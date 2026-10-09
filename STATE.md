@@ -1,9 +1,10 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 2026-10-08 07:00:00 BRT
-- **Status do Sistema:** 🟢 AO VIVO (Motor iniciado e operacional)
-- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000)
+- **Última Atualização:** 2026-10-09 04:10:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado e 327 miniaturas sincronizadas
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)

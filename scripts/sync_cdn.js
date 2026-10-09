@@ -25,7 +25,7 @@ if (fs.existsSync(ENV_PATH)) {
 const STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE || 'gigantera';
 const STORAGE_PASS = process.env.BUNNY_STORAGE_PASSWORD;
 const PULL_ZONE = process.env.BUNNY_PULL_ZONE_URL || 'https://gigantera-penumbra.b-cdn.net';
-const REGION = 'storage.bunnycdn.com'; // Change to br.storage.bunnycdn.com if needed
+const REGION = 'br.storage.bunnycdn.com'; // São Paulo storage region for gigantera
 
 // Pipeline Root Directory (Where all projects live)
 const PIPELINE_DIR = '/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera';
@@ -37,7 +37,6 @@ if (!STORAGE_PASS) {
 }
 
 // Ensure staging directories exist
-if (!fs.existsSync(SOURCE_MEDIA_DIR)) fs.mkdirSync(SOURCE_MEDIA_DIR, { recursive: true });
 if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 // HTTP PUT Helper for Bunny Storage API

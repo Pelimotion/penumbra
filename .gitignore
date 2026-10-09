@@ -6,3 +6,5 @@ node_modules/
 graphify-out/
 .vercel
 .env*.local
+.env
+cdn_build/

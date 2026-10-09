@@ -8,54 +8,162 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css?t=20261007_03">
+  <link rel="stylesheet" href="styles.css?t=20261009_studio_pro">
 </head>
 <body class="penumbra-app">
-  <!-- MEDIA NEXUS MODAL (INITIAL STATE) -->
-  <dialog id="media-nexus-modal" class="glass-dialog">
-    <div class="dialog-content">
-      <div class="nexus-header">
-        <h2>MEDIA NEXUS <span class="badge badge-preview">OFFLINE</span></h2>
-        <p class="subtitle">Selecione a fonte primária de ingestão visual (Zero-Server Architecture)</p>
+  <!-- MEDIA NEXUS STUDIO LAUNCHER (DAVINCI RESOLVE / ADOBE PRO ARCHITECTURE) -->
+  <dialog id="media-nexus-modal" class="nexus-studio-dialog">
+    <div class="nexus-window">
+      <!-- TOP STATUS STRIP -->
+      <div class="nexus-window-bar">
+        <div class="nexus-win-title">
+          <span class="nexus-brand-dot"></span>
+          <span class="nexus-brand-text">PENUMBRA SYSTEM</span>
+          <span class="nexus-build-tag">PRO VJ ENGINE · BUILD 2026.10</span>
+        </div>
+        <div class="nexus-arch-tag">ZERO-SERVER ARCHITECTURE</div>
       </div>
-      
-      <div class="source-grid">
-        <!-- Pilar A: Local -->
-        <button class="btn-source source-local" id="btn-nexus-local">
-          <div class="source-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          </div>
-          <div class="source-info">
-            <h3>LOCAL DRIVE</h3>
-            <p>Ler pasta via File System API (Zero Latency)</p>
-          </div>
-        </button>
 
-        <!-- Pilar B: Nuvem -->
-        <button class="btn-source source-cdn" id="btn-nexus-cdn">
-          <div class="source-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
-          </div>
-          <div class="source-info">
-            <h3>NUVEM GIGANTERA</h3>
-            <p>Cloud Streaming Portfólio (Requer PIN)</p>
-          </div>
-        </button>
+      <!-- STEP 1: SOURCE SELECTOR -->
+      <div id="nexus-step-source" class="nexus-step active">
+        <div class="nexus-lead">
+          <h2>ESCOLHA A ORIGEM DO PROJETO</h2>
+          <p>Conecte o diretório de mídias locais ou sincronize o catálogo de alta velocidade na Nuvem Edge.</p>
+        </div>
 
-        <!-- Pilar C: YouTube -->
-        <div class="source-yt">
-          <div class="yt-input-wrapper">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff0033" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
-            <input type="text" id="input-nexus-yt" placeholder="Cole a URL do YouTube Premium..." />
+        <div class="nexus-sources-grid">
+          <!-- CARD A: LOCAL DRIVE -->
+          <div class="nexus-source-card" id="btn-nexus-local">
+            <div class="nsc-top">
+              <div class="nsc-icon local-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <span class="nsc-badge">OFFLINE · DIRECT FS</span>
+            </div>
+            <div class="nsc-meta">
+              <h3>LOCAL DRIVE (SSD)</h3>
+              <p>Ler pasta de projeto diretamente via File System Access API. Zero latência, acesso direto aos arquivos brutos.</p>
+            </div>
+            <div class="nsc-action">
+              <span>SELECIONAR PASTA</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </div>
+
+          <!-- CARD B: NUVEM GIGANTERA -->
+          <div class="nexus-source-card" id="btn-nexus-cdn">
+            <div class="nsc-top">
+              <div class="nsc-icon cdn-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                </svg>
+              </div>
+              <span class="nsc-badge badge-cdn">BUNNY EDGE CDN</span>
+            </div>
+            <div class="nsc-meta">
+              <h3>NUVEM GIGANTERA</h3>
+              <p>Streaming do portfólio completo com miniaturas inteligentes e previews animados otimizados em WebP.</p>
+            </div>
+            <div class="nsc-action">
+              <span>AUTENTICAR COM PIN</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- YOUTUBE / STREAM INGESTION BAR -->
+        <div class="nexus-stream-bar">
+          <div class="nsb-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>INGESTÃO VIA URL / STREAM EXTERNO</span>
+          </div>
+          <div class="nsb-input-group">
+            <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
+            <button id="btn-nexus-yt-connect" class="nsb-submit-btn">INGEST</button>
+          </div>
+        </div>
+
+        <!-- TECHNICAL BENCHMARK SPECS -->
+        <div class="nexus-specs-bar">
+          <div class="spec-item"><span class="spec-k">CODECS:</span> <span class="spec-v">H.264 / H.265 (MP4)</span></div>
+          <div class="spec-divider"></div>
+          <div class="spec-item"><span class="spec-k">ALPHA:</span> <span class="spec-v">WEBM (VP9)</span></div>
+          <div class="spec-divider"></div>
+          <div class="spec-item"><span class="spec-k">DEFAULT FPS:</span> <span class="spec-v">30.0 (SYNC)</span></div>
+          <div class="spec-divider"></div>
+          <div class="spec-item"><span class="spec-k">REDE/OSC:</span> <span class="spec-v">DESLIGADO (PADRÃO)</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 2: CLOUD PIN AUTHENTICATION GATE -->
+      <div id="nexus-step-pin" class="nexus-step" style="display: none;">
+        <div class="nexus-pin-container">
+          <button id="btn-pin-back" class="btn-step-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            VOLTAR À SELEÇÃO
+          </button>
+          <div class="pin-gate-emblem">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <div class="nexus-pin-header">
+            <h2>ACESSO RESTRITO // GIGANTERA EDGE</h2>
+            <p>Insira a chave numérica de 4 dígitos para autorizar o streaming do portfólio.</p>
+          </div>
+
+          <!-- PIN VISUAL DISPLAY -->
+          <div class="pin-display-wrap">
+            <div class="pin-cells" id="pin-slots">
+              <div class="pin-cell" data-idx="0"></div>
+              <div class="pin-cell" data-idx="1"></div>
+              <div class="pin-cell" data-idx="2"></div>
+              <div class="pin-cell" data-idx="3"></div>
+            </div>
+            <!-- Invisible actual input to capture physical keyboard smoothly -->
+            <input type="password" id="pin-hidden-input" maxlength="4" inputmode="numeric" autocomplete="off" autofocus>
+          </div>
+
+          <div id="pin-feedback-msg" class="pin-feedback-line">DIGITE O PIN (TECLADO OU BOTÕES ABAIXO)</div>
+
+          <!-- STUDIO ON-SCREEN KEYPAD -->
+          <div class="pin-keypad">
+            <button class="pin-key" data-key="1">1</button>
+            <button class="pin-key" data-key="2">2</button>
+            <button class="pin-key" data-key="3">3</button>
+            <button class="pin-key" data-key="4">4</button>
+            <button class="pin-key" data-key="5">5</button>
+            <button class="pin-key" data-key="6">6</button>
+            <button class="pin-key" data-key="7">7</button>
+            <button class="pin-key" data-key="8">8</button>
+            <button class="pin-key" data-key="9">9</button>
+            <button class="pin-key key-action" data-key="clear">C</button>
+            <button class="pin-key" data-key="0">0</button>
+            <button class="pin-key key-action" data-key="backspace">⌫</button>
+          </div>
+
+          <div class="pin-footer-actions">
+            <button id="btn-pin-submit" class="btn-studio-primary">AUTENTICAR</button>
           </div>
         </div>
       </div>
-      <div class="nexus-footer">
-        <p style="margin-bottom:8px; color: #00f0ff; font-weight: bold; font-size:13px; text-transform:uppercase;">Dicas de Performance (Web Engine)</p>
-        <p style="font-size:12px; color:#aaa; line-height:1.4;">• <strong>Formatos:</strong> Prefira H.264 (.mp4) ou H.265 para alta fluidez. Evite vídeos pesados.<br>
-        • <strong>Transparência (Chroma):</strong> Use WebM (VP9) para manter canal Alpha nativamente.<br>
-        • <strong>Resolução:</strong> 1080p ou 720p é ideal para múltiplas camadas 3D WebGL simultâneas.<br>
-        • <strong>Adicionar Pastas:</strong> Você pode adicionar múltiplas pastas locais dentro do painel após iniciar!</p>
+
+      <!-- STEP 3: LOADING & SYNC PROGRESS -->
+      <div id="nexus-step-loading" class="nexus-step" style="display: none;">
+        <div class="nexus-loading-box">
+          <div class="studio-loader-orbit">
+            <div class="orbit-spinner"></div>
+            <div class="orbit-center-dot"></div>
+          </div>
+          <h3 id="nexus-loading-title">CONECTANDO AO GIGANTERA EDGE...</h3>
+          <p id="nexus-loading-subtitle">Sincronizando manifesto de mídia e catálogo de mattes analógicos</p>
+          <div class="loading-progress-bar">
+            <div class="lpb-fill" id="nexus-loading-bar"></div>
+          </div>
+        </div>
       </div>
     </div>
   </dialog>
@@ -2115,35 +2223,11 @@
     <!-- Floating HUD Macro State & Presets Toast -->
     <div id="hud-macro-toast" class="hud-macro-toast"></div>
 
-    <!-- PIN CUSTOM MODAL -->
-    <div id="pin-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:99999; justify-content:center; align-items:center;">
-      <div style="background:#0a0a0a; border:1px solid #333; border-radius:12px; padding:40px; text-align:center; box-shadow:0 0 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(255,255,255,0.02); max-width:400px; width:100%; animation: slideUp 0.3s ease;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#b05bff" stroke-width="1.5" style="margin-bottom:20px; filter:drop-shadow(0 0 10px rgba(176,91,255,0.4));">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <h2 style="font-size:18px; font-family:var(--font-mono); letter-spacing:3px; color:#fff; margin-bottom:10px;">CREDÊNCIAL CLOUD</h2>
-        <p style="font-size:12px; color:#777; margin-bottom:30px; line-height: 1.5;">O ambiente Nuvem Gigantera é restrito.<br>Insira seu PIN operacional (4 dígitos).</p>
-        
-        <input type="password" id="pin-modal-input" maxlength="4" placeholder="••••" style="background:#000; border:1px solid #444; border-radius:6px; color:#fff; font-size:32px; text-align:center; padding:15px; width:100%; font-family:var(--font-mono); letter-spacing:15px; outline:none; transition:border-color 0.2s;" autocomplete="off">
-        
-        <div style="display:flex; gap:10px; margin-top:25px;">
-          <button id="btn-pin-cancel" style="flex:1; padding:12px; background:transparent; border:1px solid #333; color:#aaa; border-radius:6px; cursor:pointer; font-size:12px; letter-spacing:1px; font-weight:bold; transition:all 0.2s;">CANCELAR</button>
-          <button id="btn-pin-confirm" style="flex:1; padding:12px; background:#b05bff; border:none; color:#000; border-radius:6px; cursor:pointer; font-size:12px; letter-spacing:1px; font-weight:bold; transition:all 0.2s; box-shadow:0 0 20px rgba(176,91,255,0.3);">AUTENTICAR</button>
-        </div>
-      </div>
-    </div>
-    
-    <style>
-      #pin-modal-input:focus { border-color: #b05bff; box-shadow: 0 0 10px rgba(176,91,255,0.2); }
-      #btn-pin-cancel:hover { background: #111; color: #fff; }
-      #btn-pin-confirm:hover { background: #c685ff; box-shadow: 0 0 30px rgba(176,91,255,0.6); }
-      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+
 
     <!-- MIDI Controller Hub -->
     <script src="midi.js"></script>
-    <script src="app.js?t=20261008_macro_presets"></script>
+    <script src="app.js?t=20261009_studio_pro"></script>
   </body>
 </html>
 
