@@ -4,3 +4,5 @@ node_modules/
 *.zip
 *.log
 graphify-out/
+.vercel
+.env*.local

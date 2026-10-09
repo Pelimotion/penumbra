@@ -34,3 +34,18 @@ As regras abaixo são **inegociáveis**. Nenhuma alteração de código ou funci
 3. **Preservação Geométrica (Aspect Ratio):**
    * Nenhum vídeo ou textura pode ser achatado ou esticado de forma não uniforme (`stretch`).
    * Enquadramento estrito via `Aspect Fit` (com letterbox/pillarbox preto puro `#000000`) ou `Aspect Fill` centralizado.
+
+---
+
+## 🌐 3. Invariantes de Hibridismo e Cloud (Hybrid Cloud Invariants)
+
+1. **Agnosticismo de Origem (HARS - Hybrid Asset Resolution):**
+   * A interface Web (Cockpit) **nunca** deve quebrar se o servidor Node.js local estiver offline.
+   * **Cascata de Resolução Obrigatória:**
+     1. Tenta WebSocket/API em `localhost` (para operação local).
+     2. Tenta WebSocket/API no `IP da LAN` configurado (para operação via iPad/Vercel no mesmo WiFi).
+     3. Fallback automático para `Bunny.net CDN` servindo um `manifest.json` estático e vídeos cacheados (para modo Portfólio Cloud-only).
+2. **Performance de Streaming CDN (Anti-Stuttering):**
+   * Quando operando no modo Bunny.net, vídeos devem utilizar estratégias agressivas de buffer (`preload="auto"`) e Service Workers para cache de Blob, garantindo que cortes de VJ (takes) ocorram em 60 FPS sem engasgos de rede.
+3. **Segurança e CORS:**
+   * O servidor Node.js local deve ter headers CORS abertos estritamente para `gigantera.xyz` e `localhost`, permitindo que a Vercel controle a máquina física sem bloqueios de segurança do browser.

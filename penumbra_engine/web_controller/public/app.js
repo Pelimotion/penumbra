@@ -13,6 +13,36 @@
  */
 
 // ============================================================================
+// 0. HYBRID ASSET RESOLUTION STRATEGY (HARS)
+// ============================================================================
+// Determines if we are running locally, remotely controlling local, or fully cloud
+const HARS = {
+  getMode: () => {
+    if (window.location.hostname === 'localhost') return 'local';
+    if (window.location.hostname.includes('gigantera.xyz') || window.location.hostname.includes('vercel.app')) return 'cloud';
+    return 'lan';
+  },
+  getApiBase: () => {
+    const mode = HARS.getMode();
+    const storedIP = localStorage.getItem('penumbra_lan_ip');
+    if (mode === 'local') return '';
+    if (mode === 'cloud' && storedIP) return `http://${storedIP}:3000`;
+    if (mode === 'cloud') return 'https://pelimotion-portfolio.b-cdn.net/penumbra'; // Fallback Bunny CDN
+    return ''; // LAN mode (accessed via IP) uses relative paths
+  },
+  getWsUrl: () => {
+    const mode = HARS.getMode();
+    const storedIP = localStorage.getItem('penumbra_lan_ip');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    if (mode === 'local') return `${protocol}//localhost:3000`;
+    if (mode === 'cloud' && storedIP) return `ws://${storedIP}:3000`;
+    if (mode === 'cloud') return null; // No WS in pure CDN mode
+    return `${protocol}//${window.location.host}`; // LAN mode
+  },
+  resolveUrl: (path) => `${HARS.getApiBase()}${path}`
+};
+
+// ============================================================================
 // 1. APPLICATION STATE
 // ============================================================================
 let appState = {
@@ -340,8 +370,13 @@ window.closeTheater = closeTheater;
 // 3. WEBSOCKET CLIENT & BIDIRECTIONAL TELEMETRY
 // ============================================================================
 function initWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${protocol}//${window.location.host}`);
+  const wsUrl = HARS.getWsUrl();
+  if (!wsUrl) {
+    console.warn('[HARS] Running in Cloud-Only mode. WebSocket disabled.');
+    return;
+  }
+  
+  ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
     console.log('[*] Connected to Penumbra Web Server.');
