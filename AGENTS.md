@@ -24,6 +24,11 @@ Bem-vindo ao workspace do **Penumbra System / Video Art Drinkzinho**. Este proje
 4. **Aprendizado Contínuo de Skills:**
    - Quando dominar um novo procedimento ou resolver um bug complexo, registre uma nova habilidade executando o `skill-synthesizer`.
 
+5. **Fluxo Colaborativo de Git (Branch & PR Obrigatório):**
+   - Nunca commitar e dar push diretamente na branch `main`.
+   - Sempre criar uma feature/fix branch (ex: `feat/...`, `fix/...`), publicar com `git push -u origin <branch>` e trabalhar nela.
+   - Ao concluir a tarefa ou marco, abrir um Pull Request (PR) no GitHub (`gh pr create`) apontando para `main`. O revisor humano avalia e dá merge sem conflitos concorrentes.
+
 ---
 
 ## 📚 Documentação e Regras Detalhadas
@@ -31,3 +36,4 @@ Bem-vindo ao workspace do **Penumbra System / Video Art Drinkzinho**. Este proje
 - Regras de Tokens: [`.agents/rules/02_token_economy.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/rules/02_token_economy.md)
 - Regras de Decisão: [`.agents/rules/03_critical_decision.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/rules/03_critical_decision.md)
 - Orquestração Multi-Agente: [`.agents/rules/04_vibe_orchestration.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/rules/04_vibe_orchestration.md)
+- Governança de Git & PR: [`.agents/rules/05_git_collaboration.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/rules/05_git_collaboration.md)
