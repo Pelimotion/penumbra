@@ -1,0 +1,14 @@
+{
+  "name": "penumbra-system",
+  "version": "2026.10.09",
+  "description": "Penumbra System — Professional Audio-Reactive VJ Engine (Zero-Server Architecture)",
+  "private": true,
+  "scripts": {
+    "deploy": "node scripts/deploy_cdn.js",
+    "docs": "node scripts/update_docs.js",
+    "bundle": "node scripts/build_portable.js",
+    "sync-media": "node scripts/sync_cdn.js",
+    "ship": "node scripts/update_docs.js && git add CHANGELOG.md STATE.md docs/ && git diff --cached --quiet || git commit -m 'docs: auto-update documentation' && node scripts/deploy_cdn.js",
+    "start": "cd penumbra_engine/web_controller && node server.js"
+  }
+}
