@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/penumbra/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/penumbra/(.*)",
+      "destination": "/penumbra_engine/web_controller/public/$1"
+    },
+    {
+      "source": "/penumbra",
+      "destination": "/penumbra_engine/web_controller/public/"
+    }
+  ]
+}
