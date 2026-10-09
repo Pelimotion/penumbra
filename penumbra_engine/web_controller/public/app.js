@@ -182,11 +182,71 @@ const MediaProvider = {
     }
 
     const localManifest = await getLocalManifest(dirHandle);
+    
+    // Auto-Launch Portable HTML if present and we aren't already running in it
+    const isOfflineMode = window.location.protocol === 'blob:' || window.location.protocol === 'file:';
+    if (!isOfflineMode) {
+      try {
+        const execHandle = await dirHandle.getFileHandle('Penumbra_Offline_Executable.html');
+        const execFile = await execHandle.getFile();
+        const execUrl = URL.createObjectURL(execFile);
+        
+        const popup = window.open(execUrl, '_blank');
+        if (popup) {
+          document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#050505; color:#00f0ff; font-family:monospace; text-align:center;">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <h2 style="margin-top:20px; font-size:24px;">GIGANTERA OFFLINE INICIADO</h2>
+              <p style="color:#aaa; max-width:400px; line-height:1.6;">O motor portátil foi aberto em uma nova aba rodando diretamente do seu SSD com latência zero.<br><br>Por favor, acesse a nova aba.</p>
+            </div>
+          `;
+          return []; // Halt current app
+        }
+      } catch (e) {
+        // Not found, continue normally
+      }
+    }
+
     if (localManifest && localManifest.length > 0) {
       console.log('[Media Nexus] Usando media_manifest.json local otimizado.');
       return localManifest;
     }
 
+    return clips;
+  },
+
+  scanExtraDir: async (dirHandle) => {
+    const clips = [];
+    async function scan(handle, currentPath = '') {
+      for await (const entry of handle.values()) {
+        const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+        if (entry.kind === 'file') {
+          const ext = entry.name.split('.').pop().toLowerCase();
+          if (['mp4', 'mov', 'webm'].includes(ext)) {
+            const file = await entry.getFile();
+            // Prefix to avoid collisions
+            const uniquePath = `EXTRA_${Date.now()}/${entryPath}`;
+            MediaProvider.localFilesMap.set(uniquePath, file);
+            clips.push({
+              id: `local_extra_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+              filename: entry.name,
+              folder: currentPath || 'LOCAL IMPORT',
+              relative_path: uniquePath,
+              absolute_path: uniquePath,
+              width: 1920, height: 1080, duration: 10.0, fps: 60.0,
+              codec: ext,
+              category: 'IMPORTAÇÃO LOCAL',
+              suggested_layer: 0,
+              thumbnail: '',
+              is_local: true
+            });
+          }
+        } else if (entry.kind === 'directory') {
+          await scan(entry, entryPath);
+        }
+      }
+    }
+    await scan(dirHandle);
     return clips;
   },
 
@@ -5893,6 +5953,25 @@ window.addEventListener('DOMContentLoaded', () => {
       await loadMediaPool(clips);
       await loadMattesCatalog();
     });
+
+    // Add Extra Local Folder logic
+    const btnAddLocal = document.getElementById('btn-add-local-folder');
+    if (btnAddLocal) {
+      btnAddLocal.addEventListener('click', async () => {
+        try {
+          const handle = await window.showDirectoryPicker();
+          const newClips = await MediaProvider.scanExtraDir(handle);
+          if (newClips.length > 0) {
+            allClips.push(...newClips);
+            renderMediaGrid(); // Re-render pool
+            console.log(`[Media Nexus] Adicionado ${newClips.length} novos clipes locais.`);
+          }
+        } catch(e) {
+          console.warn('[Media Nexus] Seleção extra de pasta cancelada ou falha:', e);
+        }
+      });
+    }
+
   } else {
     loadMediaPool();
     loadMattesCatalog();
