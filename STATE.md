@@ -1,8 +1,8 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 15:18:00 BRT
-- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA EDGE CDN (`https://gigantera-penumbra.b-cdn.net`) & VERCEL (`https://penumbra-xi.vercel.app/penumbra/`)
-- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000), [https://penumbra-xi.vercel.app/penumbra/](https://penumbra-xi.vercel.app/penumbra/) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
+- **Última Atualização:** 09/10/2026, 16:41:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA EDGE CDN (`https://gigantera-penumbra.b-cdn.net`), VERCEL (`https://penumbra-xi.vercel.app/penumbra/`) e DOMÍNIO OFICIAL (`https://gigantera.xyz/penumbra`)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000), [https://gigantera.xyz/penumbra](https://gigantera.xyz/penumbra), [https://penumbra-xi.vercel.app/penumbra/](https://penumbra-xi.vercel.app/penumbra/) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps, Git Colaborativo PR-First e Skills)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
@@ -17,19 +17,25 @@
 |---|---|---|
 | `app.js` | 9,450 | 372.1 KB |
 | `styles.css` | 8,600 | 164.9 KB |
-| `index.html` | 3,420 | 216.2 KB |
+| `index.html` | 3,425 | 216.3 KB |
 | `midi.js` | 1,580 | 61.5 KB |
-| `Penumbra_Portable.html` | — | 816.9 KB |
+| `Penumbra_Portable.html` | — | 817.2 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status & Governança Colaborativa
-- **Branch Ativa:** `feat/collab-branch-pr-governance`
-- **Protocolo:** PR-First (Branch dedicada → Push → Pull Request para `main` sem conflitos)
-- **Pull Request Aberto no Pavilhão:** [gigantera-portfolio#1](https://github.com/Pelimotion/gigantera-portfolio/pull/1) para atualizar `https://gigantera.xyz/penumbra`
-- **Repositório Principal:** [Pelimotion/penumbra](https://github.com/Pelimotion/penumbra) sincronizado no commit `53dadb8`
+- **Branch Ativa:** `feat/penumbra-collaborative-dev`
+- **Protocolo:** PR-First (Desenvolvimento na branch dedicada → Push → Pull Request para `main` sem conflitos)
+- **Repositório Principal:** [Pelimotion/penumbra](https://github.com/Pelimotion/penumbra)
+- **Ambiente de Produção gigantera.xyz:** Totalmente blindado com rewrites para cleanUrls e MIME types 200 OK.
+
+## 🤝 Handover para o Próximo Chat / Próxima Sessão
+1. **Branch de Trabalho:** Continuar exclusivamente na branch `feat/penumbra-collaborative-dev`.
+2. **Ambiente de Testes / Preview:** Utilizar `http://localhost:3000` ou o link de Preview gerado pela Vercel após cada push.
+3. **Hardware Twin & MIDI:** Central de 4 bancos (B1 Mixer, B2 Layer Focus, B3 Conductor, B4 Color Lab) e Soft Takeover totalmente operacionais em `midi.js`.
+4. **Finalização de Tarefa:** Ao concluir novas features, disparar `gh pr create` para abrir PR limpa contra a `main`.
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
