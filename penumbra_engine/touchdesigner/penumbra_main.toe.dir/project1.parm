@@ -1,0 +1,10 @@
+?
+stdswitcher1 0 1
+w 0 1280
+h 0 720
+top 0 ./out1
+repocomp 17 "" me
+drag 0 dragparent
+drop 0 dropparent
+parentshortcut 0 Project
+?

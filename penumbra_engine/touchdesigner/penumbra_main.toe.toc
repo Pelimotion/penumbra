@@ -1,0 +1,12 @@
+.build
+.start
+.grps
+project1.n
+project1.parm
+project1.panel
+perform.n
+perform.parm
+.application
+project1/setup_penumbra.n
+project1/setup_penumbra.parm
+project1/setup_penumbra.text

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PENUMBRA SYSTEM · Janela Destacada (Pop-out)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: #050608;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .popout-header {
+      height: 40px;
+      background: rgba(10, 13, 20, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.6px;
+    }
+    .badge-preview { background: #00f0ff; color: #000; }
+    .badge-live { background: #00ff88; color: #000; }
+    .title {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #fff;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .timecode {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+    }
+    .btn-fs {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 9px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .btn-fs:hover {
+      background: rgba(0, 240, 255, 0.18);
+      border-color: #00f0ff;
+    }
+    .viewport-box {
+      flex: 1;
+      position: relative;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .overlay-hud {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .hud-tag {
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header class="popout-header">
+    <div class="header-left">
+      <span class="badge badge-preview" id="feed-badge">PREVIEW DESTACADO</span>
+      <span class="title" id="clip-title">CONECTANDO AO COCKPIT...</span>
+    </div>
+    <div class="header-right">
+      <span class="timecode" id="feed-tc">TC 00:00:00.00</span>
+      <button class="btn-fs" id="btn-toggle-rotate" style="display: none;" title="Rotacionar sinal HDMI 90° para projetor montado fisicamente na vertical">⤾ PROJETOR 90°: ATIVO</button>
+      <button class="btn-fs" id="btn-fullscreen">⛶ TELA CHEIA</button>
+    </div>
+  </header>
+
+  <main class="viewport-box">
+    <canvas id="popout-canvas" width="1280" height="720"></canvas>
+    <div class="overlay-hud">
+      <span class="hud-tag" id="hud-mode">ASPECT FILL (SEM BORDAS PRETAS)</span>
+      <span class="hud-tag" id="hud-status">JANELA FLUTUANTE ATIVA</span>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('popout-canvas');
+    const ctx = canvas.getContext('2d');
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewMode = urlParams.get('view') || 'preview'; // 'preview' or 'program'
+    
+    const feedBadge = document.getElementById('feed-badge');
+    const clipTitle = document.getElementById('clip-title');
+    const feedTc = document.getElementById('feed-tc');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const btnToggleRotate = document.getElementById('btn-toggle-rotate');
+    let rotateCompensate = true; // Auto-active for physical projector compensation
+
+    if (viewMode === 'program') {
+      feedBadge.textContent = 'PROGRAM (AO VIVO NO BÊ)';
+      feedBadge.className = 'badge badge-live';
+      document.title = 'PENUMBRA · PROGRAM AO VIVO (POP-OUT)';
+      if (btnToggleRotate) {
+        btnToggleRotate.style.display = 'inline-block';
+        btnToggleRotate.addEventListener('click', () => {
+          rotateCompensate = !rotateCompensate;
+          btnToggleRotate.textContent = rotateCompensate ? '⤾ PROJETOR 90°: ATIVO' : '⬍ NATIVO RETO (9:16)';
+          btnToggleRotate.style.borderColor = rotateCompensate ? '#00ff88' : '#00f0ff';
+          btnToggleRotate.style.color = rotateCompensate ? '#00ff88' : '#00f0ff';
+        });
+      }
+    } else {
+      feedBadge.textContent = 'PREVIEW (PRÓXIMO CUE)';
+      feedBadge.className = 'badge badge-preview';
+      document.title = 'PENUMBRA · PREVIEW DESTACADO (POP-OUT)';
+    }
+
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Render Loop directly syncing from parent window opener or WebSocket
+    function syncAndRender() {
+      if (window.opener && !window.opener.closed) {
+        const sourceCanvasId = viewMode === 'program' ? 'program-canvas' : 'preview-canvas';
+        const srcCanvas = window.opener.document.getElementById(sourceCanvasId);
+        const srcTc = window.opener.document.getElementById(viewMode === 'program' ? 'prg-timecode' : 'prv-timecode');
+        const srcTitle = window.opener.document.getElementById(viewMode === 'program' ? 'hud-clip-title' : 'preview-clip-title');
+
+        if (srcTc && feedTc) feedTc.textContent = srcTc.textContent;
+        if (srcTitle && clipTitle) clipTitle.textContent = srcTitle.textContent;
+
+        if (srcCanvas && srcCanvas.width > 0) {
+          const isSrcVertical = srcCanvas.height > srcCanvas.width;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          if (isSrcVertical && rotateCompensate && viewMode === 'program') {
+            // Projector is physically tilted 90 degrees. Rotate 9:16 vertical signal into 16:9 HDMI output
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(Math.PI / 2);
+            const scale = canvas.width / srcCanvas.height;
+            const drawW = srcCanvas.width * scale;
+            const drawH = srcCanvas.height * scale;
+            ctx.drawImage(srcCanvas, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+          } else {
+            // Draw normal / native portrait or landscape
+            ctx.drawImage(srcCanvas, 0, 0, canvas.width, canvas.height);
+          }
+        }
+      } else {
+        // Fallback connecting to WebSocket directly
+        ctx.fillStyle = '#050608';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#718096';
+        ctx.font = '14px JetBrains Mono';
+        ctx.fillText('Aguardando sinal do Cockpit...', canvas.width / 2 - 120, canvas.height / 2);
+      }
+      requestAnimationFrame(syncAndRender);
+    }
+    syncAndRender();
+  </script>
+</body>
+</html>

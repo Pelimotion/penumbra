@@ -1,0 +1,9 @@
+?
+winop 0 project1
+title 17 "" me
+justifyh 0 center
+justifyv 0 center
+openin 0 main
+bordersinsize 0 off
+includedialog 0 on
+?

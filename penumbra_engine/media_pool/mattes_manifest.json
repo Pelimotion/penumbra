@@ -1,0 +1,379 @@
+[
+  {
+    "id": "matte_a_half_left",
+    "filename": "matte_a_half_left.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_half_left.png",
+    "name": "Metade Esquerda",
+    "description": "Split vertical 50% esquerdo",
+    "tags": [
+      "split",
+      "minimal"
+    ]
+  },
+  {
+    "id": "matte_a_half_right",
+    "filename": "matte_a_half_right.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_half_right.png",
+    "name": "Metade Direita",
+    "description": "Split vertical 50% direito",
+    "tags": [
+      "split",
+      "minimal"
+    ]
+  },
+  {
+    "id": "matte_a_half_top",
+    "filename": "matte_a_half_top.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_half_top.png",
+    "name": "Metade Superior",
+    "description": "Split horizontal 50% superior",
+    "tags": [
+      "split",
+      "horizontal"
+    ]
+  },
+  {
+    "id": "matte_a_half_bottom",
+    "filename": "matte_a_half_bottom.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_half_bottom.png",
+    "name": "Metade Inferior",
+    "description": "Split horizontal 50% inferior",
+    "tags": [
+      "split",
+      "horizontal"
+    ]
+  },
+  {
+    "id": "matte_a_third_center",
+    "filename": "matte_a_third_center.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_third_center.png",
+    "name": "Pilar Central (1/3)",
+    "description": "Coluna vertical centralizada de um terço",
+    "tags": [
+      "pillar",
+      "cinematic"
+    ]
+  },
+  {
+    "id": "matte_a_golden_pillar",
+    "filename": "matte_a_golden_pillar.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_golden_pillar.png",
+    "name": "Monólito Áureo",
+    "description": "Proporção áurea vertical phi (0.382)",
+    "tags": [
+      "sacred",
+      "golden"
+    ]
+  },
+  {
+    "id": "matte_a_center_circle",
+    "filename": "matte_a_center_circle.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_center_circle.png",
+    "name": "Abertura Circular",
+    "description": "Círculo concêntrico de foco central",
+    "tags": [
+      "circle",
+      "focus"
+    ]
+  },
+  {
+    "id": "matte_a_anamorphic_slit",
+    "filename": "matte_a_anamorphic_slit.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_anamorphic_slit.png",
+    "name": "Fenda Anamórfica 2.39:1",
+    "description": "Letterbox cinemascope panorâmico",
+    "tags": [
+      "anamorphic",
+      "letterbox"
+    ]
+  },
+  {
+    "id": "matte_a_dual_monolith",
+    "filename": "matte_a_dual_monolith.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_dual_monolith.png",
+    "name": "Monólitos Gêmeos",
+    "description": "Colunas laterais revelando centro negativo",
+    "tags": [
+      "architectural",
+      "brutalist"
+    ]
+  },
+  {
+    "id": "matte_a_diagonal_slash",
+    "filename": "matte_a_diagonal_slash.png",
+    "category": "SOLIDS",
+    "category_folder": "cat_a_solids",
+    "path": "cat_a_solids/matte_a_diagonal_slash.png",
+    "name": "Corte Diagonal 45°",
+    "description": "Corte angular arquitetônico diagonal",
+    "tags": [
+      "diagonal",
+      "angular"
+    ]
+  },
+  {
+    "id": "matte_b_penumbra_vignette",
+    "filename": "matte_b_penumbra_vignette.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_penumbra_vignette.png",
+    "name": "Penumbra Vignette Clássica",
+    "description": "Degradê suave protegendo o teto de escuridão",
+    "tags": [
+      "vignette",
+      "obsidian"
+    ]
+  },
+  {
+    "id": "matte_b_feather_core",
+    "filename": "matte_b_feather_core.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_feather_core.png",
+    "name": "Núcleo Esfumado Oval",
+    "description": "Destaque orgânico central sem arestas duras",
+    "tags": [
+      "feather",
+      "core"
+    ]
+  },
+  {
+    "id": "matte_b_soft_horizon",
+    "filename": "matte_b_soft_horizon.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_soft_horizon.png",
+    "name": "Horizonte Suave",
+    "description": "Degradê horizontal imitando neblina atmosférica",
+    "tags": [
+      "horizon",
+      "atmosphere"
+    ]
+  },
+  {
+    "id": "matte_b_diagonal_wash",
+    "filename": "matte_b_diagonal_wash.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_diagonal_wash.png",
+    "name": "Lavagem Diagonal",
+    "description": "Luz oblíqua suave cinematográfica",
+    "tags": [
+      "wash",
+      "oblique"
+    ]
+  },
+  {
+    "id": "matte_b_inverse_spotlight",
+    "filename": "matte_b_inverse_spotlight.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_inverse_spotlight.png",
+    "name": "Spotlight Invertido",
+    "description": "Núcleo ocluso em penumbra com periferia revelada",
+    "tags": [
+      "inverse",
+      "negative"
+    ]
+  },
+  {
+    "id": "matte_b_smoke_density",
+    "filename": "matte_b_smoke_density.png",
+    "category": "SOFT",
+    "category_folder": "cat_b_soft",
+    "path": "cat_b_soft/matte_b_smoke_density.png",
+    "name": "Densidade de Névoa",
+    "description": "Micro-textura esfumada em suspensão",
+    "tags": [
+      "smoke",
+      "texture"
+    ]
+  },
+  {
+    "id": "matte_c_staccato_blinds",
+    "filename": "matte_c_staccato_blinds.png",
+    "category": "TEMPO",
+    "category_folder": "cat_c_tempo",
+    "path": "cat_c_tempo/matte_c_staccato_blinds.png",
+    "name": "Persianas Verticais (16)",
+    "description": "Ripas arquitetônicas para sincronia rítmica",
+    "tags": [
+      "staccato",
+      "rhythm"
+    ]
+  },
+  {
+    "id": "matte_c_horizontal_slits",
+    "filename": "matte_c_horizontal_slits.png",
+    "category": "TEMPO",
+    "category_folder": "cat_c_tempo",
+    "path": "cat_c_tempo/matte_c_horizontal_slits.png",
+    "name": "Fendas Horizontais (12)",
+    "description": "Ripas horizontais tipo persiana veneziana",
+    "tags": [
+      "staccato",
+      "raster"
+    ]
+  },
+  {
+    "id": "matte_c_stepped_rings",
+    "filename": "matte_c_stepped_rings.png",
+    "category": "TEMPO",
+    "category_folder": "cat_c_tempo",
+    "path": "cat_c_tempo/matte_c_stepped_rings.png",
+    "name": "Anéis Concêntricos",
+    "description": "Ondas circulares quantizadas em tempo",
+    "tags": [
+      "rings",
+      "ripple"
+    ]
+  },
+  {
+    "id": "matte_c_raster_checker",
+    "filename": "matte_c_raster_checker.png",
+    "category": "TEMPO",
+    "category_folder": "cat_c_tempo",
+    "path": "cat_c_tempo/matte_c_raster_checker.png",
+    "name": "Xadrez Raster Eletrônico",
+    "description": "Malha brutalista Berlin club",
+    "tags": [
+      "raster",
+      "checker"
+    ]
+  },
+  {
+    "id": "matte_c_barcode_slits",
+    "filename": "matte_c_barcode_slits.png",
+    "category": "TEMPO",
+    "category_folder": "cat_c_tempo",
+    "path": "cat_c_tempo/matte_c_barcode_slits.png",
+    "name": "Código de Barras Modular",
+    "description": "Intervalos assíncronos inspirados em partituras gráficas",
+    "tags": [
+      "barcode",
+      "serial"
+    ]
+  },
+  {
+    "id": "matte_d_organic_fluid",
+    "filename": "matte_d_organic_fluid.png",
+    "category": "PROCEDURAL",
+    "category_folder": "cat_d_procedural",
+    "path": "cat_d_procedural/matte_d_organic_fluid.png",
+    "name": "Fluido Mármore Líquido",
+    "description": "Morfologia orgânica de densidade líquida",
+    "tags": [
+      "fluid",
+      "organic"
+    ]
+  },
+  {
+    "id": "matte_d_dark_nebula",
+    "filename": "matte_d_dark_nebula.png",
+    "category": "PROCEDURAL",
+    "category_folder": "cat_d_procedural",
+    "path": "cat_d_procedural/matte_d_dark_nebula.png",
+    "name": "Nebulosa Cavernosa",
+    "description": "Gradiente procedural escuro de alta granulação",
+    "tags": [
+      "nebula",
+      "dark"
+    ]
+  },
+  {
+    "id": "matte_d_lissajous_aperture",
+    "filename": "matte_d_lissajous_aperture.png",
+    "category": "PROCEDURAL",
+    "category_folder": "cat_d_procedural",
+    "path": "cat_d_procedural/matte_d_lissajous_aperture.png",
+    "name": "Abertura Lissajous",
+    "description": "Harmônicos matemáticos com roll-off suave",
+    "tags": [
+      "lissajous",
+      "harmonic"
+    ]
+  },
+  {
+    "id": "matte_d_cloud_caverns",
+    "filename": "matte_d_cloud_caverns.png",
+    "category": "PROCEDURAL",
+    "category_folder": "cat_d_procedural",
+    "path": "cat_d_procedural/matte_d_cloud_caverns.png",
+    "name": "Caverna de Nuvens",
+    "description": "Bolsões de escuridão profunda com fendas de luz",
+    "tags": [
+      "clouds",
+      "cavern"
+    ]
+  },
+  {
+    "id": "matte_e_diamond_lattice",
+    "filename": "matte_e_diamond_lattice.png",
+    "category": "STRUCTURAL",
+    "category_folder": "cat_e_structural",
+    "path": "cat_e_structural/matte_e_diamond_lattice.png",
+    "name": "Treliça de Losangos",
+    "description": "Geometria estrutural em arame de diamante",
+    "tags": [
+      "wireframe",
+      "lattice"
+    ]
+  },
+  {
+    "id": "matte_e_architectural_portal",
+    "filename": "matte_e_architectural_portal.png",
+    "category": "STRUCTURAL",
+    "category_folder": "cat_e_structural",
+    "path": "cat_e_structural/matte_e_architectural_portal.png",
+    "name": "Portal de Arco",
+    "description": "Arco monumental de galeria de arte contemporânea",
+    "tags": [
+      "portal",
+      "arch"
+    ]
+  },
+  {
+    "id": "matte_e_blueprint_reticle",
+    "filename": "matte_e_blueprint_reticle.png",
+    "category": "STRUCTURAL",
+    "category_folder": "cat_e_structural",
+    "path": "cat_e_structural/matte_e_blueprint_reticle.png",
+    "name": "Retículo de Blueprint",
+    "description": "Marcadores de enquadramento técnico industrial",
+    "tags": [
+      "blueprint",
+      "viewfinder"
+    ]
+  },
+  {
+    "id": "matte_e_concentric_hexagons",
+    "filename": "matte_e_concentric_hexagons.png",
+    "category": "STRUCTURAL",
+    "category_folder": "cat_e_structural",
+    "path": "cat_e_structural/matte_e_concentric_hexagons.png",
+    "name": "Hexágonos Concêntricos",
+    "description": "Estrutura isométrica com ritmo de expansão",
+    "tags": [
+      "hexagon",
+      "isometric"
+    ]
+  }
+]

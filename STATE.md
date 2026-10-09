@@ -1,0 +1,35 @@
+# PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
+
+- **Última Atualização:** 2026-10-08 07:00:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO (Motor iniciado e operacional)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000)
+- **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+
+## Pipeline de Processos
+- **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
+- **Web Controller (Porta 3000):** 🟢 ATIVO (Servidor Express + WebSocket Cockpit)
+- **TouchDesigner NDI Output:** 🟢 CONFIGURADO (`PENUMBRA_LIVE` via NDI Out TOP)
+- **TouchDesigner Syphon Output:** 🟢 CONFIGURADO (`PENUMBRA_SYPHON` via Syphon Out TOP)
+
+## Recursos de Visualização Ampliada & Janela Flutuante
+- **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
+- **🗖 DESTACAR (Janela Flutuante Independente):** Pop-out independente (`popout.html`) com tela cheia nativa para segundo monitor/Sidecar.
+
+## Recursos de Regência Musical & Macro Presets (Recém-Implementados)
+- **Matriz de Macro Presets (Aba 5 Conductor & HUD):**
+  - 16 Presets curados distribuídos pelos estados `INTRO`, `GROOVE`, `BUILD`, `DROP`, `BREAK`.
+  - Integração profunda: Cinemática de deformação, máscaras categoria-específicas, blend de camadas e a stack dos 5 plugins do After Effects (Pixel Sorter, Pixel Stretch, Modulation, Bad TV, RXXR).
+  - Toast HUD flutuante em tempo real e indicador no cabeçalho de áudio com tag do preset ativo (`1/3 · PURE CLEAN CINEMA`, etc.).
+- **Modo Manual com Padrão Groove Limpo:**
+  - Sem interação do operador, o modo manual permanece estritamente em `GROOVE` (`Pure Clean Cinema`): zero efeitos pesados, sem distorção, máscaras limpas e vídeo original a 60 FPS cristalino.
+  - Clicar nos botões de estado (`IN`, `GRV`, `BLD`, `DRP`, `BRK`) carrega os presets do momento, e cliques repetidos no mesmo botão ciclam suas variações estéticas.
+- **Autopilot Inteligente com Adaptação a Modos Forçados:**
+  - O operador pode forçar o momento musical a qualquer instante no Autopilot sem conflito.
+  - O Autopilot adapta imediatamente suas métricas de tensão (`buildup_likelihood`, `drop_likelihood`), reordena a fila de mídias por afinidade semântica, ajusta as curvas de transição e mantém a narrativa visual elegante e coesa.
+
+## Conexões & Roteamento
+- **Entrada de Áudio:** RCA mesa DJ → Adaptador P2 blindado → MacBook Built-in Audio / UMC22
+- **Saída de Vídeo:** MacBook Felipe → NDI (Gigabit Ethernet / Wi-Fi) → MacBook Bê (MadMapper)
+- **Painel de Controle:** `http://localhost:3000` (MacBook / iPad)
+- **Decodificação de Vídeo:** HTML5 Hardware Accelerated MP4/MOV Streaming (60 FPS)
+- **Grading Tonal & Sobel:** Ativo (Gamma 0.85, Pretos -5%, Médios 1.0, Sobel Mix 22%)
