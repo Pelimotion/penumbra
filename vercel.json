@@ -2,19 +2,110 @@
   "version": 2,
   "redirects": [
     {
-      "source": "/",
+      "source": "/penumbra",
       "destination": "/penumbra/",
       "permanent": false
     }
   ],
   "rewrites": [
     {
+      "source": "/penumbra/assets/(.*)",
+      "destination": "/penumbra_engine/web_controller/public/assets/$1"
+    },
+    {
+      "source": "/penumbra/thumbnails/(.*)",
+      "destination": "/penumbra_engine/media_pool/thumbnails/$1"
+    },
+    {
+      "source": "/penumbra/mattes/(.*)",
+      "destination": "/penumbra_engine/media_pool/mattes/$1"
+    },
+    {
+      "source": "/penumbra/media_manifest.json",
+      "destination": "/penumbra_engine/web_controller/public/media_manifest.json"
+    },
+    {
+      "source": "/penumbra/Penumbra_Portable.html",
+      "destination": "/penumbra_engine/web_controller/public/Penumbra_Portable.html"
+    },
+    {
       "source": "/penumbra/(.*)",
       "destination": "/penumbra_engine/web_controller/public/$1"
     },
     {
-      "source": "/penumbra",
-      "destination": "/penumbra_engine/web_controller/public/"
+      "source": "/penumbra/",
+      "destination": "/penumbra_engine/web_controller/public/index.html"
+    },
+    {
+      "source": "/thumbnails/(.*)",
+      "destination": "/penumbra_engine/media_pool/thumbnails/$1"
+    },
+    {
+      "source": "/mattes/(.*)",
+      "destination": "/penumbra_engine/media_pool/mattes/$1"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/penumbra_engine/web_controller/public/assets/$1"
+    },
+    {
+      "source": "/styles.css",
+      "destination": "/penumbra_engine/web_controller/public/styles.css"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/penumbra_engine/web_controller/public/app.js"
+    },
+    {
+      "source": "/midi.js",
+      "destination": "/penumbra_engine/web_controller/public/midi.js"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/penumbra_engine/web_controller/public/favicon.svg"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/penumbra_engine/web_controller/public/favicon.ico"
+    },
+    {
+      "source": "/media_manifest.json",
+      "destination": "/penumbra_engine/web_controller/public/media_manifest.json"
+    },
+    {
+      "source": "/popout.html",
+      "destination": "/penumbra_engine/web_controller/public/popout.html"
+    },
+    {
+      "source": "/Penumbra_Portable.html",
+      "destination": "/penumbra_engine/web_controller/public/Penumbra_Portable.html"
+    },
+    {
+      "source": "/",
+      "destination": "/penumbra_engine/web_controller/public/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/penumbra_engine/web_controller/public/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "*"
+        }
+      ]
     }
   ]
 }

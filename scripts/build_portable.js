@@ -36,6 +36,13 @@ function bundlePortable() {
 
   const outputPath = path.join(OUTPUT_DIR, 'Penumbra_Portable.html');
   fs.writeFileSync(outputPath, htmlContent);
+  
+  // Also replicate to public directory and workspace root
+  try {
+    fs.writeFileSync(path.join(PUBLIC_DIR, 'Penumbra_Portable.html'), htmlContent);
+    fs.writeFileSync(path.join(__dirname, '../Penumbra_Portable.html'), htmlContent);
+  } catch (e) {}
+
   console.log(`[✓] Successfully built: ${outputPath}`);
   
   return outputPath;
