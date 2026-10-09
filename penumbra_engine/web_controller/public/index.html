@@ -22,6 +22,7 @@
           <span class="nexus-build-tag">PRO VJ ENGINE · BUILD 2026.10</span>
         </div>
         <div class="nexus-arch-tag">ZERO-SERVER ARCHITECTURE</div>
+        <button class="nexus-close-x" id="btn-nexus-close-x" onclick="closeStudioLauncher()" title="Fechar Launcher (ESC)" style="display: none;">✕</button>
       </div>
 
       <!-- STEP 1: SOURCE SELECTOR -->
@@ -83,6 +84,14 @@
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
             <button id="btn-nexus-yt-connect" class="nsb-submit-btn">INGEST</button>
           </div>
+        </div>
+
+        <!-- SOURCE PERSISTENCE PREFERENCE -->
+        <div class="nexus-source-prefs">
+          <label class="nexus-pref-checkbox">
+            <input type="checkbox" id="chk-nexus-remember-source">
+            <span>Lembrar esta escolha e iniciar automaticamente (alterável nas Configurações)</span>
+          </label>
         </div>
 
         <!-- TECHNICAL BENCHMARK SPECS -->
@@ -184,6 +193,11 @@
         <span class="dot live"></span>
         <span class="label">NDI: PENUMBRA_LIVE</span>
       </div>
+      <button class="source-status-btn" id="btn-header-source" onclick="openStudioLauncher()" title="Origem de Mídia Ativa — Clique para alterar entre Nuvem e Local">
+        <span class="src-icon" id="header-src-icon">☁️</span>
+        <span class="src-label" id="header-src-label">NUVEM CDN</span>
+        <span class="src-caret">▾</span>
+      </button>
     </div>
 
     <!-- Headphone Cue Audio Monitor & Master Tools -->
@@ -1864,6 +1878,7 @@
 
         <!-- Top Segmented Navigation Tabs -->
         <div class="settings-tabs-nav">
+          <button class="settings-tab-btn" data-tab="source" onclick="setSettingsTab('source')">📁 ORIGEM DE MÍDIA</button>
           <button class="settings-tab-btn active" data-tab="output" onclick="setSettingsTab('output')">📺 SAÍDA & PROJEÇÃO</button>
           <button class="settings-tab-btn" data-tab="autopilot" onclick="setSettingsTab('autopilot')">🤖 PILOTO AUTOMÁTICO</button>
           <button class="settings-tab-btn" data-tab="audio" onclick="setSettingsTab('audio')">🎙️ ÁUDIO & SINCRONIA</button>
@@ -1873,6 +1888,70 @@
         </div>
 
         <div class="settings-tab-content">
+          <!-- TAB 0: ORIGEM DE MÍDIA (LOCAL / NUVEM) -->
+          <div class="settings-tab-panel" id="settings-panel-source">
+            <div class="cfg-grid-two">
+              <div class="shortcut-group">
+                <h3>FONTE DO PROJETO & RECURSOS</h3>
+                <div class="cfg-field-block">
+                  <div class="cfg-label-row">
+                    <span class="cfg-title">ORIGEM ATIVA:</span>
+                    <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+                  </div>
+                  <p class="cfg-desc" style="margin-top: 8px;" id="cfg-active-source-desc">
+                    Streaming direto do portfólio via Edge CDN de alta performance com miniaturas inteligentes.
+                  </p>
+                  
+                  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn btn-studio-primary btn-sm" onclick="openStudioLauncher(); closeSettingsModal();" style="width: 100%;">
+                      🚀 REABRIR STUDIO LAUNCHER (ALTERAR FONTE)
+                    </button>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()" style="width: 100%;">
+                      ☁️ RE-CONECTAR NUVEM EDGE (PIN 2026)
+                    </button>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()" style="width: 100%;">
+                      📁 MONTAR PASTA LOCAL VIA DIRECT FS
+                    </button>
+                  </div>
+                </div>
+
+                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <span class="cfg-title">PREFERÊNCIA DE INICIALIZAÇÃO:</span>
+                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
+                    <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
+                    <span class="cfg-desc">Lembrar fonte selecionada (pula o seletor inicial se autorizado)</span>
+                  </label>
+                  <div style="margin-top: 10px;">
+                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber);">
+                      🗑️ ESQUECER PREFERÊNCIA (SEMPRE PERGUNTAR AO INICIAR)
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="shortcut-group">
+                <h3>PASTAS LOCAIS & MÍDIAS ADICIONAIS</h3>
+                <div class="cfg-field-block">
+                  <span class="cfg-title">IMPORTAÇÃO DINÂMICA DE PASTAS:</span>
+                  <p class="cfg-desc" style="margin-top: 6px;">
+                    Você pode conectar múltiplas pastas de vídeos do seu computador a qualquer momento. Os clipes serão indexados no Media Pool preservando os nomes originais.
+                  </p>
+                  <button class="btn btn-outline btn-sm" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()" style="margin-top: 10px; width: 100%;">
+                    📁 ADICIONAR NOVA PASTA DE VÍDEOS
+                  </button>
+                </div>
+
+                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <span class="cfg-title">TOTAL DE CLIPES NO MEDIA POOL:</span>
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
+                    <span class="metric-val text-cyan" id="cfg-media-count-val">0</span>
+                    <span class="cfg-desc">clipes carregados no motor</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- TAB 1: SAÍDA & PROJEÇÃO -->
           <div class="settings-tab-panel active" id="settings-panel-output">
             <div class="cfg-grid-two">

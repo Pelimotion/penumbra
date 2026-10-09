@@ -5144,4 +5144,79 @@ html, body.penumbra-app {
   100% { transform: translateX(100%); }
 }
 
+/* SOURCE STATUS BUTTON IN COCKPIT HEADER */
+.source-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  letter-spacing: 0.05em;
+}
+.source-status-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.18);
+}
+.source-status-btn .src-icon {
+  font-size: 11px;
+}
+.source-status-btn .src-caret {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+/* NEXUS CLOSE BUTTON */
+.nexus-close-x {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+.nexus-close-x:hover {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.12);
+}
+
+/* NEXUS SOURCE PREFERENCES ROW */
+.nexus-source-prefs {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.nexus-pref-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+.nexus-pref-checkbox input {
+  accent-color: #00f0ff;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
 

@@ -5155,6 +5155,81 @@ html, body.penumbra-app {
   100% { transform: translateX(100%); }
 }
 
+/* SOURCE STATUS BUTTON IN COCKPIT HEADER */
+.source-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  letter-spacing: 0.05em;
+}
+.source-status-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.18);
+}
+.source-status-btn .src-icon {
+  font-size: 11px;
+}
+.source-status-btn .src-caret {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+/* NEXUS CLOSE BUTTON */
+.nexus-close-x {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+.nexus-close-x:hover {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.12);
+}
+
+/* NEXUS SOURCE PREFERENCES ROW */
+.nexus-source-prefs {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.nexus-pref-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+.nexus-pref-checkbox input {
+  accent-color: #00f0ff;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
 
 
 </style>
@@ -5171,6 +5246,7 @@ html, body.penumbra-app {
           <span class="nexus-build-tag">PRO VJ ENGINE · BUILD 2026.10</span>
         </div>
         <div class="nexus-arch-tag">ZERO-SERVER ARCHITECTURE</div>
+        <button class="nexus-close-x" id="btn-nexus-close-x" onclick="closeStudioLauncher()" title="Fechar Launcher (ESC)" style="display: none;">✕</button>
       </div>
 
       <!-- STEP 1: SOURCE SELECTOR -->
@@ -5232,6 +5308,14 @@ html, body.penumbra-app {
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
             <button id="btn-nexus-yt-connect" class="nsb-submit-btn">INGEST</button>
           </div>
+        </div>
+
+        <!-- SOURCE PERSISTENCE PREFERENCE -->
+        <div class="nexus-source-prefs">
+          <label class="nexus-pref-checkbox">
+            <input type="checkbox" id="chk-nexus-remember-source">
+            <span>Lembrar esta escolha e iniciar automaticamente (alterável nas Configurações)</span>
+          </label>
         </div>
 
         <!-- TECHNICAL BENCHMARK SPECS -->
@@ -5333,6 +5417,11 @@ html, body.penumbra-app {
         <span class="dot live"></span>
         <span class="label">NDI: PENUMBRA_LIVE</span>
       </div>
+      <button class="source-status-btn" id="btn-header-source" onclick="openStudioLauncher()" title="Origem de Mídia Ativa — Clique para alterar entre Nuvem e Local">
+        <span class="src-icon" id="header-src-icon">☁️</span>
+        <span class="src-label" id="header-src-label">NUVEM CDN</span>
+        <span class="src-caret">▾</span>
+      </button>
     </div>
 
     <!-- Headphone Cue Audio Monitor & Master Tools -->
@@ -7013,6 +7102,7 @@ html, body.penumbra-app {
 
         <!-- Top Segmented Navigation Tabs -->
         <div class="settings-tabs-nav">
+          <button class="settings-tab-btn" data-tab="source" onclick="setSettingsTab('source')">📁 ORIGEM DE MÍDIA</button>
           <button class="settings-tab-btn active" data-tab="output" onclick="setSettingsTab('output')">📺 SAÍDA & PROJEÇÃO</button>
           <button class="settings-tab-btn" data-tab="autopilot" onclick="setSettingsTab('autopilot')">🤖 PILOTO AUTOMÁTICO</button>
           <button class="settings-tab-btn" data-tab="audio" onclick="setSettingsTab('audio')">🎙️ ÁUDIO & SINCRONIA</button>
@@ -7022,6 +7112,70 @@ html, body.penumbra-app {
         </div>
 
         <div class="settings-tab-content">
+          <!-- TAB 0: ORIGEM DE MÍDIA (LOCAL / NUVEM) -->
+          <div class="settings-tab-panel" id="settings-panel-source">
+            <div class="cfg-grid-two">
+              <div class="shortcut-group">
+                <h3>FONTE DO PROJETO & RECURSOS</h3>
+                <div class="cfg-field-block">
+                  <div class="cfg-label-row">
+                    <span class="cfg-title">ORIGEM ATIVA:</span>
+                    <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+                  </div>
+                  <p class="cfg-desc" style="margin-top: 8px;" id="cfg-active-source-desc">
+                    Streaming direto do portfólio via Edge CDN de alta performance com miniaturas inteligentes.
+                  </p>
+                  
+                  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn btn-studio-primary btn-sm" onclick="openStudioLauncher(); closeSettingsModal();" style="width: 100%;">
+                      🚀 REABRIR STUDIO LAUNCHER (ALTERAR FONTE)
+                    </button>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()" style="width: 100%;">
+                      ☁️ RE-CONECTAR NUVEM EDGE (PIN 2026)
+                    </button>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()" style="width: 100%;">
+                      📁 MONTAR PASTA LOCAL VIA DIRECT FS
+                    </button>
+                  </div>
+                </div>
+
+                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <span class="cfg-title">PREFERÊNCIA DE INICIALIZAÇÃO:</span>
+                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
+                    <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
+                    <span class="cfg-desc">Lembrar fonte selecionada (pula o seletor inicial se autorizado)</span>
+                  </label>
+                  <div style="margin-top: 10px;">
+                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber);">
+                      🗑️ ESQUECER PREFERÊNCIA (SEMPRE PERGUNTAR AO INICIAR)
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="shortcut-group">
+                <h3>PASTAS LOCAIS & MÍDIAS ADICIONAIS</h3>
+                <div class="cfg-field-block">
+                  <span class="cfg-title">IMPORTAÇÃO DINÂMICA DE PASTAS:</span>
+                  <p class="cfg-desc" style="margin-top: 6px;">
+                    Você pode conectar múltiplas pastas de vídeos do seu computador a qualquer momento. Os clipes serão indexados no Media Pool preservando os nomes originais.
+                  </p>
+                  <button class="btn btn-outline btn-sm" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()" style="margin-top: 10px; width: 100%;">
+                    📁 ADICIONAR NOVA PASTA DE VÍDEOS
+                  </button>
+                </div>
+
+                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+                  <span class="cfg-title">TOTAL DE CLIPES NO MEDIA POOL:</span>
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
+                    <span class="metric-val text-cyan" id="cfg-media-count-val">0</span>
+                    <span class="cfg-desc">clipes carregados no motor</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- TAB 1: SAÍDA & PROJEÇÃO -->
           <div class="settings-tab-panel active" id="settings-panel-output">
             <div class="cfg-grid-two">
@@ -13454,18 +13608,163 @@ function applyTonalPreset(g, b, m, c, em, et) {
 }
 
 // ============================================================================
-// 11. BOOTSTRAP INITIALIZATION
+// 11. STUDIO LAUNCHER & MEDIA SOURCE ORCHESTRATION
 // ============================================================================
-window.addEventListener('DOMContentLoaded', () => {
+let activeMediaSource = localStorage.getItem('penumbra_media_source') || 'cdn';
+
+function updateSourceUI(sourceName) {
+  activeMediaSource = sourceName;
+  const headerIcon = document.getElementById('header-src-icon');
+  const headerLabel = document.getElementById('header-src-label');
+  const cfgBadge = document.getElementById('cfg-active-source-badge');
+  const cfgDesc = document.getElementById('cfg-active-source-desc');
+  const cfgCount = document.getElementById('cfg-media-count-val');
+  const chkRemember = document.getElementById('chk-cfg-remember-source');
+
+  if (chkRemember) {
+    chkRemember.checked = localStorage.getItem('penumbra_remember_source') === 'true';
+  }
+  if (cfgCount) {
+    cfgCount.textContent = (allClips && allClips.length) ? allClips.length : 0;
+  }
+
+  if (sourceName === 'local') {
+    if (headerIcon) headerIcon.textContent = '📁';
+    if (headerLabel) headerLabel.textContent = 'LOCAL DIRECT FS';
+    if (cfgBadge) {
+      cfgBadge.className = 'cfg-badge text-emerald';
+      cfgBadge.textContent = 'LOCAL DRIVE (DIRECT FS)';
+    }
+    if (cfgDesc) {
+      cfgDesc.textContent = 'Lendo arquivos diretamente do seu disco com zero-latência via File System Access API.';
+    }
+  } else if (sourceName === 'stream') {
+    if (headerIcon) headerIcon.textContent = '▶';
+    if (headerLabel) headerLabel.textContent = 'STREAM URL';
+    if (cfgBadge) {
+      cfgBadge.className = 'cfg-badge text-purple';
+      cfgBadge.textContent = 'STREAM EXTERNO / YOUTUBE';
+    }
+    if (cfgDesc) {
+      cfgDesc.textContent = 'Ingestão de feeds externos em tempo real via HLS ou YouTube stream.';
+    }
+  } else {
+    // cdn
+    if (headerIcon) headerIcon.textContent = '☁️';
+    if (headerLabel) headerLabel.textContent = 'NUVEM CDN';
+    if (cfgBadge) {
+      cfgBadge.className = 'cfg-badge text-cyan';
+      cfgBadge.textContent = 'NUVEM (BUNNY EDGE CDN)';
+    }
+    if (cfgDesc) {
+      cfgDesc.textContent = 'Streaming direto do portfólio completo via Edge CDN de alta performance com miniaturas inteligentes.';
+    }
+  }
+}
+window.updateSourceUI = updateSourceUI;
+
+function openStudioLauncher() {
+  const nexusModal = document.getElementById('media-nexus-modal');
+  if (!nexusModal) return;
+
+  const stepSource = document.getElementById('nexus-step-source');
+  const stepPin = document.getElementById('nexus-step-pin');
+  const stepLoading = document.getElementById('nexus-step-loading');
+  const btnCloseX = document.getElementById('btn-nexus-close-x');
+  const chkRemember = document.getElementById('chk-nexus-remember-source');
+
+  if (chkRemember) {
+    chkRemember.checked = localStorage.getItem('penumbra_remember_source') === 'true';
+  }
+
+  if (stepSource) stepSource.style.display = 'block';
+  if (stepPin) stepPin.style.display = 'none';
+  if (stepLoading) stepLoading.style.display = 'none';
+
+  if (btnCloseX) {
+    btnCloseX.style.display = (allClips && allClips.length > 0) ? 'block' : 'none';
+  }
+
+  try {
+    if (!nexusModal.open) nexusModal.showModal();
+  } catch (e) {
+    nexusModal.setAttribute('open', '');
+  }
+}
+window.openStudioLauncher = openStudioLauncher;
+
+function closeStudioLauncher() {
+  const nexusModal = document.getElementById('media-nexus-modal');
+  if (!nexusModal) return;
+  nexusModal.classList.add('dialog-closing');
+  setTimeout(() => {
+    try { nexusModal.close(); } catch (e) { nexusModal.removeAttribute('open'); }
+    nexusModal.classList.remove('dialog-closing');
+  }, 240);
+}
+window.closeStudioLauncher = closeStudioLauncher;
+
+function toggleRememberSource(checked) {
+  localStorage.setItem('penumbra_remember_source', checked ? 'true' : 'false');
+  const chkModal = document.getElementById('chk-nexus-remember-source');
+  const chkCfg = document.getElementById('chk-cfg-remember-source');
+  if (chkModal) chkModal.checked = checked;
+  if (chkCfg) chkCfg.checked = checked;
+}
+window.toggleRememberSource = toggleRememberSource;
+
+function resetSourcePreference() {
+  localStorage.removeItem('penumbra_media_source');
+  localStorage.removeItem('penumbra_remember_source');
+  localStorage.removeItem('penumbra_cdn_pin');
+  const chkModal = document.getElementById('chk-nexus-remember-source');
+  const chkCfg = document.getElementById('chk-cfg-remember-source');
+  if (chkModal) chkModal.checked = false;
+  if (chkCfg) chkCfg.checked = false;
+  alert('Preferência de inicialização removida. O seletor de fonte (Studio Launcher) será exibido sempre ao abrir o Penumbra.');
+}
+window.resetSourcePreference = resetSourcePreference;
+
+async function reconnectCloudSource() {
+  try {
+    const clips = await MediaProvider.initCDN();
+    await loadMediaPool(clips);
+    await loadMattesCatalog();
+    updateSourceUI('cdn');
+    localStorage.setItem('penumbra_media_source', 'cdn');
+    console.log('[Media Nexus] Nuvem Edge reconectada com sucesso.');
+  } catch (err) {
+    console.error('[CDN] Falha ao reconectar nuvem:', err);
+    openStudioLauncher();
+  }
+}
+window.reconnectCloudSource = reconnectCloudSource;
+
+async function selectLocalDirectorySource() {
+  try {
+    const dirHandle = await window.showDirectoryPicker({ mode: 'read', startIn: 'videos' });
+    closeStudioLauncher();
+    const clips = await MediaProvider.initLocal(dirHandle);
+    await loadMediaPool(clips);
+    await loadMattesCatalog();
+    updateSourceUI('local');
+    localStorage.setItem('penumbra_media_source', 'local');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.warn('[Media Nexus] Seleção de diretório falhou:', err);
+    }
+  }
+}
+window.selectLocalDirectorySource = selectLocalDirectorySource;
+
+// ============================================================================
+// BOOTSTRAP INITIALIZATION
+// ============================================================================
+function bootstrapApp() {
   initWebSocket();
-  
-  // ============================================================================
-  // INITIALIZE MEDIA NEXUS STUDIO LAUNCHER (DAVINCI RESOLVE / ADOBE PRO ARCHITECTURE)
-  // ============================================================================
+
   const nexusModal = document.getElementById('media-nexus-modal');
   if (nexusModal) {
-    nexusModal.showModal();
-
     const stepSource = document.getElementById('nexus-step-source');
     const stepPin = document.getElementById('nexus-step-pin');
     const stepLoading = document.getElementById('nexus-step-loading');
@@ -13489,22 +13788,12 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // Close launcher with smooth transition
-    const closeLauncher = () => {
-      nexusModal.classList.add('dialog-closing');
-      setTimeout(() => {
-        nexusModal.close();
-        nexusModal.classList.remove('dialog-closing');
-      }, 260);
-    };
-
     // PIN Verification Logic
     const verifyPin = async () => {
       const pin = (pinInput ? pinInput.value : '').trim();
       if (pin.length !== 4) return;
 
       if (pin === '2026') {
-        // PIN OK
         pinSlots.forEach(s => s.classList.add('pin-success'));
         if (pinFeedback) {
           pinFeedback.className = 'pin-feedback-line text-emerald';
@@ -13520,7 +13809,10 @@ window.addEventListener('DOMContentLoaded', () => {
             const clips = await MediaProvider.initCDN();
             await loadMediaPool(clips);
             await loadMattesCatalog();
-            closeLauncher();
+            updateSourceUI('cdn');
+            localStorage.setItem('penumbra_media_source', 'cdn');
+            localStorage.setItem('penumbra_cdn_pin', '2026');
+            closeStudioLauncher();
           } catch (err) {
             console.error('[CDN] Ingestion error:', err);
             if (stepLoading) stepLoading.style.display = 'none';
@@ -13528,7 +13820,6 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         }, 350);
       } else {
-        // WRONG PIN
         pinSlots.forEach(s => s.classList.add('pin-error'));
         if (pinFeedback) {
           pinFeedback.className = 'pin-feedback-line text-crimson';
@@ -13552,23 +13843,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnLocal = document.getElementById('btn-nexus-local');
     if (btnLocal) {
       btnLocal.addEventListener('click', async () => {
-        try {
-          const dirHandle = await window.showDirectoryPicker({
-            mode: 'read',
-            startIn: 'videos'
-          });
-          console.log('[Media Nexus] Local directory mounted:', dirHandle.name);
-          closeLauncher();
-
-          const clips = await MediaProvider.initLocal(dirHandle);
-          await loadMediaPool(clips);
-          await loadMattesCatalog();
-        } catch (err) {
-          // Silently handle user cancellation without console pollution
-          if (err.name !== 'AbortError') {
-            console.warn('[Media Nexus] Directory selection failed:', err);
-          }
-        }
+        await selectLocalDirectorySource();
       });
     }
 
@@ -13654,7 +13929,6 @@ window.addEventListener('DOMContentLoaded', () => {
       const url = (inputYT ? inputYT.value : '').trim();
       if (!url) return;
       console.log('[Media Nexus] YouTube/Stream Ingest:', url);
-      // Create dynamic clip entry
       const streamClip = {
         id: `stream_${Date.now()}`,
         filename: url,
@@ -13667,7 +13941,8 @@ window.addEventListener('DOMContentLoaded', () => {
       };
       allClips.unshift(streamClip);
       renderMediaGrid();
-      closeLauncher();
+      updateSourceUI('stream');
+      closeStudioLauncher();
     };
 
     if (btnYT) btnYT.addEventListener('click', handleYTIngest);
@@ -13676,30 +13951,52 @@ window.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') handleYTIngest();
       });
     }
-  }
 
-    // Add Extra Local Folder logic
-    const btnAddLocal = document.getElementById('btn-add-local-folder');
-    if (btnAddLocal) {
-      btnAddLocal.addEventListener('click', async () => {
-        try {
-          const handle = await window.showDirectoryPicker();
-          const newClips = await MediaProvider.scanExtraDir(handle);
-          if (newClips.length > 0) {
-            allClips.push(...newClips);
-            renderMediaGrid(); // Re-render pool
-            console.log(`[Media Nexus] Adicionado ${newClips.length} novos clipes locais.`);
-          }
-        } catch(e) {
-          console.warn('[Media Nexus] Seleção extra de pasta cancelada ou falha:', e);
-        }
+    // Check saved preference on startup
+    const savedSource = localStorage.getItem('penumbra_media_source');
+    const rememberSource = localStorage.getItem('penumbra_remember_source') === 'true';
+    const savedPin = localStorage.getItem('penumbra_cdn_pin');
+
+    if (rememberSource && savedSource === 'cdn' && savedPin === '2026') {
+      console.log('[Media Nexus] Autoconectando à Nuvem Edge (preferência salva)...');
+      MediaProvider.initCDN().then(clips => {
+        loadMediaPool(clips);
+        loadMattesCatalog();
+        updateSourceUI('cdn');
+      }).catch(err => {
+        console.warn('[Media Nexus] Falha ao autoconectar, abrindo Studio Launcher:', err);
+        openStudioLauncher();
       });
+    } else {
+      // Pergunta sempre se quer Nuvem ou Local se preferência não estiver salva
+      openStudioLauncher();
     }
-
   } else {
     loadMediaPool();
     loadMattesCatalog();
   }
+
+  // Add Extra Local Folder logic
+  const btnAddLocal = document.getElementById('btn-add-local-folder');
+  if (btnAddLocal) {
+    btnAddLocal.addEventListener('click', async () => {
+      try {
+        const handle = await window.showDirectoryPicker();
+        const newClips = await MediaProvider.scanExtraDir(handle);
+        if (newClips.length > 0) {
+          allClips.push(...newClips);
+          renderMediaGrid();
+          updateSourceUI('local');
+          console.log(`[Media Nexus] Adicionado ${newClips.length} novos clipes locais.`);
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.warn('[Media Nexus] Seleção extra de pasta cancelada ou falha:', e);
+        }
+      }
+    });
+  }
+
   setupEvents();
   setupProFaders();
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
@@ -13708,10 +14005,18 @@ window.addEventListener('DOMContentLoaded', () => {
   updateFxUI();
   renderVisuals();
   updateUI();
+  updateSourceUI(activeMediaSource);
+
   window.addEventListener('resize', () => {
     if (typeof renderQueueCards === 'function') renderQueueCards();
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+  bootstrapApp();
+}
 
 // ============================================================================
 // PRO-APP UX: FADERS & KNOBS (DOUBLE CLICK RESET & SHIFT FINE-TUNING)
