@@ -13,6 +13,7 @@ penumbra_engine/audio_brain/cache/
 *.mov
 *.wav
 *.mp3
+!penumbra_engine/web_controller/public/assets/audio/test_preview.mp3
 *.fbx
 *.blend
 overnight.log
