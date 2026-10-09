@@ -2489,7 +2489,7 @@ initMarineSpores();
 
 // Load real 3D vertex points extracted from user's Espinhaço FBX
 function loadSpinePoints() {
-  fetch('/assets/espinhaco_spine_points.json')
+  fetch('assets/espinhaco_spine_points.json')
     .then(r => r.json())
     .then(data => {
       if (data && data.points && data.points.length > 0) {
