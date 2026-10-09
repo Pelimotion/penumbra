@@ -4460,225 +4460,735 @@ body.resizing-workspace-active * {
 }
 
 /* NEXUS STREAM & DOWNLOADER RETRACTABLE DRAWER */
-.nexus-stream-drawer {
-  background: #15161b;
-  border: 1px solid #2d313d;
+/* ============================================================================
+   PENUMBRA UNIFIED MEDIA INGESTION & SYNCHRONIZATION DECK
+   ============================================================================ */
+.media-ingest-deck {
+  background: #121318;
+  border: 1px solid #282a35;
   border-radius: 4px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   margin-top: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  animation: slide-drawer-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  animation: slide-ingest-deck 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slide-drawer-down {
-  from { opacity: 0; transform: translateY(-6px); }
+@keyframes slide-ingest-deck {
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.nsd-header {
+.mid-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1e2029;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.nsd-title-group {
+.mid-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mid-pulse-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  background: rgba(0, 240, 255, 0.12);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.mid-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.mid-subtitle {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: #72768a;
+}
+
+.mid-header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.nsd-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ff334b;
-  box-shadow: 0 0 8px #ff334b;
-  animation: pulse-stream-dot 1.2s infinite alternate;
-}
-
-@keyframes pulse-stream-dot {
-  from { opacity: 0.4; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1.3); }
-}
-
-.nsd-title {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.5px;
-}
-
-.nsd-subtitle {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  color: #7b8094;
-}
-
-.nsd-close-btn {
-  background: transparent;
-  border: none;
-  color: #7b8094;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
-.nsd-close-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-
-.nsd-body {
+.mid-tabs-nav {
   display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-
-.nsd-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nsd-field-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 700;
-  color: #8f94a6;
-  letter-spacing: 0.5px;
-}
-
-.nsd-input-col {
-  flex: 2;
-  min-width: 240px;
-}
-
-.nsd-input-col input, .nsd-title-col input {
-  background: #0d0e12;
-  border: 1px solid #282a33;
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 6px 10px;
+  background: #0a0b0e;
+  border: 1px solid #222530;
   border-radius: 3px;
-  outline: none;
-  width: 100%;
-  transition: border-color 0.15s;
+  padding: 2px;
+  gap: 2px;
 }
 
-.nsd-input-col input:focus, .nsd-title-col input:focus {
-  border-color: #ff334b;
-}
-
-.nsd-cat-col {
-  flex: 1;
-  min-width: 160px;
-}
-
-.nsd-select {
-  background: #0d0e12;
-  border: 1px solid #282a33;
-  color: #00f0ff;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  padding: 6px 8px;
-  border-radius: 3px;
-  outline: none;
-  width: 100%;
-}
-
-.nsd-title-col {
-  flex: 1;
-  min-width: 140px;
-}
-
-.nsd-actions-col {
-  display: flex;
-  gap: 6px;
-}
-
-.nsd-btn {
+.mid-tab-btn {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: transparent;
+  border: none;
+  color: #7b8094;
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  padding: 6px 14px;
-  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.nsd-btn-download {
-  background: #00f0ff;
-  border: 1px solid #00f0ff;
-  color: #000;
+.mid-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.nsd-btn-download:hover {
-  background: #33f3ff;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+.mid-tab-btn.active {
+  background: #1c1e27;
+  color: #00f0ff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-.nsd-btn-stream {
-  background: #23252d;
-  border: 1px solid #ff334b;
-  color: #ff4d64;
+.mid-close-btn {
+  background: transparent;
+  border: none;
+  color: #72768a;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: all 0.15s;
 }
 
-.nsd-btn-stream:hover {
-  background: #ff334b;
-  color: #000;
-  box-shadow: 0 0 12px rgba(255, 51, 75, 0.4);
+.mid-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
-/* LIVE DOWNLOAD PROGRESS FEEDBACK */
-.nsd-progress-wrap {
-  margin-top: 10px;
+/* PANELS */
+.mid-panel {
+  animation: fadeIn 0.18s ease;
+}
+
+/* 1. LOCAL MEDIA PANEL */
+.mid-grid-local {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+
+.mid-dropzone {
+  border: 1px dashed #2e3242;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.015);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.mid-dropzone.dragover {
+  border-color: #00f0ff;
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.mid-dropzone svg {
+  color: #00f0ff;
+  opacity: 0.8;
+}
+
+.mid-dz-text strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.mid-dz-text span {
+  font-size: 9px;
+  color: #72768a;
+}
+
+.mid-dz-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mid-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.mid-btn-file {
+  background: #1c1e27;
+  border-color: #2f3445;
+  color: #fff;
+}
+
+.mid-btn-file:hover {
+  background: #252835;
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+.mid-btn-folder {
+  background: #1c1e27;
+  border-color: #2f3445;
+  color: #8c92a6;
+}
+
+.mid-btn-folder:hover {
+  background: #252835;
+  border-color: #00ff88;
+  color: #00ff88;
+}
+
+.mid-local-settings {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
   background: #0d0e12;
-  border: 1px solid #262833;
+  border: 1px solid #1f222c;
+  border-radius: 3px;
+  padding: 12px;
+}
+
+.mid-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mid-field label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #72768a;
+  letter-spacing: 0.5px;
+}
+
+.mid-select {
+  background: #15161d;
+  border: 1px solid #282a35;
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  outline: none;
+}
+
+.mid-status-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  background: #15161d;
+  border: 1px solid #242733;
+  border-radius: 3px;
+}
+
+.msb-label {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  color: #72768a;
+  font-weight: 700;
+}
+
+.msb-val {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: #00ff88;
+  font-weight: 600;
+}
+
+/* 2. BUNNY CLOUD PANEL */
+.mid-grid-cloud {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mid-cloud-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0d0e12;
+  border: 1px solid #1f222c;
+  border-radius: 4px;
+  padding: 14px 18px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mcc-info {
+  flex: 1;
+  min-width: 280px;
+}
+
+.mcc-tag {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+
+.mcc-info h4 {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #fff;
+  margin: 4px 0 2px 0;
+}
+
+.mcc-info p {
+  font-size: 9.5px;
+  color: #72768a;
+  margin: 0 0 8px 0;
+}
+
+.mcc-metrics {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  flex-wrap: wrap;
+}
+
+.mcc-k {
+  color: #5d6175;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.mcc-v {
+  color: #fff;
+  font-weight: 600;
+}
+
+.mcc-v.online {
+  color: #00ff88;
+}
+
+.mcc-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mid-btn-accent {
+  background: #00f0ff;
+  color: #000;
+  border-color: #00f0ff;
+  font-weight: 900;
+}
+
+.mid-btn-accent:hover {
+  background: #38f4ff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
+}
+
+.mid-btn-ghost {
+  background: transparent;
+  color: #8c92a6;
+  border-color: #2b2f3d;
+}
+
+.mid-btn-ghost:hover {
+  background: #1c1e27;
+  color: #fff;
+  border-color: #404557;
+}
+
+/* 3. YOUTUBE & WEB STREAMS PANEL */
+.mid-yt-workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mid-yt-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mid-yt-field-url {
+  flex: 3;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  background: #0a0b0e;
+  border: 1px solid #222530;
+  border-radius: 3px;
+  padding: 0 8px;
+  transition: border-color 0.15s;
+}
+
+.mid-yt-field-url:focus-within {
+  border-color: #ff334b;
+  box-shadow: 0 0 8px rgba(255, 51, 75, 0.2);
+}
+
+.mid-input-prefix {
+  color: #ff334b;
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
+}
+
+.mid-yt-field-url input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 4px;
+  outline: none;
+}
+
+.mid-input-clear {
+  background: transparent;
+  border: none;
+  color: #5d6175;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.mid-input-clear:hover {
+  color: #fff;
+}
+
+.mid-yt-field-cat {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mid-yt-field-cat label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #72768a;
+  white-space: nowrap;
+}
+
+.mid-yt-field-title {
+  flex: 1.5;
+  min-width: 160px;
+}
+
+.mid-yt-field-title input {
+  background: #0a0b0e;
+  border: 1px solid #222530;
+  border-radius: 3px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+}
+
+.mid-yt-field-title input:focus {
+  border-color: #00f0ff;
+}
+
+/* YOUTUBE DETECTED PREVIEW CARD */
+.mid-yt-preview-strip {
+  background: #08090b;
+  border: 1px solid #1f222d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.mid-yt-preview-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mid-yt-thumb-wrap {
+  width: 110px;
+  height: 62px;
+  position: relative;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #000;
+  flex-shrink: 0;
+  border: 1px solid #282a35;
+}
+
+.mid-yt-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mid-yt-badge-type {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.85);
+  letter-spacing: 0.4px;
+}
+
+.mid-yt-badge-type.yt {
+  background: #ff334b;
+  color: #fff;
+}
+
+.mid-yt-badge-type.web {
+  background: #00f0ff;
+  color: #000;
+}
+
+.mid-yt-meta-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.mid-yt-card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.mid-yt-card-url {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: #00f0ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.mid-yt-card-hints {
+  font-size: 9px;
+  color: #72768a;
+}
+
+/* ACTIONS ROW */
+.mid-yt-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.mid-yt-info-tag {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: #5d6175;
+}
+
+.mid-yt-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.mid-btn-primary {
+  background: #ff334b;
+  color: #fff;
+  border-color: #ff334b;
+}
+
+.mid-btn-primary:hover {
+  background: #ff4d64;
+  box-shadow: 0 0 12px rgba(255, 51, 75, 0.45);
+}
+
+.mid-btn-secondary {
+  background: #1c1e27;
+  color: #00f0ff;
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.mid-btn-secondary:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: #00f0ff;
+}
+
+/* PROGRESS */
+.mid-yt-progress-strip {
+  background: #0d0e12;
+  border: 1px solid #1f222c;
   border-radius: 3px;
   padding: 8px 12px;
 }
 
-.nsd-progress-info {
+.myps-info {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-family: var(--font-mono);
   font-size: 9px;
   margin-bottom: 5px;
-}
-
-.nsd-progress-status {
-  font-weight: 700;
   color: #00f0ff;
+  font-weight: 700;
 }
 
-.nsd-progress-metrics {
-  color: #8c90a2;
-}
-
-.nsd-progress-track {
+.myps-track {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: #1a1c24;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
-.nsd-progress-bar {
+.myps-bar {
   height: 100%;
-  background: linear-gradient(90deg, #00f0ff, #ff334b);
+  background: linear-gradient(90deg, #ff334b, #00f0ff);
   transition: width 0.2s ease;
+}
+
+/* ============================================================================
+   TOOLBAR INGESTION TRIGGER & PILLS CLUSTER
+   ============================================================================ */
+.lib-ingest-trigger-hub {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #101116;
+  border: 1px solid #22242f;
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.btn-ingest-hub-main {
+  background: #1b1d26 !important;
+  color: #00f0ff !important;
+  border-color: rgba(0, 240, 255, 0.25) !important;
+  font-weight: 800 !important;
+  font-size: 9px !important;
+  padding: 4px 8px !important;
+}
+
+.btn-ingest-hub-main:hover {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: #00f0ff !important;
+}
+
+.btn-ingest-hub-main.active {
+  background: #00f0ff !important;
+  color: #000 !important;
+}
+
+.ingest-pills-cluster {
+  display: flex;
+  gap: 1px;
+}
+
+.ingest-cluster-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #6b7084;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.ingest-cluster-pill:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ingest-cluster-pill.active {
+  color: #ff334b;
+}
+
+/* SIDEBAR INGEST SHORTCUT */
+.lib-sidebar-quick-ingest {
+  padding: 6px 8px 4px 8px;
+}
+
+.btn-sidebar-ingest {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-ingest:hover {
+  background: #00f0ff;
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
 
 /* FILTER STRIPS & PILLS */
@@ -7279,8 +7789,14 @@ body.resizing-workspace-active * {
           </div>
           <div class="nsb-input-group">
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
-            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">⬇️ BAIXAR</button>
-            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">📡 STREAM</button>
+            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>BAIXAR</span>
+            </button>
+            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>STREAM</span>
+            </button>
           </div>
         </div>
 
@@ -8914,69 +9430,179 @@ body.resizing-workspace-active * {
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
         <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
-        <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
-        <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
-            <div class="nsd-header">
-              <div class="nsd-title-group">
-                <span class="nsd-pulse-dot"></span>
-                <span class="nsd-title">NEXUS MEDIA STREAMER & DOWNLOADER</span>
-                <span class="nsd-subtitle">// YOUTUBE, HLS, MP4 & DIRECT FEEDS</span>
-              </div>
-              <button class="nsd-close-btn" id="btn-close-stream-drawer" title="Fechar painel">✕</button>
+        <!-- UNIFIED MEDIA INGESTION & SYNCHRONIZATION DECK -->
+        <div class="media-ingest-deck" id="media-ingest-deck" style="display: none;">
+          <!-- INGEST DECK HEADER -->
+          <div class="mid-header">
+            <div class="mid-title-group">
+              <span class="mid-pulse-badge">INGESTÃO UNIFICADA</span>
+              <span class="mid-title">CENTRAL DE AQUISIÇÃO & SINCRONIZAÇÃO DE MÍDIAS</span>
+              <span class="mid-subtitle">// VÍDEOS LOCAIS · BUNNY CDN OFFLINE · YOUTUBE & WEB STREAMS</span>
             </div>
-            
-            <div class="nsd-body">
-              <div class="nsd-input-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">URL DA MÍDIA / FEED:</span>
-                  <input type="text" id="input-pool-stream-url" placeholder="Cole link do YouTube (watch, shorts, live) ou URL direta .mp4/.webm/.m3u8..." autocomplete="off">
+            <div class="mid-header-actions">
+              <!-- 3 MODE TABS -->
+              <div class="mid-tabs-nav">
+                <button class="mid-tab-btn" id="mid-tab-btn-local" onclick="switchIngestMode('local')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span>1. MÍDIA LOCAL (SSD)</span>
+                </button>
+                <button class="mid-tab-btn" id="mid-tab-btn-cloud" onclick="switchIngestMode('cloud')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  <span>2. BUNNY CDN (NUVEM & OFFLINE)</span>
+                </button>
+                <button class="mid-tab-btn active" id="mid-tab-btn-stream" onclick="switchIngestMode('stream')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>3. YOUTUBE & WEB STREAMS</span>
+                </button>
+              </div>
+              <button class="mid-close-btn" onclick="toggleMediaIngestDeck(false)" title="Fechar Central de Ingestão (ESC)">✕</button>
+            </div>
+          </div>
+
+          <!-- PANEL 1: LOCAL MEDIA -->
+          <div class="mid-panel" id="mid-panel-local" style="display: none;">
+            <div class="mid-grid-local">
+              <div class="mid-dropzone" id="mid-local-dropzone">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div class="mid-dz-text">
+                  <strong>ARRASTE E SOLTE VÍDEOS OU ÁUDIOS AQUI</strong>
+                  <span>Suporta MP4, WebM, MOV, MP3, WAV · Decodificação direta no navegador</span>
+                </div>
+                <div class="mid-dz-buttons">
+                  <label class="mid-btn mid-btn-file">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    <span>SELECIONAR ARQUIVOS</span>
+                    <input type="file" id="input-mid-local-files" multiple accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav" style="display: none;">
+                  </label>
+                  <button class="mid-btn mid-btn-folder" id="btn-mid-pick-folder" onclick="handleIngestPickFolder()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>VINCULAR PASTA COMPLETA</span>
+                  </button>
                 </div>
               </div>
-
-              <div class="nsd-cat-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">CATEGORIA DE DESTINO:</span>
-                  <select id="select-stream-target-cat" class="nsd-select">
-                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
-                    <option value="MINIMAL">MINIMAL (Base Hipnótica)</option>
-                    <option value="ABSTRACT">ABSTRACT (Geometria/Partículas)</option>
-                    <option value="FIGURA">FIGURA (Silhuetas/Corpos)</option>
-                    <option value="DENSE">DENSE (Alta Frequência/Drop)</option>
-                    <option value="CHROMA">CHROMA (Recorte Alpha)</option>
+              <div class="mid-local-settings">
+                <div class="mid-field">
+                  <label>CATEGORIA DE IMPORTAÇÃO:</label>
+                  <select id="select-mid-local-cat" class="mid-select">
+                    <option value="LOCAL IMPORT" selected>LOCAL IMPORT</option>
+                    <option value="MINIMAL">MINIMAL</option>
+                    <option value="ABSTRACT">ABSTRACT</option>
+                    <option value="FIGURA">FIGURA</option>
+                    <option value="DENSE">DENSE</option>
+                    <option value="CHROMA">CHROMA (ALPHA)</option>
                   </select>
                 </div>
-              </div>
-
-              <div class="nsd-title-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">APELIDO (OPCIONAL):</span>
-                  <input type="text" id="input-pool-stream-title" placeholder="Nome para o Media Pool..." autocomplete="off">
+                <div class="mid-status-box" id="mid-local-status-box">
+                  <span class="msb-label">ESTADO LOCAL:</span>
+                  <span class="msb-val" id="mid-local-count-text">0 clipes locais adicionados nesta sessão</span>
                 </div>
-              </div>
-
-              <div class="nsd-actions-col">
-                <button class="nsd-btn nsd-btn-download" id="btn-pool-action-download" title="Baixa o vídeo no SSD em alta qualidade, gera thumbnail e adiciona como clipe local no Media Pool">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  BAIXAR PARA O POOL
-                </button>
-                <button class="nsd-btn nsd-btn-stream" id="btn-pool-action-stream" title="Ingere imediatamente como stream online em tempo real no Media Pool">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  STREAM AO VIVO
-                </button>
-              </div>
-            </div>
-
-            <!-- LIVE DOWNLOAD PROGRESS FEEDBACK -->
-            <div class="nsd-progress-wrap" id="nsd-progress-wrap" style="display: none;">
-              <div class="nsd-progress-info">
-                <span class="nsd-progress-status" id="nsd-progress-status">INICIANDO DOWNLOAD...</span>
-                <span class="nsd-progress-metrics" id="nsd-progress-metrics">0% · -- MB/s · ETA --:--</span>
-              </div>
-              <div class="nsd-progress-track">
-                <div class="nsd-progress-bar" id="nsd-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
           </div>
+
+          <!-- PANEL 2: BUNNY CLOUD (DOWNLOAD & SYNC) -->
+          <div class="mid-panel" id="mid-panel-cloud" style="display: none;">
+            <div class="mid-grid-cloud">
+              <div class="mid-cloud-card">
+                <div class="mcc-info">
+                  <span class="mcc-tag">NUVEM GLOBAL</span>
+                  <h4>ACERVO NA BUNNY EDGE CDN</h4>
+                  <p>74 Clipes de Vídeo em alta qualidade, 29 Mattes Alfa e 327 thumbnails pré-geradas para streaming instantâneo.</p>
+                  <div class="mcc-metrics">
+                    <div class="mcc-metric"><span class="mcc-k">STATUS CDN:</span> <span class="mcc-v online">CONECTADO</span></div>
+                    <div class="mcc-metric"><span class="mcc-k">DOMÍNIO:</span> <span class="mcc-v">gigantera-penumbra.b-cdn.net</span></div>
+                    <div class="mcc-metric"><span class="mcc-k">OFFLINE NO SSD:</span> <span class="mcc-v" id="mid-cloud-cached-count">0 / 74 CLIPES</span></div>
+                  </div>
+                </div>
+                <div class="mcc-actions">
+                  <button class="mid-btn mid-btn-accent" id="btn-mid-download-all" onclick="downloadAllPendingClips()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>BAIXAR TODO O ACERVO PARA O SSD (OFFLINE 100%)</span>
+                  </button>
+                  <button class="mid-btn mid-btn-ghost" onclick="openCacheProfileSettings()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>GERENCIAR PERFIL & CACHE</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 3: YOUTUBE & WEB STREAMS (THE HERO EXPERIENCE) -->
+          <div class="mid-panel" id="mid-panel-stream">
+            <div class="mid-yt-workflow">
+              <!-- INPUT BAR -->
+              <div class="mid-yt-input-row">
+                <div class="mid-yt-field-url">
+                  <div class="mid-input-prefix">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <input type="text" id="input-mid-yt-url" placeholder="Cole uma URL do YouTube (watch, shorts, live) ou feed direto .mp4/.m3u8..." autocomplete="off">
+                  <button class="mid-input-clear" id="btn-mid-yt-clear" onclick="clearIngestYtInput()" title="Limpar URL">✕</button>
+                </div>
+
+                <div class="mid-yt-field-cat">
+                  <label>CATEGORIA:</label>
+                  <select id="select-mid-yt-cat" class="mid-select">
+                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                    <option value="MINIMAL">MINIMAL</option>
+                    <option value="ABSTRACT">ABSTRACT</option>
+                    <option value="FIGURA">FIGURA</option>
+                    <option value="DENSE">DENSE</option>
+                    <option value="CHROMA">CHROMA (ALPHA)</option>
+                  </select>
+                </div>
+
+                <div class="mid-yt-field-title">
+                  <input type="text" id="input-mid-yt-title" placeholder="Apelido opcional (auto-preenche)..." autocomplete="off">
+                </div>
+              </div>
+
+              <!-- INSTANT DETECTED PREVIEW CARD -->
+              <div class="mid-yt-preview-strip" id="mid-yt-preview-strip" style="display: none;">
+                <div class="mid-yt-preview-card">
+                  <div class="mid-yt-thumb-wrap">
+                    <img id="img-mid-yt-thumb" src="" alt="Thumbnail do Vídeo">
+                    <span class="mid-yt-badge-type" id="badge-mid-yt-type">YOUTUBE</span>
+                  </div>
+                  <div class="mid-yt-meta-wrap">
+                    <div class="mid-yt-card-title" id="lbl-mid-yt-title">Detectando vídeo...</div>
+                    <div class="mid-yt-card-url" id="lbl-mid-yt-url">--</div>
+                    <div class="mid-yt-card-hints">Pronto para ingestão. Clique em 'PUXAR PARA O POOL' para usá-lo imediatamente no cockpit.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ACTION BUTTONS -->
+              <div class="mid-yt-actions-row">
+                <div class="mid-yt-actions-left">
+                  <span class="mid-yt-info-tag">STREAMING EM TEMPO REAL // Conecte vídeos do YouTube e feeds de rede diretamente aos canais A (Program) e B (Preview).</span>
+                </div>
+                <div class="mid-yt-actions-right">
+                  <button class="mid-btn mid-btn-secondary" id="btn-mid-yt-download" onclick="executeIngestYt('download')" title="Baixa o vídeo no disco para operação 100% offline (requer Penumbra Local)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>BAIXAR PARA O SSD</span>
+                  </button>
+                  <button class="mid-btn mid-btn-primary" id="btn-mid-yt-stream" onclick="executeIngestYt('stream')" title="Adiciona imediatamente como clipe ativo no Media Pool para uso no Program/Preview">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>PUXAR PARA O POOL (STREAM AO VIVO)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PROGRESS FEEDBACK -->
+              <div class="mid-yt-progress-strip" id="mid-yt-progress-strip" style="display: none;">
+                <div class="myps-info">
+                  <span id="mid-yt-progress-status">PROCESSANDO INGESTÃO...</span>
+                  <span id="mid-yt-progress-metrics">--</span>
+                </div>
+                <div class="myps-track">
+                  <div class="myps-bar" id="mid-yt-progress-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- TWO-PANEL STUDIO BROWSER LAYOUT -->
         <div class="library-studio-layout">
@@ -8988,6 +9614,14 @@ body.resizing-workspace-active * {
                 <span>ORGANIZAÇÃO & BINS</span>
               </div>
               <button class="btn-sidebar-collapse" id="btn-toggle-sidebar" onclick="toggleLibrarySidebar()" title="Recolher barra lateral">◂</button>
+            </div>
+
+            <!-- SIDEBAR QUICK INGEST SHORTCUT -->
+            <div class="lib-sidebar-quick-ingest">
+              <button class="btn-sidebar-ingest" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão de Mídias (Atalho: I)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ NOVA INGESTÃO</span>
+              </button>
             </div>
 
             <div class="lib-sidebar-scroll">
@@ -9140,20 +9774,27 @@ body.resizing-workspace-active * {
               </div>
 
               <div class="lib-tb-right">
-                <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span>+ STREAM</span>
-                </button>
-
-                <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                  <span>+ LOCAL</span>
-                </button>
-
-                <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                  <span>CACHE</span>
-                </button>
+                <!-- UNIFIED MEDIA INGESTION CONTROLLER (LOCAL / BUNNY CLOUD / YOUTUBE) -->
+                <div class="lib-ingest-trigger-hub">
+                  <button class="btn-pool-action btn-ingest-hub-main" id="btn-open-ingest-hub" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão: Mídia Local, Nuvem Bunny CDN ou YouTube (Atalho: I)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>+ INGESTÃO</span>
+                  </button>
+                  <div class="ingest-pills-cluster">
+                    <button class="ingest-cluster-pill" id="pill-quick-local" onclick="openMediaIngestTab('local')" title="Adicionar Arquivos ou Pasta Local (SSD)">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                      <span>LOCAL</span>
+                    </button>
+                    <button class="ingest-cluster-pill" id="pill-quick-cloud" onclick="openMediaIngestTab('cloud')" title="Baixar / Sincronizar da Nuvem Bunny CDN">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                      <span>BUNNY</span>
+                    </button>
+                    <button class="ingest-cluster-pill active" id="pill-quick-stream" onclick="openMediaIngestTab('stream')" title="Puxar Vídeos do YouTube ou Feeds Web">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                      <span>YOUTUBE</span>
+                    </button>
+                  </div>
+                </div>
 
                 <div class="lib-view-mode-group">
                   <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">
@@ -10044,6 +10685,7 @@ body.resizing-workspace-active * {
             <h3>ROTEAMENTO DE MÍDIA</h3>
             <div class="shortcut-row"><span class="sc-desc">Enviar clipe selecionado diretamente para PROGRAM (Deck A)</span><kbd>A</kbd></div>
             <div class="shortcut-row"><span class="sc-desc">Preparar clipe selecionado no PREVIEW CUE (Deck B)</span><kbd>B</kbd></div>
+            <div class="shortcut-row"><span class="sc-desc">Abrir Central de Ingestão (Local SSD, Bunny, YouTube)</span><kbd>I</kbd></div>
             <div class="shortcut-row"><span class="sc-desc">Pular para próximo clipe da fila do Autopilot</span><kbd>S</kbd></div>
           </div>
           <div class="shortcut-group">
@@ -16023,14 +16665,14 @@ async function ingestStreamMedia(rawUrl, targetCategory, customTitle, mode = 'st
   }
   const category = targetCategory || 'STREAMS & YOUTUBE';
   const title = (customTitle || '').trim();
-  const progressWrap = document.getElementById('nsd-progress-wrap');
-  const progressStatus = document.getElementById('nsd-progress-status');
-  const progressMetrics = document.getElementById('nsd-progress-metrics');
-  const progressBar = document.getElementById('nsd-progress-bar');
+  const progressWrap = document.getElementById('mid-yt-progress-strip') || document.getElementById('nsd-progress-wrap');
+  const progressStatus = document.getElementById('mid-yt-progress-status') || document.getElementById('nsd-progress-status');
+  const progressMetrics = document.getElementById('mid-yt-progress-metrics') || document.getElementById('nsd-progress-metrics');
+  const progressBar = document.getElementById('mid-yt-progress-bar') || document.getElementById('nsd-progress-bar');
 
   if (progressWrap) progressWrap.style.display = 'block';
   if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR...' : 'CONECTANDO FEED EXTERNO...';
-  if (progressBar) progressBar.style.width = '15%';
+  if (progressBar) progressBar.style.width = '35%';
 
   const isServerAvailable = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
@@ -16298,21 +16940,21 @@ function createMediaCardElement(clip) {
   const projName = clip.project || '1.In';
 
   let srcBadgeHtml = '';
-  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ CDN</span>';
-  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD</span>';
-  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">⬇️ OFFLINE</span>';
-  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">▶️ YT</span>';
-  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">📡 STREAM</span>';
+  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">CDN EDGE</span>';
+  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">SSD LOCAL</span>';
+  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">OFFLINE</span>';
+  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">YOUTUBE</span>';
+  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">STREAM</span>';
 
   // Cache Status Check
   const cacheInfo = UserProfileManager.getCacheDetails(clip);
   let cacheBadgeHtml = '';
   if (cacheInfo.isCached) {
-    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">💾 LOCAL</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">CACHED</span>`;
   } else if (clipSource === 'cdn') {
-    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">☁️ NUVEM</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">NUVEM</span>`;
   } else if (clipSource === 'youtube' || clipSource === 'stream') {
-    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">📡 STREAM</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">LIVE</span>`;
   }
 
   const categoryName = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
@@ -17305,65 +17947,352 @@ function setupEvents() {
     });
   }
 
-  // 4. Retractable Stream & Downloader Drawer Controls
-  const btnToggleStream = document.getElementById('btn-toggle-stream-panel');
-  const streamDrawer = document.getElementById('nexus-stream-drawer');
-  const btnCloseStream = document.getElementById('btn-close-stream-drawer');
+  // ============================================================================
+  // UNIFIED MEDIA INGESTION & SYNCHRONIZATION HUB CONTROLLER
+  // ============================================================================
+  let currentIngestMode = 'stream';
 
-  if (btnToggleStream && streamDrawer) {
-    btnToggleStream.addEventListener('click', () => {
-      const isVisible = streamDrawer.style.display !== 'none';
-      streamDrawer.style.display = isVisible ? 'none' : 'block';
-      btnToggleStream.classList.toggle('active', !isVisible);
-      if (!isVisible) {
-        const inp = document.getElementById('input-pool-stream-url');
-        if (inp) inp.focus();
+  window.toggleMediaIngestDeck = function(forceState) {
+    const deck = document.getElementById('media-ingest-deck');
+    const mainBtn = document.getElementById('btn-open-ingest-hub');
+    if (!deck) return;
+    
+    const isVisible = deck.style.display !== 'none';
+    const newState = forceState !== undefined ? Boolean(forceState) : !isVisible;
+    
+    deck.style.display = newState ? 'block' : 'none';
+    if (mainBtn) mainBtn.classList.toggle('active', newState);
+    
+    if (newState) {
+      window.switchIngestMode(currentIngestMode);
+      updateIngestStats();
+    }
+  };
+
+  window.openMediaIngestTab = function(tabName) {
+    window.toggleMediaIngestDeck(true);
+    window.switchIngestMode(tabName);
+  };
+
+  window.switchIngestMode = function(mode) {
+    currentIngestMode = mode;
+    
+    ['local', 'cloud', 'stream'].forEach(m => {
+      const btn = document.getElementById(`mid-tab-btn-${m}`);
+      const panel = document.getElementById(`mid-panel-${m}`);
+      const pill = document.getElementById(`pill-quick-${m}`);
+      
+      const isActive = m === mode;
+      if (btn) btn.classList.toggle('active', isActive);
+      if (panel) panel.style.display = isActive ? 'block' : 'none';
+      if (pill) pill.classList.toggle('active', isActive);
+    });
+
+    if (mode === 'stream') {
+      const inp = document.getElementById('input-mid-yt-url');
+      if (inp) {
+        setTimeout(() => inp.focus(), 60);
+      }
+    }
+    updateIngestStats();
+  };
+
+  function updateIngestStats() {
+    // 1. Cloud Cached Count
+    const cloudCountEl = document.getElementById('mid-cloud-cached-count');
+    if (cloudCountEl) {
+      const cached = allClips.filter(c => UserProfileManager.isClipCached(c)).length;
+      cloudCountEl.textContent = `${cached} / ${allClips.length} CLIPES`;
+    }
+
+    // 2. Local Count
+    const localCountEl = document.getElementById('mid-local-count-text');
+    if (localCountEl) {
+      const locals = allClips.filter(c => c.is_local).length;
+      localCountEl.textContent = `${locals} clipe(s) local(is) ativo(s)`;
+    }
+  }
+
+  // --- LOCAL INGESTION HANDLERS ---
+  window.handleIngestPickFolder = async function() {
+    try {
+      if (typeof window.showDirectoryPicker !== 'function') {
+        alert('Seu navegador não suporta a File System Access API para seleção de pastas. Utilize o botão SELECIONAR ARQUIVOS.');
+        return;
+      }
+      const handle = await window.showDirectoryPicker();
+      const newClips = await MediaProvider.scanExtraDir(handle);
+      if (newClips.length > 0) {
+        allClips.push(...newClips);
+        saveCustomClipsToStorage();
+        renderFolderPills();
+        renderMediaCards();
+        updateSourceUI('local');
+        updateIngestStats();
+        if (typeof showHudMacroToast === 'function') {
+          showHudMacroToast(`[LOCAL SSD] +${newClips.length} clipes vinculados da pasta`);
+        }
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') {
+        console.warn('[Ingest Local] Seleção de pasta cancelada ou falhou:', e);
+      }
+    }
+  };
+
+  window.handleIngestLocalFiles = async function(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    const catSelect = document.getElementById('select-mid-local-cat');
+    const targetCat = catSelect ? catSelect.value : 'LOCAL IMPORT';
+    let addedCount = 0;
+
+    for (const file of Array.from(fileList)) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+      const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext);
+      if (!isVideo && !isAudio) continue;
+
+      const uniquePath = `LOCAL_${Date.now()}_${file.name}`;
+      MediaProvider.localFilesMap.set(uniquePath, file);
+      const blobUrl = URL.createObjectURL(file);
+
+      let thumbUrl = '';
+      if (isVideo) {
+        thumbUrl = await generateVideoThumbnailBlob(file);
+      }
+
+      const clip = {
+        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 7)}`,
+        filename: file.name,
+        display_title: file.name.replace(/\.[^/.]+$/, ""),
+        folder: "LOCAL IMPORT",
+        relative_path: uniquePath,
+        absolute_path: uniquePath,
+        blob_url: blobUrl,
+        width: 1920,
+        height: 1080,
+        duration: 10.0,
+        fps: 60.0,
+        codec: ext,
+        category: targetCat,
+        suggested_layer: 0,
+        thumbnail: thumbUrl,
+        is_local: true,
+        source: 'local'
+      };
+      allClips.unshift(clip);
+      addedCount++;
+    }
+
+    if (addedCount > 0) {
+      saveCustomClipsToStorage();
+      renderFolderPills();
+      renderMediaCards();
+      updateSourceUI('local');
+      updateIngestStats();
+      if (typeof showHudMacroToast === 'function') {
+        showHudMacroToast(`[LOCAL] +${addedCount} arquivo(s) importado(s) com sucesso`);
+      }
+    }
+  };
+
+  function generateVideoThumbnailBlob(file) {
+    return new Promise((resolve) => {
+      try {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        video.playsInline = true;
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        video.currentTime = 0.5;
+        video.onloadeddata = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 180;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 320, 180);
+            const dataUri = canvas.toDataURL('image/jpeg', 0.7);
+            URL.revokeObjectURL(url);
+            resolve(dataUri);
+          } catch(e) {
+            URL.revokeObjectURL(url);
+            resolve('');
+          }
+        };
+        video.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve('');
+        };
+        setTimeout(() => resolve(''), 2500);
+      } catch(err) {
+        resolve('');
       }
     });
   }
 
-  if (btnCloseStream && streamDrawer) {
-    btnCloseStream.addEventListener('click', () => {
-      streamDrawer.style.display = 'none';
-      if (btnToggleStream) btnToggleStream.classList.remove('active');
+  // File input change
+  const inputMidFiles = document.getElementById('input-mid-local-files');
+  if (inputMidFiles) {
+    inputMidFiles.addEventListener('change', (e) => {
+      handleIngestLocalFiles(e.target.files);
+      e.target.value = '';
     });
   }
 
-  // 5. Ingest Stream Actions inside Media Pool
-  const btnPoolDl = document.getElementById('btn-pool-action-download');
-  const btnPoolStream = document.getElementById('btn-pool-action-stream');
-  const inputPoolUrl = document.getElementById('input-pool-stream-url');
-  const selectPoolCat = document.getElementById('select-stream-target-cat');
-  const inputPoolTitle = document.getElementById('input-pool-stream-title');
-
-  if (btnPoolDl) {
-    btnPoolDl.addEventListener('click', () => {
-      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
-      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-      ingestStreamMedia(url, cat, title, 'download');
+  // Drag & drop on dropzone
+  const dropzone = document.getElementById('mid-local-dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files) {
+        handleIngestLocalFiles(e.dataTransfer.files);
+      }
     });
   }
 
-  if (btnPoolStream) {
-    btnPoolStream.addEventListener('click', () => {
-      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
-      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-      ingestStreamMedia(url, cat, title, 'stream');
+  // Global Drag & drop on main media library
+  const mediaGridTab = document.getElementById('tab-mediapool');
+  if (mediaGridTab) {
+    mediaGridTab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    mediaGridTab.addEventListener('drop', (e) => {
+      if (e.target.closest('#mid-local-dropzone')) return;
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        e.preventDefault();
+        handleIngestLocalFiles(e.dataTransfer.files);
+      }
     });
   }
 
-  if (inputPoolUrl) {
-    inputPoolUrl.addEventListener('keydown', (e) => {
+  // --- YOUTUBE & WEB STREAMS HANDLERS ---
+  const inputYt = document.getElementById('input-mid-yt-url');
+  if (inputYt) {
+    inputYt.addEventListener('input', (e) => {
+      handleYtUrlInput(e.target.value);
+    });
+    inputYt.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const url = inputPoolUrl.value.trim();
-        const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-        const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-        ingestStreamMedia(url, cat, title, 'stream');
+        executeIngestYt('stream');
       }
     });
   }
+
+  window.clearIngestYtInput = function() {
+    if (inputYt) inputYt.value = '';
+    const strip = document.getElementById('mid-yt-preview-strip');
+    if (strip) strip.style.display = 'none';
+    const titleInp = document.getElementById('input-mid-yt-title');
+    if (titleInp) titleInp.value = '';
+  };
+
+  window.handleYtUrlInput = function(rawUrl) {
+    const clean = (rawUrl || '').trim();
+    const previewStrip = document.getElementById('mid-yt-preview-strip');
+    const imgThumb = document.getElementById('img-mid-yt-thumb');
+    const lblTitle = document.getElementById('lbl-mid-yt-title');
+    const lblUrl = document.getElementById('lbl-mid-yt-url');
+    const badgeType = document.getElementById('badge-mid-yt-type');
+    const titleInput = document.getElementById('input-mid-yt-title');
+
+    if (!clean) {
+      if (previewStrip) previewStrip.style.display = 'none';
+      return;
+    }
+
+    const isYt = isYouTubeUrl(clean);
+    const ytId = extractYouTubeId(clean);
+
+    if (isYt && ytId) {
+      if (previewStrip) previewStrip.style.display = 'block';
+      if (badgeType) {
+        badgeType.textContent = 'YOUTUBE';
+        badgeType.className = 'mid-yt-badge-type yt';
+      }
+      const thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      if (imgThumb) imgThumb.src = thumb;
+      if (lblUrl) lblUrl.textContent = clean;
+      if (lblTitle) lblTitle.textContent = `YouTube [${ytId}]`;
+
+      // Live oEmbed title resolution
+      fetch(`https://noembed.com/embed?url=${encodeURIComponent(clean)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.title) {
+            if (lblTitle) lblTitle.textContent = data.title;
+            if (titleInput && !titleInput.value) titleInput.value = data.title;
+          }
+        })
+        .catch(() => {});
+    } else if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      if (previewStrip) previewStrip.style.display = 'block';
+      if (badgeType) {
+        badgeType.textContent = clean.endsWith('.m3u8') ? 'HLS LIVE' : 'STREAM WEB';
+        badgeType.className = 'mid-yt-badge-type web';
+      }
+      if (imgThumb) imgThumb.src = 'favicon.svg';
+      const filename = clean.split('/').pop().split('?')[0] || 'Feed Externo';
+      if (lblTitle) lblTitle.textContent = filename;
+      if (lblUrl) lblUrl.textContent = clean;
+      if (titleInput && !titleInput.value) titleInput.value = filename;
+    } else {
+      if (previewStrip) previewStrip.style.display = 'none';
+    }
+  };
+
+  window.executeIngestYt = async function(mode = 'stream') {
+    const url = (inputYt ? inputYt.value : '').trim();
+    if (!url) {
+      alert('Por favor, informe uma URL do YouTube ou feed de vídeo válido.');
+      if (inputYt) inputYt.focus();
+      return;
+    }
+    const cat = document.getElementById('select-mid-yt-cat')?.value || 'STREAMS & YOUTUBE';
+    const title = document.getElementById('input-mid-yt-title')?.value?.trim() || '';
+
+    const progressStrip = document.getElementById('mid-yt-progress-strip');
+    const progressStatus = document.getElementById('mid-yt-progress-status');
+    const progressBar = document.getElementById('mid-yt-progress-bar');
+    const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+
+    if (mode === 'download' && isOnline) {
+      alert('MODO NUVEM ONLINE: O download direto no SSD em alta qualidade (yt-dlp) requer o Penumbra rodando no ambiente local. No navegador online, utilize a opção "PUXAR PARA O POOL (STREAM AO VIVO)" para carregar e mixar o vídeo em tempo real.');
+      return;
+    }
+
+    if (progressStrip) progressStrip.style.display = 'block';
+    if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR LOCAL...' : 'CONECTANDO FEED DO YOUTUBE...';
+    if (progressBar) progressBar.style.width = '35%';
+
+    try {
+      await ingestStreamMedia(url, cat, title, mode);
+      if (progressBar) progressBar.style.width = '100%';
+      if (progressStatus) progressStatus.textContent = 'MÍDIA INGERIDA COM SUCESSO NO POOL!';
+      setTimeout(() => {
+        if (progressStrip) progressStrip.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+        clearIngestYtInput();
+      }, 1400);
+      if (typeof showHudMacroToast === 'function') {
+        showHudMacroToast(`[INGESTÃO] Vídeo adicionado ao Media Pool (${cat})`);
+      }
+    } catch(err) {
+      if (progressStatus) progressStatus.textContent = 'ERRO NA INGESTÃO: ' + err.message;
+      setTimeout(() => {
+        if (progressStrip) progressStrip.style.display = 'none';
+      }, 3000);
+    }
+  };
 
   // Multi-Source Audio Input Selector Pills (TEST / MIC / P2 / USB)
   document.querySelectorAll('.src-pill').forEach(btn => {
@@ -18741,10 +19670,23 @@ function initKeyboardShortcuts() {
       return;
     }
 
+    // I: Toggle Media Ingest Deck (Local / Bunny / YouTube)
+    if (key === 'i' || key === 'I') {
+      e.preventDefault();
+      switchTab('tab-mediapool');
+      if (typeof window.toggleMediaIngestDeck === 'function') {
+        window.toggleMediaIngestDeck();
+      }
+      return;
+    }
+
     // Escape: Close modals
     if (key === 'Escape') {
       closeShortcutsModal();
       closeTheater();
+      if (typeof window.toggleMediaIngestDeck === 'function') {
+        window.toggleMediaIngestDeck(false);
+      }
       return;
     }
   });

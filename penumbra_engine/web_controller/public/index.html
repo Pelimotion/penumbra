@@ -95,8 +95,14 @@
           </div>
           <div class="nsb-input-group">
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
-            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">⬇️ BAIXAR</button>
-            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">📡 STREAM</button>
+            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>BAIXAR</span>
+            </button>
+            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>STREAM</span>
+            </button>
           </div>
         </div>
 
@@ -1730,69 +1736,179 @@
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
         <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
-        <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
-        <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
-            <div class="nsd-header">
-              <div class="nsd-title-group">
-                <span class="nsd-pulse-dot"></span>
-                <span class="nsd-title">NEXUS MEDIA STREAMER & DOWNLOADER</span>
-                <span class="nsd-subtitle">// YOUTUBE, HLS, MP4 & DIRECT FEEDS</span>
-              </div>
-              <button class="nsd-close-btn" id="btn-close-stream-drawer" title="Fechar painel">✕</button>
+        <!-- UNIFIED MEDIA INGESTION & SYNCHRONIZATION DECK -->
+        <div class="media-ingest-deck" id="media-ingest-deck" style="display: none;">
+          <!-- INGEST DECK HEADER -->
+          <div class="mid-header">
+            <div class="mid-title-group">
+              <span class="mid-pulse-badge">INGESTÃO UNIFICADA</span>
+              <span class="mid-title">CENTRAL DE AQUISIÇÃO & SINCRONIZAÇÃO DE MÍDIAS</span>
+              <span class="mid-subtitle">// VÍDEOS LOCAIS · BUNNY CDN OFFLINE · YOUTUBE & WEB STREAMS</span>
             </div>
-            
-            <div class="nsd-body">
-              <div class="nsd-input-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">URL DA MÍDIA / FEED:</span>
-                  <input type="text" id="input-pool-stream-url" placeholder="Cole link do YouTube (watch, shorts, live) ou URL direta .mp4/.webm/.m3u8..." autocomplete="off">
+            <div class="mid-header-actions">
+              <!-- 3 MODE TABS -->
+              <div class="mid-tabs-nav">
+                <button class="mid-tab-btn" id="mid-tab-btn-local" onclick="switchIngestMode('local')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span>1. MÍDIA LOCAL (SSD)</span>
+                </button>
+                <button class="mid-tab-btn" id="mid-tab-btn-cloud" onclick="switchIngestMode('cloud')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  <span>2. BUNNY CDN (NUVEM & OFFLINE)</span>
+                </button>
+                <button class="mid-tab-btn active" id="mid-tab-btn-stream" onclick="switchIngestMode('stream')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>3. YOUTUBE & WEB STREAMS</span>
+                </button>
+              </div>
+              <button class="mid-close-btn" onclick="toggleMediaIngestDeck(false)" title="Fechar Central de Ingestão (ESC)">✕</button>
+            </div>
+          </div>
+
+          <!-- PANEL 1: LOCAL MEDIA -->
+          <div class="mid-panel" id="mid-panel-local" style="display: none;">
+            <div class="mid-grid-local">
+              <div class="mid-dropzone" id="mid-local-dropzone">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div class="mid-dz-text">
+                  <strong>ARRASTE E SOLTE VÍDEOS OU ÁUDIOS AQUI</strong>
+                  <span>Suporta MP4, WebM, MOV, MP3, WAV · Decodificação direta no navegador</span>
+                </div>
+                <div class="mid-dz-buttons">
+                  <label class="mid-btn mid-btn-file">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    <span>SELECIONAR ARQUIVOS</span>
+                    <input type="file" id="input-mid-local-files" multiple accept="video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav" style="display: none;">
+                  </label>
+                  <button class="mid-btn mid-btn-folder" id="btn-mid-pick-folder" onclick="handleIngestPickFolder()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>VINCULAR PASTA COMPLETA</span>
+                  </button>
                 </div>
               </div>
-
-              <div class="nsd-cat-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">CATEGORIA DE DESTINO:</span>
-                  <select id="select-stream-target-cat" class="nsd-select">
-                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
-                    <option value="MINIMAL">MINIMAL (Base Hipnótica)</option>
-                    <option value="ABSTRACT">ABSTRACT (Geometria/Partículas)</option>
-                    <option value="FIGURA">FIGURA (Silhuetas/Corpos)</option>
-                    <option value="DENSE">DENSE (Alta Frequência/Drop)</option>
-                    <option value="CHROMA">CHROMA (Recorte Alpha)</option>
+              <div class="mid-local-settings">
+                <div class="mid-field">
+                  <label>CATEGORIA DE IMPORTAÇÃO:</label>
+                  <select id="select-mid-local-cat" class="mid-select">
+                    <option value="LOCAL IMPORT" selected>LOCAL IMPORT</option>
+                    <option value="MINIMAL">MINIMAL</option>
+                    <option value="ABSTRACT">ABSTRACT</option>
+                    <option value="FIGURA">FIGURA</option>
+                    <option value="DENSE">DENSE</option>
+                    <option value="CHROMA">CHROMA (ALPHA)</option>
                   </select>
                 </div>
-              </div>
-
-              <div class="nsd-title-col">
-                <div class="nsd-field-group">
-                  <span class="nsd-field-label">APELIDO (OPCIONAL):</span>
-                  <input type="text" id="input-pool-stream-title" placeholder="Nome para o Media Pool..." autocomplete="off">
+                <div class="mid-status-box" id="mid-local-status-box">
+                  <span class="msb-label">ESTADO LOCAL:</span>
+                  <span class="msb-val" id="mid-local-count-text">0 clipes locais adicionados nesta sessão</span>
                 </div>
-              </div>
-
-              <div class="nsd-actions-col">
-                <button class="nsd-btn nsd-btn-download" id="btn-pool-action-download" title="Baixa o vídeo no SSD em alta qualidade, gera thumbnail e adiciona como clipe local no Media Pool">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  BAIXAR PARA O POOL
-                </button>
-                <button class="nsd-btn nsd-btn-stream" id="btn-pool-action-stream" title="Ingere imediatamente como stream online em tempo real no Media Pool">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  STREAM AO VIVO
-                </button>
-              </div>
-            </div>
-
-            <!-- LIVE DOWNLOAD PROGRESS FEEDBACK -->
-            <div class="nsd-progress-wrap" id="nsd-progress-wrap" style="display: none;">
-              <div class="nsd-progress-info">
-                <span class="nsd-progress-status" id="nsd-progress-status">INICIANDO DOWNLOAD...</span>
-                <span class="nsd-progress-metrics" id="nsd-progress-metrics">0% · -- MB/s · ETA --:--</span>
-              </div>
-              <div class="nsd-progress-track">
-                <div class="nsd-progress-bar" id="nsd-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
           </div>
+
+          <!-- PANEL 2: BUNNY CLOUD (DOWNLOAD & SYNC) -->
+          <div class="mid-panel" id="mid-panel-cloud" style="display: none;">
+            <div class="mid-grid-cloud">
+              <div class="mid-cloud-card">
+                <div class="mcc-info">
+                  <span class="mcc-tag">NUVEM GLOBAL</span>
+                  <h4>ACERVO NA BUNNY EDGE CDN</h4>
+                  <p>74 Clipes de Vídeo em alta qualidade, 29 Mattes Alfa e 327 thumbnails pré-geradas para streaming instantâneo.</p>
+                  <div class="mcc-metrics">
+                    <div class="mcc-metric"><span class="mcc-k">STATUS CDN:</span> <span class="mcc-v online">CONECTADO</span></div>
+                    <div class="mcc-metric"><span class="mcc-k">DOMÍNIO:</span> <span class="mcc-v">gigantera-penumbra.b-cdn.net</span></div>
+                    <div class="mcc-metric"><span class="mcc-k">OFFLINE NO SSD:</span> <span class="mcc-v" id="mid-cloud-cached-count">0 / 74 CLIPES</span></div>
+                  </div>
+                </div>
+                <div class="mcc-actions">
+                  <button class="mid-btn mid-btn-accent" id="btn-mid-download-all" onclick="downloadAllPendingClips()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>BAIXAR TODO O ACERVO PARA O SSD (OFFLINE 100%)</span>
+                  </button>
+                  <button class="mid-btn mid-btn-ghost" onclick="openCacheProfileSettings()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>GERENCIAR PERFIL & CACHE</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 3: YOUTUBE & WEB STREAMS (THE HERO EXPERIENCE) -->
+          <div class="mid-panel" id="mid-panel-stream">
+            <div class="mid-yt-workflow">
+              <!-- INPUT BAR -->
+              <div class="mid-yt-input-row">
+                <div class="mid-yt-field-url">
+                  <div class="mid-input-prefix">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <input type="text" id="input-mid-yt-url" placeholder="Cole uma URL do YouTube (watch, shorts, live) ou feed direto .mp4/.m3u8..." autocomplete="off">
+                  <button class="mid-input-clear" id="btn-mid-yt-clear" onclick="clearIngestYtInput()" title="Limpar URL">✕</button>
+                </div>
+
+                <div class="mid-yt-field-cat">
+                  <label>CATEGORIA:</label>
+                  <select id="select-mid-yt-cat" class="mid-select">
+                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                    <option value="MINIMAL">MINIMAL</option>
+                    <option value="ABSTRACT">ABSTRACT</option>
+                    <option value="FIGURA">FIGURA</option>
+                    <option value="DENSE">DENSE</option>
+                    <option value="CHROMA">CHROMA (ALPHA)</option>
+                  </select>
+                </div>
+
+                <div class="mid-yt-field-title">
+                  <input type="text" id="input-mid-yt-title" placeholder="Apelido opcional (auto-preenche)..." autocomplete="off">
+                </div>
+              </div>
+
+              <!-- INSTANT DETECTED PREVIEW CARD -->
+              <div class="mid-yt-preview-strip" id="mid-yt-preview-strip" style="display: none;">
+                <div class="mid-yt-preview-card">
+                  <div class="mid-yt-thumb-wrap">
+                    <img id="img-mid-yt-thumb" src="" alt="Thumbnail do Vídeo">
+                    <span class="mid-yt-badge-type" id="badge-mid-yt-type">YOUTUBE</span>
+                  </div>
+                  <div class="mid-yt-meta-wrap">
+                    <div class="mid-yt-card-title" id="lbl-mid-yt-title">Detectando vídeo...</div>
+                    <div class="mid-yt-card-url" id="lbl-mid-yt-url">--</div>
+                    <div class="mid-yt-card-hints">Pronto para ingestão. Clique em 'PUXAR PARA O POOL' para usá-lo imediatamente no cockpit.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ACTION BUTTONS -->
+              <div class="mid-yt-actions-row">
+                <div class="mid-yt-actions-left">
+                  <span class="mid-yt-info-tag">STREAMING EM TEMPO REAL // Conecte vídeos do YouTube e feeds de rede diretamente aos canais A (Program) e B (Preview).</span>
+                </div>
+                <div class="mid-yt-actions-right">
+                  <button class="mid-btn mid-btn-secondary" id="btn-mid-yt-download" onclick="executeIngestYt('download')" title="Baixa o vídeo no disco para operação 100% offline (requer Penumbra Local)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>BAIXAR PARA O SSD</span>
+                  </button>
+                  <button class="mid-btn mid-btn-primary" id="btn-mid-yt-stream" onclick="executeIngestYt('stream')" title="Adiciona imediatamente como clipe ativo no Media Pool para uso no Program/Preview">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>PUXAR PARA O POOL (STREAM AO VIVO)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PROGRESS FEEDBACK -->
+              <div class="mid-yt-progress-strip" id="mid-yt-progress-strip" style="display: none;">
+                <div class="myps-info">
+                  <span id="mid-yt-progress-status">PROCESSANDO INGESTÃO...</span>
+                  <span id="mid-yt-progress-metrics">--</span>
+                </div>
+                <div class="myps-track">
+                  <div class="myps-bar" id="mid-yt-progress-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- TWO-PANEL STUDIO BROWSER LAYOUT -->
         <div class="library-studio-layout">
@@ -1804,6 +1920,14 @@
                 <span>ORGANIZAÇÃO & BINS</span>
               </div>
               <button class="btn-sidebar-collapse" id="btn-toggle-sidebar" onclick="toggleLibrarySidebar()" title="Recolher barra lateral">◂</button>
+            </div>
+
+            <!-- SIDEBAR QUICK INGEST SHORTCUT -->
+            <div class="lib-sidebar-quick-ingest">
+              <button class="btn-sidebar-ingest" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão de Mídias (Atalho: I)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ NOVA INGESTÃO</span>
+              </button>
             </div>
 
             <div class="lib-sidebar-scroll">
@@ -1956,20 +2080,27 @@
               </div>
 
               <div class="lib-tb-right">
-                <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span>+ STREAM</span>
-                </button>
-
-                <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                  <span>+ LOCAL</span>
-                </button>
-
-                <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                  <span>CACHE</span>
-                </button>
+                <!-- UNIFIED MEDIA INGESTION CONTROLLER (LOCAL / BUNNY CLOUD / YOUTUBE) -->
+                <div class="lib-ingest-trigger-hub">
+                  <button class="btn-pool-action btn-ingest-hub-main" id="btn-open-ingest-hub" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão: Mídia Local, Nuvem Bunny CDN ou YouTube (Atalho: I)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>+ INGESTÃO</span>
+                  </button>
+                  <div class="ingest-pills-cluster">
+                    <button class="ingest-cluster-pill" id="pill-quick-local" onclick="openMediaIngestTab('local')" title="Adicionar Arquivos ou Pasta Local (SSD)">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                      <span>LOCAL</span>
+                    </button>
+                    <button class="ingest-cluster-pill" id="pill-quick-cloud" onclick="openMediaIngestTab('cloud')" title="Baixar / Sincronizar da Nuvem Bunny CDN">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                      <span>BUNNY</span>
+                    </button>
+                    <button class="ingest-cluster-pill active" id="pill-quick-stream" onclick="openMediaIngestTab('stream')" title="Puxar Vídeos do YouTube ou Feeds Web">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                      <span>YOUTUBE</span>
+                    </button>
+                  </div>
+                </div>
 
                 <div class="lib-view-mode-group">
                   <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">
@@ -2860,6 +2991,7 @@
             <h3>ROTEAMENTO DE MÍDIA</h3>
             <div class="shortcut-row"><span class="sc-desc">Enviar clipe selecionado diretamente para PROGRAM (Deck A)</span><kbd>A</kbd></div>
             <div class="shortcut-row"><span class="sc-desc">Preparar clipe selecionado no PREVIEW CUE (Deck B)</span><kbd>B</kbd></div>
+            <div class="shortcut-row"><span class="sc-desc">Abrir Central de Ingestão (Local SSD, Bunny, YouTube)</span><kbd>I</kbd></div>
             <div class="shortcut-row"><span class="sc-desc">Pular para próximo clipe da fila do Autopilot</span><kbd>S</kbd></div>
           </div>
           <div class="shortcut-group">

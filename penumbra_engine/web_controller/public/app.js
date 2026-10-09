@@ -5807,14 +5807,14 @@ async function ingestStreamMedia(rawUrl, targetCategory, customTitle, mode = 'st
   }
   const category = targetCategory || 'STREAMS & YOUTUBE';
   const title = (customTitle || '').trim();
-  const progressWrap = document.getElementById('nsd-progress-wrap');
-  const progressStatus = document.getElementById('nsd-progress-status');
-  const progressMetrics = document.getElementById('nsd-progress-metrics');
-  const progressBar = document.getElementById('nsd-progress-bar');
+  const progressWrap = document.getElementById('mid-yt-progress-strip') || document.getElementById('nsd-progress-wrap');
+  const progressStatus = document.getElementById('mid-yt-progress-status') || document.getElementById('nsd-progress-status');
+  const progressMetrics = document.getElementById('mid-yt-progress-metrics') || document.getElementById('nsd-progress-metrics');
+  const progressBar = document.getElementById('mid-yt-progress-bar') || document.getElementById('nsd-progress-bar');
 
   if (progressWrap) progressWrap.style.display = 'block';
   if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR...' : 'CONECTANDO FEED EXTERNO...';
-  if (progressBar) progressBar.style.width = '15%';
+  if (progressBar) progressBar.style.width = '35%';
 
   const isServerAvailable = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
@@ -6082,21 +6082,21 @@ function createMediaCardElement(clip) {
   const projName = clip.project || '1.In';
 
   let srcBadgeHtml = '';
-  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ CDN</span>';
-  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD</span>';
-  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">⬇️ OFFLINE</span>';
-  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">▶️ YT</span>';
-  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">📡 STREAM</span>';
+  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">CDN EDGE</span>';
+  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">SSD LOCAL</span>';
+  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">OFFLINE</span>';
+  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">YOUTUBE</span>';
+  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">STREAM</span>';
 
   // Cache Status Check
   const cacheInfo = UserProfileManager.getCacheDetails(clip);
   let cacheBadgeHtml = '';
   if (cacheInfo.isCached) {
-    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">💾 LOCAL</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">CACHED</span>`;
   } else if (clipSource === 'cdn') {
-    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">☁️ NUVEM</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">NUVEM</span>`;
   } else if (clipSource === 'youtube' || clipSource === 'stream') {
-    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">📡 STREAM</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">LIVE</span>`;
   }
 
   const categoryName = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
@@ -7089,65 +7089,352 @@ function setupEvents() {
     });
   }
 
-  // 4. Retractable Stream & Downloader Drawer Controls
-  const btnToggleStream = document.getElementById('btn-toggle-stream-panel');
-  const streamDrawer = document.getElementById('nexus-stream-drawer');
-  const btnCloseStream = document.getElementById('btn-close-stream-drawer');
+  // ============================================================================
+  // UNIFIED MEDIA INGESTION & SYNCHRONIZATION HUB CONTROLLER
+  // ============================================================================
+  let currentIngestMode = 'stream';
 
-  if (btnToggleStream && streamDrawer) {
-    btnToggleStream.addEventListener('click', () => {
-      const isVisible = streamDrawer.style.display !== 'none';
-      streamDrawer.style.display = isVisible ? 'none' : 'block';
-      btnToggleStream.classList.toggle('active', !isVisible);
-      if (!isVisible) {
-        const inp = document.getElementById('input-pool-stream-url');
-        if (inp) inp.focus();
+  window.toggleMediaIngestDeck = function(forceState) {
+    const deck = document.getElementById('media-ingest-deck');
+    const mainBtn = document.getElementById('btn-open-ingest-hub');
+    if (!deck) return;
+    
+    const isVisible = deck.style.display !== 'none';
+    const newState = forceState !== undefined ? Boolean(forceState) : !isVisible;
+    
+    deck.style.display = newState ? 'block' : 'none';
+    if (mainBtn) mainBtn.classList.toggle('active', newState);
+    
+    if (newState) {
+      window.switchIngestMode(currentIngestMode);
+      updateIngestStats();
+    }
+  };
+
+  window.openMediaIngestTab = function(tabName) {
+    window.toggleMediaIngestDeck(true);
+    window.switchIngestMode(tabName);
+  };
+
+  window.switchIngestMode = function(mode) {
+    currentIngestMode = mode;
+    
+    ['local', 'cloud', 'stream'].forEach(m => {
+      const btn = document.getElementById(`mid-tab-btn-${m}`);
+      const panel = document.getElementById(`mid-panel-${m}`);
+      const pill = document.getElementById(`pill-quick-${m}`);
+      
+      const isActive = m === mode;
+      if (btn) btn.classList.toggle('active', isActive);
+      if (panel) panel.style.display = isActive ? 'block' : 'none';
+      if (pill) pill.classList.toggle('active', isActive);
+    });
+
+    if (mode === 'stream') {
+      const inp = document.getElementById('input-mid-yt-url');
+      if (inp) {
+        setTimeout(() => inp.focus(), 60);
+      }
+    }
+    updateIngestStats();
+  };
+
+  function updateIngestStats() {
+    // 1. Cloud Cached Count
+    const cloudCountEl = document.getElementById('mid-cloud-cached-count');
+    if (cloudCountEl) {
+      const cached = allClips.filter(c => UserProfileManager.isClipCached(c)).length;
+      cloudCountEl.textContent = `${cached} / ${allClips.length} CLIPES`;
+    }
+
+    // 2. Local Count
+    const localCountEl = document.getElementById('mid-local-count-text');
+    if (localCountEl) {
+      const locals = allClips.filter(c => c.is_local).length;
+      localCountEl.textContent = `${locals} clipe(s) local(is) ativo(s)`;
+    }
+  }
+
+  // --- LOCAL INGESTION HANDLERS ---
+  window.handleIngestPickFolder = async function() {
+    try {
+      if (typeof window.showDirectoryPicker !== 'function') {
+        alert('Seu navegador não suporta a File System Access API para seleção de pastas. Utilize o botão SELECIONAR ARQUIVOS.');
+        return;
+      }
+      const handle = await window.showDirectoryPicker();
+      const newClips = await MediaProvider.scanExtraDir(handle);
+      if (newClips.length > 0) {
+        allClips.push(...newClips);
+        saveCustomClipsToStorage();
+        renderFolderPills();
+        renderMediaCards();
+        updateSourceUI('local');
+        updateIngestStats();
+        if (typeof showHudMacroToast === 'function') {
+          showHudMacroToast(`[LOCAL SSD] +${newClips.length} clipes vinculados da pasta`);
+        }
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') {
+        console.warn('[Ingest Local] Seleção de pasta cancelada ou falhou:', e);
+      }
+    }
+  };
+
+  window.handleIngestLocalFiles = async function(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    const catSelect = document.getElementById('select-mid-local-cat');
+    const targetCat = catSelect ? catSelect.value : 'LOCAL IMPORT';
+    let addedCount = 0;
+
+    for (const file of Array.from(fileList)) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+      const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext);
+      if (!isVideo && !isAudio) continue;
+
+      const uniquePath = `LOCAL_${Date.now()}_${file.name}`;
+      MediaProvider.localFilesMap.set(uniquePath, file);
+      const blobUrl = URL.createObjectURL(file);
+
+      let thumbUrl = '';
+      if (isVideo) {
+        thumbUrl = await generateVideoThumbnailBlob(file);
+      }
+
+      const clip = {
+        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 7)}`,
+        filename: file.name,
+        display_title: file.name.replace(/\.[^/.]+$/, ""),
+        folder: "LOCAL IMPORT",
+        relative_path: uniquePath,
+        absolute_path: uniquePath,
+        blob_url: blobUrl,
+        width: 1920,
+        height: 1080,
+        duration: 10.0,
+        fps: 60.0,
+        codec: ext,
+        category: targetCat,
+        suggested_layer: 0,
+        thumbnail: thumbUrl,
+        is_local: true,
+        source: 'local'
+      };
+      allClips.unshift(clip);
+      addedCount++;
+    }
+
+    if (addedCount > 0) {
+      saveCustomClipsToStorage();
+      renderFolderPills();
+      renderMediaCards();
+      updateSourceUI('local');
+      updateIngestStats();
+      if (typeof showHudMacroToast === 'function') {
+        showHudMacroToast(`[LOCAL] +${addedCount} arquivo(s) importado(s) com sucesso`);
+      }
+    }
+  };
+
+  function generateVideoThumbnailBlob(file) {
+    return new Promise((resolve) => {
+      try {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        video.playsInline = true;
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        video.currentTime = 0.5;
+        video.onloadeddata = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 180;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 320, 180);
+            const dataUri = canvas.toDataURL('image/jpeg', 0.7);
+            URL.revokeObjectURL(url);
+            resolve(dataUri);
+          } catch(e) {
+            URL.revokeObjectURL(url);
+            resolve('');
+          }
+        };
+        video.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve('');
+        };
+        setTimeout(() => resolve(''), 2500);
+      } catch(err) {
+        resolve('');
       }
     });
   }
 
-  if (btnCloseStream && streamDrawer) {
-    btnCloseStream.addEventListener('click', () => {
-      streamDrawer.style.display = 'none';
-      if (btnToggleStream) btnToggleStream.classList.remove('active');
+  // File input change
+  const inputMidFiles = document.getElementById('input-mid-local-files');
+  if (inputMidFiles) {
+    inputMidFiles.addEventListener('change', (e) => {
+      handleIngestLocalFiles(e.target.files);
+      e.target.value = '';
     });
   }
 
-  // 5. Ingest Stream Actions inside Media Pool
-  const btnPoolDl = document.getElementById('btn-pool-action-download');
-  const btnPoolStream = document.getElementById('btn-pool-action-stream');
-  const inputPoolUrl = document.getElementById('input-pool-stream-url');
-  const selectPoolCat = document.getElementById('select-stream-target-cat');
-  const inputPoolTitle = document.getElementById('input-pool-stream-title');
-
-  if (btnPoolDl) {
-    btnPoolDl.addEventListener('click', () => {
-      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
-      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-      ingestStreamMedia(url, cat, title, 'download');
+  // Drag & drop on dropzone
+  const dropzone = document.getElementById('mid-local-dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files) {
+        handleIngestLocalFiles(e.dataTransfer.files);
+      }
     });
   }
 
-  if (btnPoolStream) {
-    btnPoolStream.addEventListener('click', () => {
-      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
-      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-      ingestStreamMedia(url, cat, title, 'stream');
+  // Global Drag & drop on main media library
+  const mediaGridTab = document.getElementById('tab-mediapool');
+  if (mediaGridTab) {
+    mediaGridTab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    mediaGridTab.addEventListener('drop', (e) => {
+      if (e.target.closest('#mid-local-dropzone')) return;
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        e.preventDefault();
+        handleIngestLocalFiles(e.dataTransfer.files);
+      }
     });
   }
 
-  if (inputPoolUrl) {
-    inputPoolUrl.addEventListener('keydown', (e) => {
+  // --- YOUTUBE & WEB STREAMS HANDLERS ---
+  const inputYt = document.getElementById('input-mid-yt-url');
+  if (inputYt) {
+    inputYt.addEventListener('input', (e) => {
+      handleYtUrlInput(e.target.value);
+    });
+    inputYt.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const url = inputPoolUrl.value.trim();
-        const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
-        const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
-        ingestStreamMedia(url, cat, title, 'stream');
+        executeIngestYt('stream');
       }
     });
   }
+
+  window.clearIngestYtInput = function() {
+    if (inputYt) inputYt.value = '';
+    const strip = document.getElementById('mid-yt-preview-strip');
+    if (strip) strip.style.display = 'none';
+    const titleInp = document.getElementById('input-mid-yt-title');
+    if (titleInp) titleInp.value = '';
+  };
+
+  window.handleYtUrlInput = function(rawUrl) {
+    const clean = (rawUrl || '').trim();
+    const previewStrip = document.getElementById('mid-yt-preview-strip');
+    const imgThumb = document.getElementById('img-mid-yt-thumb');
+    const lblTitle = document.getElementById('lbl-mid-yt-title');
+    const lblUrl = document.getElementById('lbl-mid-yt-url');
+    const badgeType = document.getElementById('badge-mid-yt-type');
+    const titleInput = document.getElementById('input-mid-yt-title');
+
+    if (!clean) {
+      if (previewStrip) previewStrip.style.display = 'none';
+      return;
+    }
+
+    const isYt = isYouTubeUrl(clean);
+    const ytId = extractYouTubeId(clean);
+
+    if (isYt && ytId) {
+      if (previewStrip) previewStrip.style.display = 'block';
+      if (badgeType) {
+        badgeType.textContent = 'YOUTUBE';
+        badgeType.className = 'mid-yt-badge-type yt';
+      }
+      const thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      if (imgThumb) imgThumb.src = thumb;
+      if (lblUrl) lblUrl.textContent = clean;
+      if (lblTitle) lblTitle.textContent = `YouTube [${ytId}]`;
+
+      // Live oEmbed title resolution
+      fetch(`https://noembed.com/embed?url=${encodeURIComponent(clean)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.title) {
+            if (lblTitle) lblTitle.textContent = data.title;
+            if (titleInput && !titleInput.value) titleInput.value = data.title;
+          }
+        })
+        .catch(() => {});
+    } else if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      if (previewStrip) previewStrip.style.display = 'block';
+      if (badgeType) {
+        badgeType.textContent = clean.endsWith('.m3u8') ? 'HLS LIVE' : 'STREAM WEB';
+        badgeType.className = 'mid-yt-badge-type web';
+      }
+      if (imgThumb) imgThumb.src = 'favicon.svg';
+      const filename = clean.split('/').pop().split('?')[0] || 'Feed Externo';
+      if (lblTitle) lblTitle.textContent = filename;
+      if (lblUrl) lblUrl.textContent = clean;
+      if (titleInput && !titleInput.value) titleInput.value = filename;
+    } else {
+      if (previewStrip) previewStrip.style.display = 'none';
+    }
+  };
+
+  window.executeIngestYt = async function(mode = 'stream') {
+    const url = (inputYt ? inputYt.value : '').trim();
+    if (!url) {
+      alert('Por favor, informe uma URL do YouTube ou feed de vídeo válido.');
+      if (inputYt) inputYt.focus();
+      return;
+    }
+    const cat = document.getElementById('select-mid-yt-cat')?.value || 'STREAMS & YOUTUBE';
+    const title = document.getElementById('input-mid-yt-title')?.value?.trim() || '';
+
+    const progressStrip = document.getElementById('mid-yt-progress-strip');
+    const progressStatus = document.getElementById('mid-yt-progress-status');
+    const progressBar = document.getElementById('mid-yt-progress-bar');
+    const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+
+    if (mode === 'download' && isOnline) {
+      alert('MODO NUVEM ONLINE: O download direto no SSD em alta qualidade (yt-dlp) requer o Penumbra rodando no ambiente local. No navegador online, utilize a opção "PUXAR PARA O POOL (STREAM AO VIVO)" para carregar e mixar o vídeo em tempo real.');
+      return;
+    }
+
+    if (progressStrip) progressStrip.style.display = 'block';
+    if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR LOCAL...' : 'CONECTANDO FEED DO YOUTUBE...';
+    if (progressBar) progressBar.style.width = '35%';
+
+    try {
+      await ingestStreamMedia(url, cat, title, mode);
+      if (progressBar) progressBar.style.width = '100%';
+      if (progressStatus) progressStatus.textContent = 'MÍDIA INGERIDA COM SUCESSO NO POOL!';
+      setTimeout(() => {
+        if (progressStrip) progressStrip.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+        clearIngestYtInput();
+      }, 1400);
+      if (typeof showHudMacroToast === 'function') {
+        showHudMacroToast(`[INGESTÃO] Vídeo adicionado ao Media Pool (${cat})`);
+      }
+    } catch(err) {
+      if (progressStatus) progressStatus.textContent = 'ERRO NA INGESTÃO: ' + err.message;
+      setTimeout(() => {
+        if (progressStrip) progressStrip.style.display = 'none';
+      }, 3000);
+    }
+  };
 
   // Multi-Source Audio Input Selector Pills (TEST / MIC / P2 / USB)
   document.querySelectorAll('.src-pill').forEach(btn => {
@@ -8525,10 +8812,23 @@ function initKeyboardShortcuts() {
       return;
     }
 
+    // I: Toggle Media Ingest Deck (Local / Bunny / YouTube)
+    if (key === 'i' || key === 'I') {
+      e.preventDefault();
+      switchTab('tab-mediapool');
+      if (typeof window.toggleMediaIngestDeck === 'function') {
+        window.toggleMediaIngestDeck();
+      }
+      return;
+    }
+
     // Escape: Close modals
     if (key === 'Escape') {
       closeShortcutsModal();
       closeTheater();
+      if (typeof window.toggleMediaIngestDeck === 'function') {
+        window.toggleMediaIngestDeck(false);
+      }
       return;
     }
   });
