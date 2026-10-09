@@ -27,7 +27,7 @@ const HARS = {
     const storedIP = localStorage.getItem('penumbra_lan_ip');
     if (mode === 'local') return '';
     if (mode === 'cloud' && storedIP) return `http://${storedIP}:3000`;
-    if (mode === 'cloud') return 'https://pelimotion-portfolio.b-cdn.net/penumbra'; // Fallback Bunny CDN
+    if (mode === 'cloud') return 'https://gigantera-penumbra.b-cdn.net'; // Vibe-Coding Zero-Server CDN
     return ''; // LAN mode (accessed via IP) uses relative paths
   },
   getWsUrl: () => {
@@ -93,9 +93,15 @@ const MediaProvider = {
 
   initCDN: async () => {
     MediaProvider.mode = 'cdn';
-    const res = await fetch(HARS.resolveUrl('/api/manifest'));
-    if (!res.ok) throw new Error('CDN Manifest not found');
-    return await res.json();
+    // Fetch static manifest from the edge
+    try {
+      const res = await fetch(HARS.resolveUrl('/media_manifest.json'));
+      if (!res.ok) throw new Error('CDN Manifest not found');
+      return await res.json();
+    } catch(e) {
+      console.warn('[CDN] Failed to load manifest, using fallback local array', e);
+      return [];
+    }
   },
 
   getMediaUrl: (relativePath) => {
@@ -103,8 +109,11 @@ const MediaProvider = {
       const file = MediaProvider.localFilesMap.get(relativePath);
       return file ? URL.createObjectURL(file) : '';
     }
-    if (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'lan') {
-      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relativePath)}`); // We'll need to adapt the endpoint or use direct paths
+    if (MediaProvider.mode === 'cdn') {
+      return HARS.resolveUrl(`/${relativePath}`);
+    }
+    if (MediaProvider.mode === 'lan') {
+      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relativePath)}`);
     }
     return relativePath;
   },
@@ -112,10 +121,20 @@ const MediaProvider = {
   getThumbUrl: (clip) => {
     if (!clip || !clip.thumbnail) return '';
     if (MediaProvider.mode === 'local') {
-      // Future: extract frame from local File blob and cache it. For now, empty skeleton.
       return ''; 
     }
+    if (MediaProvider.mode === 'cdn') {
+      return HARS.resolveUrl(`/${clip.thumbnail}`);
+    }
     return HARS.resolveUrl(`/thumbnails/${clip.thumbnail}`);
+  },
+
+  getPreviewAnimUrl: (clip) => {
+    if (!clip || !clip.preview_anim) return '';
+    if (MediaProvider.mode === 'cdn') {
+      return HARS.resolveUrl(`/${clip.preview_anim}`);
+    }
+    return '';
   }
 };
 
@@ -5027,11 +5046,12 @@ function renderMediaCards() {
     const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
     card.className = `media-card ${isGen ? 'is-generative' : ''}`;
     const thumbSrc = MediaProvider.getThumbUrl(clip);
+    const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
     const projName = clip.project || '1.In';
 
     card.innerHTML = `
       <div class="media-card-thumb">
-        ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}">` : '<div class="no-thumb">RAW 1.IN</div>'}
+        ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
         ${isGen 
           ? `<span class="badge-generative">3D GENERATIVE</span>`
           : `<span class="media-cat-badge ${clip.has_chroma ? 'CHROMA' : clip.category}">${clip.has_chroma ? 'CHROMA' : clip.category}</span>`
@@ -5041,7 +5061,7 @@ function renderMediaCards() {
         <div class="media-card-title" title="${clip.filename}">
           <span class="media-project-badge">${projName}</span>${clip.filename}
         </div>
-        <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width}×${clip.height} · ${Math.round(clip.duration)}s`}</div>
+        <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
         <div class="card-actions-row">
           <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
           <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
@@ -5052,6 +5072,17 @@ function renderMediaCards() {
 
     card.addEventListener('mouseenter', () => {
       focusedClipId = clip.id;
+      const img = card.querySelector('.dynamic-preview-img');
+      if (img && img.dataset.anim) {
+        img.src = img.dataset.anim;
+      }
+    });
+
+    card.addEventListener('mouseleave', () => {
+      const img = card.querySelector('.dynamic-preview-img');
+      if (img && img.dataset.static) {
+        img.src = img.dataset.static;
+      }
     });
 
     const btnA = card.querySelector('.btn-bus-a');
