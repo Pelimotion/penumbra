@@ -85,7 +85,10 @@ async function runTests() {
   assert(indexHtml.includes('id="btn-quick-switch-view"'), 'Quick switcher button (#btn-quick-switch-view with TAB) exists');
 
   // Universal Library DOM
-  assert(indexHtml.includes('class="library-type-selector-bar"'), 'Universal Library Type selector bar exists');
+  assert(indexHtml.includes('library-type-selector-bar'), 'Universal Library Type selector bar exists');
+  assert(indexHtml.includes('id="library-sidebar"'), 'Studio library sidebar (#library-sidebar) exists');
+  assert(indexHtml.includes('class="library-toolbar-compact"'), 'Compact 38px library toolbar exists');
+  assert(indexHtml.includes('id="library-quick-inspector"'), 'Quick parameter inspector drawer (#library-quick-inspector) exists');
   assert(indexHtml.includes('data-asset-type="all"'), 'Library filter pill ALL exists');
   assert(indexHtml.includes('data-asset-type="clips"'), 'Library filter pill CLIPS exists');
   assert(indexHtml.includes('data-asset-type="mattes"'), 'Library filter pill MATTES exists');
@@ -106,6 +109,10 @@ async function runTests() {
   assert(stylesCss.includes('.workspace-splitter-horizontal'), 'Splitter styles defined with row-resize cursor');
   assert(stylesCss.includes('.dock-master-header'), 'Dock master header styles defined');
   assert(stylesCss.includes('.dock-timeline-view-pane'), 'Dedicated timeline view styles defined (.dock-timeline-view-pane)');
+  assert(stylesCss.includes('.library-sidebar'), 'Studio Library sidebar styles defined (.library-sidebar)');
+  assert(stylesCss.includes('.library-toolbar-compact'), 'Compact 38px toolbar styles defined (.library-toolbar-compact)');
+  assert(stylesCss.includes('.library-quick-inspector'), 'Quick parameter inspector styles defined (.library-quick-inspector)');
+  assert(stylesCss.includes('.btn-edit-params'), 'Parameter edit button styles defined (.btn-edit-params)');
   assert(stylesCss.includes('.library-type-selector-bar'), 'Universal library selector bar styles defined');
   assert(stylesCss.includes('.library-card-matte'), 'Procedural matte card styles defined');
   assert(stylesCss.includes('.library-card-fx'), 'FX Shader plugin card styles defined');
@@ -122,6 +129,12 @@ async function runTests() {
   assert(appJs.includes('function toggleDockViewMode('), 'toggleDockViewMode function defined');
   assert(appJs.includes('function cueNextFromQueue('), 'cueNextFromQueue function defined');
   assert(appJs.includes('function filterPreferencesSearch('), 'filterPreferencesSearch function defined');
+  assert(appJs.includes('function editMatteParameters('), 'editMatteParameters function defined');
+  assert(appJs.includes('function editFxParameters('), 'editFxParameters function defined');
+  assert(appJs.includes('function editPresetParameters('), 'editPresetParameters function defined');
+  assert(appJs.includes('function editClipTonalParameters('), 'editClipTonalParameters function defined');
+  assert(appJs.includes('function toggleLibrarySidebar('), 'toggleLibrarySidebar function defined');
+  assert(appJs.includes('function openQuickInspector('), 'openQuickInspector function defined');
   assert(appJs.includes('activeLibraryAssetType'), 'activeLibraryAssetType state variable used');
   assert(appJs.includes('createMatteCardForLibrary'), 'createMatteCardForLibrary helper defined');
   assert(appJs.includes('createFxCardForLibrary'), 'createFxCardForLibrary helper defined');

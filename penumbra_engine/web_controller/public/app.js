@@ -6122,7 +6122,8 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
+        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">🎛️ LOOK</button>
+        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
         ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
       </div>
     </div>
@@ -6288,12 +6289,12 @@ function createMatteCardForLibrary(matte) {
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
       <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer4', '${matte.path}')" title="Aplicar no Layer 4 (Accent)">→ L4</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">🎛️ PARÂMETROS</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    onLayerMatteChange(targetL, matte.path);
+    editMatteParameters(matte.path, matte.name);
   });
 
   return card;
@@ -6318,14 +6319,12 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
         ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
       </button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_a');">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_b');">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">🎛️ PARÂMETROS</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    selectFxPlugin(pluginId);
-    switchTab('tab-fx');
+    editFxParameters(pluginId);
   });
 
   return card;
@@ -6348,18 +6347,248 @@ function createPresetCardForLibrary(presetId, presetInfo) {
       <div class="library-card-desc">${presetInfo.desc}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-studio-primary btn-xs" style="width:100%;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
-        CARREGAR PRESET
+      <button class="btn btn-studio-primary btn-xs" style="flex:1;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
+        CARREGAR
+      </button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editPresetParameters('${presetId}')" title="Editar parâmetros no Conductor (Módulo 5)">
+        🎛️ EDITAR
       </button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    applyMacroPreset(presetId, 0, true);
+    editPresetParameters(presetId);
   });
 
   return card;
 }
+
+// ============================================================================
+// ASSET PARAMETER EDIT NAVIGATION & QUICK INSPECTOR METHODS
+// ============================================================================
+function editMatteParameters(mattePath, matteName) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  switchTab('tab-mattes');
+  
+  const targetL = appState.matte_target_layer || 'layer3';
+  onLayerMatteChange(targetL, mattePath);
+
+  if (typeof switchMatteSub === 'function') switchMatteSub('kinematics');
+
+  const kinGrid = document.querySelector('#subview-kinematics .kinematics-dock-grid');
+  if (kinGrid) {
+    kinGrid.classList.remove('highlight-focus-ring');
+    void kinGrid.offsetWidth;
+    kinGrid.classList.add('highlight-focus-ring');
+  }
+
+  showMacroToast(`🎭 [MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
+  openQuickInspector('matte', { path: mattePath, name: matteName });
+}
+window.editMatteParameters = editMatteParameters;
+
+function editFxParameters(pluginId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  if (!appState.fx.enabled) toggleFxMaster();
+  selectFxPlugin(pluginId);
+  switchTab('tab-fx');
+
+  const activeCard = document.getElementById(`card-fx-${pluginId}`);
+  if (activeCard) {
+    activeCard.classList.remove('highlight-focus-ring');
+    void activeCard.offsetWidth;
+    activeCard.classList.add('highlight-focus-ring');
+  }
+
+  const fxInfo = FX_LIBRARY_CATALOG[pluginId] || { title: pluginId };
+  showMacroToast(`⚡ [FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
+  openQuickInspector('fx', { pluginId, info: fxInfo });
+}
+window.editFxParameters = editFxParameters;
+
+function editPresetParameters(presetId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  applyMacroPreset(presetId, 0, true);
+  switchTab('tab-conductor');
+
+  const presetGrid = document.querySelector('#tab-conductor .macro-matrix-grid');
+  if (presetGrid) {
+    presetGrid.classList.remove('highlight-focus-ring');
+    void presetGrid.offsetWidth;
+    presetGrid.classList.add('highlight-focus-ring');
+  }
+
+  const pInfo = PRESETS_LIBRARY_CATALOG[presetId] || { title: presetId };
+  showMacroToast(`🎛️ [CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
+  openQuickInspector('preset', { presetId, info: pInfo });
+}
+window.editPresetParameters = editPresetParameters;
+
+function editClipTonalParameters(clipId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  routeClipToBus(clipId, 'B');
+  switchTab('tab-tonal');
+
+  const tonalGrid = document.querySelector('#tab-tonal .tonal-controls-grid') || document.querySelector('#tab-tonal');
+  if (tonalGrid) {
+    tonalGrid.classList.remove('highlight-focus-ring');
+    void tonalGrid.offsetWidth;
+    tonalGrid.classList.add('highlight-focus-ring');
+  }
+
+  const clip = allClips.find(c => c.id === clipId);
+  const title = clip?.display_title || clip?.filename || 'Clipe';
+  showMacroToast(`🎨 [TONAL] Grading aberto para "${title}" no Módulo 4`);
+  openQuickInspector('clip', { clipId, clip });
+}
+window.editClipTonalParameters = editClipTonalParameters;
+
+function toggleLibrarySidebar() {
+  const sb = document.getElementById('library-sidebar');
+  if (!sb) return;
+  const isCol = sb.classList.toggle('is-collapsed');
+  const btn = document.getElementById('btn-toggle-sidebar');
+  if (btn) btn.textContent = isCol ? '▸' : '◂';
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_sidebar_collapsed', isCol);
+  }
+}
+window.toggleLibrarySidebar = toggleLibrarySidebar;
+
+function toggleTreeSection(headerEl) {
+  if (!headerEl) return;
+  const section = headerEl.closest('.lib-tree-section');
+  if (section) section.classList.toggle('is-collapsed');
+}
+window.toggleTreeSection = toggleTreeSection;
+
+let libraryViewMode = 'grid'; // 'grid' | 'compact'
+function setLibraryViewMode(mode) {
+  libraryViewMode = mode;
+  const grid = document.getElementById('media-cards-container');
+  if (grid) {
+    grid.classList.toggle('view-compact', mode === 'compact');
+  }
+  document.getElementById('btn-view-grid')?.classList.toggle('active', mode === 'grid');
+  document.getElementById('btn-view-compact')?.classList.toggle('active', mode === 'compact');
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_view_mode', mode);
+  }
+}
+window.setLibraryViewMode = setLibraryViewMode;
+
+function toggleLibraryCategoryGrouping() {
+  isGroupedByCategory = !isGroupedByCategory;
+  const btn = document.getElementById('btn-toggle-group-categories');
+  if (btn) btn.classList.toggle('active', isGroupedByCategory);
+  const container = document.getElementById('media-cards-container');
+  if (container) container.classList.toggle('is-grouped', isGroupedByCategory);
+  renderMediaCards();
+}
+window.toggleLibraryCategoryGrouping = toggleLibraryCategoryGrouping;
+
+function clearMediaSearch() {
+  const inp = document.getElementById('input-media-search');
+  if (inp) {
+    inp.value = '';
+    renderMediaCards();
+    inp.focus();
+  }
+}
+window.clearMediaSearch = clearMediaSearch;
+
+function toggleQuickInspector(forceState) {
+  const drawer = document.getElementById('library-quick-inspector');
+  if (!drawer) return;
+  const show = typeof forceState === 'boolean' ? forceState : (drawer.style.display === 'none');
+  drawer.style.display = show ? 'flex' : 'none';
+  document.getElementById('btn-toggle-inspector')?.classList.toggle('active', show);
+}
+window.toggleQuickInspector = toggleQuickInspector;
+
+function openQuickInspector(assetType, data) {
+  const drawer = document.getElementById('library-quick-inspector');
+  const body = document.getElementById('lqi-body-content');
+  const title = document.getElementById('lqi-asset-title');
+  const icon = document.getElementById('lqi-asset-icon');
+  if (!drawer || !body) return;
+
+  drawer.style.display = 'flex';
+  document.getElementById('btn-toggle-inspector')?.classList.add('active');
+
+  if (assetType === 'matte') {
+    if (icon) icon.textContent = '🎭';
+    if (title) title.textContent = `MATTE: ${data.name || 'MÁSCARA'}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>CAMADA ALVO</span><strong>${(appState.matte_target_layer || 'layer3').toUpperCase()}</strong></div>
+        <div class="lqi-label"><span>ARQUIVO</span><small style="color:var(--cyan);">${data.path}</small></div>
+        <button class="btn btn-outline btn-xs" style="width:100%; margin-top:4px;" onclick="toggleCurrentTargetMatteInvert()">
+          INVERTER PRETO/BRANCO (INV)
+        </button>
+      </div>
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>RESPIRAÇÃO (WIGGLE)</span><strong id="lqi-val-wiggle">6%</strong></div>
+        <input type="range" class="pro-slider" min="0" max="30" value="6" oninput="const s = document.getElementById('slider-wiggle-scale'); if(s) { s.value = this.value; s.dispatchEvent(new Event('input')); } document.getElementById('lqi-val-wiggle').textContent = this.value + '%';">
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-mattes')">
+        ABRIR MÓDULO MATTES COMPLETO (TAB 3) ↗
+      </button>
+    `;
+  } else if (assetType === 'fx') {
+    const fxInfo = data.info || {};
+    if (icon) icon.textContent = '⚡';
+    if (title) title.textContent = `FX: ${fxInfo.title || data.pluginId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>ESTADO FX MASTER</span><strong>${appState.fx.enabled ? '🟢 ATIVO' : '🔴 DESLIGADO'}</strong></div>
+        <button class="btn btn-primary btn-xs" style="width:100%; margin-top:4px;" onclick="toggleFxMaster(); openQuickInspector('fx', { pluginId: '${data.pluginId}', info: FX_LIBRARY_CATALOG['${data.pluginId}'] });">
+          ${appState.fx.enabled ? 'DESLIGAR FX MASTER' : 'LIGAR FX MASTER'}
+        </button>
+      </div>
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>DRY / WET (INTENSIDADE)</span><strong id="lqi-val-drywet">80%</strong></div>
+        <input type="range" class="pro-slider" min="0" max="100" value="80" oninput="setFxMasterParam('masterIntensity', this.value / 100); document.getElementById('lqi-val-drywet').textContent = this.value + '%';">
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-fx')">
+        ABRIR FX ENGINE COMPLETO (TAB 6) ↗
+      </button>
+    `;
+  } else if (assetType === 'preset') {
+    const pInfo = data.info || {};
+    if (icon) icon.textContent = '🎛️';
+    if (title) title.textContent = `PRESET: ${pInfo.title || data.presetId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>TEMPO SUGERIDO</span><strong>${pInfo.bpm || 'AUTO'}</strong></div>
+        <div class="lqi-label"><span>NARRATIVA</span><p style="font-size:8.5px; color:#9ea5b5; margin:0;">${pInfo.desc || ''}</p></div>
+        <button class="btn btn-studio-primary btn-xs" style="width:100%; margin-top:6px;" onclick="applyMacroPreset('${data.presetId}', 0, true);">
+          DISPARAR PRESET NO PROGRAM
+        </button>
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-conductor')">
+        ABRIR AUTOPILOT CONDUCTOR (TAB 5) ↗
+      </button>
+    `;
+  } else if (assetType === 'clip') {
+    const clip = data.clip || allClips.find(c => c.id === data.clipId);
+    if (icon) icon.textContent = '🎬';
+    if (title) title.textContent = `CLIPE: ${clip?.display_title || clip?.filename || data.clipId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>ROTEAMENTO RÁPIDO</span></div>
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <button class="btn btn-outline btn-xs" style="flex:1;" onclick="routeClipToBus('${data.clipId}', 'A')">PGM (A)</button>
+          <button class="btn btn-primary btn-xs" style="flex:1;" onclick="routeClipToBus('${data.clipId}', 'B')">PRV (B)</button>
+        </div>
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-tonal')">
+        ABRIR GRADING TONAL (TAB 4) ↗
+      </button>
+    `;
+  }
+}
+window.openQuickInspector = openQuickInspector;
 
 function renderMediaCards() {
   const container = document.getElementById('media-cards-container');
@@ -6460,6 +6689,7 @@ function renderMediaCards() {
 
   // Grouped by Category View Mode
   if (isGroupedByCategory && activeCategoryFilter === 'ALL') {
+    container.classList.add('is-grouped');
     const predefinedOrder = [
       'MINIMAL',
       'ABSTRACT',
@@ -6508,6 +6738,7 @@ function renderMediaCards() {
       container.appendChild(section);
     });
   } else {
+    container.classList.remove('is-grouped');
     // Flat Grid View Mode
     filtered.forEach(clip => {
       container.appendChild(createMediaCardElement(clip));

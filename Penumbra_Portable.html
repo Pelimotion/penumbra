@@ -4805,6 +4805,7 @@ body.resizing-workspace-active * {
 /* CATEGORY SECTION GROUPING VIEW */
 .category-group-section {
   width: 100%;
+  grid-column: 1 / -1;
   margin-bottom: 14px;
 }
 
@@ -6494,6 +6495,540 @@ body.resizing-workspace-active * {
   font-size: 9px;
   padding: 4px 6px;
 }
+
+/* ==========================================================================
+   STUDIO ASSET LIBRARY BROWSER (TWO-PANEL DA VINCI / RESOLUME ARCHITECTURE)
+   ========================================================================== */
+
+#tab-mediapool {
+  padding: 0;
+  overflow: hidden;
+}
+
+.library-studio-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 1. LEFT SIDEBAR (ORGANIZATION & BINS) */
+.library-sidebar {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  background: #0d0e12;
+  border-right: 1px solid #1a1c22;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.library-sidebar.is-collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  margin-left: -220px !important;
+}
+
+.lib-sidebar-header {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: #111317;
+  border-bottom: 1px solid #1c1e25;
+}
+
+.lib-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #cfd3dc;
+  text-transform: uppercase;
+}
+
+.btn-sidebar-collapse {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #6c7283;
+  font-size: 11px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-collapse:hover {
+  background: #1d202a;
+  color: #fff;
+  border-color: #2b2e3c;
+}
+
+.lib-sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 6px;
+}
+
+.lib-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.lib-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #20232c;
+  border-radius: 2px;
+}
+
+.lib-tree-section {
+  margin-bottom: 12px;
+}
+
+.lib-tree-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  color: #676d7e;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s ease;
+}
+
+.lib-tree-section-header:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lib-tree-chevron {
+  font-size: 8px;
+  transition: transform 0.15s ease;
+}
+
+.lib-tree-section.is-collapsed .lib-tree-chevron {
+  transform: rotate(-90deg);
+}
+
+.lib-tree-section.is-collapsed .lib-tree-items {
+  display: none;
+}
+
+.lib-tree-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 3px;
+}
+
+.lib-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 3px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #9ea5b5;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.lib-tree-item:hover {
+  background: #15171e;
+  color: #fff;
+  border-color: #242733;
+}
+
+.lib-tree-item.active {
+  background: rgba(0, 240, 255, 0.12) !important;
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  color: var(--cyan) !important;
+  font-weight: 700;
+}
+
+.lib-tree-item .tree-label,
+.lib-tree-item .lib-type-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lib-tree-item .tree-badge,
+.lib-tree-item .pill-badge,
+.lib-tree-item .lib-type-badge {
+  font-size: 7.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #798093;
+  margin-left: auto;
+}
+
+.lib-tree-item.active .tree-badge,
+.lib-tree-item.active .pill-badge,
+.lib-tree-item.active .lib-type-badge {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan);
+}
+
+/* 2. RIGHT MAIN PANEL */
+.library-main-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #08090b;
+  overflow: hidden;
+}
+
+.library-toolbar-compact {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: #101115;
+  border-bottom: 1px solid #1a1c23;
+  gap: 10px;
+}
+
+.lib-tb-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lib-tb-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-lib-tb {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #17181f;
+  border: 1px solid #272a36;
+  color: #c4c8d5;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-lib-tb:hover {
+  background: #222530;
+  color: #fff;
+  border-color: #3b3f50;
+}
+
+.lib-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 180px;
+  max-width: 320px;
+  flex: 1;
+}
+
+.lib-search-icon {
+  position: absolute;
+  left: 8px;
+  color: #5d6373;
+  pointer-events: none;
+}
+
+.lib-search-input {
+  width: 100%;
+  background: #090a0d;
+  border: 1px solid #21242d;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  padding: 5px 24px 5px 26px;
+  border-radius: 3px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lib-search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.lib-search-clear {
+  position: absolute;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #6a7182;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.lib-search-clear:hover {
+  color: #fff;
+}
+
+.lib-view-mode-group {
+  display: flex;
+  background: #0c0d11;
+  border: 1px solid #1e2028;
+  border-radius: 3px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-lib-view-mode {
+  background: transparent;
+  border: none;
+  color: #798094;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn-lib-view-mode:hover {
+  color: #fff;
+}
+
+.btn-lib-view-mode.active {
+  background: #1c1e28;
+  color: var(--cyan);
+}
+
+/* 3. ASSET GRID RESILIENT RULES */
+.dock-media-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  padding: 8px 10px 24px 10px;
+}
+
+.dock-media-grid.view-compact {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px;
+}
+
+.dock-media-grid.is-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-group-section {
+  width: 100%;
+  grid-column: 1 / -1;
+  margin-bottom: 12px;
+}
+
+.category-subgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+/* 4. PARAMETER EDIT BUTTONS ON CARDS */
+.btn-edit-params {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 3px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-edit-params:hover {
+  background: #00f0ff;
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.btn-edit-clip-tonal {
+  background: rgba(255, 184, 0, 0.12) !important;
+  border-color: rgba(255, 184, 0, 0.35) !important;
+  color: #ffb800 !important;
+}
+
+.btn-edit-clip-tonal:hover {
+  background: #ffb800 !important;
+  color: #000 !important;
+  box-shadow: 0 0 10px rgba(255, 184, 0, 0.5) !important;
+}
+
+/* PULSING FOCUS HIGHLIGHT FOR PARAMETER EDIT TRANSITIONS */
+.highlight-focus-ring {
+  animation: pulse-focus-ring 1.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes pulse-focus-ring {
+  0% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.8), 0 0 20px rgba(0, 240, 255, 0.6); border-color: #00f0ff !important; }
+  50% { box-shadow: 0 0 0 4px rgba(0, 240, 255, 0.4), 0 0 30px rgba(0, 240, 255, 0.4); border-color: #00f0ff !important; }
+  100% { box-shadow: none; }
+}
+
+/* 5. QUICK PARAMETER INSPECTOR DRAWER */
+.library-quick-inspector {
+  width: 290px;
+  min-width: 290px;
+  max-width: 290px;
+  background: #0d0e13;
+  border-left: 1px solid #1c1f28;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-inspector-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 6;
+}
+
+@keyframes slide-inspector-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.lqi-header {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: #111319;
+  border-bottom: 1px solid #1d202b;
+}
+
+.lqi-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #cfd3dc;
+  letter-spacing: 0.6px;
+}
+
+.lqi-close-btn {
+  background: transparent;
+  border: none;
+  color: #798094;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 3px 6px;
+}
+.lqi-close-btn:hover {
+  color: #fff;
+}
+
+.lqi-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lqi-asset-card {
+  background: #13151b;
+  border: 1px solid #222633;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lqi-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lqi-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #7f8698;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.lqi-action-btn-full {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  background: #00f0ff;
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lqi-action-btn-full:hover {
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  transform: translateY(-1px);
+}
+
 
 
 
@@ -8199,35 +8734,8 @@ body.resizing-workspace-active * {
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
         <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
-        <div class="pool-dock-header">
-          <!-- TOP ROW: BUSCA + AÇÕES PRINCIPAIS -->
-          <div class="dock-search-row">
-            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar clipes, mattes, efeitos FX ou presets..." class="dock-search">
-            <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
-            <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
-            
-            <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              <span>+ STREAM / DOWNLOADER</span>
-            </button>
-
-            <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-              <span>💾 PERFIL & CACHE</span>
-            </button>
-
-            <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              <span>+ ADD PASTA LOCAL</span>
-            </button>
-
-            <button class="btn-pool-action btn-toggle-group active" id="btn-toggle-group-categories" title="Alternar entre visualização por seções de categorias e grid contínuo">
-              <span>▤ SEÇÕES DE CATEGORIA</span>
-            </button>
-          </div>
-
-          <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
-          <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
+        <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
+        <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
             <div class="nsd-header">
               <div class="nsd-title-group">
                 <span class="nsd-pulse-dot"></span>
@@ -8290,96 +8798,214 @@ body.resizing-workspace-active * {
             </div>
           </div>
 
-          <!-- MASTER ASSET TYPE SELECTOR (UNIVERSAL CREATIVE ASSET LIBRARY) -->
-          <div class="library-type-selector-bar">
-            <button class="lib-type-btn active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
-              <span class="lib-type-icon">✨</span>
-              <span class="lib-type-label">TODOS OS RECURSOS</span>
-              <span class="lib-type-badge" id="lib-count-all">115</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
-              <span class="lib-type-icon">🎬</span>
-              <span class="lib-type-label">VÍDEOS & CLIPES</span>
-              <span class="lib-type-badge" id="lib-count-clips">74</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
-              <span class="lib-type-icon">🎭</span>
-              <span class="lib-type-label">MATTES & MÁSCARAS</span>
-              <span class="lib-type-badge" id="lib-count-mattes">29</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
-              <span class="lib-type-icon">⚡</span>
-              <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
-              <span class="lib-type-badge" id="lib-count-fx">6</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
-              <span class="lib-type-icon">🎛️</span>
-              <span class="lib-type-label">PRESETS & CONDUCTOR</span>
-              <span class="lib-type-badge" id="lib-count-presets">6</span>
-            </button>
-          </div>
-
-          <!-- TOOLSTRIP 1: FILTROS DE ORIGEM DA MÍDIA (SOURCES) -->
-          <div class="filter-group pool-source-strip">
-            <span class="filter-group-label">ORIGEM:</span>
-            <div class="filter-pills source-pills" id="source-pills-container">
-              <button class="pill-btn active" data-source="ALL">
-                <span>TODAS AS ORIGENS</span> <span class="pill-badge" id="badge-count-src-all">0</span>
-              </button>
-              <button class="pill-btn" data-source="cdn">
-                <span class="src-dot dot-cdn"></span> <span>☁️ BUNNY CDN</span> <span class="pill-badge" id="badge-count-src-cdn">0</span>
-              </button>
-              <button class="pill-btn" data-source="local">
-                <span class="src-dot dot-local"></span> <span>📁 LOCAL (SSD)</span> <span class="pill-badge" id="badge-count-src-local">0</span>
-              </button>
-              <button class="pill-btn" data-source="stream">
-                <span class="src-dot dot-stream"></span> <span>▶️ YOUTUBE & STREAMS</span> <span class="pill-badge" id="badge-count-src-stream">0</span>
-              </button>
+        <!-- TWO-PANEL STUDIO BROWSER LAYOUT -->
+        <div class="library-studio-layout">
+          <!-- LEFT SIDEBAR: BINS & COLLECTIONS HIERARCHY -->
+          <aside class="library-sidebar" id="library-sidebar">
+            <div class="lib-sidebar-header">
+              <div class="lib-sidebar-title">
+                <span class="lib-sidebar-icon">📁</span>
+                <span>ORGANIZAÇÃO & BINS</span>
+              </div>
+              <button class="btn-sidebar-collapse" id="btn-toggle-sidebar" onclick="toggleLibrarySidebar()" title="Recolher barra lateral">◂</button>
             </div>
-          </div>
 
-          <!-- TOOLSTRIP 2: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
-          <div class="filter-group pool-category-strip">
-            <span class="filter-group-label">CATEGORIA:</span>
-            <div class="filter-pills category-pills" id="category-pills-container">
-              <button class="pill-btn active" data-cat="ALL">
-                <span>TODAS</span> <span class="pill-badge" id="badge-count-cat-all">0</span>
-              </button>
-              <button class="pill-btn" data-cat="MINIMAL">
-                <span class="cat-pill-indicator cat-ind-minimal"></span> <span>MINIMAL</span> <span class="pill-badge" id="badge-count-cat-minimal">0</span>
-              </button>
-              <button class="pill-btn" data-cat="ABSTRACT">
-                <span class="cat-pill-indicator cat-ind-abstract"></span> <span>ABSTRACT</span> <span class="pill-badge" id="badge-count-cat-abstract">0</span>
-              </button>
-              <button class="pill-btn" data-cat="FIGURA">
-                <span class="cat-pill-indicator cat-ind-figura"></span> <span>FIGURA</span> <span class="pill-badge" id="badge-count-cat-figura">0</span>
-              </button>
-              <button class="pill-btn" data-cat="DENSE">
-                <span class="cat-pill-indicator cat-ind-dense"></span> <span>DENSE</span> <span class="pill-badge" id="badge-count-cat-dense">0</span>
-              </button>
-              <button class="pill-btn" data-cat="CHROMA">
-                <span class="cat-pill-indicator cat-ind-chroma"></span> <span>CHROMA</span> <span class="pill-badge" id="badge-count-cat-chroma">0</span>
-              </button>
-              <button class="pill-btn" data-cat="STREAMS & YOUTUBE">
-                <span class="cat-pill-indicator cat-ind-stream"></span> <span>STREAMS & YOUTUBE</span> <span class="pill-badge" id="badge-count-cat-stream">0</span>
-              </button>
-              <button class="pill-btn" data-cat="GENERATIVE">
-                <span class="cat-pill-indicator cat-ind-gen"></span> <span>GENERATIVE 3D</span> <span class="pill-badge" id="badge-count-cat-gen">0</span>
-              </button>
+            <div class="lib-sidebar-scroll">
+              <!-- SECTION 1: ASSET TYPES / COLEÇÕES GLOBAIS -->
+              <div class="lib-tree-section">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">COLEÇÕES GLOBAIS</span>
+                </div>
+                <div class="library-type-selector-bar lib-tree-items">
+                  <button class="lib-type-btn lib-tree-item active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
+                    <span class="lib-type-icon">✨</span>
+                    <span class="lib-type-label">TODOS OS RECURSOS</span>
+                    <span class="lib-type-badge" id="lib-count-all">115</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
+                    <span class="lib-type-icon">🎬</span>
+                    <span class="lib-type-label">VÍDEOS & CLIPES</span>
+                    <span class="lib-type-badge" id="lib-count-clips">74</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
+                    <span class="lib-type-icon">🎭</span>
+                    <span class="lib-type-label">MATTES & MÁSCARAS</span>
+                    <span class="lib-type-badge" id="lib-count-mattes">29</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
+                    <span class="lib-type-icon">⚡</span>
+                    <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
+                    <span class="lib-type-badge" id="lib-count-fx">6</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
+                    <span class="lib-type-icon">🎛️</span>
+                    <span class="lib-type-label">PRESETS & CONDUCTOR</span>
+                    <span class="lib-type-badge" id="lib-count-presets">6</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 2: ORIGEM DA MÍDIA (SOURCES) -->
+              <div class="lib-tree-section pool-source-strip" id="sidebar-sec-sources">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">ORIGEM DA MÍDIA</span>
+                </div>
+                <div class="lib-tree-items filter-pills source-pills" id="source-pills-container">
+                  <button class="lib-tree-item pill-btn active" data-source="ALL">
+                    <span class="tree-icon">🌐</span>
+                    <span class="tree-label">TODAS AS ORIGENS</span>
+                    <span class="pill-badge" id="badge-count-src-all">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="cdn">
+                    <span class="src-dot dot-cdn"></span>
+                    <span class="tree-label">BUNNY CDN (NUVEM)</span>
+                    <span class="pill-badge" id="badge-count-src-cdn">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="local">
+                    <span class="src-dot dot-local"></span>
+                    <span class="tree-label">LOCAL (SSD)</span>
+                    <span class="pill-badge" id="badge-count-src-local">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="stream">
+                    <span class="src-dot dot-stream"></span>
+                    <span class="tree-label">YOUTUBE & STREAMS</span>
+                    <span class="pill-badge" id="badge-count-src-stream">0</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 3: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
+              <div class="lib-tree-section pool-category-strip" id="sidebar-sec-categories">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">CATEGORIAS (SMART BINS)</span>
+                </div>
+                <div class="lib-tree-items filter-pills category-pills" id="category-pills-container">
+                  <button class="lib-tree-item pill-btn active" data-cat="ALL">
+                    <span class="tree-icon">🏷️</span>
+                    <span class="tree-label">TODAS AS CATEGORIAS</span>
+                    <span class="pill-badge" id="badge-count-cat-all">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="MINIMAL">
+                    <span class="cat-pill-indicator cat-ind-minimal"></span>
+                    <span class="tree-label">MINIMAL</span>
+                    <span class="pill-badge" id="badge-count-cat-minimal">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="ABSTRACT">
+                    <span class="cat-pill-indicator cat-ind-abstract"></span>
+                    <span class="tree-label">ABSTRACT</span>
+                    <span class="pill-badge" id="badge-count-cat-abstract">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="FIGURA">
+                    <span class="cat-pill-indicator cat-ind-figura"></span>
+                    <span class="tree-label">FIGURA</span>
+                    <span class="pill-badge" id="badge-count-cat-figura">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="DENSE">
+                    <span class="cat-pill-indicator cat-ind-dense"></span>
+                    <span class="tree-label">DENSE</span>
+                    <span class="pill-badge" id="badge-count-cat-dense">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="CHROMA">
+                    <span class="cat-pill-indicator cat-ind-chroma"></span>
+                    <span class="tree-label">CHROMA (ALPHA)</span>
+                    <span class="pill-badge" id="badge-count-cat-chroma">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="STREAMS & YOUTUBE">
+                    <span class="cat-pill-indicator cat-ind-stream"></span>
+                    <span class="tree-label">STREAMS & YOUTUBE</span>
+                    <span class="pill-badge" id="badge-count-cat-stream">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="GENERATIVE">
+                    <span class="cat-pill-indicator cat-ind-gen"></span>
+                    <span class="tree-label">GENERATIVE 3D</span>
+                    <span class="pill-badge" id="badge-count-cat-gen">0</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 4: PASTAS / BINS DE PROJETO -->
+              <div class="lib-tree-section pool-folder-strip" id="sidebar-sec-folders">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">PASTAS DO PROJETO</span>
+                </div>
+                <div class="lib-tree-items filter-pills folder-pills" id="folder-pills-container">
+                  <!-- Dynamically populated from media manifest -->
+                </div>
+              </div>
             </div>
-          </div>
+          </aside>
 
-          <!-- TOOLSTRIP 3: PROJETOS / PASTAS (SUB-BINS) -->
-          <div class="filter-group pool-folder-strip">
-            <span class="filter-group-label">PASTAS / BINS:</span>
-            <div class="filter-pills folder-pills" id="folder-pills-container">
-              <!-- Dynamically populated from media manifest -->
+          <!-- RIGHT MAIN PANEL: COMPACT TOOLBAR + ASSET GRID -->
+          <section class="library-main-panel">
+            <!-- ULTRA-COMPACT SINGLE ROW TOOLBAR (38px) -->
+            <header class="library-toolbar-compact">
+              <div class="lib-tb-left">
+                <button class="btn-lib-tb btn-toggle-sb" id="btn-toggle-sb-bar" onclick="toggleLibrarySidebar()" title="Mostrar/Ocultar Painel de Bins">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                  <span>BINS</span>
+                </button>
+                
+                <div class="lib-search-box">
+                  <svg class="lib-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input type="text" id="input-media-search" placeholder="Buscar clipes, mattes, efeitos FX ou presets..." class="lib-search-input">
+                  <button class="lib-search-clear" id="btn-clear-media-search" onclick="clearMediaSearch()" title="Limpar busca">✕</button>
+                </div>
+
+                <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
+                <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
+              </div>
+
+              <div class="lib-tb-right">
+                <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>+ STREAM</span>
+                </button>
+
+                <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  <span>+ LOCAL</span>
+                </button>
+
+                <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  <span>CACHE</span>
+                </button>
+
+                <div class="lib-view-mode-group">
+                  <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">▦ GRADE</button>
+                  <button class="btn-lib-view-mode" id="btn-view-compact" onclick="setLibraryViewMode('compact')" title="Visualização Compacta">▤ LISTA</button>
+                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento vertical por categorias">🗂️ SEÇÕES</button>
+                </div>
+
+                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleQuickInspector()" title="Abrir/Fechar Inspetor de Parâmetros Rápidos">
+                  <span>⚙️ PARÂMETROS</span>
+                </button>
+              </div>
+            </header>
+
+            <!-- ASSET CONTENT CONTAINER (100% vertical space) -->
+            <div class="dock-media-grid" id="media-cards-container">
+              <!-- Dynamically populated via app.js -->
             </div>
-          </div>
-        </div>
+          </section>
 
-        <div class="dock-media-grid" id="media-cards-container">
-          <!-- Dynamically populated via app.js -->
+          <!-- QUICK PARAMETER INSPECTOR DRAWER -->
+          <aside class="library-quick-inspector" id="library-quick-inspector" style="display: none;">
+            <div class="lqi-header">
+              <div class="lqi-title-group">
+                <span class="lqi-icon" id="lqi-asset-icon">🎛️</span>
+                <span class="lqi-title" id="lqi-asset-title">INSPETOR DE PARÂMETROS</span>
+              </div>
+              <button class="lqi-close-btn" onclick="toggleQuickInspector(false)">✕</button>
+            </div>
+            <div class="lqi-body" id="lqi-body-content">
+              <!-- Populated dynamically based on focused asset -->
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -15500,7 +16126,8 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
+        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">🎛️ LOOK</button>
+        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
         ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
       </div>
     </div>
@@ -15666,12 +16293,12 @@ function createMatteCardForLibrary(matte) {
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
       <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer4', '${matte.path}')" title="Aplicar no Layer 4 (Accent)">→ L4</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">🎛️ PARÂMETROS</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    onLayerMatteChange(targetL, matte.path);
+    editMatteParameters(matte.path, matte.name);
   });
 
   return card;
@@ -15696,14 +16323,12 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
         ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
       </button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_a');">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_b');">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">🎛️ PARÂMETROS</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    selectFxPlugin(pluginId);
-    switchTab('tab-fx');
+    editFxParameters(pluginId);
   });
 
   return card;
@@ -15726,18 +16351,248 @@ function createPresetCardForLibrary(presetId, presetInfo) {
       <div class="library-card-desc">${presetInfo.desc}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-studio-primary btn-xs" style="width:100%;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
-        CARREGAR PRESET
+      <button class="btn btn-studio-primary btn-xs" style="flex:1;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
+        CARREGAR
+      </button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editPresetParameters('${presetId}')" title="Editar parâmetros no Conductor (Módulo 5)">
+        🎛️ EDITAR
       </button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    applyMacroPreset(presetId, 0, true);
+    editPresetParameters(presetId);
   });
 
   return card;
 }
+
+// ============================================================================
+// ASSET PARAMETER EDIT NAVIGATION & QUICK INSPECTOR METHODS
+// ============================================================================
+function editMatteParameters(mattePath, matteName) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  switchTab('tab-mattes');
+  
+  const targetL = appState.matte_target_layer || 'layer3';
+  onLayerMatteChange(targetL, mattePath);
+
+  if (typeof switchMatteSub === 'function') switchMatteSub('kinematics');
+
+  const kinGrid = document.querySelector('#subview-kinematics .kinematics-dock-grid');
+  if (kinGrid) {
+    kinGrid.classList.remove('highlight-focus-ring');
+    void kinGrid.offsetWidth;
+    kinGrid.classList.add('highlight-focus-ring');
+  }
+
+  showMacroToast(`🎭 [MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
+  openQuickInspector('matte', { path: mattePath, name: matteName });
+}
+window.editMatteParameters = editMatteParameters;
+
+function editFxParameters(pluginId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  if (!appState.fx.enabled) toggleFxMaster();
+  selectFxPlugin(pluginId);
+  switchTab('tab-fx');
+
+  const activeCard = document.getElementById(`card-fx-${pluginId}`);
+  if (activeCard) {
+    activeCard.classList.remove('highlight-focus-ring');
+    void activeCard.offsetWidth;
+    activeCard.classList.add('highlight-focus-ring');
+  }
+
+  const fxInfo = FX_LIBRARY_CATALOG[pluginId] || { title: pluginId };
+  showMacroToast(`⚡ [FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
+  openQuickInspector('fx', { pluginId, info: fxInfo });
+}
+window.editFxParameters = editFxParameters;
+
+function editPresetParameters(presetId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  applyMacroPreset(presetId, 0, true);
+  switchTab('tab-conductor');
+
+  const presetGrid = document.querySelector('#tab-conductor .macro-matrix-grid');
+  if (presetGrid) {
+    presetGrid.classList.remove('highlight-focus-ring');
+    void presetGrid.offsetWidth;
+    presetGrid.classList.add('highlight-focus-ring');
+  }
+
+  const pInfo = PRESETS_LIBRARY_CATALOG[presetId] || { title: presetId };
+  showMacroToast(`🎛️ [CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
+  openQuickInspector('preset', { presetId, info: pInfo });
+}
+window.editPresetParameters = editPresetParameters;
+
+function editClipTonalParameters(clipId) {
+  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
+  routeClipToBus(clipId, 'B');
+  switchTab('tab-tonal');
+
+  const tonalGrid = document.querySelector('#tab-tonal .tonal-controls-grid') || document.querySelector('#tab-tonal');
+  if (tonalGrid) {
+    tonalGrid.classList.remove('highlight-focus-ring');
+    void tonalGrid.offsetWidth;
+    tonalGrid.classList.add('highlight-focus-ring');
+  }
+
+  const clip = allClips.find(c => c.id === clipId);
+  const title = clip?.display_title || clip?.filename || 'Clipe';
+  showMacroToast(`🎨 [TONAL] Grading aberto para "${title}" no Módulo 4`);
+  openQuickInspector('clip', { clipId, clip });
+}
+window.editClipTonalParameters = editClipTonalParameters;
+
+function toggleLibrarySidebar() {
+  const sb = document.getElementById('library-sidebar');
+  if (!sb) return;
+  const isCol = sb.classList.toggle('is-collapsed');
+  const btn = document.getElementById('btn-toggle-sidebar');
+  if (btn) btn.textContent = isCol ? '▸' : '◂';
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_sidebar_collapsed', isCol);
+  }
+}
+window.toggleLibrarySidebar = toggleLibrarySidebar;
+
+function toggleTreeSection(headerEl) {
+  if (!headerEl) return;
+  const section = headerEl.closest('.lib-tree-section');
+  if (section) section.classList.toggle('is-collapsed');
+}
+window.toggleTreeSection = toggleTreeSection;
+
+let libraryViewMode = 'grid'; // 'grid' | 'compact'
+function setLibraryViewMode(mode) {
+  libraryViewMode = mode;
+  const grid = document.getElementById('media-cards-container');
+  if (grid) {
+    grid.classList.toggle('view-compact', mode === 'compact');
+  }
+  document.getElementById('btn-view-grid')?.classList.toggle('active', mode === 'grid');
+  document.getElementById('btn-view-compact')?.classList.toggle('active', mode === 'compact');
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_view_mode', mode);
+  }
+}
+window.setLibraryViewMode = setLibraryViewMode;
+
+function toggleLibraryCategoryGrouping() {
+  isGroupedByCategory = !isGroupedByCategory;
+  const btn = document.getElementById('btn-toggle-group-categories');
+  if (btn) btn.classList.toggle('active', isGroupedByCategory);
+  const container = document.getElementById('media-cards-container');
+  if (container) container.classList.toggle('is-grouped', isGroupedByCategory);
+  renderMediaCards();
+}
+window.toggleLibraryCategoryGrouping = toggleLibraryCategoryGrouping;
+
+function clearMediaSearch() {
+  const inp = document.getElementById('input-media-search');
+  if (inp) {
+    inp.value = '';
+    renderMediaCards();
+    inp.focus();
+  }
+}
+window.clearMediaSearch = clearMediaSearch;
+
+function toggleQuickInspector(forceState) {
+  const drawer = document.getElementById('library-quick-inspector');
+  if (!drawer) return;
+  const show = typeof forceState === 'boolean' ? forceState : (drawer.style.display === 'none');
+  drawer.style.display = show ? 'flex' : 'none';
+  document.getElementById('btn-toggle-inspector')?.classList.toggle('active', show);
+}
+window.toggleQuickInspector = toggleQuickInspector;
+
+function openQuickInspector(assetType, data) {
+  const drawer = document.getElementById('library-quick-inspector');
+  const body = document.getElementById('lqi-body-content');
+  const title = document.getElementById('lqi-asset-title');
+  const icon = document.getElementById('lqi-asset-icon');
+  if (!drawer || !body) return;
+
+  drawer.style.display = 'flex';
+  document.getElementById('btn-toggle-inspector')?.classList.add('active');
+
+  if (assetType === 'matte') {
+    if (icon) icon.textContent = '🎭';
+    if (title) title.textContent = `MATTE: ${data.name || 'MÁSCARA'}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>CAMADA ALVO</span><strong>${(appState.matte_target_layer || 'layer3').toUpperCase()}</strong></div>
+        <div class="lqi-label"><span>ARQUIVO</span><small style="color:var(--cyan);">${data.path}</small></div>
+        <button class="btn btn-outline btn-xs" style="width:100%; margin-top:4px;" onclick="toggleCurrentTargetMatteInvert()">
+          INVERTER PRETO/BRANCO (INV)
+        </button>
+      </div>
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>RESPIRAÇÃO (WIGGLE)</span><strong id="lqi-val-wiggle">6%</strong></div>
+        <input type="range" class="pro-slider" min="0" max="30" value="6" oninput="const s = document.getElementById('slider-wiggle-scale'); if(s) { s.value = this.value; s.dispatchEvent(new Event('input')); } document.getElementById('lqi-val-wiggle').textContent = this.value + '%';">
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-mattes')">
+        ABRIR MÓDULO MATTES COMPLETO (TAB 3) ↗
+      </button>
+    `;
+  } else if (assetType === 'fx') {
+    const fxInfo = data.info || {};
+    if (icon) icon.textContent = '⚡';
+    if (title) title.textContent = `FX: ${fxInfo.title || data.pluginId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>ESTADO FX MASTER</span><strong>${appState.fx.enabled ? '🟢 ATIVO' : '🔴 DESLIGADO'}</strong></div>
+        <button class="btn btn-primary btn-xs" style="width:100%; margin-top:4px;" onclick="toggleFxMaster(); openQuickInspector('fx', { pluginId: '${data.pluginId}', info: FX_LIBRARY_CATALOG['${data.pluginId}'] });">
+          ${appState.fx.enabled ? 'DESLIGAR FX MASTER' : 'LIGAR FX MASTER'}
+        </button>
+      </div>
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>DRY / WET (INTENSIDADE)</span><strong id="lqi-val-drywet">80%</strong></div>
+        <input type="range" class="pro-slider" min="0" max="100" value="80" oninput="setFxMasterParam('masterIntensity', this.value / 100); document.getElementById('lqi-val-drywet').textContent = this.value + '%';">
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-fx')">
+        ABRIR FX ENGINE COMPLETO (TAB 6) ↗
+      </button>
+    `;
+  } else if (assetType === 'preset') {
+    const pInfo = data.info || {};
+    if (icon) icon.textContent = '🎛️';
+    if (title) title.textContent = `PRESET: ${pInfo.title || data.presetId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>TEMPO SUGERIDO</span><strong>${pInfo.bpm || 'AUTO'}</strong></div>
+        <div class="lqi-label"><span>NARRATIVA</span><p style="font-size:8.5px; color:#9ea5b5; margin:0;">${pInfo.desc || ''}</p></div>
+        <button class="btn btn-studio-primary btn-xs" style="width:100%; margin-top:6px;" onclick="applyMacroPreset('${data.presetId}', 0, true);">
+          DISPARAR PRESET NO PROGRAM
+        </button>
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-conductor')">
+        ABRIR AUTOPILOT CONDUCTOR (TAB 5) ↗
+      </button>
+    `;
+  } else if (assetType === 'clip') {
+    const clip = data.clip || allClips.find(c => c.id === data.clipId);
+    if (icon) icon.textContent = '🎬';
+    if (title) title.textContent = `CLIPE: ${clip?.display_title || clip?.filename || data.clipId}`;
+    body.innerHTML = `
+      <div class="lqi-asset-card">
+        <div class="lqi-label"><span>ROTEAMENTO RÁPIDO</span></div>
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <button class="btn btn-outline btn-xs" style="flex:1;" onclick="routeClipToBus('${data.clipId}', 'A')">PGM (A)</button>
+          <button class="btn btn-primary btn-xs" style="flex:1;" onclick="routeClipToBus('${data.clipId}', 'B')">PRV (B)</button>
+        </div>
+      </div>
+      <button class="lqi-action-btn-full" onclick="switchTab('tab-tonal')">
+        ABRIR GRADING TONAL (TAB 4) ↗
+      </button>
+    `;
+  }
+}
+window.openQuickInspector = openQuickInspector;
 
 function renderMediaCards() {
   const container = document.getElementById('media-cards-container');
@@ -15838,6 +16693,7 @@ function renderMediaCards() {
 
   // Grouped by Category View Mode
   if (isGroupedByCategory && activeCategoryFilter === 'ALL') {
+    container.classList.add('is-grouped');
     const predefinedOrder = [
       'MINIMAL',
       'ABSTRACT',
@@ -15886,6 +16742,7 @@ function renderMediaCards() {
       container.appendChild(section);
     });
   } else {
+    container.classList.remove('is-grouped');
     // Flat Grid View Mode
     filtered.forEach(clip => {
       container.appendChild(createMediaCardElement(clip));

@@ -1709,35 +1709,8 @@
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
         <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
-        <div class="pool-dock-header">
-          <!-- TOP ROW: BUSCA + AÇÕES PRINCIPAIS -->
-          <div class="dock-search-row">
-            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar clipes, mattes, efeitos FX ou presets..." class="dock-search">
-            <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
-            <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
-            
-            <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              <span>+ STREAM / DOWNLOADER</span>
-            </button>
-
-            <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-              <span>💾 PERFIL & CACHE</span>
-            </button>
-
-            <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              <span>+ ADD PASTA LOCAL</span>
-            </button>
-
-            <button class="btn-pool-action btn-toggle-group active" id="btn-toggle-group-categories" title="Alternar entre visualização por seções de categorias e grid contínuo">
-              <span>▤ SEÇÕES DE CATEGORIA</span>
-            </button>
-          </div>
-
-          <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
-          <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
+        <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
+        <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
             <div class="nsd-header">
               <div class="nsd-title-group">
                 <span class="nsd-pulse-dot"></span>
@@ -1800,96 +1773,214 @@
             </div>
           </div>
 
-          <!-- MASTER ASSET TYPE SELECTOR (UNIVERSAL CREATIVE ASSET LIBRARY) -->
-          <div class="library-type-selector-bar">
-            <button class="lib-type-btn active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
-              <span class="lib-type-icon">✨</span>
-              <span class="lib-type-label">TODOS OS RECURSOS</span>
-              <span class="lib-type-badge" id="lib-count-all">115</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
-              <span class="lib-type-icon">🎬</span>
-              <span class="lib-type-label">VÍDEOS & CLIPES</span>
-              <span class="lib-type-badge" id="lib-count-clips">74</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
-              <span class="lib-type-icon">🎭</span>
-              <span class="lib-type-label">MATTES & MÁSCARAS</span>
-              <span class="lib-type-badge" id="lib-count-mattes">29</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
-              <span class="lib-type-icon">⚡</span>
-              <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
-              <span class="lib-type-badge" id="lib-count-fx">6</span>
-            </button>
-            <button class="lib-type-btn" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
-              <span class="lib-type-icon">🎛️</span>
-              <span class="lib-type-label">PRESETS & CONDUCTOR</span>
-              <span class="lib-type-badge" id="lib-count-presets">6</span>
-            </button>
-          </div>
-
-          <!-- TOOLSTRIP 1: FILTROS DE ORIGEM DA MÍDIA (SOURCES) -->
-          <div class="filter-group pool-source-strip">
-            <span class="filter-group-label">ORIGEM:</span>
-            <div class="filter-pills source-pills" id="source-pills-container">
-              <button class="pill-btn active" data-source="ALL">
-                <span>TODAS AS ORIGENS</span> <span class="pill-badge" id="badge-count-src-all">0</span>
-              </button>
-              <button class="pill-btn" data-source="cdn">
-                <span class="src-dot dot-cdn"></span> <span>☁️ BUNNY CDN</span> <span class="pill-badge" id="badge-count-src-cdn">0</span>
-              </button>
-              <button class="pill-btn" data-source="local">
-                <span class="src-dot dot-local"></span> <span>📁 LOCAL (SSD)</span> <span class="pill-badge" id="badge-count-src-local">0</span>
-              </button>
-              <button class="pill-btn" data-source="stream">
-                <span class="src-dot dot-stream"></span> <span>▶️ YOUTUBE & STREAMS</span> <span class="pill-badge" id="badge-count-src-stream">0</span>
-              </button>
+        <!-- TWO-PANEL STUDIO BROWSER LAYOUT -->
+        <div class="library-studio-layout">
+          <!-- LEFT SIDEBAR: BINS & COLLECTIONS HIERARCHY -->
+          <aside class="library-sidebar" id="library-sidebar">
+            <div class="lib-sidebar-header">
+              <div class="lib-sidebar-title">
+                <span class="lib-sidebar-icon">📁</span>
+                <span>ORGANIZAÇÃO & BINS</span>
+              </div>
+              <button class="btn-sidebar-collapse" id="btn-toggle-sidebar" onclick="toggleLibrarySidebar()" title="Recolher barra lateral">◂</button>
             </div>
-          </div>
 
-          <!-- TOOLSTRIP 2: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
-          <div class="filter-group pool-category-strip">
-            <span class="filter-group-label">CATEGORIA:</span>
-            <div class="filter-pills category-pills" id="category-pills-container">
-              <button class="pill-btn active" data-cat="ALL">
-                <span>TODAS</span> <span class="pill-badge" id="badge-count-cat-all">0</span>
-              </button>
-              <button class="pill-btn" data-cat="MINIMAL">
-                <span class="cat-pill-indicator cat-ind-minimal"></span> <span>MINIMAL</span> <span class="pill-badge" id="badge-count-cat-minimal">0</span>
-              </button>
-              <button class="pill-btn" data-cat="ABSTRACT">
-                <span class="cat-pill-indicator cat-ind-abstract"></span> <span>ABSTRACT</span> <span class="pill-badge" id="badge-count-cat-abstract">0</span>
-              </button>
-              <button class="pill-btn" data-cat="FIGURA">
-                <span class="cat-pill-indicator cat-ind-figura"></span> <span>FIGURA</span> <span class="pill-badge" id="badge-count-cat-figura">0</span>
-              </button>
-              <button class="pill-btn" data-cat="DENSE">
-                <span class="cat-pill-indicator cat-ind-dense"></span> <span>DENSE</span> <span class="pill-badge" id="badge-count-cat-dense">0</span>
-              </button>
-              <button class="pill-btn" data-cat="CHROMA">
-                <span class="cat-pill-indicator cat-ind-chroma"></span> <span>CHROMA</span> <span class="pill-badge" id="badge-count-cat-chroma">0</span>
-              </button>
-              <button class="pill-btn" data-cat="STREAMS & YOUTUBE">
-                <span class="cat-pill-indicator cat-ind-stream"></span> <span>STREAMS & YOUTUBE</span> <span class="pill-badge" id="badge-count-cat-stream">0</span>
-              </button>
-              <button class="pill-btn" data-cat="GENERATIVE">
-                <span class="cat-pill-indicator cat-ind-gen"></span> <span>GENERATIVE 3D</span> <span class="pill-badge" id="badge-count-cat-gen">0</span>
-              </button>
+            <div class="lib-sidebar-scroll">
+              <!-- SECTION 1: ASSET TYPES / COLEÇÕES GLOBAIS -->
+              <div class="lib-tree-section">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">COLEÇÕES GLOBAIS</span>
+                </div>
+                <div class="library-type-selector-bar lib-tree-items">
+                  <button class="lib-type-btn lib-tree-item active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
+                    <span class="lib-type-icon">✨</span>
+                    <span class="lib-type-label">TODOS OS RECURSOS</span>
+                    <span class="lib-type-badge" id="lib-count-all">115</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
+                    <span class="lib-type-icon">🎬</span>
+                    <span class="lib-type-label">VÍDEOS & CLIPES</span>
+                    <span class="lib-type-badge" id="lib-count-clips">74</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
+                    <span class="lib-type-icon">🎭</span>
+                    <span class="lib-type-label">MATTES & MÁSCARAS</span>
+                    <span class="lib-type-badge" id="lib-count-mattes">29</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
+                    <span class="lib-type-icon">⚡</span>
+                    <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
+                    <span class="lib-type-badge" id="lib-count-fx">6</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
+                    <span class="lib-type-icon">🎛️</span>
+                    <span class="lib-type-label">PRESETS & CONDUCTOR</span>
+                    <span class="lib-type-badge" id="lib-count-presets">6</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 2: ORIGEM DA MÍDIA (SOURCES) -->
+              <div class="lib-tree-section pool-source-strip" id="sidebar-sec-sources">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">ORIGEM DA MÍDIA</span>
+                </div>
+                <div class="lib-tree-items filter-pills source-pills" id="source-pills-container">
+                  <button class="lib-tree-item pill-btn active" data-source="ALL">
+                    <span class="tree-icon">🌐</span>
+                    <span class="tree-label">TODAS AS ORIGENS</span>
+                    <span class="pill-badge" id="badge-count-src-all">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="cdn">
+                    <span class="src-dot dot-cdn"></span>
+                    <span class="tree-label">BUNNY CDN (NUVEM)</span>
+                    <span class="pill-badge" id="badge-count-src-cdn">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="local">
+                    <span class="src-dot dot-local"></span>
+                    <span class="tree-label">LOCAL (SSD)</span>
+                    <span class="pill-badge" id="badge-count-src-local">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-source="stream">
+                    <span class="src-dot dot-stream"></span>
+                    <span class="tree-label">YOUTUBE & STREAMS</span>
+                    <span class="pill-badge" id="badge-count-src-stream">0</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 3: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
+              <div class="lib-tree-section pool-category-strip" id="sidebar-sec-categories">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">CATEGORIAS (SMART BINS)</span>
+                </div>
+                <div class="lib-tree-items filter-pills category-pills" id="category-pills-container">
+                  <button class="lib-tree-item pill-btn active" data-cat="ALL">
+                    <span class="tree-icon">🏷️</span>
+                    <span class="tree-label">TODAS AS CATEGORIAS</span>
+                    <span class="pill-badge" id="badge-count-cat-all">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="MINIMAL">
+                    <span class="cat-pill-indicator cat-ind-minimal"></span>
+                    <span class="tree-label">MINIMAL</span>
+                    <span class="pill-badge" id="badge-count-cat-minimal">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="ABSTRACT">
+                    <span class="cat-pill-indicator cat-ind-abstract"></span>
+                    <span class="tree-label">ABSTRACT</span>
+                    <span class="pill-badge" id="badge-count-cat-abstract">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="FIGURA">
+                    <span class="cat-pill-indicator cat-ind-figura"></span>
+                    <span class="tree-label">FIGURA</span>
+                    <span class="pill-badge" id="badge-count-cat-figura">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="DENSE">
+                    <span class="cat-pill-indicator cat-ind-dense"></span>
+                    <span class="tree-label">DENSE</span>
+                    <span class="pill-badge" id="badge-count-cat-dense">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="CHROMA">
+                    <span class="cat-pill-indicator cat-ind-chroma"></span>
+                    <span class="tree-label">CHROMA (ALPHA)</span>
+                    <span class="pill-badge" id="badge-count-cat-chroma">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="STREAMS & YOUTUBE">
+                    <span class="cat-pill-indicator cat-ind-stream"></span>
+                    <span class="tree-label">STREAMS & YOUTUBE</span>
+                    <span class="pill-badge" id="badge-count-cat-stream">0</span>
+                  </button>
+                  <button class="lib-tree-item pill-btn" data-cat="GENERATIVE">
+                    <span class="cat-pill-indicator cat-ind-gen"></span>
+                    <span class="tree-label">GENERATIVE 3D</span>
+                    <span class="pill-badge" id="badge-count-cat-gen">0</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- SECTION 4: PASTAS / BINS DE PROJETO -->
+              <div class="lib-tree-section pool-folder-strip" id="sidebar-sec-folders">
+                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
+                  <span class="lib-tree-chevron">▾</span>
+                  <span class="lib-tree-title">PASTAS DO PROJETO</span>
+                </div>
+                <div class="lib-tree-items filter-pills folder-pills" id="folder-pills-container">
+                  <!-- Dynamically populated from media manifest -->
+                </div>
+              </div>
             </div>
-          </div>
+          </aside>
 
-          <!-- TOOLSTRIP 3: PROJETOS / PASTAS (SUB-BINS) -->
-          <div class="filter-group pool-folder-strip">
-            <span class="filter-group-label">PASTAS / BINS:</span>
-            <div class="filter-pills folder-pills" id="folder-pills-container">
-              <!-- Dynamically populated from media manifest -->
+          <!-- RIGHT MAIN PANEL: COMPACT TOOLBAR + ASSET GRID -->
+          <section class="library-main-panel">
+            <!-- ULTRA-COMPACT SINGLE ROW TOOLBAR (38px) -->
+            <header class="library-toolbar-compact">
+              <div class="lib-tb-left">
+                <button class="btn-lib-tb btn-toggle-sb" id="btn-toggle-sb-bar" onclick="toggleLibrarySidebar()" title="Mostrar/Ocultar Painel de Bins">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                  <span>BINS</span>
+                </button>
+                
+                <div class="lib-search-box">
+                  <svg class="lib-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input type="text" id="input-media-search" placeholder="Buscar clipes, mattes, efeitos FX ou presets..." class="lib-search-input">
+                  <button class="lib-search-clear" id="btn-clear-media-search" onclick="clearMediaSearch()" title="Limpar busca">✕</button>
+                </div>
+
+                <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
+                <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
+              </div>
+
+              <div class="lib-tb-right">
+                <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>+ STREAM</span>
+                </button>
+
+                <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  <span>+ LOCAL</span>
+                </button>
+
+                <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  <span>CACHE</span>
+                </button>
+
+                <div class="lib-view-mode-group">
+                  <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">▦ GRADE</button>
+                  <button class="btn-lib-view-mode" id="btn-view-compact" onclick="setLibraryViewMode('compact')" title="Visualização Compacta">▤ LISTA</button>
+                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento vertical por categorias">🗂️ SEÇÕES</button>
+                </div>
+
+                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleQuickInspector()" title="Abrir/Fechar Inspetor de Parâmetros Rápidos">
+                  <span>⚙️ PARÂMETROS</span>
+                </button>
+              </div>
+            </header>
+
+            <!-- ASSET CONTENT CONTAINER (100% vertical space) -->
+            <div class="dock-media-grid" id="media-cards-container">
+              <!-- Dynamically populated via app.js -->
             </div>
-          </div>
-        </div>
+          </section>
 
-        <div class="dock-media-grid" id="media-cards-container">
-          <!-- Dynamically populated via app.js -->
+          <!-- QUICK PARAMETER INSPECTOR DRAWER -->
+          <aside class="library-quick-inspector" id="library-quick-inspector" style="display: none;">
+            <div class="lqi-header">
+              <div class="lqi-title-group">
+                <span class="lqi-icon" id="lqi-asset-icon">🎛️</span>
+                <span class="lqi-title" id="lqi-asset-title">INSPETOR DE PARÂMETROS</span>
+              </div>
+              <button class="lqi-close-btn" onclick="toggleQuickInspector(false)">✕</button>
+            </div>
+            <div class="lqi-body" id="lqi-body-content">
+              <!-- Populated dynamically based on focused asset -->
+            </div>
+          </aside>
         </div>
       </div>
 

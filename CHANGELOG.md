@@ -1,21 +1,22 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 11:38:45 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 12:23:25 BRT
 
 ---
 
 ## Outubro de 2026
 
-### 📚 Documentação
-- `f1a6951` add ADR-0013 and update changelog for source orchestration
-- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
-
 ### ✨ Novos Recursos
+- `d24098f` **(ui)** redesign pro preferences, resizable workspace, dedicated timeline arranger, and universal asset library
 - `4859515` **(launcher)** fix startup launcher trigger, add source switcher in header and Settings tab
 - `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment
 - `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
+
+### 📚 Documentação
+- `f1a6951` add ADR-0013 and update changelog for source orchestration
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
 
 ### 🐛 Correções
 - `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
