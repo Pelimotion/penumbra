@@ -52,6 +52,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/penumbra', express.static(path.join(__dirname, 'public')));
 app.use('/thumbnails', express.static(THUMBS_DIR));
 app.use('/downloads', express.static(DOWNLOADS_DIR));
 
