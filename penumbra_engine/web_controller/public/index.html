@@ -1688,9 +1688,9 @@
     <footer class="app-status-bar">
       <div class="status-left">
         <span class="status-indicator-dot"></span>
-        <span>ENGINE RUNTIME: <strong id="status-fps-display">60.0 FPS</strong> (GPU OK)</span>
+        <span>ENGINE RUNTIME: <strong id="status-fps-display">30.0 FPS</strong> (GPU OK)</span>
         <span class="sep">|</span>
-        <span>NETWORK OUTPUT: <strong id="status-ndi-display">NDI & MADMAPPER ON</strong></span>
+        <span>NETWORK OUTPUT: <strong id="status-ndi-display" style="color:var(--text-muted)">OFFLINE (HDMI ONLY)</strong></span>
       </div>
       <div class="status-right">
         <span>PENUMBRA VJ ENGINE · PELIMOTION 2026 · ZERO-SCROLL PRO COCKPIT</span>
@@ -1955,8 +1955,8 @@
                 <div class="cfg-field-block">
                   <span class="cfg-title">LIMITE DE TAXA DE QUADROS (FRAME LIMITER):</span>
                   <div class="conductor-btn-group" id="group-cfg-fps" style="margin-top: 8px;">
-                    <button class="conductor-btn" data-fps="30" onclick="setFpsLimit(30)">30 FPS (BATERIA)</button>
-                    <button class="conductor-btn active" data-fps="60" onclick="setFpsLimit(60)">60 FPS (FLUIDO)</button>
+                    <button class="conductor-btn active" data-fps="30" onclick="setFpsLimit(30)">30 FPS (BATERIA)</button>
+                    <button class="conductor-btn" data-fps="60" onclick="setFpsLimit(60)">60 FPS (FLUIDO)</button>
                     <button class="conductor-btn" data-fps="120" onclick="setFpsLimit(120)">120 FPS (PROMOTION)</button>
                   </div>
                   <span class="cfg-desc" style="display:block; margin-top: 8px;">O modo 60 FPS garante sincronia perfeita com projetores HDMI sem aquecer o MacBook 13".</span>
@@ -1993,8 +1993,8 @@
                 <div class="cfg-field-block">
                   <span class="cfg-title">TRANSMISSÃO NDI / SYPHON / SPOUT:</span>
                   <div class="conductor-btn-group" id="group-cfg-network" style="margin-top: 8px;">
-                    <button class="conductor-btn active" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO (REDE LOCAL)</button>
-                    <button class="conductor-btn" data-net="off" onclick="toggleNetworkOutput(false)">DESLIGADO (SÓ HDMI)</button>
+                    <button class="conductor-btn" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO (REDE LOCAL)</button>
+                    <button class="conductor-btn active" data-net="off" onclick="toggleNetworkOutput(false)">DESLIGADO (SÓ HDMI)</button>
                   </div>
                   <span class="cfg-desc" style="display:block; margin-top: 8px;">Desligue saídas de rede para usar apenas HDMI no projetor, melhorando o desempenho e economizando bateria.</span>
                 </div>

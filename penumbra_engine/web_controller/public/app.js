@@ -381,7 +381,8 @@ let appState = {
   vertical_projection: false,
   projector_compensation: true,
   audio_gain: 1.0,
-  fps_limit: 60,
+  fps_limit: 30,
+  network_output_enabled: false,
   fx: {
     active: false,
     target: 'master', // 'master' (Master PGM Output), 'deck_a' (Deck A L0), 'deck_b' (Deck B L3)
