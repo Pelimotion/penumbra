@@ -757,12 +757,18 @@ app.post('/api/clips/:id/category', (req, res) => {
 
 // 3. Audio Streaming Endpoint (For listening to DJ feed on MacBook headphones)
 app.get('/api/audio-stream', (req, res) => {
-  if (!fs.existsSync(AUDIO_TRACK_PATH)) {
-    return res.status(404).send('Audio track not found');
+  let targetAudio = AUDIO_TRACK_PATH;
+  if (!fs.existsSync(targetAudio)) {
+    const localFallback = path.join(__dirname, 'public', 'assets', 'audio', 'test_preview.mp3');
+    if (fs.existsSync(localFallback)) {
+      targetAudio = localFallback;
+    } else {
+      return res.status(404).send('Audio track not found');
+    }
   }
 
   try {
-    const stat = fs.statSync(AUDIO_TRACK_PATH);
+    const stat = fs.statSync(targetAudio);
     const total = stat.size;
     const range = req.headers.range;
 
@@ -772,7 +778,7 @@ app.get('/api/audio-stream', (req, res) => {
       const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
       const chunksize = end - start + 1;
 
-      const stream = fs.createReadStream(AUDIO_TRACK_PATH, { start, end });
+      const stream = fs.createReadStream(targetAudio, { start, end });
       stream.on('error', (err) => {
         if (!res.headersSent) res.status(500).end();
         stream.destroy();
@@ -787,7 +793,7 @@ app.get('/api/audio-stream', (req, res) => {
       });
       stream.pipe(res);
     } else {
-      const stream = fs.createReadStream(AUDIO_TRACK_PATH);
+      const stream = fs.createReadStream(targetAudio);
       stream.on('error', (err) => {
         if (!res.headersSent) res.status(500).end();
         stream.destroy();
@@ -805,25 +811,8 @@ app.get('/api/audio-stream', (req, res) => {
   }
 });
 
-// 4. Raw Video Streaming Endpoint (HTTP 206 for active layer HTML5 video playback)
-app.get('/api/raw-video/:clipId', (req, res) => {
-  const clipId = req.params.clipId;
-  const manifest = getManifest();
-  const clip = manifest.find(c => c.id === clipId || c.filename === clipId);
-
-  let videoPath = null;
-  if (clip && clip.absolute_path && fs.existsSync(clip.absolute_path)) {
-    videoPath = clip.absolute_path;
-  } else if (clip && clip.relative_path && fs.existsSync(path.join(ROOT_DIR, 'media_pool', clip.relative_path))) {
-    videoPath = path.join(ROOT_DIR, 'media_pool', clip.relative_path);
-  } else if (fs.existsSync(path.join(DOWNLOADS_DIR, clipId))) {
-    videoPath = path.join(DOWNLOADS_DIR, clipId);
-  } else if (clip && clip.filename && fs.existsSync(path.join(DOWNLOADS_DIR, clip.filename))) {
-    videoPath = path.join(DOWNLOADS_DIR, clip.filename);
-  } else if (clip && clip.relative_path && fs.existsSync(path.join(DOWNLOADS_DIR, path.basename(clip.relative_path)))) {
-    videoPath = path.join(DOWNLOADS_DIR, path.basename(clip.relative_path));
-  }
-
+// Helper for HTTP 206 Partial Content Video Streaming
+function streamVideoFile(videoPath, req, res) {
   if (!videoPath || !fs.existsSync(videoPath)) {
     return res.status(404).send('Video file not found');
   }
@@ -838,7 +827,7 @@ app.get('/api/raw-video/:clipId', (req, res) => {
     const total = stat.size;
     const range = req.headers.range;
     const ext = path.extname(videoPath).toLowerCase();
-    const contentType = ext === '.mov' ? 'video/quicktime' : 'video/mp4';
+    const contentType = ext === '.mov' ? 'video/quicktime' : (ext === '.webm' ? 'video/webm' : 'video/mp4');
 
     if (range) {
       const parts = range.replace(/bytes=/, '').split('-');
@@ -858,7 +847,7 @@ app.get('/api/raw-video/:clipId', (req, res) => {
         'Accept-Ranges': 'bytes',
         'Content-Length': chunksize,
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=86400'
       });
       stream.pipe(res);
     } else {
@@ -872,13 +861,126 @@ app.get('/api/raw-video/:clipId', (req, res) => {
       res.writeHead(200, {
         'Content-Length': total,
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600'
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=86400'
       });
       stream.pipe(res);
     }
   } catch (err) {
     if (!res.headersSent) res.status(500).send('Error streaming video');
   }
+}
+
+function resolveLocalVideoPath(targetIdentifier) {
+  if (!targetIdentifier) return null;
+  const decoded = decodeURIComponent(targetIdentifier);
+  const base = path.basename(decoded);
+  const manifest = getManifest();
+  const clip = manifest.find(c => c.id === decoded || c.filename === decoded || c.relative_path === decoded || c.filename === base);
+
+  const candidatePaths = [];
+  if (clip && clip.absolute_path) candidatePaths.push(clip.absolute_path);
+  if (clip && clip.relative_path) {
+    candidatePaths.push(path.join(WORKSPACE_DIR, clip.relative_path));
+    candidatePaths.push(path.join(ROOT_DIR, 'media_pool', clip.relative_path));
+    const parentPipeline = path.resolve(WORKSPACE_DIR, '..');
+    candidatePaths.push(path.join(parentPipeline, clip.relative_path));
+  }
+  candidatePaths.push(path.join(WORKSPACE_DIR, decoded));
+  candidatePaths.push(path.join(WORKSPACE_DIR, '1. In', decoded));
+  candidatePaths.push(path.join(WORKSPACE_DIR, '1. In', base));
+  candidatePaths.push(path.join(DOWNLOADS_DIR, decoded));
+  candidatePaths.push(path.join(DOWNLOADS_DIR, base));
+  candidatePaths.push(path.join(ROOT_DIR, 'media_pool', decoded));
+
+  for (const p of candidatePaths) {
+    if (p && fs.existsSync(p) && fs.statSync(p).isFile()) {
+      return p;
+    }
+  }
+
+  // Deep scan in 1. In
+  const inDir = path.join(WORKSPACE_DIR, '1. In');
+  if (fs.existsSync(inDir)) {
+    try {
+      const files = fs.readdirSync(inDir);
+      for (const f of files) {
+        if (f.toLowerCase() === base.toLowerCase()) {
+          return path.join(inDir, f);
+        }
+      }
+    } catch (e) {}
+  }
+
+  return null;
+}
+
+// 4. Raw Video Streaming Endpoints (Supports ?path=... and /:clipId)
+app.get('/api/raw-video', (req, res) => {
+  const target = req.query.path || req.query.clipId || req.query.id;
+  const videoPath = resolveLocalVideoPath(target);
+  streamVideoFile(videoPath, req, res);
+});
+
+app.get('/api/raw-video/:clipId', (req, res) => {
+  const clipId = req.params.clipId;
+  const videoPath = resolveLocalVideoPath(clipId);
+  streamVideoFile(videoPath, req, res);
+});
+
+// 5. Local Files Index Endpoint (Discovers local machine files for automatic deduplication)
+app.get('/api/local-files/index', (req, res) => {
+  const indexedFiles = [];
+  const scannedPaths = [
+    path.join(WORKSPACE_DIR, '1. In'),
+    DOWNLOADS_DIR
+  ];
+
+  // Also check sibling pipeline directories if on external drive
+  const parentPipeline = path.resolve(WORKSPACE_DIR, '..');
+  if (fs.existsSync(parentPipeline) && parentPipeline.includes('Pipeline Gigantera')) {
+    try {
+      const siblings = fs.readdirSync(parentPipeline);
+      siblings.forEach(s => {
+        const inSub = path.join(parentPipeline, s, '1. In');
+        if (fs.existsSync(inSub) && !scannedPaths.includes(inSub)) {
+          scannedPaths.push(inSub);
+        }
+      });
+    } catch (e) {}
+  }
+
+  scannedPaths.forEach(dir => {
+    if (fs.existsSync(dir)) {
+      try {
+        const entries = fs.readdirSync(dir);
+        entries.forEach(f => {
+          if (f.startsWith('.')) return;
+          const ext = path.extname(f).toLowerCase().replace('.', '');
+          if (['mp4', 'mov', 'webm'].includes(ext)) {
+            const fullP = path.join(dir, f);
+            try {
+              const stat = fs.statSync(fullP);
+              indexedFiles.push({
+                filename: f,
+                folder: path.basename(dir),
+                absolute_path: fullP,
+                relative_path: path.relative(WORKSPACE_DIR, fullP),
+                size_mb: Math.round((stat.size / (1024 * 1024)) * 100) / 100,
+                mtime: stat.mtime.toISOString()
+              });
+            } catch (e) {}
+          }
+        });
+      } catch (e) {}
+    }
+  });
+
+  res.json({
+    success: true,
+    count: indexedFiles.length,
+    files: indexedFiles
+  });
 });
 
 // Audio Devices Endpoint

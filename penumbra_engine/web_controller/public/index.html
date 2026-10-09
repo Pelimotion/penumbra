@@ -378,23 +378,22 @@
       </div>
     </section>
 
-    <!-- INLINE AUDIO & MUSICAL PHRASE ENGINE STRIP (PRO DJ/VJ ARCHITECTURE) -->
-    <div class="inline-audio-strip">
-      <!-- 1. Musical Phrase Downbeat Reset & Clock -->
-      <div class="audio-strip-col col-phrase-master">
-        <button class="btn btn-warning btn-phrase-reset" id="btn-reset-phrase" onclick="resetMusicalPhrase()" data-tooltip-title="REINICIAR FRASE MUSICAL [R]" data-tooltip-desc="Alinha a contagem métrica ao início da música ou nova seção (Compasso 1.1.1). Pressione R no teclado." data-shortcut="R">
-          <kbd>R</kbd> RESET 1.1.1
-        </button>
-        <button class="btn-strip-tap" id="btn-strip-tap" onclick="handleTapTempo()" title="Tap Tempo no ritmo da música [T]">
-          TAP
-        </button>
-        <div class="phrase-clock-meta">
-          <div class="bpm-row">
+    <!-- CENTRAL MASTER CONTROL & TRANSITION BRIDGE (PRO ATEM & CDJ ARCHITECTURE) -->
+    <div class="master-control-bridge" id="master-control-bridge">
+      <!-- 1. INLINE AUDIO & MUSICAL PHRASE ENGINE STRIP (PRO DJ/VJ ARCHITECTURE) -->
+      <div class="inline-audio-strip">
+        <!-- 1. Musical Phrase Downbeat Reset & Clock -->
+        <div class="audio-strip-col col-phrase-master">
+          <button class="btn btn-warning btn-phrase-reset" id="btn-reset-phrase" onclick="resetMusicalPhrase()" data-tooltip-title="REINICIAR FRASE MUSICAL [R]" data-tooltip-desc="Alinha a contagem métrica ao início da música ou nova seção (Compasso 1.1.1). Pressione R no teclado." data-shortcut="R">
+            <kbd>R</kbd> RESET 1.1.1
+          </button>
+          <button class="btn-strip-tap" id="btn-strip-tap" onclick="handleTapTempo()" title="Tap Tempo no ritmo da música [T]">
+            TAP
+          </button>
+          <div class="phrase-clock-capsule" title="Relógio Musical · Compasso e Pulso de Beat">
             <div class="pulse-indicator" id="beat-pulse-orb" title="Pulso de Beat / Downbeat"></div>
-          </div>
-          <div class="phrase-counter-row">
             <span class="phrase-bar-badge" id="phrase-bar-display">BAR 01 / 16</span>
-            <div class="phrase-beat-dots" id="phrase-beat-dots">
+            <div class="phrase-beat-dots" id="phrase-beat-dots" title="Fase de 4 Beats por Compasso">
               <span class="b-dot active"></span>
               <span class="b-dot"></span>
               <span class="b-dot"></span>
@@ -402,18 +401,17 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 2. Phrase Grid Length Selector (8, 16, 32, 64 Bars) -->
-      <div class="audio-strip-col col-phrase-grid">
-        <div class="phrase-len-pills">
-          <button class="phrase-len-btn" data-bars="8" onclick="setPhraseLength(8)">8B</button>
-          <button class="phrase-len-btn active" data-bars="16" onclick="setPhraseLength(16)">16 BARS</button>
-          <button class="phrase-len-btn" data-bars="32" onclick="setPhraseLength(32)">32B</button>
-          <button class="phrase-len-btn" data-bars="64" onclick="setPhraseLength(64)">64B</button>
+        <!-- 2. Phrase Grid Length Selector (8, 16, 32, 64 Bars) -->
+        <div class="audio-strip-col col-phrase-grid">
+          <div class="phrase-len-pills" title="Duração da Frase Musical (Compassos)">
+            <button class="phrase-len-btn" data-bars="8" onclick="setPhraseLength(8)">8B</button>
+            <button class="phrase-len-btn active" data-bars="16" onclick="setPhraseLength(16)">16 BARS</button>
+            <button class="phrase-len-btn" data-bars="32" onclick="setPhraseLength(32)">32B</button>
+            <button class="phrase-len-btn" data-bars="64" onclick="setPhraseLength(64)">64B</button>
+          </div>
+          <div class="phrase-remaining-tag" id="phrase-remaining-lbl">FALTAM 15 COMPASSOS (60 BEATS)</div>
         </div>
-        <div class="phrase-remaining-tag" id="phrase-remaining-lbl">FALTAM 15 COMPASSOS (60 BEATS)</div>
-      </div>
 
       <!-- 3. Musical Narrative Macro State & Energy Flow -->
       <div class="audio-strip-col col-state">
@@ -535,6 +533,7 @@
         <span class="bus-clip-title" id="me-bus-b-title">CUE: Metallic_spine...</span>
       </div>
     </div>
+  </div>
 
     <!-- WORKSPACE SPLITTER (DRAGGABLE RESIZE BETWEEN MONITORS AND DOCK) -->
     <div class="workspace-splitter-horizontal" id="workspace-splitter" title="Arraste para redimensionar monitores e dock (Duplo clique para redefinir proporção padrão)">
@@ -2014,64 +2013,14 @@
                 </div>
               </div>
 
-              <!-- SECTION 3: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
-              <div class="lib-tree-section pool-category-strip" id="sidebar-sec-categories">
-                <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
-                  <span class="lib-tree-chevron">▾</span>
-                  <span class="lib-tree-title">CATEGORIAS (SMART BINS)</span>
-                </div>
-                <div class="lib-tree-items filter-pills category-pills" id="category-pills-container">
-                  <button class="lib-tree-item pill-btn active" data-cat="ALL">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-                    <span class="tree-label">TODAS AS CATEGORIAS</span>
-                    <span class="pill-badge" id="badge-count-cat-all">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="MINIMAL">
-                    <span class="cat-pill-indicator cat-ind-minimal"></span>
-                    <span class="tree-label">MINIMAL</span>
-                    <span class="pill-badge" id="badge-count-cat-minimal">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="ABSTRACT">
-                    <span class="cat-pill-indicator cat-ind-abstract"></span>
-                    <span class="tree-label">ABSTRACT</span>
-                    <span class="pill-badge" id="badge-count-cat-abstract">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="FIGURA">
-                    <span class="cat-pill-indicator cat-ind-figura"></span>
-                    <span class="tree-label">FIGURA</span>
-                    <span class="pill-badge" id="badge-count-cat-figura">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="DENSE">
-                    <span class="cat-pill-indicator cat-ind-dense"></span>
-                    <span class="tree-label">DENSE</span>
-                    <span class="pill-badge" id="badge-count-cat-dense">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="CHROMA">
-                    <span class="cat-pill-indicator cat-ind-chroma"></span>
-                    <span class="tree-label">CHROMA (ALPHA)</span>
-                    <span class="pill-badge" id="badge-count-cat-chroma">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="STREAMS & YOUTUBE">
-                    <span class="cat-pill-indicator cat-ind-stream"></span>
-                    <span class="tree-label">STREAMS & YOUTUBE</span>
-                    <span class="pill-badge" id="badge-count-cat-stream">0</span>
-                  </button>
-                  <button class="lib-tree-item pill-btn" data-cat="GENERATIVE">
-                    <span class="cat-pill-indicator cat-ind-gen"></span>
-                    <span class="tree-label">GENERATIVE 3D</span>
-                    <span class="pill-badge" id="badge-count-cat-gen">0</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- SECTION 4: PASTAS / BINS DE PROJETO -->
+              <!-- SECTION 3: PASTAS DO PROJETO (BINS) -->
               <div class="lib-tree-section pool-folder-strip" id="sidebar-sec-folders">
                 <div class="lib-tree-section-header" onclick="toggleTreeSection(this)">
                   <span class="lib-tree-chevron">▾</span>
-                  <span class="lib-tree-title">PASTAS DO PROJETO</span>
+                  <span class="lib-tree-title">PASTAS DO PROJETO (BINS)</span>
                 </div>
                 <div class="lib-tree-items filter-pills folder-pills" id="folder-pills-container">
-                  <!-- Dynamically populated from media manifest -->
+                  <!-- Dynamically populated from media manifest folders -->
                 </div>
               </div>
             </div>
@@ -2129,9 +2078,9 @@
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                     <span>LISTA</span>
                   </button>
-                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento vertical por categorias">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                    <span>SEÇÕES</span>
+                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento por pastas do projeto">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <span>PASTAS</span>
                   </button>
                 </div>
 
@@ -2578,17 +2527,43 @@
 
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
-                  <span>CACHE LOCAL INTELIGENTE (ZERO-WASTE)</span>
-                  <span class="cfg-badge text-emerald" id="cfg-cache-size-badge">0.0 MB EM DISCO</span>
+                  <span>CACHE WEB PERSISTENTE & ARMAZENAMENTO (ZERO-WASTE)</span>
+                  <span class="cfg-badge text-emerald" id="cfg-cache-size-badge">0.0 MB EM CACHE</span>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Download Offline Completo</span>
-                    <span class="prop-desc">Baixa todas as mídias da CDN para reprodução 100% offline.</span>
+                    <span class="prop-title">Gestão de Cache Offline</span>
+                    <span class="prop-desc" id="cfg-cache-quota-desc">Armazenado via Web Cache API e IndexedDB. Disponível offline e no localhost.</span>
                   </div>
                   <div class="prop-control" style="display: flex; gap: 6px;">
                     <button class="btn btn-outline btn-xs" id="btn-sync-cache-status" onclick="refreshCacheStatus()">🔄 ATUALIZAR STATUS</button>
                     <button class="btn btn-outline btn-xs text-cyan" onclick="downloadAllPendingClips()">⬇️ BAIXAR TUDO OFFLINE</button>
+                    <button class="btn btn-outline btn-xs text-crimson" onclick="clearMediaCache()" title="Limpar todo o cache de mídias">🗑️ LIMPAR CACHE</button>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">⚡ Deduplicação Inteligente (Nuvem ↔ Local SSD)</span>
+                    <span class="prop-desc">Se o arquivo já existir localmente no SSD, usa-o automaticamente mesmo se o clipe da nuvem for acionado, poupando 100% dos dados.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="metric-val text-cyan" id="cfg-dedup-stats-val" style="font-size: 10px;">0 / 0 VINCULADOS</span>
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-smart-dedup-enabled" checked onchange="toggleSmartDedup(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Streaming em Alta Sob Demanda</span>
+                    <span class="prop-desc">Carrega streaming em alta resolução apenas quando o clipe é ativado no card ou enviado para Program/Preview, evitando consumo desnecessário de CDN.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-stream-on-demand" checked onchange="toggleStreamOnDemand(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
                   </div>
                 </div>
                 <div class="cfg-prop-row">

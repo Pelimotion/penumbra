@@ -1,10 +1,12 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 16:41:00 BRT
+- **Última Atualização:** 09/10/2026, 20:05:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA EDGE CDN (`https://gigantera-penumbra.b-cdn.net`), VERCEL (`https://penumbra-xi.vercel.app/penumbra/`) e DOMÍNIO OFICIAL (`https://gigantera.xyz/penumbra`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000), [https://gigantera.xyz/penumbra](https://gigantera.xyz/penumbra), [https://penumbra-xi.vercel.app/penumbra/](https://penumbra-xi.vercel.app/penumbra/) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps, Git Colaborativo PR-First e Skills)
-- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
+- **Master Control Bridge:** 🟢 REDESENHADO (Cápsula de precisão horizontal, zero clipping, M/E broadcast grade)
+- **Media Pool Bins:** 🟢 PASTAS DE PROJETO NATIVAS (`Espinhaço/1. In`, `Tetropode/1. In`, etc. Categorias arbitrárias removidas)
+- **Zero-Waste Web Cache & Smart Dedup:** 🟢 ATIVO (Web Cache API + IndexedDB + Roteamento Local Instantâneo `⚡ LOCAL NATIVO`)
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
