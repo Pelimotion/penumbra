@@ -1,18 +1,16 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 04:19:18 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 04:40:51 BRT
 
 ---
 
 ## Outubro de 2026
 
-### ✨ Novos Recursos
-- `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment
-- `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
-- `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
-- `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
+### 🐛 Correções
+- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
 
 ### 🔧 Manutenção
+- `5c02002` auto-deploy + auto-docs on every commit (post-commit hook + update_docs.js)
 - `7095a42` Set default FPS to 30 and Network Outputs to OFF
 - `397dd4b` Enhance CDN Sync with Recursive IN/OUT Structure, Model Injection, and Secure PIN Unlock
 - `038e719` Implement Bunny CDN Sync Script & Animated Hover Previews (Zero-Server Architecture)
@@ -25,4 +23,10 @@
 - `8b58c52` Implement HARS Architecture and CORS
 - `12cf409` Add tetrapod favicon
 - `fbcfa9d` Initial commit of Penumbra Engine
+
+### ✨ Novos Recursos
+- `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment
+- `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
+- `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
+- `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 

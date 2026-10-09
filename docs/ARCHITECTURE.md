@@ -1,6 +1,6 @@
 # 🎛️ PENUMBRA SYSTEM · ARQUITETURA TÉCNICA
 
-> Auto-gerado por `scripts/update_docs.js` · 09/10/2026, 04:19:18 BRT
+> Auto-gerado por `scripts/update_docs.js` · 09/10/2026, 04:40:51 BRT
 
 ---
 
@@ -33,7 +33,7 @@ O **Penumbra System** é um VJ Engine audio-reativo de alta performance executad
 | `public/midi.js` | MIDI Controller Bridge | 139 |
 | `server.js` | Express + WebSocket Server (modo local) | 570 |
 | `scripts/deploy_cdn.js` | Deploy automático Bunny Edge CDN | 136 |
-| `scripts/build_portable.js` | Bundler HTML portátil offline | 49 |
+| `scripts/build_portable.js` | Bundler HTML portátil offline | 56 |
 | `scripts/update_docs.js` | Auto-documentação (este script) | 357 |
 
 ## Media Pool
