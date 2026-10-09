@@ -1,10 +1,20 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 04:40:51 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 04:53:20 BRT
 
 ---
 
 ## Outubro de 2026
+
+### ✨ Novos Recursos
+- `4859515` **(launcher)** fix startup launcher trigger, add source switcher in header and Settings tab
+- `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment
+- `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
+- `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
+- `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
+
+### 📚 Documentação
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
 
 ### 🐛 Correções
 - `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
@@ -23,10 +33,4 @@
 - `8b58c52` Implement HARS Architecture and CORS
 - `12cf409` Add tetrapod favicon
 - `fbcfa9d` Initial commit of Penumbra Engine
-
-### ✨ Novos Recursos
-- `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment
-- `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
-- `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
-- `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 

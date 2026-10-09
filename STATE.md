@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 04:40:51 BRT
+- **Última Atualização:** 09/10/2026, 04:53:19 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -15,10 +15,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 6,821 | 267.6 KB |
-| `styles.css` | 5,148 | 99.9 KB |
-| `index.html` | 2,235 | 137.0 KB |
-| `Penumbra_Portable.html` | — | 510.9 KB |
+| `app.js` | 6,972 | 273.3 KB |
+| `styles.css` | 5,223 | 101.5 KB |
+| `index.html` | 2,314 | 141.9 KB |
+| `Penumbra_Portable.html` | — | 523.0 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
@@ -26,9 +26,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `094b6a5` — fix(routing): resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
-- **Data:** 2026-10-09 04:40:10
-- **Total de Commits:** 18
+- **Último Commit:** `4859515` — feat(launcher): fix startup launcher trigger, add source switcher in header and Settings tab
+- **Data:** 2026-10-09 04:52:50
+- **Total de Commits:** 20
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
