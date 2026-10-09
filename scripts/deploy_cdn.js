@@ -105,7 +105,8 @@ async function runDeploy() {
     { local: path.join(PUBLIC_DIR, 'midi.js'), remote: 'midi.js', type: 'application/javascript' },
     { local: path.join(PUBLIC_DIR, 'favicon.svg'), remote: 'favicon.svg', type: 'image/svg+xml' },
     { local: manifestPublic, remote: 'media_manifest.json', type: 'application/json' },
-    { local: portablePath, remote: 'Penumbra_Portable.html', type: 'text/html' }
+    { local: portablePath, remote: 'Penumbra_Portable.html', type: 'text/html' },
+    { local: path.join(PUBLIC_DIR, 'assets', 'audio', 'test_preview.mp3'), remote: 'assets/audio/test_preview.mp3', type: 'audio/mpeg' }
   ];
 
   console.log(`\n⬆️ [Upload] Enviando ${coreQueue.length} arquivos essenciais para a CDN...`);

@@ -5240,6 +5240,165 @@ body.resizing-workspace-active * {
   line-height: 1.35;
 }
 
+/* Pro Storage Mode Switcher (Adobe / DaVinci Architecture) */
+.storage-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.storage-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.storage-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 240, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.storage-card.active {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.storage-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.storage-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+
+.storage-card.active .storage-card-title-group {
+  color: var(--cyan);
+}
+
+.storage-card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.storage-card-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.storage-card.active .storage-card-status {
+  background: var(--cyan);
+  color: #000;
+}
+
+.storage-card-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Header Source Quick Switcher Dropdown */
+.header-source-control {
+  position: relative;
+}
+
+.source-quick-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: rgba(10, 14, 23, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.1);
+  padding: 6px;
+  min-width: 240px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.source-opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: #ccd6e0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.source-opt-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.source-opt-btn.active {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan);
+}
+
+.source-opt-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+.btn-cue-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: #a0aec0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cue-upload:hover {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
 /* MODERN PRO TOGGLE SWITCH */
 .cfg-switch {
   position: relative;
@@ -7232,23 +7391,44 @@ body.resizing-workspace-active * {
         <span class="dot live"></span>
         <span class="label">NDI: PENUMBRA_LIVE</span>
       </div>
-      <button class="source-status-btn" id="btn-header-source" onclick="openStudioLauncher()" title="Origem de Mídia Ativa — Clique para alterar entre Nuvem e Local">
-        <span class="src-icon" id="header-src-icon">☁️</span>
-        <span class="src-label" id="header-src-label">NUVEM CDN</span>
-        <span class="src-caret">▾</span>
-      </button>
+      <div class="header-source-control" id="header-source-control">
+        <button class="source-status-btn" id="btn-header-source" onclick="toggleHeaderSourceMenu(event)" title="Origem de Mídia — Alternar entre Nuvem e Local">
+          <svg class="src-svg" id="header-src-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          <span class="src-label" id="header-src-label">NUVEM CDN</span>
+          <span class="src-caret">▾</span>
+        </button>
+        <div class="source-quick-dropdown" id="source-quick-dropdown" style="display: none;">
+          <button class="source-opt-btn active" id="opt-src-cloud" onclick="switchStorageMode('cloud')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+            <span>NUVEM (BUNNY EDGE CDN)</span>
+          </button>
+          <button class="source-opt-btn" id="opt-src-local" onclick="switchStorageMode('local')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>LOCAL (DISCO SSD)</span>
+          </button>
+          <div class="source-opt-divider"></div>
+          <button class="source-opt-btn" onclick="openSettingsModal('source'); toggleHeaderSourceMenu();">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>CONFIGURAR ARMAZENAMENTO...</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Headphone Cue Audio Monitor & Master Tools -->
     <div class="header-actions">
-      <!-- Removed Audio In from header -->
-
       <!-- Headphone Audition Module -->
-      <div class="audio-cue-box" title="Ouvir áudio do DJ nos fones do MacBook com segurança">
+      <div class="audio-cue-box" title="Monitor de Áudio (CUE) · Teste e Pré-escuta">
         <button class="btn btn-cue" id="btn-audio-monitor">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
           <span id="txt-audio-monitor">CUE OFF</span>
         </button>
         <input type="range" id="slider-cue-vol" min="0" max="100" value="70" class="mini-vol" title="Volume do fone">
+        <label class="btn-cue-upload" title="Carregar arquivo de áudio (MP3/WAV) do seu computador">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <span>AUDIO FILE</span>
+          <input type="file" id="input-cue-audio-file" accept="audio/*" style="display: none;" onchange="handleLocalAudioFileUpload(event)">
+        </label>
         <audio id="html5-audio-cue" preload="none"></audio>
       </div>
 
@@ -7292,9 +7472,9 @@ body.resizing-workspace-active * {
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prg-timecode">TC 00:01:24.18</div>
-              <button class="btn-screen-action" id="btn-prg-focus" onclick="toggleProgramFocus()" title="Modo Foco no Program (>35% da tela, Preview compacto)">◰ FOCO PGM</button>
-              <button class="btn-screen-action" id="btn-prg-popout" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')" title="Destacar em Janela Flutuante (Segundo Monitor)">◱ DESTACAR</button>
-              <button class="btn-screen-action" id="btn-prg-expand" onclick="window.openTheater && window.openTheater('program')" title="Expandir em Modo Cinema">⛶ EXPANDIR</button>
+              <button class="btn-screen-action" id="btn-prg-focus" onclick="toggleProgramFocus()" title="Modo Foco no Program (>35% da tela, Preview compacto)">FOCO PGM</button>
+              <button class="btn-screen-action" id="btn-prg-popout" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')" title="Destacar em Janela Flutuante (Segundo Monitor)">DESTACAR</button>
+              <button class="btn-screen-action" id="btn-prg-expand" onclick="window.openTheater && window.openTheater('program')" title="Expandir em Modo Cinema">EXPANDIR</button>
             </div>
           </div>
           
@@ -7332,8 +7512,8 @@ body.resizing-workspace-active * {
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prv-timecode">CUE IN 4 BARS</div>
-              <button class="btn-screen-action highlight-action" id="btn-prv-popout" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')" title="Destacar Preview em Janela Flutuante (Segundo Monitor)">◱ DESTACAR</button>
-              <button class="btn-screen-action highlight-action" id="btn-prv-expand" onclick="window.openTheater && window.openTheater('preview')" title="Expandir Preview em Tela Grande (Modo Cinema)">⛶ EXPANDIR</button>
+              <button class="btn-screen-action highlight-action" id="btn-prv-popout" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')" title="Destacar Preview em Janela Flutuante (Segundo Monitor)">DESTACAR</button>
+              <button class="btn-screen-action highlight-action" id="btn-prv-expand" onclick="window.openTheater && window.openTheater('preview')" title="Expandir Preview em Tela Grande (Modo Cinema)">EXPANDIR</button>
             </div>
           </div>
           
@@ -7566,7 +7746,7 @@ body.resizing-workspace-active * {
         <!-- Dock Actions -->
         <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
           <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
-            <span id="lbl-quick-switch-text">⏱️ TIMELINE PRO</span> <kbd>TAB</kbd>
+            <span id="lbl-quick-switch-text">TIMELINE PRO</span> <kbd>TAB</kbd>
           </button>
           <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
             MAXIMIZE <kbd>~</kbd>
@@ -7586,8 +7766,8 @@ body.resizing-workspace-active * {
           <div class="tl-transport-controls">
             <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata (Take)">TAKE</button>
             <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
-            <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP ⏭</button>
-            <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE 🔀</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE</button>
             <button class="btn btn-outline btn-xs" id="btn-tl-cue-next" onclick="cueNextFromQueue()" title="Preparar próximo item no Deck B">CUE → B</button>
           </div>
 
@@ -7973,7 +8153,7 @@ body.resizing-workspace-active * {
               <!-- 1. Media -->
               <div class="delegation-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="color: var(--cyan); font-size: 11px; letter-spacing: 1px;">📺 MEDIA PROGRESSION</strong>
+                  <strong style="color: var(--cyan); font-size: 11px; letter-spacing: 1px;">MEDIA PROGRESSION</strong>
                   <input type="checkbox" id="chk-delegate-media" class="toggle-checkbox" checked>
                 </div>
                 <div style="font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.4;">
@@ -7991,7 +8171,7 @@ body.resizing-workspace-active * {
               <!-- 2. Mattes -->
               <div class="delegation-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="color: var(--pink); font-size: 11px; letter-spacing: 1px;">🌑 MATTE ORCHESTRATION</strong>
+                  <strong style="color: var(--pink); font-size: 11px; letter-spacing: 1px;">MATTE ORCHESTRATION</strong>
                   <input type="checkbox" id="chk-delegate-mattes" class="toggle-checkbox">
                 </div>
                 <div style="font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.4;">
@@ -8008,7 +8188,7 @@ body.resizing-workspace-active * {
               <!-- 3. FX Overdrive -->
               <div class="delegation-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="color: var(--amber); font-size: 11px; letter-spacing: 1px;">⚡ FX OVERDRIVE</strong>
+                  <strong style="color: var(--amber); font-size: 11px; letter-spacing: 1px;">FX OVERDRIVE</strong>
                   <input type="checkbox" id="chk-delegate-fx" class="toggle-checkbox">
                 </div>
                 <div style="font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.4;">
@@ -8022,7 +8202,7 @@ body.resizing-workspace-active * {
               <!-- 4. Kinetics & Blends -->
               <div class="delegation-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="color: var(--white); font-size: 11px; letter-spacing: 1px;">🔄 KINETICS & BLENDS</strong>
+                  <strong style="color: var(--white); font-size: 11px; letter-spacing: 1px;">KINETICS & BLENDS</strong>
                   <input type="checkbox" id="chk-delegate-kinetics" class="toggle-checkbox">
                 </div>
                 <div style="font-size: 10px; color: rgba(255,255,255,0.5); line-height: 1.4;">
@@ -8804,7 +8984,7 @@ body.resizing-workspace-active * {
           <aside class="library-sidebar" id="library-sidebar">
             <div class="lib-sidebar-header">
               <div class="lib-sidebar-title">
-                <span class="lib-sidebar-icon">📁</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 <span>ORGANIZAÇÃO & BINS</span>
               </div>
               <button class="btn-sidebar-collapse" id="btn-toggle-sidebar" onclick="toggleLibrarySidebar()" title="Recolher barra lateral">◂</button>
@@ -8819,27 +8999,27 @@ body.resizing-workspace-active * {
                 </div>
                 <div class="library-type-selector-bar lib-tree-items">
                   <button class="lib-type-btn lib-tree-item active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
-                    <span class="lib-type-icon">✨</span>
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     <span class="lib-type-label">TODOS OS RECURSOS</span>
                     <span class="lib-type-badge" id="lib-count-all">115</span>
                   </button>
                   <button class="lib-type-btn lib-tree-item" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
-                    <span class="lib-type-icon">🎬</span>
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
                     <span class="lib-type-label">VÍDEOS & CLIPES</span>
                     <span class="lib-type-badge" id="lib-count-clips">74</span>
                   </button>
                   <button class="lib-type-btn lib-tree-item" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
-                    <span class="lib-type-icon">🎭</span>
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
                     <span class="lib-type-label">MATTES & MÁSCARAS</span>
                     <span class="lib-type-badge" id="lib-count-mattes">29</span>
                   </button>
                   <button class="lib-type-btn lib-tree-item" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
-                    <span class="lib-type-icon">⚡</span>
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                     <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
                     <span class="lib-type-badge" id="lib-count-fx">6</span>
                   </button>
                   <button class="lib-type-btn lib-tree-item" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
-                    <span class="lib-type-icon">🎛️</span>
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                     <span class="lib-type-label">PRESETS & CONDUCTOR</span>
                     <span class="lib-type-badge" id="lib-count-presets">6</span>
                   </button>
@@ -8854,7 +9034,7 @@ body.resizing-workspace-active * {
                 </div>
                 <div class="lib-tree-items filter-pills source-pills" id="source-pills-container">
                   <button class="lib-tree-item pill-btn active" data-source="ALL">
-                    <span class="tree-icon">🌐</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                     <span class="tree-label">TODAS AS ORIGENS</span>
                     <span class="pill-badge" id="badge-count-src-all">0</span>
                   </button>
@@ -8884,7 +9064,7 @@ body.resizing-workspace-active * {
                 </div>
                 <div class="lib-tree-items filter-pills category-pills" id="category-pills-container">
                   <button class="lib-tree-item pill-btn active" data-cat="ALL">
-                    <span class="tree-icon">🏷️</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
                     <span class="tree-label">TODAS AS CATEGORIAS</span>
                     <span class="pill-badge" id="badge-count-cat-all">0</span>
                   </button>
@@ -8956,7 +9136,7 @@ body.resizing-workspace-active * {
                 </div>
 
                 <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
-                <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
+                <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">0 LOCAL · 74 NUVEM</span>
               </div>
 
               <div class="lib-tb-right">
@@ -8976,13 +9156,23 @@ body.resizing-workspace-active * {
                 </button>
 
                 <div class="lib-view-mode-group">
-                  <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">▦ GRADE</button>
-                  <button class="btn-lib-view-mode" id="btn-view-compact" onclick="setLibraryViewMode('compact')" title="Visualização Compacta">▤ LISTA</button>
-                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento vertical por categorias">🗂️ SEÇÕES</button>
+                  <button class="btn-lib-view-mode active" id="btn-view-grid" onclick="setLibraryViewMode('grid')" title="Visualização em Grade Ampla">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>GRADE</span>
+                  </button>
+                  <button class="btn-lib-view-mode" id="btn-view-compact" onclick="setLibraryViewMode('compact')" title="Visualização Compacta">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <span>LISTA</span>
+                  </button>
+                  <button class="btn-lib-view-mode btn-toggle-group active" id="btn-toggle-group-categories" title="Agrupamento vertical por categorias">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    <span>SEÇÕES</span>
+                  </button>
                 </div>
 
                 <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleQuickInspector()" title="Abrir/Fechar Inspetor de Parâmetros Rápidos">
-                  <span>⚙️ PARÂMETROS</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                  <span>INSPETOR</span>
                 </button>
               </div>
             </header>
@@ -8997,7 +9187,7 @@ body.resizing-workspace-active * {
           <aside class="library-quick-inspector" id="library-quick-inspector" style="display: none;">
             <div class="lqi-header">
               <div class="lqi-title-group">
-                <span class="lqi-icon" id="lqi-asset-icon">🎛️</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                 <span class="lqi-title" id="lqi-asset-title">INSPETOR DE PARÂMETROS</span>
               </div>
               <button class="lqi-close-btn" onclick="toggleQuickInspector(false)">✕</button>
@@ -9244,18 +9434,18 @@ body.resizing-workspace-active * {
         <!-- Pro Preferences Header Bar -->
         <div class="cfg-modal-header">
           <div class="cfg-modal-title-group">
-            <span class="cfg-modal-icon">⚙️</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <div class="cfg-title-texts">
               <span class="cfg-main-title">PREFERÊNCIAS & SISTEMA</span>
               <span class="cfg-sub-title">PENUMBRA ENGINE VJ · BROADCAST SPEC</span>
             </div>
           </div>
           <div class="cfg-search-wrapper">
-            <span class="cfg-search-icon">🔍</span>
+            <svg class="cfg-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
             <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
-          <button class="btn btn-danger btn-xs" id="btn-settings-close">✕ FECHAR (ESC)</button>
+          <button class="btn btn-danger btn-xs" id="btn-settings-close">FECHAR (ESC)</button>
         </div>
 
         <!-- Pro Two-Column Layout -->
@@ -9264,39 +9454,39 @@ body.resizing-workspace-active * {
           <div class="cfg-sidebar-col">
             <div class="cfg-nav-list">
               <button class="cfg-nav-item active" data-tab="source" onclick="setSettingsTab('source')">
-                <span class="nav-icon">📁</span>
-                <span class="nav-label">Mídia & Origem</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></span>
+                <span class="nav-label">Armazenamento & Mídia</span>
               </button>
               <button class="cfg-nav-item" data-tab="profile" onclick="setSettingsTab('profile')">
-                <span class="nav-icon">💾</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>
                 <span class="nav-label">Cache & Perfil Portátil</span>
               </button>
               <button class="cfg-nav-item" data-tab="output" onclick="setSettingsTab('output')">
-                <span class="nav-icon">📺</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span>
                 <span class="nav-label">Saída & Telão HDMI</span>
               </button>
               <button class="cfg-nav-item" data-tab="autopilot" onclick="setSettingsTab('autopilot')">
-                <span class="nav-icon">🤖</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v4M12 19v4M1 12h4M19 12h4"></path></svg></span>
                 <span class="nav-label">Piloto Automático</span>
               </button>
               <button class="cfg-nav-item" data-tab="audio" onclick="setSettingsTab('audio')">
-                <span class="nav-icon">🎙️</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></span>
                 <span class="nav-label">Áudio & Sincronia BPM</span>
               </button>
               <button class="cfg-nav-item" data-tab="performance" onclick="setSettingsTab('performance')">
-                <span class="nav-icon">⚡</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
                 <span class="nav-label">GPU & Performance</span>
               </button>
               <button class="cfg-nav-item" data-tab="network" onclick="setSettingsTab('network')">
-                <span class="nav-icon">🌐</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>
                 <span class="nav-label">Rede, OSC & NDI</span>
               </button>
               <button class="cfg-nav-item" data-tab="shortcuts" onclick="setSettingsTab('shortcuts')">
-                <span class="nav-icon">⌨️</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6" y2="8"></line><line x1="10" y1="8" x2="10" y2="8"></line><line x1="14" y1="8" x2="14" y2="8"></line><line x1="18" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="18" y2="12"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg></span>
                 <span class="nav-label">Atalhos de Teclado</span>
               </button>
               <button class="cfg-nav-item" data-tab="system" onclick="setSettingsTab('system')">
-                <span class="nav-icon">ℹ️</span>
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
                 <span class="nav-label">Sistema & Diagnóstico</span>
               </button>
             </div>
@@ -9305,50 +9495,59 @@ body.resizing-workspace-active * {
           <!-- Right Content Area -->
           <div class="cfg-content-col" id="cfg-content-panels">
 
-            <!-- PANEL 1: ORIGEM DE MÍDIA -->
+            <!-- PANEL 1: ARMAZENAMENTO & MÍDIA (DAVINCI / ADOBE ARCHITECTURE) -->
             <div class="settings-tab-panel active" id="settings-panel-source">
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
-                  <span>FONTE ATIVA DE VÍDEOS & CLOUD STREAM</span>
-                  <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+                  <span>MODO DE ARMAZENAMENTO ATIVO (STORAGE ENGINE)</span>
+                  <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM CDN</span>
                 </div>
+
+                <!-- Pro Segmented Storage Cards -->
+                <div class="storage-mode-grid">
+                  <div class="storage-card active" id="card-mode-cloud" onclick="switchStorageMode('cloud')">
+                    <div class="storage-card-header">
+                      <div class="storage-card-title-group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                        <span class="storage-card-title">NUVEM (BUNNY EDGE CDN)</span>
+                      </div>
+                      <span class="storage-card-status" id="status-mode-cloud">ATIVO</span>
+                    </div>
+                    <p class="storage-card-desc">Streaming global ultrarrápido a partir do cluster regional de São Paulo (br.storage.bunnycdn.com) com cache local sob demanda.</p>
+                  </div>
+
+                  <div class="storage-card" id="card-mode-local" onclick="switchStorageMode('local')">
+                    <div class="storage-card-header">
+                      <div class="storage-card-title-group">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        <span class="storage-card-title">DISCO LOCAL (SISTEMA DE ARQUIVOS)</span>
+                      </div>
+                      <span class="storage-card-status" id="status-mode-local">DISPONÍVEL</span>
+                    </div>
+                    <p class="storage-card-desc">Acesso direto ao SSD local sem consumo de banda através da File System Access API de alta performance ou servidor local.</p>
+                  </div>
+                </div>
+
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Status da Origem</span>
-                    <span class="prop-desc" id="cfg-active-source-desc">Streaming direto via Bunny CDN com cache local sob demanda.</span>
+                    <span class="prop-title">Ponto de Montagem Ativo</span>
+                    <span class="prop-desc" id="cfg-active-source-desc">Conectado à Bunny CDN · São Paulo Edge</span>
                   </div>
-                  <div class="prop-control">
-                    <button class="btn btn-studio-primary btn-xs" onclick="openStudioLauncher(); closeSettingsModal();">REABRIR LAUNCHER</button>
-                  </div>
-                </div>
-                <div class="cfg-prop-row">
-                  <div class="prop-meta">
-                    <span class="prop-title">Reconectar Nuvem Edge</span>
-                    <span class="prop-desc">Restabelece feed seguro Bunny CDN (PIN 2026).</span>
-                  </div>
-                  <div class="prop-control">
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()">☁️ RECONECTAR CDN</button>
-                  </div>
-                </div>
-                <div class="cfg-prop-row">
-                  <div class="prop-meta">
-                    <span class="prop-title">Montar Pasta Local (SSD)</span>
-                    <span class="prop-desc">Vincular diretório físico via File System API.</span>
-                  </div>
-                  <div class="prop-control">
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()">📁 ESCOLHER PASTA</button>
+                  <div class="prop-control" style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()">ALTERAR PASTA SSD</button>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()">RECONECTAR CDN</button>
                   </div>
                 </div>
               </div>
 
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
-                  <span>PREFERÊNCIAS DE INICIALIZAÇÃO & ARQUIVOS</span>
+                  <span>PREFERÊNCIAS DE INICIALIZAÇÃO & DIRETÓRIOS</span>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Lembrar Fonte Selecionada</span>
-                    <span class="prop-desc">Inicia direto na última fonte sem exibir tela inicial.</span>
+                    <span class="prop-title">Lembrar Modo de Armazenamento</span>
+                    <span class="prop-desc">Persiste a escolha entre Nuvem e Local no arquivo de perfil.</span>
                   </div>
                   <div class="prop-control">
                     <label class="cfg-switch">
@@ -9359,8 +9558,8 @@ body.resizing-workspace-active * {
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Total de Clipes Carregados</span>
-                    <span class="prop-desc">Mídias ativas disponíveis no motor gráfico.</span>
+                    <span class="prop-title">Total de Clipes Ativos</span>
+                    <span class="prop-desc">Mídias disponíveis e indexadas na biblioteca.</span>
                   </div>
                   <div class="prop-control">
                     <span class="metric-val text-cyan" id="cfg-media-count-val">0 CLIPES</span>
@@ -9368,12 +9567,11 @@ body.resizing-workspace-active * {
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Adicionar Mais Pastas de Mídia</span>
-                    <span class="prop-desc">Indexa novos vídeos ao Media Pool sem reiniciar.</span>
+                    <span class="prop-title">Adicionar Mais Diretórios</span>
+                    <span class="prop-desc">Indexa novos vídeos ao Media Pool sem reiniciar a sessão.</span>
                   </div>
                   <div class="prop-control">
                     <button class="btn btn-outline btn-xs" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()">+ ADICIONAR PASTA</button>
-                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber); margin-left: 6px;">REDEFINIR PREFERÊNCIA</button>
                   </div>
                 </div>
               </div>
@@ -9600,11 +9798,25 @@ body.resizing-workspace-active * {
                   </div>
                   <div class="prop-control">
                     <div class="audio-src-pills">
-                      <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">🎵 TESTE (MP3)</button>
-                      <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">🎙️ MIC MAC</button>
-                      <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">🔌 P2 LINE</button>
-                      <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">🎛️ USB DJ</button>
+                      <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">TESTE (ONLINE)</button>
+                      <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">MICROFONE</button>
+                      <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">LINE IN (P2)</button>
+                      <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">USB DJ</button>
                     </div>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Arquivo de Áudio do Computador</span>
+                    <span class="prop-desc">Suba uma música local (MP3/WAV/AIFF) para testar a sincronia, audição no fone e espectro de frequências em tempo real.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; gap: 8px;">
+                    <label class="btn btn-studio-primary btn-xs" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      SUBIR MP3 LOCAL
+                      <input type="file" id="input-cfg-audio-file" accept="audio/*" style="display: none;" onchange="handleLocalAudioFileUpload(event)">
+                    </label>
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-play-online-sample" onclick="playOnlineTestTrack()">FAIXA TESTE ONLINE</button>
                   </div>
                 </div>
                 <div class="cfg-prop-row">
@@ -16126,9 +16338,9 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">🎛️ LOOK</button>
+        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">LOOK</button>
         <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
-        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
+        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">CACHE</button>` : ''}
       </div>
     </div>
   `;
@@ -16283,7 +16495,7 @@ function createMatteCardForLibrary(matte) {
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
       <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}">
-      <span class="lib-badge-type lib-badge-matte">🎭 MATTE</span>
+      <span class="lib-badge-type lib-badge-matte">MATTE</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${matte.name}</div>
@@ -16293,7 +16505,7 @@ function createMatteCardForLibrary(matte) {
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
       <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">🎛️ PARÂMETROS</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">PARÂMETROS</button>
     </div>
   `;
 
@@ -16311,8 +16523,8 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
 
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
-      <div class="library-card-fx-preview">${pluginInfo.icon || '⚡'}</div>
-      <span class="lib-badge-type lib-badge-fx">⚡ FX ENGINE</span>
+      <div class="library-card-fx-preview">${pluginInfo.code || pluginId.slice(0, 4).toUpperCase()}</div>
+      <span class="lib-badge-type lib-badge-fx">FX SHADER</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${pluginInfo.title}</div>
@@ -16320,10 +16532,10 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
     </div>
     <div class="library-card-actions">
       <button class="btn ${isAct ? 'btn-primary' : 'btn-outline'} btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); if(!appState.fx.enabled) toggleFxMaster();">
-        ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
+        ${isAct ? 'ATIVO' : '+ ATIVAR'}
       </button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">🎛️ PARÂMETROS</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">PARÂMETROS</button>
     </div>
   `;
 
@@ -16341,10 +16553,10 @@ function createPresetCardForLibrary(presetId, presetInfo) {
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
       <div class="library-card-preset-preview">
-        <span style="font-size:24px;">${presetInfo.icon || '🎛️'}</span>
+        <span style="font-family:var(--font-mono); font-size:16px; font-weight:800; color:var(--cyan);">${presetId.slice(0, 3).toUpperCase()}</span>
         <span style="font-family:var(--font-mono); font-size:9px; color:#fff; font-weight:700;">${presetInfo.bpm || 'AUTO BPM'}</span>
       </div>
-      <span class="lib-badge-type lib-badge-preset">🎛️ PRESET</span>
+      <span class="lib-badge-type lib-badge-preset">PRESET</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${presetInfo.title}</div>
@@ -16355,7 +16567,7 @@ function createPresetCardForLibrary(presetId, presetInfo) {
         CARREGAR
       </button>
       <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editPresetParameters('${presetId}')" title="Editar parâmetros no Conductor (Módulo 5)">
-        🎛️ EDITAR
+        EDITAR
       </button>
     </div>
   `;
@@ -16386,7 +16598,7 @@ function editMatteParameters(mattePath, matteName) {
     kinGrid.classList.add('highlight-focus-ring');
   }
 
-  showMacroToast(`🎭 [MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
+  showMacroToast(`[MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
   openQuickInspector('matte', { path: mattePath, name: matteName });
 }
 window.editMatteParameters = editMatteParameters;
@@ -16405,7 +16617,7 @@ function editFxParameters(pluginId) {
   }
 
   const fxInfo = FX_LIBRARY_CATALOG[pluginId] || { title: pluginId };
-  showMacroToast(`⚡ [FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
+  showMacroToast(`[FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
   openQuickInspector('fx', { pluginId, info: fxInfo });
 }
 window.editFxParameters = editFxParameters;
@@ -16423,7 +16635,7 @@ function editPresetParameters(presetId) {
   }
 
   const pInfo = PRESETS_LIBRARY_CATALOG[presetId] || { title: presetId };
-  showMacroToast(`🎛️ [CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
+  showMacroToast(`[CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
   openQuickInspector('preset', { presetId, info: pInfo });
 }
 window.editPresetParameters = editPresetParameters;
@@ -16442,7 +16654,7 @@ function editClipTonalParameters(clipId) {
 
   const clip = allClips.find(c => c.id === clipId);
   const title = clip?.display_title || clip?.filename || 'Clipe';
-  showMacroToast(`🎨 [TONAL] Grading aberto para "${title}" no Módulo 4`);
+  showMacroToast(`[TONAL] Grading aberto para "${title}" no Módulo 4`);
   openQuickInspector('clip', { clipId, clip });
 }
 window.editClipTonalParameters = editClipTonalParameters;
@@ -16791,8 +17003,161 @@ function updateAudioSourceUI(srcInfo) {
   if (lbl) {
     lbl.textContent = srcInfo.device_name || (mode ? mode.toUpperCase() : 'Áudio Ativo');
   }
+  const cfgLbl = document.getElementById('lbl-cfg-audio-dev');
+  if (cfgLbl) {
+    cfgLbl.textContent = srcInfo.device_name || (mode ? mode.toUpperCase() : 'Áudio Ativo');
+  }
 }
 window.updateAudioSourceUI = updateAudioSourceUI;
+
+// ============================================================================
+// WEB AUDIO API REAL-TIME ANALYSER & LOCAL FILE UPLOAD
+// ============================================================================
+let webAudioCtx = null;
+let webAudioAnalyser = null;
+let webAudioSourceNode = null;
+let webAudioFreqData = null;
+let webAudioAnimFrameId = null;
+
+function initWebAudioAnalyser() {
+  if (webAudioCtx && webAudioAnalyser) {
+    if (webAudioCtx.state === 'suspended') {
+      webAudioCtx.resume().catch(() => {});
+    }
+    return;
+  }
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass || !audioCuePlayer) return;
+    
+    webAudioCtx = new AudioContextClass();
+    webAudioAnalyser = webAudioCtx.createAnalyser();
+    webAudioAnalyser.fftSize = 256;
+    webAudioAnalyser.smoothingTimeConstant = 0.75;
+    webAudioFreqData = new Uint8Array(webAudioAnalyser.frequencyBinCount);
+    
+    webAudioSourceNode = webAudioCtx.createMediaElementSource(audioCuePlayer);
+    webAudioSourceNode.connect(webAudioAnalyser);
+    webAudioAnalyser.connect(webAudioCtx.destination);
+    
+    startWebAudioVisualizerLoop();
+  } catch (err) {
+    console.log('[WebAudio] Analyser init notice:', err.message);
+  }
+}
+
+function startWebAudioVisualizerLoop() {
+  if (webAudioAnimFrameId) return;
+  
+  function loop() {
+    webAudioAnimFrameId = requestAnimationFrame(loop);
+    if (!webAudioAnalyser || !webAudioFreqData || !audioCuePlayer || audioCuePlayer.paused) return;
+    
+    webAudioAnalyser.getByteFrequencyData(webAudioFreqData);
+    
+    const avg = (start, end) => {
+      let sum = 0;
+      const count = Math.max(1, end - start);
+      for (let i = start; i < end && i < webAudioFreqData.length; i++) sum += webAudioFreqData[i];
+      return (sum / count) / 255.0;
+    };
+    
+    const subVal = avg(0, 2);
+    const bassVal = avg(2, 5);
+    const lomidVal = avg(5, 10);
+    const himidVal = avg(10, 25);
+    const presVal = avg(25, 55);
+    const airVal = avg(55, 120);
+    
+    // Drive meters directly if WebSocket is offline or in test audio playback
+    if (!ws || ws.readyState !== WebSocket.OPEN || currentAudioSource.mode === 'test') {
+      if (meters.sub) meters.sub.style.height = `${Math.min(100, Math.round(subVal * 125))}%`;
+      if (meters.bass) meters.bass.style.height = `${Math.min(100, Math.round(bassVal * 125))}%`;
+      if (meters.lomid) meters.lomid.style.height = `${Math.min(100, Math.round(lomidVal * 125))}%`;
+      if (meters.himid) meters.himid.style.height = `${Math.min(100, Math.round(himidVal * 125))}%`;
+      if (meters.pres) meters.pres.style.height = `${Math.min(100, Math.round(presVal * 125))}%`;
+      if (meters.air) meters.air.style.height = `${Math.min(100, Math.round(airVal * 125))}%`;
+      
+      if (beatOrb && (bassVal > 0.45 || subVal > 0.55)) {
+        beatOrb.style.transform = `scale(${1 + Math.max(subVal, bassVal) * 0.45})`;
+        beatOrb.style.filter = `drop-shadow(0 0 16px rgba(0,240,255,0.85))`;
+      } else if (beatOrb) {
+        beatOrb.style.transform = 'scale(1)';
+        beatOrb.style.filter = 'none';
+      }
+    }
+  }
+  loop();
+}
+
+function handleLocalAudioFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    const objectUrl = URL.createObjectURL(file);
+    if (audioCuePlayer) {
+      audioCuePlayer.src = objectUrl;
+      audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
+      audioCuePlayer.play().then(() => {
+        btnAudioMonitor?.classList.add('active');
+        if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+        initWebAudioAnalyser();
+        showMacroToast(`Áudio Carregado: ${file.name.slice(0, 24)}`);
+        
+        currentAudioSource.mode = 'test';
+        currentAudioSource.device_name = `Arquivo: ${file.name.slice(0, 18)}`;
+        updateAudioSourceUI(currentAudioSource);
+      }).catch(err => {
+        console.warn('[Audio] Reprodução requer interação:', err);
+        showMacroToast(`Arquivo Selecionado: ${file.name.slice(0, 20)} (Clique no Fone)`);
+      });
+    }
+  } catch (err) {
+    console.error('[Audio] Erro ao carregar arquivo local:', err);
+    showMacroToast('Erro ao carregar arquivo de áudio local');
+  }
+}
+window.handleLocalAudioFileUpload = handleLocalAudioFileUpload;
+
+function playOnlineTestTrack() {
+  if (!audioCuePlayer) return;
+  const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+  audioCuePlayer.src = isOnline ? './assets/audio/test_preview.mp3' : '/api/audio-stream';
+  audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
+  audioCuePlayer.play().then(() => {
+    btnAudioMonitor?.classList.add('active');
+    if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+    initWebAudioAnalyser();
+    showMacroToast('Reproduzindo Faixa Teste (2:00)');
+    currentAudioSource.mode = 'test';
+    currentAudioSource.device_name = 'MP3 Teste (Online)';
+    updateAudioSourceUI(currentAudioSource);
+  }).catch(err => {
+    console.warn('[Audio] Falha ao tocar faixa teste, tentando fallback direto:', err);
+    audioCuePlayer.src = './assets/audio/test_preview.mp3';
+    audioCuePlayer.play().then(() => {
+      btnAudioMonitor?.classList.add('active');
+      if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+      initWebAudioAnalyser();
+      showMacroToast('Reproduzindo Faixa Teste (Online CDN)');
+    }).catch(() => {});
+  });
+}
+window.playOnlineTestTrack = playOnlineTestTrack;
+
+function toggleAudioMonitor() {
+  if (btnAudioMonitor) btnAudioMonitor.click();
+}
+window.toggleAudioMonitor = toggleAudioMonitor;
+
+function switchAudioSource(mode) {
+  if (mode === 'test') {
+    playOnlineTestTrack();
+  } else {
+    setAudioSource(mode);
+  }
+}
+window.switchAudioSource = switchAudioSource;
 
 // ============================================================================
 // 10. EVENT LISTENERS & COCKPIT INTERACTIONS
@@ -17034,17 +17399,41 @@ function setupEvents() {
       const isAuditioning = btnAudioMonitor.classList.contains('active');
       if (isAuditioning) {
         audioCuePlayer.pause();
-        audioCuePlayer.src = '';
         btnAudioMonitor.classList.remove('active');
-        if (txtAudioMonitor) txtAudioMonitor.textContent = 'FONE OFF';
+        if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE OFF';
         sendAction('set_audio_monitor', { enabled: false });
       } else {
-        audioCuePlayer.src = '/api/audio-stream';
+        if (!audioCuePlayer.src || audioCuePlayer.src === window.location.href || audioCuePlayer.src.endsWith('/')) {
+          const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+          audioCuePlayer.src = isOnline ? './assets/audio/test_preview.mp3' : '/api/audio-stream';
+        }
         audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
-        audioCuePlayer.play().catch(() => {});
-        btnAudioMonitor.classList.add('active');
-        if (txtAudioMonitor) txtAudioMonitor.textContent = 'FONE ON';
-        sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
+        audioCuePlayer.play().then(() => {
+          btnAudioMonitor.classList.add('active');
+          if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+          initWebAudioAnalyser();
+          sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
+        }).catch(err => {
+          console.warn('[Audio] Falha ao tocar áudio inicial, tentando fallback:', err);
+          if (audioCuePlayer.src.includes('/api/audio-stream')) {
+            audioCuePlayer.src = './assets/audio/test_preview.mp3';
+            audioCuePlayer.play().then(() => {
+              btnAudioMonitor.classList.add('active');
+              if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+              initWebAudioAnalyser();
+            }).catch(() => {});
+          }
+        });
+      }
+    });
+
+    audioCuePlayer.addEventListener('error', () => {
+      if (audioCuePlayer.src.includes('/api/audio-stream')) {
+        console.log('[Audio] /api/audio-stream indisponível, alternando para test_preview.mp3...');
+        audioCuePlayer.src = './assets/audio/test_preview.mp3';
+        if (btnAudioMonitor.classList.contains('active')) {
+          audioCuePlayer.play().catch(() => {});
+        }
       }
     });
   }
@@ -17468,25 +17857,36 @@ function updateSourceUI(sourceName) {
   const cfgCount = document.getElementById('cfg-media-count-val');
   const chkRemember = document.getElementById('chk-cfg-remember-source');
 
+  const cardCloud = document.getElementById('card-mode-cloud');
+  const cardLocal = document.getElementById('card-mode-local');
+  const stCloud = document.getElementById('status-mode-cloud');
+  const stLocal = document.getElementById('status-mode-local');
+  const optCloud = document.getElementById('opt-src-cloud');
+  const optLocal = document.getElementById('opt-src-local');
+
   if (chkRemember) {
     chkRemember.checked = localStorage.getItem('penumbra_remember_source') === 'true';
   }
   if (cfgCount) {
-    cfgCount.textContent = (allClips && allClips.length) ? allClips.length : 0;
+    cfgCount.textContent = (allClips && allClips.length) ? `${allClips.length} CLIPES` : '0 CLIPES';
   }
 
   if (sourceName === 'local') {
-    if (headerIcon) headerIcon.textContent = '📁';
-    if (headerLabel) headerLabel.textContent = 'LOCAL DIRECT FS';
+    if (headerLabel) headerLabel.textContent = 'DISCO LOCAL';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-emerald';
-      cfgBadge.textContent = 'LOCAL DRIVE (DIRECT FS)';
+      cfgBadge.textContent = 'DISCO LOCAL (SSD)';
     }
     if (cfgDesc) {
-      cfgDesc.textContent = 'Lendo arquivos diretamente do seu disco com zero-latência via File System Access API.';
+      cfgDesc.textContent = 'Acesso direto ao sistema de arquivos local com zero-latência via File System API.';
     }
+    if (cardLocal) cardLocal.classList.add('active');
+    if (stLocal) stLocal.textContent = 'ATIVO';
+    if (cardCloud) cardCloud.classList.remove('active');
+    if (stCloud) stCloud.textContent = 'DISPONÍVEL';
+    if (optLocal) optLocal.classList.add('active');
+    if (optCloud) optCloud.classList.remove('active');
   } else if (sourceName === 'stream') {
-    if (headerIcon) headerIcon.textContent = '▶';
     if (headerLabel) headerLabel.textContent = 'STREAM URL';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-purple';
@@ -17497,18 +17897,72 @@ function updateSourceUI(sourceName) {
     }
   } else {
     // cdn
-    if (headerIcon) headerIcon.textContent = '☁️';
     if (headerLabel) headerLabel.textContent = 'NUVEM CDN';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-cyan';
-      cfgBadge.textContent = 'NUVEM (BUNNY EDGE CDN)';
+      cfgBadge.textContent = 'NUVEM CDN';
     }
     if (cfgDesc) {
-      cfgDesc.textContent = 'Streaming direto do portfólio completo via Edge CDN de alta performance com miniaturas inteligentes.';
+      cfgDesc.textContent = 'Streaming direto da Bunny Edge CDN (São Paulo) com miniaturas e cache local.';
     }
+    if (cardCloud) cardCloud.classList.add('active');
+    if (stCloud) stCloud.textContent = 'ATIVO';
+    if (cardLocal) cardLocal.classList.remove('active');
+    if (stLocal) stLocal.textContent = 'DISPONÍVEL';
+    if (optCloud) optCloud.classList.add('active');
+    if (optLocal) optLocal.classList.remove('active');
   }
 }
 window.updateSourceUI = updateSourceUI;
+
+async function switchStorageMode(mode) {
+  const dd = document.getElementById('source-quick-dropdown');
+  if (dd) dd.style.display = 'none';
+
+  if (mode === 'cloud') {
+    try {
+      showMacroToast('Conectando à Nuvem Bunny CDN...');
+      await reconnectCloudSource();
+      updateSourceUI('cdn');
+      showMacroToast('Armazenamento alternado para Nuvem (Bunny CDN)');
+    } catch (err) {
+      console.error('[Storage] Erro ao alternar para nuvem:', err);
+    }
+  } else if (mode === 'local') {
+    try {
+      if (MediaProvider.activeSource === 'local' && allClips && allClips.length > 0) {
+        updateSourceUI('local');
+        showMacroToast('Armazenamento ativo: Disco Local (SSD)');
+      } else {
+        await selectLocalDirectorySource();
+      }
+    } catch (err) {
+      console.error('[Storage] Erro ao alternar para local:', err);
+    }
+  }
+}
+window.switchStorageMode = switchStorageMode;
+
+function toggleHeaderSourceMenu(e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const dd = document.getElementById('source-quick-dropdown');
+  if (!dd) return;
+  const isShown = dd.style.display === 'flex';
+  dd.style.display = isShown ? 'none' : 'flex';
+}
+window.toggleHeaderSourceMenu = toggleHeaderSourceMenu;
+
+// Fechar menu de fonte ao clicar fora
+document.addEventListener('click', (e) => {
+  const ctrl = document.getElementById('header-source-control');
+  const dd = document.getElementById('source-quick-dropdown');
+  if (ctrl && dd && !ctrl.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
 
 function openStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');

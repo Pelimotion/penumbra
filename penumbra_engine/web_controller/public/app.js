@@ -6122,9 +6122,9 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">🎛️ LOOK</button>
+        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">LOOK</button>
         <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
-        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
+        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">CACHE</button>` : ''}
       </div>
     </div>
   `;
@@ -6279,7 +6279,7 @@ function createMatteCardForLibrary(matte) {
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
       <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}">
-      <span class="lib-badge-type lib-badge-matte">🎭 MATTE</span>
+      <span class="lib-badge-type lib-badge-matte">MATTE</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${matte.name}</div>
@@ -6289,7 +6289,7 @@ function createMatteCardForLibrary(matte) {
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
       <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">🎛️ PARÂMETROS</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">PARÂMETROS</button>
     </div>
   `;
 
@@ -6307,8 +6307,8 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
 
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
-      <div class="library-card-fx-preview">${pluginInfo.icon || '⚡'}</div>
-      <span class="lib-badge-type lib-badge-fx">⚡ FX ENGINE</span>
+      <div class="library-card-fx-preview">${pluginInfo.code || pluginId.slice(0, 4).toUpperCase()}</div>
+      <span class="lib-badge-type lib-badge-fx">FX SHADER</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${pluginInfo.title}</div>
@@ -6316,10 +6316,10 @@ function createFxCardForLibrary(pluginId, pluginInfo) {
     </div>
     <div class="library-card-actions">
       <button class="btn ${isAct ? 'btn-primary' : 'btn-outline'} btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); if(!appState.fx.enabled) toggleFxMaster();">
-        ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
+        ${isAct ? 'ATIVO' : '+ ATIVAR'}
       </button>
       <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">🎛️ PARÂMETROS</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editFxParameters('${pluginId}')" title="Editar parâmetros deste efeito no Módulo 6">PARÂMETROS</button>
     </div>
   `;
 
@@ -6337,10 +6337,10 @@ function createPresetCardForLibrary(presetId, presetInfo) {
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
       <div class="library-card-preset-preview">
-        <span style="font-size:24px;">${presetInfo.icon || '🎛️'}</span>
+        <span style="font-family:var(--font-mono); font-size:16px; font-weight:800; color:var(--cyan);">${presetId.slice(0, 3).toUpperCase()}</span>
         <span style="font-family:var(--font-mono); font-size:9px; color:#fff; font-weight:700;">${presetInfo.bpm || 'AUTO BPM'}</span>
       </div>
-      <span class="lib-badge-type lib-badge-preset">🎛️ PRESET</span>
+      <span class="lib-badge-type lib-badge-preset">PRESET</span>
     </div>
     <div class="library-card-info">
       <div class="library-card-title">${presetInfo.title}</div>
@@ -6351,7 +6351,7 @@ function createPresetCardForLibrary(presetId, presetInfo) {
         CARREGAR
       </button>
       <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editPresetParameters('${presetId}')" title="Editar parâmetros no Conductor (Módulo 5)">
-        🎛️ EDITAR
+        EDITAR
       </button>
     </div>
   `;
@@ -6382,7 +6382,7 @@ function editMatteParameters(mattePath, matteName) {
     kinGrid.classList.add('highlight-focus-ring');
   }
 
-  showMacroToast(`🎭 [MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
+  showMacroToast(`[MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
   openQuickInspector('matte', { path: mattePath, name: matteName });
 }
 window.editMatteParameters = editMatteParameters;
@@ -6401,7 +6401,7 @@ function editFxParameters(pluginId) {
   }
 
   const fxInfo = FX_LIBRARY_CATALOG[pluginId] || { title: pluginId };
-  showMacroToast(`⚡ [FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
+  showMacroToast(`[FX ENGINE] Editando parâmetros de "${fxInfo.title}" no Módulo 6`);
   openQuickInspector('fx', { pluginId, info: fxInfo });
 }
 window.editFxParameters = editFxParameters;
@@ -6419,7 +6419,7 @@ function editPresetParameters(presetId) {
   }
 
   const pInfo = PRESETS_LIBRARY_CATALOG[presetId] || { title: presetId };
-  showMacroToast(`🎛️ [CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
+  showMacroToast(`[CONDUCTOR] Preset "${pInfo.title}" aberto para edição no Módulo 5`);
   openQuickInspector('preset', { presetId, info: pInfo });
 }
 window.editPresetParameters = editPresetParameters;
@@ -6438,7 +6438,7 @@ function editClipTonalParameters(clipId) {
 
   const clip = allClips.find(c => c.id === clipId);
   const title = clip?.display_title || clip?.filename || 'Clipe';
-  showMacroToast(`🎨 [TONAL] Grading aberto para "${title}" no Módulo 4`);
+  showMacroToast(`[TONAL] Grading aberto para "${title}" no Módulo 4`);
   openQuickInspector('clip', { clipId, clip });
 }
 window.editClipTonalParameters = editClipTonalParameters;
@@ -6787,8 +6787,161 @@ function updateAudioSourceUI(srcInfo) {
   if (lbl) {
     lbl.textContent = srcInfo.device_name || (mode ? mode.toUpperCase() : 'Áudio Ativo');
   }
+  const cfgLbl = document.getElementById('lbl-cfg-audio-dev');
+  if (cfgLbl) {
+    cfgLbl.textContent = srcInfo.device_name || (mode ? mode.toUpperCase() : 'Áudio Ativo');
+  }
 }
 window.updateAudioSourceUI = updateAudioSourceUI;
+
+// ============================================================================
+// WEB AUDIO API REAL-TIME ANALYSER & LOCAL FILE UPLOAD
+// ============================================================================
+let webAudioCtx = null;
+let webAudioAnalyser = null;
+let webAudioSourceNode = null;
+let webAudioFreqData = null;
+let webAudioAnimFrameId = null;
+
+function initWebAudioAnalyser() {
+  if (webAudioCtx && webAudioAnalyser) {
+    if (webAudioCtx.state === 'suspended') {
+      webAudioCtx.resume().catch(() => {});
+    }
+    return;
+  }
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass || !audioCuePlayer) return;
+    
+    webAudioCtx = new AudioContextClass();
+    webAudioAnalyser = webAudioCtx.createAnalyser();
+    webAudioAnalyser.fftSize = 256;
+    webAudioAnalyser.smoothingTimeConstant = 0.75;
+    webAudioFreqData = new Uint8Array(webAudioAnalyser.frequencyBinCount);
+    
+    webAudioSourceNode = webAudioCtx.createMediaElementSource(audioCuePlayer);
+    webAudioSourceNode.connect(webAudioAnalyser);
+    webAudioAnalyser.connect(webAudioCtx.destination);
+    
+    startWebAudioVisualizerLoop();
+  } catch (err) {
+    console.log('[WebAudio] Analyser init notice:', err.message);
+  }
+}
+
+function startWebAudioVisualizerLoop() {
+  if (webAudioAnimFrameId) return;
+  
+  function loop() {
+    webAudioAnimFrameId = requestAnimationFrame(loop);
+    if (!webAudioAnalyser || !webAudioFreqData || !audioCuePlayer || audioCuePlayer.paused) return;
+    
+    webAudioAnalyser.getByteFrequencyData(webAudioFreqData);
+    
+    const avg = (start, end) => {
+      let sum = 0;
+      const count = Math.max(1, end - start);
+      for (let i = start; i < end && i < webAudioFreqData.length; i++) sum += webAudioFreqData[i];
+      return (sum / count) / 255.0;
+    };
+    
+    const subVal = avg(0, 2);
+    const bassVal = avg(2, 5);
+    const lomidVal = avg(5, 10);
+    const himidVal = avg(10, 25);
+    const presVal = avg(25, 55);
+    const airVal = avg(55, 120);
+    
+    // Drive meters directly if WebSocket is offline or in test audio playback
+    if (!ws || ws.readyState !== WebSocket.OPEN || currentAudioSource.mode === 'test') {
+      if (meters.sub) meters.sub.style.height = `${Math.min(100, Math.round(subVal * 125))}%`;
+      if (meters.bass) meters.bass.style.height = `${Math.min(100, Math.round(bassVal * 125))}%`;
+      if (meters.lomid) meters.lomid.style.height = `${Math.min(100, Math.round(lomidVal * 125))}%`;
+      if (meters.himid) meters.himid.style.height = `${Math.min(100, Math.round(himidVal * 125))}%`;
+      if (meters.pres) meters.pres.style.height = `${Math.min(100, Math.round(presVal * 125))}%`;
+      if (meters.air) meters.air.style.height = `${Math.min(100, Math.round(airVal * 125))}%`;
+      
+      if (beatOrb && (bassVal > 0.45 || subVal > 0.55)) {
+        beatOrb.style.transform = `scale(${1 + Math.max(subVal, bassVal) * 0.45})`;
+        beatOrb.style.filter = `drop-shadow(0 0 16px rgba(0,240,255,0.85))`;
+      } else if (beatOrb) {
+        beatOrb.style.transform = 'scale(1)';
+        beatOrb.style.filter = 'none';
+      }
+    }
+  }
+  loop();
+}
+
+function handleLocalAudioFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    const objectUrl = URL.createObjectURL(file);
+    if (audioCuePlayer) {
+      audioCuePlayer.src = objectUrl;
+      audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
+      audioCuePlayer.play().then(() => {
+        btnAudioMonitor?.classList.add('active');
+        if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+        initWebAudioAnalyser();
+        showMacroToast(`Áudio Carregado: ${file.name.slice(0, 24)}`);
+        
+        currentAudioSource.mode = 'test';
+        currentAudioSource.device_name = `Arquivo: ${file.name.slice(0, 18)}`;
+        updateAudioSourceUI(currentAudioSource);
+      }).catch(err => {
+        console.warn('[Audio] Reprodução requer interação:', err);
+        showMacroToast(`Arquivo Selecionado: ${file.name.slice(0, 20)} (Clique no Fone)`);
+      });
+    }
+  } catch (err) {
+    console.error('[Audio] Erro ao carregar arquivo local:', err);
+    showMacroToast('Erro ao carregar arquivo de áudio local');
+  }
+}
+window.handleLocalAudioFileUpload = handleLocalAudioFileUpload;
+
+function playOnlineTestTrack() {
+  if (!audioCuePlayer) return;
+  const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+  audioCuePlayer.src = isOnline ? './assets/audio/test_preview.mp3' : '/api/audio-stream';
+  audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
+  audioCuePlayer.play().then(() => {
+    btnAudioMonitor?.classList.add('active');
+    if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+    initWebAudioAnalyser();
+    showMacroToast('Reproduzindo Faixa Teste (2:00)');
+    currentAudioSource.mode = 'test';
+    currentAudioSource.device_name = 'MP3 Teste (Online)';
+    updateAudioSourceUI(currentAudioSource);
+  }).catch(err => {
+    console.warn('[Audio] Falha ao tocar faixa teste, tentando fallback direto:', err);
+    audioCuePlayer.src = './assets/audio/test_preview.mp3';
+    audioCuePlayer.play().then(() => {
+      btnAudioMonitor?.classList.add('active');
+      if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+      initWebAudioAnalyser();
+      showMacroToast('Reproduzindo Faixa Teste (Online CDN)');
+    }).catch(() => {});
+  });
+}
+window.playOnlineTestTrack = playOnlineTestTrack;
+
+function toggleAudioMonitor() {
+  if (btnAudioMonitor) btnAudioMonitor.click();
+}
+window.toggleAudioMonitor = toggleAudioMonitor;
+
+function switchAudioSource(mode) {
+  if (mode === 'test') {
+    playOnlineTestTrack();
+  } else {
+    setAudioSource(mode);
+  }
+}
+window.switchAudioSource = switchAudioSource;
 
 // ============================================================================
 // 10. EVENT LISTENERS & COCKPIT INTERACTIONS
@@ -7030,17 +7183,41 @@ function setupEvents() {
       const isAuditioning = btnAudioMonitor.classList.contains('active');
       if (isAuditioning) {
         audioCuePlayer.pause();
-        audioCuePlayer.src = '';
         btnAudioMonitor.classList.remove('active');
-        if (txtAudioMonitor) txtAudioMonitor.textContent = 'FONE OFF';
+        if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE OFF';
         sendAction('set_audio_monitor', { enabled: false });
       } else {
-        audioCuePlayer.src = '/api/audio-stream';
+        if (!audioCuePlayer.src || audioCuePlayer.src === window.location.href || audioCuePlayer.src.endsWith('/')) {
+          const isOnline = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+          audioCuePlayer.src = isOnline ? './assets/audio/test_preview.mp3' : '/api/audio-stream';
+        }
         audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
-        audioCuePlayer.play().catch(() => {});
-        btnAudioMonitor.classList.add('active');
-        if (txtAudioMonitor) txtAudioMonitor.textContent = 'FONE ON';
-        sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
+        audioCuePlayer.play().then(() => {
+          btnAudioMonitor.classList.add('active');
+          if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+          initWebAudioAnalyser();
+          sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
+        }).catch(err => {
+          console.warn('[Audio] Falha ao tocar áudio inicial, tentando fallback:', err);
+          if (audioCuePlayer.src.includes('/api/audio-stream')) {
+            audioCuePlayer.src = './assets/audio/test_preview.mp3';
+            audioCuePlayer.play().then(() => {
+              btnAudioMonitor.classList.add('active');
+              if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+              initWebAudioAnalyser();
+            }).catch(() => {});
+          }
+        });
+      }
+    });
+
+    audioCuePlayer.addEventListener('error', () => {
+      if (audioCuePlayer.src.includes('/api/audio-stream')) {
+        console.log('[Audio] /api/audio-stream indisponível, alternando para test_preview.mp3...');
+        audioCuePlayer.src = './assets/audio/test_preview.mp3';
+        if (btnAudioMonitor.classList.contains('active')) {
+          audioCuePlayer.play().catch(() => {});
+        }
       }
     });
   }
@@ -7464,25 +7641,36 @@ function updateSourceUI(sourceName) {
   const cfgCount = document.getElementById('cfg-media-count-val');
   const chkRemember = document.getElementById('chk-cfg-remember-source');
 
+  const cardCloud = document.getElementById('card-mode-cloud');
+  const cardLocal = document.getElementById('card-mode-local');
+  const stCloud = document.getElementById('status-mode-cloud');
+  const stLocal = document.getElementById('status-mode-local');
+  const optCloud = document.getElementById('opt-src-cloud');
+  const optLocal = document.getElementById('opt-src-local');
+
   if (chkRemember) {
     chkRemember.checked = localStorage.getItem('penumbra_remember_source') === 'true';
   }
   if (cfgCount) {
-    cfgCount.textContent = (allClips && allClips.length) ? allClips.length : 0;
+    cfgCount.textContent = (allClips && allClips.length) ? `${allClips.length} CLIPES` : '0 CLIPES';
   }
 
   if (sourceName === 'local') {
-    if (headerIcon) headerIcon.textContent = '📁';
-    if (headerLabel) headerLabel.textContent = 'LOCAL DIRECT FS';
+    if (headerLabel) headerLabel.textContent = 'DISCO LOCAL';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-emerald';
-      cfgBadge.textContent = 'LOCAL DRIVE (DIRECT FS)';
+      cfgBadge.textContent = 'DISCO LOCAL (SSD)';
     }
     if (cfgDesc) {
-      cfgDesc.textContent = 'Lendo arquivos diretamente do seu disco com zero-latência via File System Access API.';
+      cfgDesc.textContent = 'Acesso direto ao sistema de arquivos local com zero-latência via File System API.';
     }
+    if (cardLocal) cardLocal.classList.add('active');
+    if (stLocal) stLocal.textContent = 'ATIVO';
+    if (cardCloud) cardCloud.classList.remove('active');
+    if (stCloud) stCloud.textContent = 'DISPONÍVEL';
+    if (optLocal) optLocal.classList.add('active');
+    if (optCloud) optCloud.classList.remove('active');
   } else if (sourceName === 'stream') {
-    if (headerIcon) headerIcon.textContent = '▶';
     if (headerLabel) headerLabel.textContent = 'STREAM URL';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-purple';
@@ -7493,18 +7681,72 @@ function updateSourceUI(sourceName) {
     }
   } else {
     // cdn
-    if (headerIcon) headerIcon.textContent = '☁️';
     if (headerLabel) headerLabel.textContent = 'NUVEM CDN';
     if (cfgBadge) {
       cfgBadge.className = 'cfg-badge text-cyan';
-      cfgBadge.textContent = 'NUVEM (BUNNY EDGE CDN)';
+      cfgBadge.textContent = 'NUVEM CDN';
     }
     if (cfgDesc) {
-      cfgDesc.textContent = 'Streaming direto do portfólio completo via Edge CDN de alta performance com miniaturas inteligentes.';
+      cfgDesc.textContent = 'Streaming direto da Bunny Edge CDN (São Paulo) com miniaturas e cache local.';
     }
+    if (cardCloud) cardCloud.classList.add('active');
+    if (stCloud) stCloud.textContent = 'ATIVO';
+    if (cardLocal) cardLocal.classList.remove('active');
+    if (stLocal) stLocal.textContent = 'DISPONÍVEL';
+    if (optCloud) optCloud.classList.add('active');
+    if (optLocal) optLocal.classList.remove('active');
   }
 }
 window.updateSourceUI = updateSourceUI;
+
+async function switchStorageMode(mode) {
+  const dd = document.getElementById('source-quick-dropdown');
+  if (dd) dd.style.display = 'none';
+
+  if (mode === 'cloud') {
+    try {
+      showMacroToast('Conectando à Nuvem Bunny CDN...');
+      await reconnectCloudSource();
+      updateSourceUI('cdn');
+      showMacroToast('Armazenamento alternado para Nuvem (Bunny CDN)');
+    } catch (err) {
+      console.error('[Storage] Erro ao alternar para nuvem:', err);
+    }
+  } else if (mode === 'local') {
+    try {
+      if (MediaProvider.activeSource === 'local' && allClips && allClips.length > 0) {
+        updateSourceUI('local');
+        showMacroToast('Armazenamento ativo: Disco Local (SSD)');
+      } else {
+        await selectLocalDirectorySource();
+      }
+    } catch (err) {
+      console.error('[Storage] Erro ao alternar para local:', err);
+    }
+  }
+}
+window.switchStorageMode = switchStorageMode;
+
+function toggleHeaderSourceMenu(e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const dd = document.getElementById('source-quick-dropdown');
+  if (!dd) return;
+  const isShown = dd.style.display === 'flex';
+  dd.style.display = isShown ? 'none' : 'flex';
+}
+window.toggleHeaderSourceMenu = toggleHeaderSourceMenu;
+
+// Fechar menu de fonte ao clicar fora
+document.addEventListener('click', (e) => {
+  const ctrl = document.getElementById('header-source-control');
+  const dd = document.getElementById('source-quick-dropdown');
+  if (ctrl && dd && !ctrl.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
 
 function openStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');

@@ -119,6 +119,8 @@ async function runTests() {
   assert(stylesCss.includes('.library-card-preset'), 'Conductor Preset card styles defined');
   assert(stylesCss.includes('.settings-card-pro'), 'Pro settings 2-column layout styles defined');
   assert(stylesCss.includes('.cfg-prop-row'), 'Settings clean property row styles defined');
+  assert(stylesCss.includes('.storage-mode-grid'), 'Pro storage mode switcher grid styles defined');
+  assert(stylesCss.includes('.storage-card'), 'Segmented storage card styles defined');
 
   // --- SUITE 4: JavaScript Logic & Engine Handlers (app.js) ---
   console.log('\n[SUITE 4] JavaScript Engine & Behavior (app.js):');
@@ -135,6 +137,11 @@ async function runTests() {
   assert(appJs.includes('function editClipTonalParameters('), 'editClipTonalParameters function defined');
   assert(appJs.includes('function toggleLibrarySidebar('), 'toggleLibrarySidebar function defined');
   assert(appJs.includes('function openQuickInspector('), 'openQuickInspector function defined');
+  assert(appJs.includes('function switchStorageMode('), 'switchStorageMode function defined');
+  assert(appJs.includes('function toggleHeaderSourceMenu('), 'toggleHeaderSourceMenu function defined');
+  assert(appJs.includes('function handleLocalAudioFileUpload('), 'handleLocalAudioFileUpload function defined');
+  assert(appJs.includes('function playOnlineTestTrack('), 'playOnlineTestTrack function defined');
+  assert(appJs.includes('function initWebAudioAnalyser('), 'initWebAudioAnalyser function defined');
   assert(appJs.includes('activeLibraryAssetType'), 'activeLibraryAssetType state variable used');
   assert(appJs.includes('createMatteCardForLibrary'), 'createMatteCardForLibrary helper defined');
   assert(appJs.includes('createFxCardForLibrary'), 'createFxCardForLibrary helper defined');
@@ -144,6 +151,10 @@ async function runTests() {
   // Keybinding Tab
   assert(appJs.includes("e.key === 'Tab'") || appJs.includes('e.key === "Tab"'), 'Tab key listener handles view mode toggle');
 
+  // Audio preview file
+  const testAudioPath = path.join(PUBLIC_DIR, 'assets', 'audio', 'test_preview.mp3');
+  assert(fs.existsSync(testAudioPath), 'Offline/Online test_preview.mp3 asset exists');
+
   // --- SUITE 5: Portable HTML Synchronization ---
   console.log('\n[SUITE 5] Portable Bundle Synchronization:');
   const portableHtmlPath = path.join(ROOT_DIR, 'cdn_build/Penumbra_Portable.html');
@@ -152,6 +163,7 @@ async function runTests() {
   assert(portableHtml.includes('workspace-splitter'), 'Portable bundle contains workspace-splitter');
   assert(portableHtml.includes('settings-card-pro'), 'Portable bundle contains settings-card-pro');
   assert(portableHtml.includes('dock-timeline-view'), 'Portable bundle contains dock-timeline-view');
+  assert(portableHtml.includes('card-mode-cloud'), 'Portable bundle contains card-mode-cloud');
 
   // --- SUMMARY ---
   console.log('\n==================================================');

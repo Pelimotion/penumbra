@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 12:23:25 BRT
+- **Última Atualização:** 09/10/2026, 12:48:17 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -15,10 +15,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 8,685 | 343.4 KB |
-| `styles.css` | 7,024 | 136.7 KB |
-| `index.html` | 2,839 | 168.9 KB |
-| `Penumbra_Portable.html` | — | 655.4 KB |
+| `app.js` | 8,927 | 352.8 KB |
+| `styles.css` | 7,183 | 139.8 KB |
+| `index.html` | 2,892 | 181.3 KB |
+| `Penumbra_Portable.html` | — | 680.4 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
@@ -26,9 +26,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `d24098f` — feat(ui): redesign pro preferences, resizable workspace, dedicated timeline arranger, and universal asset library
-- **Data:** 2026-10-09 11:39:20
-- **Total de Commits:** 22
+- **Último Commit:** `e0839ec` — feat(library): studio two-column layout, sidebar bins and instant parameter edit navigation
+- **Data:** 2026-10-09 12:23:59
+- **Total de Commits:** 23
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.

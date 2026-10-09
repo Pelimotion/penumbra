@@ -1,12 +1,13 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 12:23:25 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 12:48:17 BRT
 
 ---
 
 ## Outubro de 2026
 
 ### ✨ Novos Recursos
+- `e0839ec` **(library)** studio two-column layout, sidebar bins and instant parameter edit navigation
 - `d24098f` **(ui)** redesign pro preferences, resizable workspace, dedicated timeline arranger, and universal asset library
 - `4859515` **(launcher)** fix startup launcher trigger, add source switcher in header and Settings tab
 - `382464f` **(ui)** DaVinci/Adobe studio launcher with integrated PIN 2026 and Bunny Edge CDN deployment

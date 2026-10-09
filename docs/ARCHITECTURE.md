@@ -1,6 +1,6 @@
 # 🎛️ PENUMBRA SYSTEM · ARQUITETURA TÉCNICA
 
-> Auto-gerado por `scripts/update_docs.js` · 09/10/2026, 12:23:25 BRT
+> Auto-gerado por `scripts/update_docs.js` · 09/10/2026, 12:48:17 BRT
 
 ---
 
@@ -27,12 +27,12 @@ O **Penumbra System** é um VJ Engine audio-reativo de alta performance executad
 
 | Arquivo | Descrição | Linhas |
 |---|---|---|
-| `public/app.js` | Motor principal VJ (render, media, autopilot, FX) | 8,685 |
-| `public/styles.css` | Design System Dark Studio (DaVinci/Cavalry/Adobe) | 7,024 |
-| `public/index.html` | Cockpit HTML + Studio Launcher + PIN Gate | 2,839 |
+| `public/app.js` | Motor principal VJ (render, media, autopilot, FX) | 8,927 |
+| `public/styles.css` | Design System Dark Studio (DaVinci/Cavalry/Adobe) | 7,183 |
+| `public/index.html` | Cockpit HTML + Studio Launcher + PIN Gate | 2,892 |
 | `public/midi.js` | MIDI Controller Bridge | 139 |
 | `server.js` | Express + WebSocket Server (modo local) | 1,237 |
-| `scripts/deploy_cdn.js` | Deploy automático Bunny Edge CDN | 136 |
+| `scripts/deploy_cdn.js` | Deploy automático Bunny Edge CDN | 137 |
 | `scripts/build_portable.js` | Bundler HTML portátil offline | 56 |
 | `scripts/update_docs.js` | Auto-documentação (este script) | 368 |
 
