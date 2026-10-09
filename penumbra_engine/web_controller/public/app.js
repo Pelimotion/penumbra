@@ -4921,6 +4921,21 @@ async function loadMediaPool(providedClips = null) {
       }
     }
 
+    // Dynamic 3D Model Override from CDN (if user put it in 1.in)
+    const customModel = allClips.find(c => c.type === 'model' && c.filename.includes('espinhaco_spine_points.json'));
+    if (customModel && MediaProvider.mode === 'cdn') {
+      const modelUrl = MediaProvider.getMediaUrl(customModel.relative_path);
+      fetch(modelUrl).then(r => r.json()).then(data => {
+        if (data && data.points) {
+          plexusSpinePoints = data.points;
+          console.log(`[✓] Plexus 3D Espinhaço override from CDN: ${plexusSpinePoints.length} vertices.`);
+        }
+      }).catch(e => console.warn('Failed to load CDN model override', e));
+    }
+
+    // Keep only videos for the UI Grid
+    allClips = allClips.filter(c => c.type !== 'model');
+
     // Ensure Plexus 3D Espinhaço Generative clip is prepended and available in Media Pool
     if (!allClips.some(c => c.id === 'clip_gen_plexus_spine')) {
       allClips.unshift({
@@ -5759,9 +5774,22 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-nexus-cdn').addEventListener('click', async () => {
-      console.log('[Media Nexus] CDN Mode Activated');
+      const pin = prompt('🔒 AUTENTICAÇÃO CDN\\nInsira o PIN de acesso seguro à nuvem Gigantera:');
+      if (!pin) return;
+      
+      const msgBuffer = new TextEncoder().encode(pin);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      // SHA-256 of '2026'
+      if (hashHex !== '195cbbf6016cc99c852dc779c118742b8ec2be6bd31a23da24a35cfba78434ce') {
+        alert('❌ PIN INCORRETO. Acesso negado à CDN.');
+        return;
+      }
+      
+      console.log('[Media Nexus] CDN Mode Activated (PIN Verified)');
       nexusModal.close();
-      // Connect to Bunny.net manifest
       const clips = await MediaProvider.initCDN();
       await loadMediaPool(clips);
       await loadMattesCatalog();

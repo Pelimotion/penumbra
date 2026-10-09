@@ -80,48 +80,99 @@ function uploadToBunny(localFilePath, remotePath) {
 async function processMedia() {
   console.log('[*] Penumbra CDN Sync Orchestrator Initialized');
   
-  const files = fs.readdirSync(SOURCE_MEDIA_DIR).filter(f => f.endsWith('.mp4') || f.endsWith('.mov'));
   const manifest = [];
-
-  for (const file of files) {
-    const filePath = path.join(SOURCE_MEDIA_DIR, file);
-    const id = crypto.createHash('md5').update(file).digest('hex').substring(0, 10);
-    const baseName = path.parse(file).name;
+  
+  function scanDirRecursive(dir, baseDir) {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
     
-    const staticThumbName = `${baseName}_static.webp`;
-    const staticThumbPath = path.join(OUTPUT_DIR, staticThumbName);
-    const animThumbName = `${baseName}_anim.webp`;
-    const animThumbPath = path.join(OUTPUT_DIR, animThumbName);
-    const videoOutPath = path.join(OUTPUT_DIR, file);
-
-    console.log(`\n[FFMPEG] 🎞️ Processing ${file}...`);
-    
-    // Copy video to build folder
-    fs.copyFileSync(filePath, videoOutPath);
-    
-    // Generate Static Thumbnail (WebP for extreme efficiency)
-    if (!fs.existsSync(staticThumbPath)) {
-      execSync(`ffmpeg -y -i "${filePath}" -ss 00:00:01.000 -vframes 1 -vf "scale=320:-1" -c:v libwebp -quality 80 "${staticThumbPath}"`, { stdio: 'ignore' });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+      
+      if (entry.isDirectory()) {
+        scanDirRecursive(fullPath, baseDir);
+      } else {
+        const ext = path.extname(entry.name).toLowerCase();
+        
+        // Handle JSON models/metadata
+        if (ext === '.json' && entry.name !== 'media_manifest.json') {
+          const outPath = path.join(OUTPUT_DIR, relativePath);
+          fs.mkdirSync(path.dirname(outPath), { recursive: true });
+          fs.copyFileSync(fullPath, outPath);
+          uploadQueue.push({ local: outPath, remote: relativePath });
+          manifest.push({
+            id: `model_${crypto.createHash('md5').update(relativePath).digest('hex').substring(0, 10)}`,
+            filename: entry.name,
+            type: 'model',
+            category: 'MODEL 3D',
+            relative_path: relativePath
+          });
+        }
+        
+        // Handle Videos
+        if (ext === '.mp4' || ext === '.mov') {
+          const id = crypto.createHash('md5').update(relativePath).digest('hex').substring(0, 10);
+          const baseName = path.parse(entry.name).name;
+          const relativeDir = path.dirname(relativePath);
+          
+          const staticThumbName = `${baseName}_static.webp`;
+          const animThumbName = `${baseName}_anim.webp`;
+          
+          const outDir = path.join(OUTPUT_DIR, relativeDir);
+          fs.mkdirSync(outDir, { recursive: true });
+          
+          const videoOutPath = path.join(outDir, entry.name);
+          const staticThumbPath = path.join(outDir, staticThumbName);
+          const animThumbPath = path.join(outDir, animThumbName);
+          
+          console.log(`\n[FFMPEG] 🎞️ Processing ${relativePath}...`);
+          fs.copyFileSync(fullPath, videoOutPath);
+          
+          if (!fs.existsSync(staticThumbPath)) {
+            execSync(`ffmpeg -y -i "${fullPath}" -ss 00:00:01.000 -vframes 1 -vf "scale=320:-1" -c:v libwebp -quality 80 "${staticThumbPath}"`, { stdio: 'ignore' });
+          }
+          if (!fs.existsSync(animThumbPath)) {
+            execSync(`ffmpeg -y -i "${fullPath}" -t 3 -vf "fps=10,scale=320:-1:flags=lanczos" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 50 -loop 0 -preset default -an -vsync 0 "${animThumbPath}"`, { stdio: 'ignore' });
+          }
+          
+          uploadQueue.push({ local: videoOutPath, remote: relativePath });
+          uploadQueue.push({ local: staticThumbPath, remote: `${relativeDir}/${staticThumbName}` });
+          uploadQueue.push({ local: animThumbPath, remote: `${relativeDir}/${animThumbName}` });
+          
+          // Determine project from folder structure (e.g. IN/ProjectName/1.in/)
+          const pathParts = relativePath.split('/');
+          const projName = pathParts.length > 2 ? pathParts[1] : 'GIGANTERA';
+          const cat = pathParts[0] === 'OUT' ? 'SAÍDA (OUT)' : 'BRUTO (IN)';
+          
+          manifest.push({
+            id: `clip_${id}`,
+            filename: entry.name,
+            project: projName,
+            category: cat,
+            type: 'video',
+            relative_path: relativePath,
+            thumbnail: `${relativeDir}/${staticThumbName}`,
+            preview_anim: `${relativeDir}/${animThumbName}`
+          });
+        }
+      }
     }
-    
-    // Generate Animated Hover Preview (WebP, 10fps, 3 seconds max, ultra-low bitrate)
-    if (!fs.existsSync(animThumbPath)) {
-      execSync(`ffmpeg -y -i "${filePath}" -t 3 -vf "fps=10,scale=320:-1:flags=lanczos" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 50 -loop 0 -preset default -an -vsync 0 "${animThumbPath}"`, { stdio: 'ignore' });
-    }
+  }
 
-    manifest.push({
-      id: `clip_${id}`,
-      filename: file,
-      category: 'GIGANTERA',
-      relative_path: `clips/${file}`,
-      thumbnail: `clips/${staticThumbName}`,
-      preview_anim: `clips/${animThumbName}`
-    });
+  const uploadQueue = [];
+  
+  // Create IN and OUT folders if they don't exist
+  const inDir = path.join(SOURCE_MEDIA_DIR, 'IN');
+  const outDir = path.join(SOURCE_MEDIA_DIR, 'OUT');
+  if (!fs.existsSync(inDir)) fs.mkdirSync(inDir, { recursive: true });
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  
+  scanDirRecursive(SOURCE_MEDIA_DIR, SOURCE_MEDIA_DIR);
 
-    // Upload Video, Static Thumb, and Anim Thumb
-    await uploadToBunny(videoOutPath, `clips/${file}`);
-    await uploadToBunny(staticThumbPath, `clips/${staticThumbName}`);
-    await uploadToBunny(animThumbPath, `clips/${animThumbName}`);
+  // Upload everything sequentially
+  for (const item of uploadQueue) {
+    await uploadToBunny(item.local, item.remote);
   }
 
   // Generate and Upload Manifest
