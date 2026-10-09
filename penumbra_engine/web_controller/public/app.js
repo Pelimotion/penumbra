@@ -4387,8 +4387,19 @@ function renderQueueCards() {
 // ============================================================================
 async function loadMattesCatalog() {
   try {
-    const res = await fetch('/api/mattes');
-    allMattes = await res.json();
+    if (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'lan') {
+      const res = await fetch(HARS.resolveUrl('/api/mattes'));
+      if (res.ok) allMattes = await res.json();
+    }
+    
+    // Standalone fallback: if no backend, provide default procedural mattes
+    if (!allMattes || allMattes.length === 0) {
+      allMattes = [
+        { id: 'matte_procedural_circle', filename: 'Circulo Suave', category: 'PROCEDURAL', is_procedural: true, shape: 'circle' },
+        { id: 'matte_procedural_diamond', filename: 'Diamante', category: 'PROCEDURAL', is_procedural: true, shape: 'diamond' }
+      ];
+    }
+    
     const countLbl = document.getElementById('dock-matte-count');
     if (countLbl) countLbl.textContent = allMattes.length;
     populateMatteDropdowns();
@@ -5710,6 +5721,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // Pass dirHandle to Media Pool Provider
         const clips = await MediaProvider.initLocal(dirHandle);
         await loadMediaPool(clips);
+        await loadMattesCatalog();
       } catch (err) {
         console.warn('[Media Nexus] Directory selection cancelled or failed:', err);
       }
@@ -5721,11 +5733,12 @@ window.addEventListener('DOMContentLoaded', () => {
       // Connect to Bunny.net manifest
       const clips = await MediaProvider.initCDN();
       await loadMediaPool(clips);
+      await loadMattesCatalog();
     });
   } else {
     loadMediaPool();
+    loadMattesCatalog();
   }
-  loadMattesCatalog();
   setupEvents();
   setupProFaders();
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
