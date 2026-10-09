@@ -56,30 +56,53 @@ const MediaProvider = {
     MediaProvider.localFilesMap.clear();
     const clips = [];
     
-    // Recursive folder scan
+    // Check if there is already a local manifest
+    async function getLocalManifest(handle) {
+      try {
+        const fileHandle = await handle.getFileHandle('media_manifest.json');
+        const file = await fileHandle.getFile();
+        return JSON.parse(await file.text());
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Recursive folder scan to populate localFilesMap
     async function scanDir(handle, currentPath = '') {
       for await (const entry of handle.values()) {
         const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
         if (entry.kind === 'file') {
           const ext = entry.name.split('.').pop().toLowerCase();
-          if (['mp4', 'mov', 'webm'].includes(ext)) {
+          if (['mp4', 'mov', 'webm', 'json'].includes(ext)) {
             const file = await entry.getFile();
             MediaProvider.localFilesMap.set(entryPath, file);
             
-            // Build dynamic manifest entry
-            clips.push({
-              id: `local_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
-              filename: entry.name,
-              folder: currentPath || 'ROOT',
-              relative_path: entryPath,
-              absolute_path: entryPath,
-              width: 1920, height: 1080, duration: 10.0, fps: 60.0, // Assumed defaults
-              codec: ext,
-              category: currentPath.toUpperCase() || 'UNCATEGORIZED',
-              suggested_layer: 0,
-              thumbnail: '', // Local thumbnails can be generated via Canvas extraction later
-              is_local: true
-            });
+            if (ext === 'json') {
+              if (entry.name !== 'media_manifest.json') {
+                clips.push({
+                  id: `local_model_${entry.name}`,
+                  filename: entry.name,
+                  type: 'model',
+                  relative_path: entryPath,
+                  category: 'MODEL 3D',
+                  is_local: true
+                });
+              }
+            } else {
+              clips.push({
+                id: `local_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+                filename: entry.name,
+                folder: currentPath || 'ROOT',
+                relative_path: entryPath,
+                absolute_path: entryPath,
+                width: 1920, height: 1080, duration: 10.0, fps: 60.0,
+                codec: ext,
+                category: currentPath.split('/')[0].toUpperCase() || 'UNCATEGORIZED',
+                suggested_layer: 0,
+                thumbnail: '', 
+                is_local: true
+              });
+            }
           }
         } else if (entry.kind === 'directory') {
           await scanDir(entry, entryPath);
@@ -88,6 +111,82 @@ const MediaProvider = {
     }
     
     await scanDir(dirHandle);
+
+    // AUTO INSTALLER LOGIC (OTA)
+    if (clips.length === 0) {
+      if (confirm('📦 PASTA VAZIA DETECTADA!\\nDeseja instalar a Biblioteca Completa do Gigantera (Mídias, Modelos 3D e Executável Offline) direto da nuvem CDN nesta pasta?')) {
+        console.log('[Media Nexus] Iniciando Instalação OTA...');
+        const CDN_BASE = 'https://gigantera-penumbra.b-cdn.net';
+        
+        const manifestRes = await fetch(`${CDN_BASE}/media_manifest.json`);
+        const manifestData = await manifestRes.json();
+        
+        const progressDiv = document.createElement('div');
+        progressDiv.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;padding:30px;border:1px solid #00f0ff;color:#fff;z-index:99999;font-family:monospace;text-align:center;border-radius:8px;box-shadow: 0 0 40px rgba(0,240,255,0.2);';
+        progressDiv.innerHTML = `<h3>📥 INSTALANDO GIGANTERA OFFLINE</h3><p id="ota-status" style="margin:20px 0;">Preparando download de ${manifestData.length} itens...</p><progress id="ota-bar" value="0" max="100" style="width:100%;height:20px;"></progress>`;
+        document.body.appendChild(progressDiv);
+
+        const downloadQueue = [
+          { remote: 'media_manifest.json', local: 'media_manifest.json' },
+          { remote: 'Penumbra_Portable.html', local: 'Penumbra_Offline_Executable.html' }
+        ];
+
+        for (const item of manifestData) {
+          if (item.relative_path) downloadQueue.push({ remote: item.relative_path, local: item.relative_path });
+          if (item.thumbnail) downloadQueue.push({ remote: item.thumbnail, local: item.thumbnail });
+          if (item.preview_anim) downloadQueue.push({ remote: item.preview_anim, local: item.preview_anim });
+        }
+
+        async function ensureDirectory(baseHandle, pathStr) {
+          const parts = pathStr.split('/');
+          let currentHandle = baseHandle;
+          for (const part of parts) {
+            if (!part) continue;
+            currentHandle = await currentHandle.getDirectoryHandle(part, { create: true });
+          }
+          return currentHandle;
+        }
+
+        let doneCount = 0;
+        for (const fileItem of downloadQueue) {
+          document.getElementById('ota-status').textContent = `Baixando: ${fileItem.local}`;
+          try {
+            const res = await fetch(`${CDN_BASE}/${fileItem.remote}`);
+            if (res.ok) {
+              const blob = await res.blob();
+              const parts = fileItem.local.split('/');
+              const fileName = parts.pop();
+              const dirPath = parts.join('/');
+              
+              const targetDirHandle = dirPath ? await ensureDirectory(dirHandle, dirPath) : dirHandle;
+              const fileHandle = await targetDirHandle.getFileHandle(fileName, { create: true });
+              const writable = await fileHandle.createWritable();
+              await writable.write(blob);
+              await writable.close();
+            }
+          } catch (e) {
+            console.warn(`Falha no download OTA: ${fileItem.local}`, e);
+          }
+          doneCount++;
+          document.getElementById('ota-bar').value = (doneCount / downloadQueue.length) * 100;
+        }
+
+        progressDiv.innerHTML = `<h3>✅ INSTALAÇÃO CONCLUÍDA!</h3><p>O Penumbra Engine portátil e todas as mídias agora são nativas no seu HD.</p>`;
+        setTimeout(() => progressDiv.remove(), 4000);
+        
+        // Re-scan dynamically created files
+        MediaProvider.localFilesMap.clear();
+        clips.length = 0;
+        await scanDir(dirHandle);
+      }
+    }
+
+    const localManifest = await getLocalManifest(dirHandle);
+    if (localManifest && localManifest.length > 0) {
+      console.log('[Media Nexus] Usando media_manifest.json local otimizado.');
+      return localManifest;
+    }
+
     return clips;
   },
 
@@ -4921,16 +5020,16 @@ async function loadMediaPool(providedClips = null) {
       }
     }
 
-    // Dynamic 3D Model Override from CDN (if user put it in 1.in)
+    // Dynamic 3D Model Override from CDN or Local Storage
     const customModel = allClips.find(c => c.type === 'model' && c.filename.includes('espinhaco_spine_points.json'));
-    if (customModel && MediaProvider.mode === 'cdn') {
+    if (customModel && (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'local')) {
       const modelUrl = MediaProvider.getMediaUrl(customModel.relative_path);
       fetch(modelUrl).then(r => r.json()).then(data => {
         if (data && data.points) {
           plexusSpinePoints = data.points;
-          console.log(`[✓] Plexus 3D Espinhaço override from CDN: ${plexusSpinePoints.length} vertices.`);
+          console.log(`[✓] Plexus 3D Espinhaço override from ${MediaProvider.mode}: ${plexusSpinePoints.length} vertices.`);
         }
-      }).catch(e => console.warn('Failed to load CDN model override', e));
+      }).catch(e => console.warn('Failed to load custom model override', e));
     }
 
     // Keep only videos for the UI Grid

@@ -10,6 +10,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const crypto = require('crypto');
 const https = require('https');
+const bundlePortable = require('./build_portable');
 
 // Secure environment loading from the external DEV vault
 const ENV_PATH = '/Volumes/PLM_SSD_01/Dev/.env';
@@ -26,8 +27,8 @@ const STORAGE_PASS = process.env.BUNNY_STORAGE_PASSWORD;
 const PULL_ZONE = process.env.BUNNY_PULL_ZONE_URL || 'https://gigantera-penumbra.b-cdn.net';
 const REGION = 'storage.bunnycdn.com'; // Change to br.storage.bunnycdn.com if needed
 
-// Local directory where you place new videos to be synced to the CDN
-const SOURCE_MEDIA_DIR = path.join(__dirname, '../cdn_staging');
+// Pipeline Root Directory (Where all projects live)
+const PIPELINE_DIR = '/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera';
 const OUTPUT_DIR = path.join(__dirname, '../cdn_build');
 
 if (!STORAGE_PASS) {
@@ -78,99 +79,136 @@ function uploadToBunny(localFilePath, remotePath) {
 }
 
 async function processMedia() {
-  console.log('[*] Penumbra CDN Sync Orchestrator Initialized');
+  console.log('[*] Penumbra Pipeline Auto-Scanner & CDN Sync Initialized');
   
   const manifest = [];
+  const uploadQueue = [];
   
-  function scanDirRecursive(dir, baseDir) {
-    if (!fs.existsSync(dir)) return;
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
+  function isVideo(name) {
+    return name.toLowerCase().endsWith('.mp4') || name.toLowerCase().endsWith('.mov');
+  }
+
+  function processFile(fullPath, remoteRelativePath) {
+    const ext = path.extname(fullPath).toLowerCase();
+    const entryName = path.basename(fullPath);
     
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+    // Process JSON models
+    if (ext === '.json' && entryName !== 'media_manifest.json') {
+      const outPath = path.join(OUTPUT_DIR, remoteRelativePath);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.copyFileSync(fullPath, outPath);
+      uploadQueue.push({ local: outPath, remote: remoteRelativePath });
+      manifest.push({
+        id: `model_${crypto.createHash('md5').update(remoteRelativePath).digest('hex').substring(0, 10)}`,
+        filename: entryName,
+        type: 'model',
+        category: 'MODEL 3D',
+        relative_path: remoteRelativePath
+      });
+      console.log(`[MODEL] Found 3D Model: ${remoteRelativePath}`);
+      return;
+    }
+    
+    // Process Videos
+    if (isVideo(entryName)) {
+      const id = crypto.createHash('md5').update(remoteRelativePath).digest('hex').substring(0, 10);
+      const baseName = path.parse(entryName).name;
+      const relativeDir = path.dirname(remoteRelativePath);
       
-      if (entry.isDirectory()) {
-        scanDirRecursive(fullPath, baseDir);
-      } else {
-        const ext = path.extname(entry.name).toLowerCase();
+      const staticThumbName = `${baseName}_static.webp`;
+      const animThumbName = `${baseName}_anim.webp`;
+      
+      const outDir = path.join(OUTPUT_DIR, relativeDir);
+      fs.mkdirSync(outDir, { recursive: true });
+      
+      const videoOutPath = path.join(outDir, entryName);
+      const staticThumbPath = path.join(outDir, staticThumbName);
+      const animThumbPath = path.join(outDir, animThumbName);
+      
+      console.log(`[FFMPEG] 🎞️ Processing ${remoteRelativePath}...`);
+      fs.copyFileSync(fullPath, videoOutPath);
+      
+      if (!fs.existsSync(staticThumbPath)) {
+        execSync(`ffmpeg -y -i "${fullPath}" -ss 00:00:01.000 -vframes 1 -vf "scale=320:-1" -c:v libwebp -quality 80 "${staticThumbPath}"`, { stdio: 'ignore' });
+      }
+      if (!fs.existsSync(animThumbPath)) {
+        execSync(`ffmpeg -y -i "${fullPath}" -t 3 -vf "fps=10,scale=320:-1:flags=lanczos" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 50 -loop 0 -preset default -an -vsync 0 "${animThumbPath}"`, { stdio: 'ignore' });
+      }
+      
+      uploadQueue.push({ local: videoOutPath, remote: remoteRelativePath });
+      uploadQueue.push({ local: staticThumbPath, remote: `${relativeDir}/${staticThumbName}` });
+      uploadQueue.push({ local: animThumbPath, remote: `${relativeDir}/${animThumbName}` });
+      
+      const pathParts = remoteRelativePath.split('/');
+      const projName = pathParts.length > 2 ? pathParts[1] : 'GIGANTERA';
+      const cat = pathParts[0] === 'OUT' ? 'SAÍDA (OUT)' : 'BRUTO (IN)';
+      
+      manifest.push({
+        id: `clip_${id}`,
+        filename: entryName,
+        project: projName,
+        category: cat,
+        type: 'video',
+        relative_path: remoteRelativePath,
+        thumbnail: `${relativeDir}/${staticThumbName}`,
+        preview_anim: `${relativeDir}/${animThumbName}`
+      });
+    }
+  }
+
+  function scanPipelineFolder() {
+    if (!fs.existsSync(PIPELINE_DIR)) {
+      console.error(`[!] Pipeline dir not found: ${PIPELINE_DIR}`);
+      return;
+    }
+    
+    const projects = fs.readdirSync(PIPELINE_DIR, { withFileTypes: true });
+    
+    for (const project of projects) {
+      if (!project.isDirectory() || project.name.startsWith('.')) continue;
+      
+      const projDir = path.join(PIPELINE_DIR, project.name);
+      const projContents = fs.readdirSync(projDir, { withFileTypes: true });
+      
+      for (const item of projContents) {
+        if (!item.isDirectory()) continue;
+        const lowerName = item.name.toLowerCase();
         
-        // Handle JSON models/metadata
-        if (ext === '.json' && entry.name !== 'media_manifest.json') {
-          const outPath = path.join(OUTPUT_DIR, relativePath);
-          fs.mkdirSync(path.dirname(outPath), { recursive: true });
-          fs.copyFileSync(fullPath, outPath);
-          uploadQueue.push({ local: outPath, remote: relativePath });
-          manifest.push({
-            id: `model_${crypto.createHash('md5').update(relativePath).digest('hex').substring(0, 10)}`,
-            filename: entry.name,
-            type: 'model',
-            category: 'MODEL 3D',
-            relative_path: relativePath
-          });
+        // Match IN folders (1.in, 1. IN, IN, etc.)
+        if (lowerName.includes('1.in') || lowerName.includes('1. in') || lowerName === 'in') {
+          const inDir = path.join(projDir, item.name);
+          const files = fs.readdirSync(inDir);
+          for (const file of files) {
+            const fullPath = path.join(inDir, file);
+            if (fs.statSync(fullPath).isFile()) {
+              processFile(fullPath, `IN/${project.name}/1.in/${file}`);
+            }
+          }
         }
         
-        // Handle Videos
-        if (ext === '.mp4' || ext === '.mov') {
-          const id = crypto.createHash('md5').update(relativePath).digest('hex').substring(0, 10);
-          const baseName = path.parse(entry.name).name;
-          const relativeDir = path.dirname(relativePath);
-          
-          const staticThumbName = `${baseName}_static.webp`;
-          const animThumbName = `${baseName}_anim.webp`;
-          
-          const outDir = path.join(OUTPUT_DIR, relativeDir);
-          fs.mkdirSync(outDir, { recursive: true });
-          
-          const videoOutPath = path.join(outDir, entry.name);
-          const staticThumbPath = path.join(outDir, staticThumbName);
-          const animThumbPath = path.join(outDir, animThumbName);
-          
-          console.log(`\n[FFMPEG] 🎞️ Processing ${relativePath}...`);
-          fs.copyFileSync(fullPath, videoOutPath);
-          
-          if (!fs.existsSync(staticThumbPath)) {
-            execSync(`ffmpeg -y -i "${fullPath}" -ss 00:00:01.000 -vframes 1 -vf "scale=320:-1" -c:v libwebp -quality 80 "${staticThumbPath}"`, { stdio: 'ignore' });
+        // Match OUT folders (Out Gigantera, 3. out, OUT)
+        if (lowerName.includes('out') || lowerName.includes('3.out') || lowerName.includes('3. out') || lowerName === 'out gigantera') {
+          const outDir = path.join(projDir, item.name);
+          const files = fs.readdirSync(outDir);
+          for (const file of files) {
+            const fullPath = path.join(outDir, file);
+            if (fs.statSync(fullPath).isFile()) {
+              processFile(fullPath, `OUT/${project.name}/${file}`);
+            }
           }
-          if (!fs.existsSync(animThumbPath)) {
-            execSync(`ffmpeg -y -i "${fullPath}" -t 3 -vf "fps=10,scale=320:-1:flags=lanczos" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 50 -loop 0 -preset default -an -vsync 0 "${animThumbPath}"`, { stdio: 'ignore' });
-          }
-          
-          uploadQueue.push({ local: videoOutPath, remote: relativePath });
-          uploadQueue.push({ local: staticThumbPath, remote: `${relativeDir}/${staticThumbName}` });
-          uploadQueue.push({ local: animThumbPath, remote: `${relativeDir}/${animThumbName}` });
-          
-          // Determine project from folder structure (e.g. IN/ProjectName/1.in/)
-          const pathParts = relativePath.split('/');
-          const projName = pathParts.length > 2 ? pathParts[1] : 'GIGANTERA';
-          const cat = pathParts[0] === 'OUT' ? 'SAÍDA (OUT)' : 'BRUTO (IN)';
-          
-          manifest.push({
-            id: `clip_${id}`,
-            filename: entry.name,
-            project: projName,
-            category: cat,
-            type: 'video',
-            relative_path: relativePath,
-            thumbnail: `${relativeDir}/${staticThumbName}`,
-            preview_anim: `${relativeDir}/${animThumbName}`
-          });
         }
       }
     }
   }
 
-  const uploadQueue = [];
-  
-  // Create IN and OUT folders if they don't exist
-  const inDir = path.join(SOURCE_MEDIA_DIR, 'IN');
-  const outDir = path.join(SOURCE_MEDIA_DIR, 'OUT');
-  if (!fs.existsSync(inDir)) fs.mkdirSync(inDir, { recursive: true });
-  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  
-  scanDirRecursive(SOURCE_MEDIA_DIR, SOURCE_MEDIA_DIR);
+  scanPipelineFolder();
+
+  // Generate Portable HTML App
+  const portablePath = bundlePortable();
+  uploadQueue.push({ local: portablePath, remote: 'Penumbra_Portable.html' });
 
   // Upload everything sequentially
+  console.log(`\n[CDN] Uploading ${uploadQueue.length} files to Bunny.net...`);
   for (const item of uploadQueue) {
     await uploadToBunny(item.local, item.remote);
   }
