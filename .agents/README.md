@@ -54,6 +54,7 @@ graph TD
 ├── skills/                            # Habilidades procedurais descobertas sob demanda
 │   ├── skill-synthesizer/             # Sintetizador autônomo de novas skills
 │   ├── penumbra-vj-guardian/          # Guardião especializado do motor VJ (Penumbra)
+│   ├── midi-hardware-master/          # Conectividade MIDI Pro, Modos B1-B4 e Hardware Twin
 │   └── context-audit/                 # Auditor de pegada de tokens e saúde do workspace
 └── scripts/                           # Ferramentas executáveis CLI de suporte
     ├── synthesize_skill.py            # CLI para criar novas skills estruturadas

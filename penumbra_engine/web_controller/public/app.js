@@ -7974,7 +7974,7 @@ function updateSourceUI(sourceName) {
       cfgBadge.textContent = 'NUVEM CDN';
     }
     if (cfgDesc) {
-      cfgDesc.textContent = 'Streaming direto da Bunny Edge CDN (São Paulo) com miniaturas e cache local.';
+      cfgDesc.textContent = 'Streaming direto via Edge CDN de alta performance (São Paulo) com miniaturas e cache local.';
     }
     if (cardCloud) cardCloud.classList.add('active');
     if (stCloud) stCloud.textContent = 'ATIVO';
@@ -7992,10 +7992,10 @@ async function switchStorageMode(mode) {
 
   if (mode === 'cloud') {
     try {
-      showMacroToast('Conectando à Nuvem Bunny CDN...');
+      showMacroToast('Conectando à Nuvem Edge CDN...');
       await reconnectCloudSource();
       updateSourceUI('cdn');
-      showMacroToast('Armazenamento alternado para Nuvem (Bunny CDN)');
+      showMacroToast('Armazenamento alternado para Nuvem (Edge CDN)');
     } catch (err) {
       console.error('[Storage] Erro ao alternar para nuvem:', err);
     }
@@ -8626,12 +8626,15 @@ window.openSettingsModal = openSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 
 function setSettingsTab(tabId) {
-  document.querySelectorAll('.settings-tab-btn').forEach(b => {
+  document.querySelectorAll('.settings-tab-btn, .cfg-nav-item').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tabId);
   });
   document.querySelectorAll('.settings-tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === `settings-panel-${tabId}`);
   });
+  if (tabId === 'midi' && window.penumbraHwTwin) {
+    window.penumbraHwTwin.updateView();
+  }
 }
 window.setSettingsTab = setSettingsTab;
 

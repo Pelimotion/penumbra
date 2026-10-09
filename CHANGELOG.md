@@ -1,12 +1,23 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 12:48:17 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 14:55:20 BRT
 
 ---
 
 ## Outubro de 2026
 
+### 📚 Documentação
+- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
+- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
+- `f1a6951` add ADR-0013 and update changelog for source orchestration
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
+
+### 🔄 Outros
+- `59149e4` **(vercel)** configure buildCommand and outputDirectory for automated static deployment
+
 ### ✨ Novos Recursos
+- `3050f16` **(ingest)** unified broadcast Media Ingest Hub for Local SSD, Bunny CDN sync, and YouTube streams
+- `2f918ff` **(audio-ui)** hybrid web audio api dsp, local audio upload, emoji-free pro broadcast ui and instant storage switcher
 - `e0839ec` **(library)** studio two-column layout, sidebar bins and instant parameter edit navigation
 - `d24098f` **(ui)** redesign pro preferences, resizable workspace, dedicated timeline arranger, and universal asset library
 - `4859515` **(launcher)** fix startup launcher trigger, add source switcher in header and Settings tab
@@ -15,9 +26,8 @@
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 
-### 📚 Documentação
-- `f1a6951` add ADR-0013 and update changelog for source orchestration
-- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
+### 🚀 Deploy & Infra
+- `6452e14` whitelist test_preview.mp3 for production at gigantera.xyz/penumbra
 
 ### 🐛 Correções
 - `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel

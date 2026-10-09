@@ -61,7 +61,7 @@
                   <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
                 </svg>
               </div>
-              <span class="nsc-badge badge-cdn">BUNNY EDGE CDN</span>
+              <span class="nsc-badge badge-cdn">EDGE CDN GLOBAL</span>
             </div>
             <div class="nsc-meta">
               <h3>NUVEM GIGANTERA</h3>
@@ -222,7 +222,7 @@
         <div class="source-quick-dropdown" id="source-quick-dropdown" style="display: none;">
           <button class="source-opt-btn active" id="opt-src-cloud" onclick="switchStorageMode('cloud')">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-            <span>NUVEM (BUNNY EDGE CDN)</span>
+            <span>NUVEM (EDGE CDN)</span>
           </button>
           <button class="source-opt-btn" id="opt-src-local" onclick="switchStorageMode('local')">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
@@ -234,6 +234,19 @@
             <span>CONFIGURAR ARMAZENAMENTO...</span>
           </button>
         </div>
+      </div>
+      <div class="status-chip status-chip-midi" id="chip-midi" onclick="openSettingsModal('midi')" title="Central MIDI & Hardware Twin · Clique para abrir preferências">
+        <span class="dot" id="midi-status-dot"></span>
+        <svg class="midi-icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+          <circle cx="12" cy="7" r="1.5" fill="currentColor"></circle>
+          <circle cx="8" cy="10" r="1.5" fill="currentColor"></circle>
+          <circle cx="16" cy="10" r="1.5" fill="currentColor"></circle>
+          <circle cx="9" cy="15" r="1.5" fill="currentColor"></circle>
+          <circle cx="15" cy="15" r="1.5" fill="currentColor"></circle>
+        </svg>
+        <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
+        <span class="midi-bank-badge" id="chip-midi-bank">B1: MIXER</span>
       </div>
     </div>
 
@@ -1743,7 +1756,7 @@
             <div class="mid-title-group">
               <span class="mid-pulse-badge">INGESTÃO UNIFICADA</span>
               <span class="mid-title">CENTRAL DE AQUISIÇÃO & SINCRONIZAÇÃO DE MÍDIAS</span>
-              <span class="mid-subtitle">// VÍDEOS LOCAIS · BUNNY CDN OFFLINE · YOUTUBE & WEB STREAMS</span>
+              <span class="mid-subtitle">// VÍDEOS LOCAIS SSD · NUVEM EDGE CDN · YOUTUBE & WEB STREAMS</span>
             </div>
             <div class="mid-header-actions">
               <!-- 3 MODE TABS -->
@@ -1754,7 +1767,7 @@
                 </button>
                 <button class="mid-tab-btn" id="mid-tab-btn-cloud" onclick="switchIngestMode('cloud')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                  <span>2. BUNNY CDN (NUVEM & OFFLINE)</span>
+                  <span>2. NUVEM EDGE CDN (STREAMING)</span>
                 </button>
                 <button class="mid-tab-btn active" id="mid-tab-btn-stream" onclick="switchIngestMode('stream')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1812,7 +1825,7 @@
               <div class="mid-cloud-card">
                 <div class="mcc-info">
                   <span class="mcc-tag">NUVEM GLOBAL</span>
-                  <h4>ACERVO NA BUNNY EDGE CDN</h4>
+                  <h4>ACERVO NA NUVEM EDGE CDN</h4>
                   <p>74 Clipes de Vídeo em alta qualidade, 29 Mattes Alfa e 327 thumbnails pré-geradas para streaming instantâneo.</p>
                   <div class="mcc-metrics">
                     <div class="mcc-metric"><span class="mcc-k">STATUS CDN:</span> <span class="mcc-v online">CONECTADO</span></div>
@@ -1980,7 +1993,7 @@
                   </button>
                   <button class="lib-tree-item pill-btn" data-source="cdn">
                     <span class="src-dot dot-cdn"></span>
-                    <span class="tree-label">BUNNY CDN (NUVEM)</span>
+                    <span class="tree-label">NUVEM (EDGE CDN)</span>
                     <span class="pill-badge" id="badge-count-src-cdn">0</span>
                   </button>
                   <button class="lib-tree-item pill-btn" data-source="local">
@@ -2082,7 +2095,7 @@
               <div class="lib-tb-right">
                 <!-- UNIFIED MEDIA INGESTION CONTROLLER (LOCAL / BUNNY CLOUD / YOUTUBE) -->
                 <div class="lib-ingest-trigger-hub">
-                  <button class="btn-pool-action btn-ingest-hub-main" id="btn-open-ingest-hub" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão: Mídia Local, Nuvem Bunny CDN ou YouTube (Atalho: I)">
+                  <button class="btn-pool-action btn-ingest-hub-main" id="btn-open-ingest-hub" onclick="toggleMediaIngestDeck()" title="Abrir Central de Ingestão: Mídia Local SSD, Nuvem Edge CDN ou YouTube (Atalho: I)">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>+ INGESTÃO</span>
                   </button>
@@ -2091,9 +2104,9 @@
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                       <span>LOCAL</span>
                     </button>
-                    <button class="ingest-cluster-pill" id="pill-quick-cloud" onclick="openMediaIngestTab('cloud')" title="Baixar / Sincronizar da Nuvem Bunny CDN">
+                    <button class="ingest-cluster-pill" id="pill-quick-cloud" onclick="openMediaIngestTab('cloud')" title="Sincronizar Acervo da Nuvem Edge CDN">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-                      <span>BUNNY</span>
+                      <span>NUVEM</span>
                     </button>
                     <button class="ingest-cluster-pill active" id="pill-quick-stream" onclick="openMediaIngestTab('stream')" title="Puxar Vídeos do YouTube ou Feeds Web">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -2432,6 +2445,10 @@
                 <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6" y2="8"></line><line x1="10" y1="8" x2="10" y2="8"></line><line x1="14" y1="8" x2="14" y2="8"></line><line x1="18" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="18" y2="12"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg></span>
                 <span class="nav-label">Atalhos de Teclado</span>
               </button>
+              <button class="cfg-nav-item" data-tab="midi" onclick="setSettingsTab('midi')">
+                <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="7" r="1.5" fill="currentColor"></circle><circle cx="8" cy="10" r="1.5" fill="currentColor"></circle><circle cx="16" cy="10" r="1.5" fill="currentColor"></circle><circle cx="9" cy="15" r="1.5" fill="currentColor"></circle><circle cx="15" cy="15" r="1.5" fill="currentColor"></circle></svg></span>
+                <span class="nav-label">Controlador MIDI & Twin</span>
+              </button>
               <button class="cfg-nav-item" data-tab="system" onclick="setSettingsTab('system')">
                 <span class="nav-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
                 <span class="nav-label">Sistema & Diagnóstico</span>
@@ -2456,11 +2473,11 @@
                     <div class="storage-card-header">
                       <div class="storage-card-title-group">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-                        <span class="storage-card-title">NUVEM (BUNNY EDGE CDN)</span>
+                        <span class="storage-card-title">NUVEM (EDGE CDN GLOBAL)</span>
                       </div>
                       <span class="storage-card-status" id="status-mode-cloud">ATIVO</span>
                     </div>
-                    <p class="storage-card-desc">Streaming global ultrarrápido a partir do cluster regional de São Paulo (br.storage.bunnycdn.com) com cache local sob demanda.</p>
+                    <p class="storage-card-desc">Streaming global de alta performance a partir do cluster regional de baixa latência (São Paulo Edge) com cache inteligente a 60 FPS.</p>
                   </div>
 
                   <div class="storage-card" id="card-mode-local" onclick="switchStorageMode('local')">
@@ -2478,7 +2495,7 @@
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
                     <span class="prop-title">Ponto de Montagem Ativo</span>
-                    <span class="prop-desc" id="cfg-active-source-desc">Conectado à Bunny CDN · São Paulo Edge</span>
+                    <span class="prop-desc" id="cfg-active-source-desc">Conectado à Nuvem Edge CDN · São Paulo Regional Cluster</span>
                   </div>
                   <div class="prop-control" style="display: flex; gap: 8px;">
                     <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()">ALTERAR PASTA SSD</button>
@@ -2954,6 +2971,295 @@
                 </div>
               </div>
             </div>
+
+            <!-- PANEL 10: CONTROLADOR MIDI & HARDWARE TWIN -->
+            <div class="settings-tab-panel" id="settings-panel-midi">
+              
+              <!-- Telemetria & Status de Conexão -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <div class="cfg-header-left-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="7" r="1.5" fill="currentColor"></circle><circle cx="8" cy="10" r="1.5" fill="currentColor"></circle><circle cx="16" cy="10" r="1.5" fill="currentColor"></circle><circle cx="9" cy="15" r="1.5" fill="currentColor"></circle><circle cx="15" cy="15" r="1.5" fill="currentColor"></circle></svg>
+                    <span>CONECTIVIDADE MIDI & INTEGRAÇÃO DE HARDWARE</span>
+                  </div>
+                  <div class="cfg-header-actions">
+                    <button class="mid-btn mid-btn-ghost" onclick="window.penumbraMidi && window.penumbraMidi.scanDevices()">ESCANEAR DISPOSITIVOS</button>
+                    <button class="mid-btn mid-btn-ghost" onclick="window.penumbraMidi && window.penumbraMidi.sendLedFeedbackAll()">TESTAR LEDS</button>
+                  </div>
+                </div>
+
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Dispositivo Conectado</span>
+                    <span class="prop-desc" id="midi-prop-device-desc">Web MIDI API Ativa (Suporta M-Vave SMC-MIXER, Mackie, USB/Bluetooth)</span>
+                  </div>
+                  <div class="prop-control" style="display:flex; align-items:center; gap:8px;">
+                    <span class="cfg-badge text-cyan" id="midi-prop-device-badge">PROCURANDO...</span>
+                    <span class="cfg-badge text-emerald" id="midi-prop-rate-badge">0 HZ</span>
+                  </div>
+                </div>
+
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Perfil de Controlador Físico</span>
+                    <span class="prop-desc">Mapeamento estruturado de fábrica para controles, knobs e faders</span>
+                  </div>
+                  <div class="prop-control">
+                    <select class="cfg-select" id="sel-midi-profile" onchange="onMidiProfileChanged(this.value)">
+                      <option value="mvave_smc" selected>M-Vave SMC-MIXER (Padrão de Fábrica Penumbra)</option>
+                      <option value="mackie_universal">Mackie Control Universal (MCU Protocol)</option>
+                      <option value="launch_control_xl">Novation Launch Control XL</option>
+                      <option value="nanokontrol2">Korg nanoKONTROL2</option>
+                      <option value="apc_mini_mk2">Akai APC Mini mk2</option>
+                      <option value="custom_user">Mapeamento Customizado (MIDI Learn)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Seletor de Níveis / Bancos Operacionais -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>NÍVEL OPERACIONAL / BANCO ATIVO (ARQUITETURA MODAL HIERÁRQUICA)</span>
+                  <span class="cfg-header-badge" id="midi-active-bank-badge">BANCO 1 ATIVO</span>
+                </div>
+                
+                <div class="midi-bank-selector-grid">
+                  <button class="midi-bank-card active" id="btn-bank-1" onclick="window.penumbraMidi && window.penumbraMidi.setBank(1)">
+                    <div class="bank-num">B1</div>
+                    <div class="bank-info">
+                      <span class="bank-title">MASTER LIVE MIXER</span>
+                      <span class="bank-desc">Faders 1-5 = Opacidades L0-L4 · Fader 6 = FX Blend · Knobs = Sobel Edges & Gamma</span>
+                    </div>
+                  </button>
+                  <button class="midi-bank-card" id="btn-bank-2" onclick="window.penumbraMidi && window.penumbraMidi.setBank(2)">
+                    <div class="bank-num">B2</div>
+                    <div class="bank-info">
+                      <span class="bank-title">LAYER FOCUS & PARAMS</span>
+                      <span class="bank-desc">Knobs = Velocidade, Zoom, Pan, Hue, Blend · Faders = Procedural Crops & DSP</span>
+                    </div>
+                  </button>
+                  <button class="midi-bank-card" id="btn-bank-3" onclick="window.penumbraMidi && window.penumbraMidi.setBank(3)">
+                    <div class="bank-num">B3</div>
+                    <div class="bank-info">
+                      <span class="bank-title">CONDUCTOR MACROS</span>
+                      <span class="bank-desc">Botões M/S = Disparo direto dos 16 Presets (Intro, Groove, Build, Drop, Break)</span>
+                    </div>
+                  </button>
+                  <button class="midi-bank-card" id="btn-bank-4" onclick="window.penumbraMidi && window.penumbraMidi.setBank(4)">
+                    <div class="bank-num">B4</div>
+                    <div class="bank-info">
+                      <span class="bank-title">COLOR LAB & GRADING</span>
+                      <span class="bank-desc">Controle fino de Gamma, Pretos, Médios, Contraste, Saturação e Grão Analógico</span>
+                    </div>
+                  </button>
+                </div>
+
+                <!-- Seletor de Camada Focada para Banco 2 -->
+                <div class="midi-focus-layer-row" id="midi-focus-layer-row">
+                  <span class="midi-focus-label">CAMADA EM FOCO (BANCO 2):</span>
+                  <div class="midi-focus-buttons">
+                    <button class="midi-focus-btn active" id="btn-focus-l0" onclick="window.penumbraMidi && window.penumbraMidi.handleButtonSelect(0)">L0 BASE</button>
+                    <button class="midi-focus-btn" id="btn-focus-l1" onclick="window.penumbraMidi && window.penumbraMidi.handleButtonSelect(1)">L1 DOUBLE</button>
+                    <button class="midi-focus-btn" id="btn-focus-l2" onclick="window.penumbraMidi && window.penumbraMidi.handleButtonSelect(2)">L2 SOBEL</button>
+                    <button class="midi-focus-btn" id="btn-focus-l3" onclick="window.penumbraMidi && window.penumbraMidi.handleButtonSelect(3)">L3 ACCENT</button>
+                    <button class="midi-focus-btn" id="btn-focus-l4" onclick="window.penumbraMidi && window.penumbraMidi.handleButtonSelect(4)">L4 CHROMA</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GÊMEO VIRTUAL INTERATIVO DO M-VAVE SMC-MIXER -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>GÊMEO VIRTUAL INTERATIVO · M-VAVE SMC-MIXER (HARDWARE TWIN)</span>
+                  <span class="cfg-badge text-cyan">OPERÁVEL VIA MIDI, TECLADO OU MOUSE</span>
+                </div>
+
+                <div class="hw-twin-container" id="hw-twin-container">
+                  <!-- Header do Hardware com Visor OLED -->
+                  <div class="hw-twin-header">
+                    <div class="hw-brand-tag">
+                      <span class="hw-logo-text">M-VAVE</span>
+                      <span class="hw-model-text">SMC-MIXER · PENUMBRA TWIN</span>
+                    </div>
+                    
+                    <!-- Visor OLED Digital Virtual -->
+                    <div class="hw-oled-display" id="hw-oled-display">
+                      <div class="oled-line-1" id="oled-line-1">PENUMBRA LIVE · B1: MASTER MIXER · USB OK</div>
+                      <div class="oled-line-2" id="oled-line-2">CH 1: L0 OPAC 100% · SOFT TAKEOVER: LOCKED · 120 BPM</div>
+                    </div>
+
+                    <div class="hw-twin-leds">
+                      <div class="hw-led-item"><span class="hw-led-dot live" id="hw-led-usb"></span><span class="hw-led-lbl">USB/BT</span></div>
+                      <div class="hw-led-item"><span class="hw-led-dot" id="hw-led-midi-rx"></span><span class="hw-led-lbl">DATA</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Chassi com os 8 Canais + Seção Master/Transporte -->
+                  <div class="hw-twin-chassis">
+                    <!-- 8 Channel Strips -->
+                    <div class="hw-channels-strip-group" id="hw-channels-strip-group">
+                      <!-- Os 8 canais serão injetados e atualizados pelo script com suporte a drag de mouse e feedback -->
+                    </div>
+
+                    <!-- Seção Master & Transporte à Direita -->
+                    <div class="hw-master-section">
+                      <div class="hw-master-header">MASTER</div>
+                      
+                      <!-- Master Fader -->
+                      <div class="hw-master-fader-slot">
+                        <div class="hw-fader-track" id="hw-master-fader-track" onmousedown="handleHwMasterFaderDrag(event)">
+                          <div class="hw-fader-cap" id="hw-master-fader-cap" style="bottom: 50%;"></div>
+                        </div>
+                        <span class="hw-fader-label">CROSS</span>
+                      </div>
+
+                      <!-- Botões de Navegação & Bancos -->
+                      <div class="hw-nav-buttons">
+                        <button class="hw-mini-btn" onclick="window.penumbraMidi && window.penumbraMidi.prevBank()" title="Banco Anterior ([)">◀ BANK</button>
+                        <button class="hw-mini-btn" onclick="window.penumbraMidi && window.penumbraMidi.nextBank()" title="Próximo Banco (])">BANK ▶</button>
+                      </div>
+
+                      <!-- Botões de Transporte -->
+                      <div class="hw-transport-grid">
+                        <button class="hw-trans-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionRewind()" title="Downbeat / Bar 1.1.1 (R)">⏮ REW</button>
+                        <button class="hw-trans-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionFastForward()" title="Avançar Fila (Take)">⏭ FF</button>
+                        <button class="hw-trans-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionStop()" title="Freeze Frame">⏹ STOP</button>
+                        <button class="hw-trans-btn active-play" onclick="window.penumbraMidi && window.penumbraMidi.actionPlay()" title="Auto Take Suave (Space)">▶ PLAY</button>
+                        <button class="hw-trans-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionLoop()" title="Alternar Dock / Timeline (Tab)">🔁 LOOP</button>
+                        <button class="hw-trans-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionTapTempo()" title="Tap Tempo">⏱ TAP</button>
+                      </div>
+
+                      <!-- Botão Master Blackout / Panic -->
+                      <button class="hw-panic-btn" onclick="window.penumbraMidi && window.penumbraMidi.actionBlackout()" title="Master Blackout (B)">
+                        PANIC (MUTE)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Configurações Avançadas de Resposta & Comportamento -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>RESPOSTA DE HARDWARE · SOFT TAKEOVER & SENSIBILIDADE</span>
+                </div>
+
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Modo de Soft Takeover (Value Catching)</span>
+                    <span class="prop-desc">Evita saltos bruscos no telão ao alternar bancos ou conectar faders físicos</span>
+                  </div>
+                  <div class="prop-control">
+                    <select class="cfg-select" id="sel-soft-takeover" onchange="setMidiTakeoverMode(this.value)">
+                      <option value="pickup" selected>Pickup Mode (Padrão Pro · Só altera quando interceptar)</option>
+                      <option value="scaling">Value Scaling (Interpolação suave em direção ao valor físico)</option>
+                      <option value="direct">Direct Jump (Sem proteção · Salto imediato ao valor físico)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Aceleração Balística dos Encoders (Knobs 360°)</span>
+                    <span class="prop-desc">Giro rápido produz saltos dinâmicos; giro lento produz precisão cirúrgica</span>
+                  </div>
+                  <div class="prop-control">
+                    <select class="cfg-select" id="sel-ballistic-sens" onchange="setMidiEncoderSensitivity(this.value)">
+                      <option value="low">Baixa Aceleração (Precisão máxima cirúrgica)</option>
+                      <option value="mid" selected>Aceleração Média (Equilíbrio dinâmico para palco)</option>
+                      <option value="high">Alta Aceleração (Ajustes rápidos em drops)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Feedback Bi-direcional de LEDs (MIDI Output)</span>
+                    <span class="prop-desc">Envia comandos MIDI Out para acender e apagar os LEDs físicos do controlador</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-midi-led-feedback" checked onchange="toggleMidiLedFeedback(this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ferramenta de MIDI Learn em Tempo Real -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>SISTEMA MIDI LEARN · MAPEAMENTO RÁPIDO CUSTOMIZADO</span>
+                  <div class="cfg-header-actions">
+                    <button class="mid-btn mid-btn-ghost" onclick="exportMidiMappingsJson()">EXPORTAR JSON</button>
+                    <button class="mid-btn mid-btn-ghost" onclick="importMidiMappingsJson()">IMPORTAR JSON</button>
+                    <button class="mid-btn mid-btn-ghost" onclick="window.penumbraMidi && window.penumbraMidi.resetMappingsToDefault()">RESTAURAR PADRÃO</button>
+                  </div>
+                </div>
+
+                <div class="midi-learn-box">
+                  <div class="midi-learn-controls">
+                    <button class="btn btn-studio-primary" id="btn-toggle-midi-learn" onclick="toggleMidiLearnMode()">
+                      <span id="txt-midi-learn">● INICIAR MODO MIDI LEARN</span>
+                    </button>
+                    <span class="midi-learn-hint" id="midi-learn-hint">
+                      Clique no botão acima, selecione um controle no painel e mova o fader/knob físico correspondente.
+                    </span>
+                  </div>
+
+                  <!-- Tabela de Mapeamentos Atuais -->
+                  <div class="midi-mappings-table-wrapper" id="midi-mappings-table-wrapper">
+                    <!-- Gerado dinamicamente -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- MINI TUTORIAL VISUAL ILUSTRADO & GUIA DE PALCO -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>MINI TUTORIAL VISUAL · GUIA DE OPERAÇÃO MIDI & TECLADO</span>
+                </div>
+
+                <div class="midi-tutorial-grid">
+                  <div class="midi-tut-card">
+                    <div class="tut-card-badge">PASSO 1</div>
+                    <h4>ANATOMIA DO M-VAVE SMC-MIXER</h4>
+                    <p>O controlador possui 8 faixas de canal (Knob 360°, botões M/S/R/Sel, Fader linear) e seção Master/Transporte à direita. Funciona conectado via cabo USB-C ou Bluetooth sem fio.</p>
+                  </div>
+
+                  <div class="midi-tut-card">
+                    <div class="tut-card-badge">PASSO 2</div>
+                    <h4>NAVEGAÇÃO MODAL (BANCOS 1 A 4)</h4>
+                    <p>Use os botões <strong>BANK ◄ / ►</strong> ou as teclas <strong>[</strong> e <strong>]</strong> para alternar entre: <strong>B1 (Mixer Master)</strong>, <strong>B2 (Propriedades Focadas da Camada)</strong>, <strong>B3 (16 Presets Macro)</strong> e <strong>B4 (Color Lab)</strong>.</p>
+                  </div>
+
+                  <div class="midi-tut-card">
+                    <div class="tut-card-badge">PASSO 3</div>
+                    <h4>SOFT TAKEOVER (ZERO SALTOS)</h4>
+                    <p>Ao trocar de banco, se o fader físico estiver em 20% e o software em 80%, o visualizador exibe <strong>▲ (Mova para cima)</strong>. O valor só altera após o fader interceptar a linha do software, garantindo projeções limpas.</p>
+                  </div>
+
+                  <div class="midi-tut-card">
+                    <div class="tut-card-badge">PASSO 4</div>
+                    <h4>TRÍADE: MIDI, TECLADO OU MOUSE</h4>
+                    <p>Sem controlador conectado? Use <strong>1..8</strong> para canais, <strong>Shift + 1..5</strong> para focar na camada, <strong>Alt + 1..5</strong> para Mute, <strong>Space</strong> para Auto Take e <strong>B</strong> para Master Blackout instantâneo.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Console de Monitoramento MIDI em Tempo Real -->
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>MONITOR DE MENSAGENS MIDI (LOG EM TEMPO REAL)</span>
+                  <button class="mid-btn mid-btn-ghost" onclick="clearMidiMonitorLog()">LIMPAR LOG</button>
+                </div>
+                <div class="midi-monitor-terminal" id="midi-monitor-terminal">
+                  <div class="mon-empty-hint">Aguardando eventos do controlador físico...</div>
+                </div>
+              </div>
+
+            </div> <!-- /settings-panel-midi -->
 
           </div> <!-- /cfg-content-col -->
         </div> <!-- /cfg-two-col-layout -->
