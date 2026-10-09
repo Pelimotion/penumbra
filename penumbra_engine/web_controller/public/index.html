@@ -76,13 +76,27 @@
 
         <!-- YOUTUBE / STREAM INGESTION BAR -->
         <div class="nexus-stream-bar">
-          <div class="nsb-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>INGESTÃO VIA URL / STREAM EXTERNO</span>
+          <div class="nsb-header-row">
+            <div class="nsb-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>INGESTÃO VIA URL // STREAMING & DOWNLOADER DE MÍDIA</span>
+            </div>
+            <div class="nsb-cat-selector">
+              <span class="nsb-sub-lbl">CATEGORIA:</span>
+              <select id="select-nexus-yt-cat" class="nsb-mini-select">
+                <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                <option value="MINIMAL">MINIMAL</option>
+                <option value="ABSTRACT">ABSTRACT</option>
+                <option value="FIGURA">FIGURA</option>
+                <option value="DENSE">DENSE</option>
+                <option value="CHROMA">CHROMA</option>
+              </select>
+            </div>
           </div>
           <div class="nsb-input-group">
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
-            <button id="btn-nexus-yt-connect" class="nsb-submit-btn">INGEST</button>
+            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">⬇️ BAIXAR</button>
+            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">📡 STREAM</button>
           </div>
         </div>
 
@@ -477,51 +491,128 @@
       </div>
     </div>
 
-    <!-- GLOBAL TIMELINE SEQUENCER (ALWAYS VISIBLE) -->
-    <div class="global-timeline-dock" style="background: var(--bg-dark); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid #000; padding: 8px 16px; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
-      <div class="box-title-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding-bottom: 0;">
-        <span class="box-title" style="font-size: 9px; font-weight: 700; color: var(--cyan); letter-spacing: 0.6px;">AUTOPILOT TIMELINE (GLOBAL SEQUENCE)</span>
-        <div class="q-actions-mini" style="display: flex; gap: 6px;">
-          <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata">TAKE</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE</button>
-        </div>
-      </div>
-      <div class="timeline-container" id="autopilot-timeline-container" style="height: 100px; position: relative; background: #06080b; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; cursor: grab;">
-        <canvas id="timeline-canvas" style="display: block; width: 100%; height: 100%; object-fit: contain;"></canvas>
-        <div class="timeline-playhead-overlay" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); pointer-events: none;"></div>
-      </div>
+    <!-- WORKSPACE SPLITTER (DRAGGABLE RESIZE BETWEEN MONITORS AND DOCK) -->
+    <div class="workspace-splitter-horizontal" id="workspace-splitter" title="Arraste para redimensionar monitores e dock (Duplo clique para redefinir proporção padrão)">
+      <div class="splitter-handle-bar"></div>
     </div>
 
-    <!-- BOTTOM DOCK: TABS & MODULAR INSPECTOR (ZERO SCROLL) -->
-    <section class="dock-zone">
-      <!-- TAB NAVIGATION: 5 WORLD-CLASS MODULAR BLOCKS -->
-      <div class="dock-tabs">
-        <button class="dock-tab active" data-tab="tab-mediapool" data-shortcut="1">
-          <span class="tab-title-text"><kbd>1</kbd> MEDIA</span>
-          <span class="tab-pill-badge" id="dock-clip-count">74</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-layers" data-shortcut="2">
-          <span class="tab-title-text"><kbd>2</kbd> MIXER</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-mattes" data-shortcut="3">
-          <span class="tab-title-text"><kbd>3</kbd> MATTES</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-tonal" data-shortcut="4">
-          <span class="tab-title-text"><kbd>4</kbd> TONAL</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-queue" data-shortcut="5">
-          <span class="tab-title-text"><kbd>5</kbd> AUTOPILOT</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-fx" data-shortcut="6">
-          <span class="tab-title-text"><kbd>6</kbd> FX ENGINE</span>
-        </button>
+    <!-- BOTTOM DOCK: TABS & MODULAR INSPECTOR (FULL HEIGHT & ZERO SCROLL) -->
+    <section class="dock-zone" id="workspace-dock-zone">
+      <!-- DOCK MASTER HEADER: VIEW MODE SWITCHER + TABS + ACTIONS -->
+      <div class="dock-master-header">
+        <!-- Master Mode Switcher: Módulos & Assets vs Pro Timeline -->
+        <div class="dock-view-mode-selector">
+          <button class="dock-mode-btn active" id="btn-mode-modules" onclick="setDockViewMode('modules')" title="Visualização de Módulos e Biblioteca de Assets (Atalho: TAB)">
+            <span class="mode-icon">▤</span>
+            <span class="mode-label">MÓDULOS & ASSETS</span>
+          </button>
+          <button class="dock-mode-btn" id="btn-mode-timeline" onclick="setDockViewMode('timeline')" title="Visualização da Timeline Pro de Arranjo (Atalho: TAB)">
+            <span class="mode-icon">⏱️</span>
+            <span class="mode-label">TIMELINE PRO</span>
+            <span class="mode-badge-tab">TAB</span>
+          </button>
+        </div>
+
+        <!-- Tab Navigation: 6 World-Class Modules -->
+        <div class="dock-tabs" id="dock-tabs-bar">
+          <button class="dock-tab active" data-tab="tab-mediapool" data-shortcut="1">
+            <span class="tab-title-text"><kbd>1</kbd> BIBLIOTECA</span>
+            <span class="tab-pill-badge" id="dock-clip-count">74</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-layers" data-shortcut="2">
+            <span class="tab-title-text"><kbd>2</kbd> MIXER</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-mattes" data-shortcut="3">
+            <span class="tab-title-text"><kbd>3</kbd> MATTES</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-tonal" data-shortcut="4">
+            <span class="tab-title-text"><kbd>4</kbd> TONAL</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-queue" data-shortcut="5">
+            <span class="tab-title-text"><kbd>5</kbd> AUTOPILOT</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-fx" data-shortcut="6">
+            <span class="tab-title-text"><kbd>6</kbd> FX ENGINE</span>
+          </button>
+        </div>
+
         <div style="flex-grow: 1;"></div>
-        <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
-          MAXIMIZE
-        </button>
+
+        <!-- Dock Actions -->
+        <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
+          <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
+            <span id="lbl-quick-switch-text">⏱️ TIMELINE PRO</span> <kbd>TAB</kbd>
+          </button>
+          <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
+            MAXIMIZE <kbd>~</kbd>
+          </button>
+        </div>
       </div>
+
+      <!-- VIEW 1: DEDICATED PRO TIMELINE (FULL DOCK HEIGHT, ZERO SPACE COMPETITION) -->
+      <div class="dock-timeline-view-pane" id="dock-timeline-view" style="display: none;">
+        <div class="pro-timeline-toolbar">
+          <div class="tl-tool-group tl-status-group">
+            <span class="tl-pulse-dot"></span>
+            <span class="tl-engine-title">PRO TIMELINE ARRANGER</span>
+            <span class="tl-badge-mode" id="tl-mode-badge">AUTOPILOT ARMED</span>
+          </div>
+
+          <div class="tl-transport-controls">
+            <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata (Take)">TAKE</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP ⏭</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE 🔀</button>
+            <button class="btn btn-outline btn-xs" id="btn-tl-cue-next" onclick="cueNextFromQueue()" title="Preparar próximo item no Deck B">CUE → B</button>
+          </div>
+
+          <div class="tl-metrics-group">
+            <span class="tl-metric-tag">PHRASE: <strong id="tl-phrase-step" class="text-cyan">1 / 16</strong></span>
+            <span class="tl-metric-tag">TENSION: <strong id="tl-tension-pct" class="text-emerald">24%</strong></span>
+            <span class="tl-metric-tag">BPM: <strong id="tl-current-bpm" class="text-white">128.0</strong></span>
+          </div>
+        </div>
+
+        <div class="pro-timeline-arrangement-body">
+          <div class="timeline-tracks-sidebar">
+            <div class="tl-track-header track-master">
+              <span class="track-tag">PGM</span>
+              <span class="track-name">L0 MASTER</span>
+              <span class="track-vol" id="lbl-tl-track-l0">100%</span>
+            </div>
+            <div class="tl-track-header track-l1">
+              <span class="track-tag">L1</span>
+              <span class="track-name">PULSE REFLEX</span>
+              <span class="track-vol" id="lbl-tl-track-l1">80%</span>
+            </div>
+            <div class="tl-track-header track-l2">
+              <span class="track-tag">L2</span>
+              <span class="track-name">SOBEL EDGE</span>
+              <span class="track-vol" id="lbl-tl-track-l2">60%</span>
+            </div>
+            <div class="tl-track-header track-cue">
+              <span class="track-tag">PRV</span>
+              <span class="track-name">L3 CUE BUS B</span>
+              <span class="track-vol" id="lbl-tl-track-l3">100%</span>
+            </div>
+            <div class="tl-track-header track-fx">
+              <span class="track-tag">FX</span>
+              <span class="track-name">AFTER EFFECTS</span>
+              <span class="track-vol" id="lbl-tl-track-fx">ACT</span>
+            </div>
+          </div>
+
+          <div class="timeline-container" id="autopilot-timeline-container">
+            <canvas id="timeline-canvas"></canvas>
+            <div class="timeline-playhead-overlay" id="timeline-playhead">
+              <div class="playhead-badge">NOW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: MODULAR WORKSPACE TABS CONTAINER -->
+      <div class="dock-modules-view-pane active" id="dock-modules-view">
 
       <!-- TAB 2: VISUAL 5-CHANNEL COMPOSITOR (WORLD-CLASS RESOLUME/TOUCHDESIGNER ARCHITECTURE) -->
       <div class="tab-content" id="tab-layers">
@@ -1617,17 +1708,181 @@
       </div>
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
-        <div class="dock-workflow-hint"><strong>ETAPA 1 (CLIP POOL):</strong> Banco de vídeos brutos 1.In. Clique no card para enviar ao PREVIEW (CUE) ou use <strong>→ L0</strong> (Base Ao Vivo), <strong>→ L3</strong> (Cue), <strong>→ L4</strong> (Drop).</div>
+        <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
         <div class="pool-dock-header">
+          <!-- TOP ROW: BUSCA + AÇÕES PRINCIPAIS -->
           <div class="dock-search-row">
-            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar por nome do arquivo ou pasta do projeto..." class="dock-search">
+            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar clipes, mattes, efeitos FX ou presets..." class="dock-search">
             <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
+            <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
+            
+            <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>+ STREAM / DOWNLOADER</span>
+            </button>
+
+            <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>💾 PERFIL & CACHE</span>
+            </button>
+
+            <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>+ ADD PASTA LOCAL</span>
+            </button>
+
+            <button class="btn-pool-action btn-toggle-group active" id="btn-toggle-group-categories" title="Alternar entre visualização por seções de categorias e grid contínuo">
+              <span>▤ SEÇÕES DE CATEGORIA</span>
+            </button>
           </div>
 
-          <div class="filter-group">
-            <span class="filter-group-label">DIRECTORIES / PROJECTS:</span>
-            <button class="btn-filter" id="btn-add-local-folder" style="background:#00f0ff; color:#000; font-weight:bold; margin-left: 10px; border:none; padding:4px 10px; cursor:pointer; font-size:11px;">+ ADD PASTA LOCAL</button>
-            <div class="filter-pills folder-pills" id="folder-pills-container" style="display:inline-block; margin-left: 10px;">
+          <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
+          <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
+            <div class="nsd-header">
+              <div class="nsd-title-group">
+                <span class="nsd-pulse-dot"></span>
+                <span class="nsd-title">NEXUS MEDIA STREAMER & DOWNLOADER</span>
+                <span class="nsd-subtitle">// YOUTUBE, HLS, MP4 & DIRECT FEEDS</span>
+              </div>
+              <button class="nsd-close-btn" id="btn-close-stream-drawer" title="Fechar painel">✕</button>
+            </div>
+            
+            <div class="nsd-body">
+              <div class="nsd-input-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">URL DA MÍDIA / FEED:</span>
+                  <input type="text" id="input-pool-stream-url" placeholder="Cole link do YouTube (watch, shorts, live) ou URL direta .mp4/.webm/.m3u8..." autocomplete="off">
+                </div>
+              </div>
+
+              <div class="nsd-cat-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">CATEGORIA DE DESTINO:</span>
+                  <select id="select-stream-target-cat" class="nsd-select">
+                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                    <option value="MINIMAL">MINIMAL (Base Hipnótica)</option>
+                    <option value="ABSTRACT">ABSTRACT (Geometria/Partículas)</option>
+                    <option value="FIGURA">FIGURA (Silhuetas/Corpos)</option>
+                    <option value="DENSE">DENSE (Alta Frequência/Drop)</option>
+                    <option value="CHROMA">CHROMA (Recorte Alpha)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="nsd-title-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">APELIDO (OPCIONAL):</span>
+                  <input type="text" id="input-pool-stream-title" placeholder="Nome para o Media Pool..." autocomplete="off">
+                </div>
+              </div>
+
+              <div class="nsd-actions-col">
+                <button class="nsd-btn nsd-btn-download" id="btn-pool-action-download" title="Baixa o vídeo no SSD em alta qualidade, gera thumbnail e adiciona como clipe local no Media Pool">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  BAIXAR PARA O POOL
+                </button>
+                <button class="nsd-btn nsd-btn-stream" id="btn-pool-action-stream" title="Ingere imediatamente como stream online em tempo real no Media Pool">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  STREAM AO VIVO
+                </button>
+              </div>
+            </div>
+
+            <!-- LIVE DOWNLOAD PROGRESS FEEDBACK -->
+            <div class="nsd-progress-wrap" id="nsd-progress-wrap" style="display: none;">
+              <div class="nsd-progress-info">
+                <span class="nsd-progress-status" id="nsd-progress-status">INICIANDO DOWNLOAD...</span>
+                <span class="nsd-progress-metrics" id="nsd-progress-metrics">0% · -- MB/s · ETA --:--</span>
+              </div>
+              <div class="nsd-progress-track">
+                <div class="nsd-progress-bar" id="nsd-progress-bar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MASTER ASSET TYPE SELECTOR (UNIVERSAL CREATIVE ASSET LIBRARY) -->
+          <div class="library-type-selector-bar">
+            <button class="lib-type-btn active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
+              <span class="lib-type-icon">✨</span>
+              <span class="lib-type-label">TODOS OS RECURSOS</span>
+              <span class="lib-type-badge" id="lib-count-all">115</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
+              <span class="lib-type-icon">🎬</span>
+              <span class="lib-type-label">VÍDEOS & CLIPES</span>
+              <span class="lib-type-badge" id="lib-count-clips">74</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
+              <span class="lib-type-icon">🎭</span>
+              <span class="lib-type-label">MATTES & MÁSCARAS</span>
+              <span class="lib-type-badge" id="lib-count-mattes">29</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
+              <span class="lib-type-icon">⚡</span>
+              <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
+              <span class="lib-type-badge" id="lib-count-fx">6</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
+              <span class="lib-type-icon">🎛️</span>
+              <span class="lib-type-label">PRESETS & CONDUCTOR</span>
+              <span class="lib-type-badge" id="lib-count-presets">6</span>
+            </button>
+          </div>
+
+          <!-- TOOLSTRIP 1: FILTROS DE ORIGEM DA MÍDIA (SOURCES) -->
+          <div class="filter-group pool-source-strip">
+            <span class="filter-group-label">ORIGEM:</span>
+            <div class="filter-pills source-pills" id="source-pills-container">
+              <button class="pill-btn active" data-source="ALL">
+                <span>TODAS AS ORIGENS</span> <span class="pill-badge" id="badge-count-src-all">0</span>
+              </button>
+              <button class="pill-btn" data-source="cdn">
+                <span class="src-dot dot-cdn"></span> <span>☁️ BUNNY CDN</span> <span class="pill-badge" id="badge-count-src-cdn">0</span>
+              </button>
+              <button class="pill-btn" data-source="local">
+                <span class="src-dot dot-local"></span> <span>📁 LOCAL (SSD)</span> <span class="pill-badge" id="badge-count-src-local">0</span>
+              </button>
+              <button class="pill-btn" data-source="stream">
+                <span class="src-dot dot-stream"></span> <span>▶️ YOUTUBE & STREAMS</span> <span class="pill-badge" id="badge-count-src-stream">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TOOLSTRIP 2: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
+          <div class="filter-group pool-category-strip">
+            <span class="filter-group-label">CATEGORIA:</span>
+            <div class="filter-pills category-pills" id="category-pills-container">
+              <button class="pill-btn active" data-cat="ALL">
+                <span>TODAS</span> <span class="pill-badge" id="badge-count-cat-all">0</span>
+              </button>
+              <button class="pill-btn" data-cat="MINIMAL">
+                <span class="cat-pill-indicator cat-ind-minimal"></span> <span>MINIMAL</span> <span class="pill-badge" id="badge-count-cat-minimal">0</span>
+              </button>
+              <button class="pill-btn" data-cat="ABSTRACT">
+                <span class="cat-pill-indicator cat-ind-abstract"></span> <span>ABSTRACT</span> <span class="pill-badge" id="badge-count-cat-abstract">0</span>
+              </button>
+              <button class="pill-btn" data-cat="FIGURA">
+                <span class="cat-pill-indicator cat-ind-figura"></span> <span>FIGURA</span> <span class="pill-badge" id="badge-count-cat-figura">0</span>
+              </button>
+              <button class="pill-btn" data-cat="DENSE">
+                <span class="cat-pill-indicator cat-ind-dense"></span> <span>DENSE</span> <span class="pill-badge" id="badge-count-cat-dense">0</span>
+              </button>
+              <button class="pill-btn" data-cat="CHROMA">
+                <span class="cat-pill-indicator cat-ind-chroma"></span> <span>CHROMA</span> <span class="pill-badge" id="badge-count-cat-chroma">0</span>
+              </button>
+              <button class="pill-btn" data-cat="STREAMS & YOUTUBE">
+                <span class="cat-pill-indicator cat-ind-stream"></span> <span>STREAMS & YOUTUBE</span> <span class="pill-badge" id="badge-count-cat-stream">0</span>
+              </button>
+              <button class="pill-btn" data-cat="GENERATIVE">
+                <span class="cat-pill-indicator cat-ind-gen"></span> <span>GENERATIVE 3D</span> <span class="pill-badge" id="badge-count-cat-gen">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TOOLSTRIP 3: PROJETOS / PASTAS (SUB-BINS) -->
+          <div class="filter-group pool-folder-strip">
+            <span class="filter-group-label">PASTAS / BINS:</span>
+            <div class="filter-pills folder-pills" id="folder-pills-container">
               <!-- Dynamically populated from media manifest -->
             </div>
           </div>
@@ -1804,6 +2059,8 @@
           </div>
         </div>
       </div>
+      <!-- END VIEW 2: MODULAR WORKSPACE TABS CONTAINER -->
+      </div>
     </section>
 
     <!-- FOOTER STATUS DOCK (24px) -->
@@ -1865,389 +2122,566 @@
       <div class="pro-tooltip-desc" id="tooltip-desc">Descrição e tutorial rápido</div>
     </div>
 
-    <!-- INTERACTIVE ADVANCED SETTINGS HUD MODAL -->
+    <!-- INTERACTIVE ADVANCED SETTINGS HUD MODAL (PRO PREFERENCES) -->
     <div id="settings-modal" class="shortcuts-modal-overlay">
-      <div class="shortcuts-card settings-card-pro" style="max-width: 960px;">
-        <div class="shortcuts-header">
-          <div class="shortcuts-title-group">
-            <span class="shortcuts-icon">⚙️</span>
-            <h2>PENUMBRA ENGINE · CONFIGURAÇÕES DO SISTEMA & FLUXO VJ</h2>
+      <div class="shortcuts-card settings-card-pro">
+        <!-- Pro Preferences Header Bar -->
+        <div class="cfg-modal-header">
+          <div class="cfg-modal-title-group">
+            <span class="cfg-modal-icon">⚙️</span>
+            <div class="cfg-title-texts">
+              <span class="cfg-main-title">PREFERÊNCIAS & SISTEMA</span>
+              <span class="cfg-sub-title">PENUMBRA ENGINE VJ · BROADCAST SPEC</span>
+            </div>
+          </div>
+          <div class="cfg-search-wrapper">
+            <span class="cfg-search-icon">🔍</span>
+            <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
+            <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
           <button class="btn btn-danger btn-xs" id="btn-settings-close">✕ FECHAR (ESC)</button>
         </div>
 
-        <!-- Top Segmented Navigation Tabs -->
-        <div class="settings-tabs-nav">
-          <button class="settings-tab-btn" data-tab="source" onclick="setSettingsTab('source')">📁 ORIGEM DE MÍDIA</button>
-          <button class="settings-tab-btn active" data-tab="output" onclick="setSettingsTab('output')">📺 SAÍDA & PROJEÇÃO</button>
-          <button class="settings-tab-btn" data-tab="autopilot" onclick="setSettingsTab('autopilot')">🤖 PILOTO AUTOMÁTICO</button>
-          <button class="settings-tab-btn" data-tab="audio" onclick="setSettingsTab('audio')">🎙️ ÁUDIO & SINCRONIA</button>
-          <button class="settings-tab-btn" data-tab="performance" onclick="setSettingsTab('performance')">⚡ PERFORMANCE</button>
-          <button class="settings-tab-btn" data-tab="network" onclick="setSettingsTab('network')">🌐 REDE & OSC</button>
-          <button class="settings-tab-btn" data-tab="shortcuts" onclick="setSettingsTab('shortcuts')">⌨️ ATALHOS & GUIA</button>
-        </div>
+        <!-- Pro Two-Column Layout -->
+        <div class="cfg-two-col-layout">
+          <!-- Left Navigation Sidebar -->
+          <div class="cfg-sidebar-col">
+            <div class="cfg-nav-list">
+              <button class="cfg-nav-item active" data-tab="source" onclick="setSettingsTab('source')">
+                <span class="nav-icon">📁</span>
+                <span class="nav-label">Mídia & Origem</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="profile" onclick="setSettingsTab('profile')">
+                <span class="nav-icon">💾</span>
+                <span class="nav-label">Cache & Perfil Portátil</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="output" onclick="setSettingsTab('output')">
+                <span class="nav-icon">📺</span>
+                <span class="nav-label">Saída & Telão HDMI</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="autopilot" onclick="setSettingsTab('autopilot')">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">Piloto Automático</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="audio" onclick="setSettingsTab('audio')">
+                <span class="nav-icon">🎙️</span>
+                <span class="nav-label">Áudio & Sincronia BPM</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="performance" onclick="setSettingsTab('performance')">
+                <span class="nav-icon">⚡</span>
+                <span class="nav-label">GPU & Performance</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="network" onclick="setSettingsTab('network')">
+                <span class="nav-icon">🌐</span>
+                <span class="nav-label">Rede, OSC & NDI</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="shortcuts" onclick="setSettingsTab('shortcuts')">
+                <span class="nav-icon">⌨️</span>
+                <span class="nav-label">Atalhos de Teclado</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="system" onclick="setSettingsTab('system')">
+                <span class="nav-icon">ℹ️</span>
+                <span class="nav-label">Sistema & Diagnóstico</span>
+              </button>
+            </div>
+          </div>
 
-        <div class="settings-tab-content">
-          <!-- TAB 0: ORIGEM DE MÍDIA (LOCAL / NUVEM) -->
-          <div class="settings-tab-panel" id="settings-panel-source">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>FONTE DO PROJETO & RECURSOS</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">ORIGEM ATIVA:</span>
-                    <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+          <!-- Right Content Area -->
+          <div class="cfg-content-col" id="cfg-content-panels">
+
+            <!-- PANEL 1: ORIGEM DE MÍDIA -->
+            <div class="settings-tab-panel active" id="settings-panel-source">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>FONTE ATIVA DE VÍDEOS & CLOUD STREAM</span>
+                  <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Status da Origem</span>
+                    <span class="prop-desc" id="cfg-active-source-desc">Streaming direto via Bunny CDN com cache local sob demanda.</span>
                   </div>
-                  <p class="cfg-desc" style="margin-top: 8px;" id="cfg-active-source-desc">
-                    Streaming direto do portfólio via Edge CDN de alta performance com miniaturas inteligentes.
-                  </p>
-                  
-                  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-                    <button class="btn btn-studio-primary btn-sm" onclick="openStudioLauncher(); closeSettingsModal();" style="width: 100%;">
-                      🚀 REABRIR STUDIO LAUNCHER (ALTERAR FONTE)
-                    </button>
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()" style="width: 100%;">
-                      ☁️ RE-CONECTAR NUVEM EDGE (PIN 2026)
-                    </button>
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()" style="width: 100%;">
-                      📁 MONTAR PASTA LOCAL VIA DIRECT FS
-                    </button>
+                  <div class="prop-control">
+                    <button class="btn btn-studio-primary btn-xs" onclick="openStudioLauncher(); closeSettingsModal();">REABRIR LAUNCHER</button>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PREFERÊNCIA DE INICIALIZAÇÃO:</span>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
-                    <span class="cfg-desc">Lembrar fonte selecionada (pula o seletor inicial se autorizado)</span>
-                  </label>
-                  <div style="margin-top: 10px;">
-                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber);">
-                      🗑️ ESQUECER PREFERÊNCIA (SEMPRE PERGUNTAR AO INICIAR)
-                    </button>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Reconectar Nuvem Edge</span>
+                    <span class="prop-desc">Restabelece feed seguro Bunny CDN (PIN 2026).</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()">☁️ RECONECTAR CDN</button>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Montar Pasta Local (SSD)</span>
+                    <span class="prop-desc">Vincular diretório físico via File System API.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()">📁 ESCOLHER PASTA</button>
                   </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>PASTAS LOCAIS & MÍDIAS ADICIONAIS</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">IMPORTAÇÃO DINÂMICA DE PASTAS:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Você pode conectar múltiplas pastas de vídeos do seu computador a qualquer momento. Os clipes serão indexados no Media Pool preservando os nomes originais.
-                  </p>
-                  <button class="btn btn-outline btn-sm" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()" style="margin-top: 10px; width: 100%;">
-                    📁 ADICIONAR NOVA PASTA DE VÍDEOS
-                  </button>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>PREFERÊNCIAS DE INICIALIZAÇÃO & ARQUIVOS</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">TOTAL DE CLIPES NO MEDIA POOL:</span>
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
-                    <span class="metric-val text-cyan" id="cfg-media-count-val">0</span>
-                    <span class="cfg-desc">clipes carregados no motor</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Lembrar Fonte Selecionada</span>
+                    <span class="prop-desc">Inicia direto na última fonte sem exibir tela inicial.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Total de Clipes Carregados</span>
+                    <span class="prop-desc">Mídias ativas disponíveis no motor gráfico.</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="metric-val text-cyan" id="cfg-media-count-val">0 CLIPES</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Adicionar Mais Pastas de Mídia</span>
+                    <span class="prop-desc">Indexa novos vídeos ao Media Pool sem reiniciar.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()">+ ADICIONAR PASTA</button>
+                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber); margin-left: 6px;">REDEFINIR PREFERÊNCIA</button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 1: SAÍDA & PROJEÇÃO -->
-          <div class="settings-tab-panel active" id="settings-panel-output">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>MODO DE ORIENTAÇÃO MASTER (CONCEITO VISUAL)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">FORMATO DO PROGRAM:</span>
-                    <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
-                  </div>
-                  <div class="conductor-btn-group" style="margin-top: 8px;">
-                    <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">PADRÃO HORIZONTAL (16:9)</button>
-                    <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">MODO VERTICAL (9:16 PORTRAIT)</button>
-                  </div>
-                  <p class="cfg-desc" style="margin-top: 10px;">
-                    <strong>Conceito Vertical:</strong> Quando ativado, o monitor Program do Cockpit torna-se um preview vertical elegante e reto (sem rotação lateral/pescoço torto), ideal para totens de LED, banners verticais e projeções de arte contemporânea.
-                  </p>
+            <!-- PANEL 2: CACHE & PERFIL PORTÁTIL -->
+            <div class="settings-tab-panel" id="settings-panel-profile">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>PERFIL PORTÁTIL CENTRALIZADO</span>
+                  <span class="cfg-badge text-emerald" id="cfg-profile-file-badge">penumbra_user_profile.json</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">COMPENSAÇÃO PARA PROJETOR FÍSICO VIRADO A 90°:</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Backup & Portabilidade</span>
+                    <span class="prop-desc">Configurações, clipes do YouTube e inventário em arquivo único.</span>
                   </div>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
-                    <span class="cfg-desc">Rotacionar sinal HDMI 16:9 para projetores físicos instalados na vertical (ex: HY320/Epson virado 90° no tripé)</span>
-                  </label>
-                  <p class="cfg-desc" style="color: #64748b; font-size: 11px; margin-top: 6px;">
-                    Mantém o monitor Cockpit reto (upright) na sua tela, mas gira o feixe de saída para que a imagem projetada na parede fique reta e sem distorção.
-                  </p>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-studio-primary btn-xs" id="btn-export-user-profile" onclick="exportUserProfile()">💾 EXPORTAR JSON</button>
+                    <label class="btn btn-outline btn-xs" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center;">
+                      📥 IMPORTAR JSON
+                      <input type="file" id="input-import-user-profile" accept=".json" style="display: none;" onchange="importUserProfileFromFile(event)">
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Métricas da Sessão Salva</span>
+                    <span class="prop-desc" id="cfg-profile-details">
+                      Última gravação: <strong id="cfg-profile-last-saved" class="text-white">—</strong> · Clipes: <strong id="cfg-profile-custom-count" class="text-cyan">0</strong> · Tags: <strong id="cfg-profile-cat-count" class="text-cyan">0</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>MONITOR EXTERNO, TELÃO & BOAS PRÁTICAS MAC</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">JANELAS FLUTUANTES (POPOUTS PARA PROJETORES):</span>
-                  <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')">◱ ABRIR PROGRAM NO TELÃO</button>
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')">◱ ABRIR PREVIEW CUE</button>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CACHE LOCAL INTELIGENTE (ZERO-WASTE)</span>
+                  <span class="cfg-badge text-emerald" id="cfg-cache-size-badge">0.0 MB EM DISCO</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Download Offline Completo</span>
+                    <span class="prop-desc">Baixa todas as mídias da CDN para reprodução 100% offline.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline btn-xs" id="btn-sync-cache-status" onclick="refreshCacheStatus()">🔄 ATUALIZAR STATUS</button>
+                    <button class="btn btn-outline btn-xs text-cyan" onclick="downloadAllPendingClips()">⬇️ BAIXAR TUDO OFFLINE</button>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">CHECKLIST PRO BROADCAST (MAC + PROJETOR):</span>
-                  <ul class="cfg-checklist">
-                    <li><strong>Tela Estendida:</strong> Nos <em>Ajustes do Sistema > Telas</em> do macOS, selecione o projetor e marque <em>Tela Estendida</em> (nunca espelhamento).</li>
-                    <li><strong>Resolução HDMI:</strong> Force 1080p ou 720p se o projetor perder sincronia de sinal (No Signal).</li>
-                    <li><strong>Modo Tela Cheia:</strong> Arraste a janela Popout para o telão e pressione o botão ⛶ Tela Cheia.</li>
-                  </ul>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Preview de Vídeo no Hover (On-Demand)</span>
+                    <span class="prop-desc">Carrega vídeo no card apenas após repouso do mouse (280ms), poupando banda.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-hover-preview-enabled" checked onchange="toggleHoverPreview(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 2: PILOTO AUTOMÁTICO -->
-          <div class="settings-tab-panel" id="settings-panel-autopilot">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>CADÊNCIA MUSICAL & TRAVA DE SEGURANÇA</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">INTERVALO MÍNIMO ENTRE TAKES:</span>
-                    <span class="cfg-badge text-cyan" id="lbl-cfg-min-bars">16 BARS (PADRÃO)</span>
+            <!-- PANEL 3: SAÍDA & TELÃO HDMI -->
+            <div class="settings-tab-panel" id="settings-panel-output">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>FORMATO MASTER & GEOMETRIA DO PROGRAM</span>
+                  <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Orientação da Imagem Master</span>
+                    <span class="prop-desc">Alterna entre monitor horizontal padrão e preview vertical (totens LED / 9:16).</span>
                   </div>
-                  <div class="conductor-btn-group" id="group-cfg-min-bars" style="margin-top: 8px;">
-                    <button class="conductor-btn cfg-bars-btn" data-bars="8" onclick="setAutopilotBars(8)">8 BARS (~15s)</button>
-                    <button class="conductor-btn cfg-bars-btn active" data-bars="16" onclick="setAutopilotBars(16)">16 BARS (~31s)</button>
-                    <button class="conductor-btn cfg-bars-btn" data-bars="32" onclick="setAutopilotBars(32)">32 BARS (~62s)</button>
-                    <button class="conductor-btn cfg-bars-btn" data-bars="64" onclick="setAutopilotBars(64)">64 BARS (~124s)</button>
-                  </div>
-                  <div class="cfg-alert-box" style="margin-top: 12px;">
-                    <span class="alert-icon">🛡️</span>
-                    <span class="alert-text"><strong>PROTEÇÃO ANTIRRISCO ATIVA:</strong> O Piloto Automático NUNCA dispara takes a cada 1 compasso. Todas as transições são travadas no fraseado musical (mínimo 8 compassos).</span>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group">
+                      <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">HORIZONTAL (16:9)</button>
+                      <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">VERTICAL (9:16)</button>
+                    </div>
                   </div>
                 </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Compensação de Projetor Físico a 90°</span>
+                    <span class="prop-desc">Gira o feixe HDMI para projetores montados fisicamente deitados/na vertical.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
 
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">REGRAS DE CONDUÇÃO:</span>
-                  <div class="cfg-checkbox-list" style="margin-top: 8px;">
-                    <label class="cfg-check-item">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>POPOUTS FLUTUANTES (TELÃO & PREVIEW EXTERNO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Janelas Destacadas em Tempo Real</span>
+                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')">◱ PROGRAM NO TELÃO</button>
+                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')">◱ PREVIEW CUE</button>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Recomendações Mac + Telão</span>
+                    <span class="prop-desc">Use Tela Estendida no macOS (nunca espelhamento) e force 1080p 60Hz.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 4: PILOTO AUTOMÁTICO (CONDUCTOR) -->
+            <div class="settings-tab-panel" id="settings-panel-autopilot">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CADÊNCIA MUSICAL & SEGURANÇA</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-min-bars">16 BARS (PADRÃO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Intervalo Mínimo Entre Takes</span>
+                    <span class="prop-desc">Trava antirrisco: nunca corta a cada compasso; respeita o fraseado musical.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-min-bars">
+                      <button class="conductor-btn cfg-bars-btn" data-bars="8" onclick="setAutopilotBars(8)">8 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn active" data-bars="16" onclick="setAutopilotBars(16)">16 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn" data-bars="32" onclick="setAutopilotBars(32)">32 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn" data-bars="64" onclick="setAutopilotBars(64)">64 BARS</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Estilo da Transição Automática</span>
+                    <span class="prop-desc">Curva de fusão executada no Take do Conductor.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group">
+                      <button class="conductor-btn active" id="btn-cfg-trans-dissolve" onclick="setAutopilotTransMode('dissolve')">DISSOLVE</button>
+                      <button class="conductor-btn" id="btn-cfg-trans-dip" onclick="setAutopilotTransMode('dip')">DIP TO BLACK</button>
+                      <button class="conductor-btn" id="btn-cfg-trans-sync" onclick="setAutopilotTransMode('sync')">BEAT SYNC</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>REGRAS INTELIGENTES DE CONDUÇÃO</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Rotação na Cabeça da Frase (Bar 1 Beat 1)</span>
+                    <span class="prop-desc">Transição milimetricamente alinhada no início do compasso master.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
                       <input type="checkbox" id="chk-cfg-autocycle" checked onchange="toggleAutopilotRule('auto_cycle', this.checked)">
-                      <span>Rotação Automática na Cabeça da Frase (Bar 1 Beat 1)</span>
-                    </label>
-                    <label class="cfg-check-item">
-                      <input type="checkbox" id="chk-cfg-droptake" checked onchange="toggleAutopilotRule('auto_drop_take', this.checked)">
-                      <span>Take Único na Entrada do Drop (Com trava anti-repetição de compasso)</span>
-                    </label>
-                    <label class="cfg-check-item">
-                      <input type="checkbox" id="chk-cfg-armdrop" checked onchange="toggleAutopilotRule('auto_arm_drop', this.checked)">
-                      <span>Pulsação da Camada L1 (Reflexo Pulse) nos Graves do Clímax</span>
+                      <span class="cfg-switch-slider"></span>
                     </label>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PASTAS DO MEDIA POOL (ATIVAS NO AUTOPILOT):</span>
-                  <div class="cfg-checkbox-list" id="autopilot-folders-list" style="margin-top: 8px; max-height: 140px; overflow-y: auto; padding-right: 8px;">
-                    <!-- Preenchido dinamicamente via app.js com as categorias existentes -->
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Take Único no Clímax (Drop Detect)</span>
+                    <span class="prop-desc">Disparo pontual na quebra musical com trava anti-repetição.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-droptake" checked onchange="toggleAutopilotRule('auto_drop_take', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Pulsação da Camada L1 (Reflexo)</span>
+                    <span class="prop-desc">Ativa modulação orgânica nos graves e build-ups.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-armdrop" checked onchange="toggleAutopilotRule('auto_arm_drop', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Histórico FIFO Anti-Repetição</span>
+                    <span class="prop-desc" id="lbl-cfg-fifo-status">FIFO Ativo: 15 clipes em buffer</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                  <span class="prop-title">Pastas do Media Pool no Piloto Automático:</span>
+                  <div class="cfg-checkbox-list" id="autopilot-folders-list" style="width: 100%; max-height: 100px; overflow-y: auto;">
                     <div style="font-size: 11px; color: rgba(255,255,255,0.4);">Carregando pastas...</div>
                   </div>
                 </div>
               </div>
-
-              <div class="shortcut-group">
-                <h3>TRANSIÇÃO & MEMÓRIA ANTI-REPETIÇÃO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">ESTILO DA TRANSIÇÃO AUTOMÁTICA:</span>
-                  <div class="conductor-btn-group" style="margin-top: 8px;">
-                    <button class="conductor-btn active" id="btn-cfg-trans-dissolve" onclick="setAutopilotTransMode('dissolve')">EQUAL DISSOLVE</button>
-                    <button class="conductor-btn" id="btn-cfg-trans-dip" onclick="setAutopilotTransMode('dip')">DIP TO BLACK</button>
-                    <button class="conductor-btn" id="btn-cfg-trans-sync" onclick="setAutopilotTransMode('sync')">BEAT SYNC</button>
-                  </div>
-                </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">HISTÓRICO FIFO ANTI-REPETIÇÃO:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Garante que nenhum clipe seja repetido antes de passarem pelo menos 15 transições distintas.
-                  </p>
-                  <div class="cfg-pill-status" style="margin-top: 8px;">
-                    <span class="dot live"></span>
-                    <span id="lbl-cfg-fifo-status">FIFO Ativo: 15 clipes em buffer</span>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
 
-          <!-- TAB 3: ÁUDIO & SINCRONIA -->
-          <div class="settings-tab-panel" id="settings-panel-audio">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>ROTEAMENTO DE ENTRADA & GANHO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">FONTE DE ÁUDIO ATIVA:</span>
-                  <div class="audio-src-pills" style="margin-top: 8px;">
-                    <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">🎵 TESTE (MP3)</button>
-                    <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">🎙️ MIC MAC</button>
-                    <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">🔌 P2 LINE</button>
-                    <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">🎛️ USB DJ</button>
+            <!-- PANEL 5: ÁUDIO & SINCRONIA BPM -->
+            <div class="settings-tab-panel" id="settings-panel-audio">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>DISPOSITIVO DE ÁUDIO & ENTRADA</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-audio-dev">MP3 Interno</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Fonte de Áudio Ativa</span>
+                    <span class="prop-desc">Selecione entre faixa de teste interna, microfone do Mac ou interface USB DJ.</span>
                   </div>
-                  <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">
-                    Dispositivo: <strong id="lbl-cfg-audio-dev" style="color: #fff;">MP3 Interno (01 REC-2024-04-28.mp3)</strong>
+                  <div class="prop-control">
+                    <div class="audio-src-pills">
+                      <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">🎵 TESTE (MP3)</button>
+                      <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">🎙️ MIC MAC</button>
+                      <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">🔌 P2 LINE</button>
+                      <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">🎛️ USB DJ</button>
+                    </div>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">GANHO / SENSIBILIDADE DE ENTRADA:</span>
-                    <span class="cfg-badge" id="lbl-cfg-gain">0 dB (100%)</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Ganho / Sensibilidade de Entrada</span>
+                    <span class="prop-desc">Compensa ambientes silenciosos ou caixas de som de club saturadas.</span>
                   </div>
-                  <input type="range" class="pro-slider" id="sli-cfg-gain" min="50" max="250" value="100" style="margin-top: 8px; width: 100%;" oninput="setAudioInputGain(this.value)">
-                  <span class="cfg-desc" style="display:block; margin-top: 6px;">Ajuste para compensar caixas de som baixas ou ambientes de club com som saturado.</span>
+                  <div class="prop-control" style="width: 200px; display: flex; align-items: center; gap: 8px;">
+                    <input type="range" class="pro-slider" id="sli-cfg-gain" min="50" max="250" value="100" style="flex: 1;" oninput="setAudioInputGain(this.value)">
+                    <span class="cfg-badge" id="lbl-cfg-gain" style="min-width: 55px; text-align: center;">0 dB</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Monitoramento de Áudio (Fone CUE)</span>
+                    <span class="prop-desc" id="lbl-cfg-cue-status">Monitoramento Desativado</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-cue-listen" onclick="toggleAudioMonitor()">OUVIR ENTRADA (CUE)</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>CLOCK MUSICAL & SINCRONIA DE FRASE</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">BPM ENGINE:</span>
-                    <span class="cfg-badge text-cyan" id="lbl-cfg-bpm-mode">AUTO DETECT</span>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CLOCK MUSICAL & SINCRONIA DE FRASE</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-bpm-mode">AUTO DETECT</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Comandos de Alinhamento Rítmico</span>
+                    <span class="prop-desc">Trava de andamento, Tap Tempo manual e sincronia imediata na cabeça 1.1.1.</span>
                   </div>
-                  <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                  <div class="prop-control" style="display: flex; gap: 6px;">
                     <button class="btn btn-outline btn-xs" id="btn-cfg-tap-tempo" onclick="handleTapTempo()">TAP TEMPO</button>
                     <button class="btn btn-outline btn-xs" id="btn-cfg-lock-bpm" onclick="toggleBpmLock()">TRAVAR BPM</button>
                     <button class="btn btn-primary btn-xs" id="btn-cfg-align-downbeat" onclick="resetMusicalPhrase()">ALINHAR DOWNBEAT (1.1.1)</button>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">MONITORAMENTO DE ÁUDIO INTERNO (FONE):</span>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-cue-listen" onclick="toggleAudioMonitor()">OUVIR ENTRADA (CUE)</button>
-                    <span class="cfg-desc" id="lbl-cfg-cue-status">Monitoramento Desativado</span>
+            <!-- PANEL 6: GPU & PERFORMANCE -->
+            <div class="settings-tab-panel" id="settings-panel-performance">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>MOTOR GRÁFICO & TAXA DE QUADROS</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Limite de Taxa de Quadros (Frame Limiter)</span>
+                    <span class="prop-desc">30 FPS para economia de bateria, 60 FPS padrão broadcast, 120 FPS ProMotion.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-fps">
+                      <button class="conductor-btn active" data-fps="30" onclick="setFpsLimit(30)">30 FPS</button>
+                      <button class="conductor-btn" data-fps="60" onclick="setFpsLimit(60)">60 FPS</button>
+                      <button class="conductor-btn" data-fps="120" onclick="setFpsLimit(120)">120 FPS</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Proteção Estroboscópica (Anti-Blowout)</span>
+                    <span class="prop-desc">Evita clarões brancos repentinos e flashing excessivo na projeção.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-antiblowout" checked onchange="toggleAutopilotRule('anti_blowout', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>INDEXADOR DE MÍDIAS & MATTES</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Re-escanear Pasta Física "1. In"</span>
+                    <span class="prop-desc">Detecta novos arquivos MP4 e PNG sem reiniciar o servidor.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-primary btn-xs" onclick="rescanMediaWithFeedback()">🔄 RESCAN DE MÍDIAS</button>
+                  </div>
+                </div>
+                <div id="lbl-cfg-rescan-feedback" style="font-size: 11px; color: var(--emerald); padding-top: 4px; display: none;">✓ Mídias reindexadas com sucesso!</div>
+              </div>
+            </div>
+
+            <!-- PANEL 7: REDE, OSC & NDI -->
+            <div class="settings-tab-panel" id="settings-panel-network">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>SAÍDAS DE VÍDEO EM REDE</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Transmissão NDI / Syphon / Spout</span>
+                    <span class="prop-desc">Desligue para operar puramente em HDMI físico, economizando recursos.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-network">
+                      <button class="conductor-btn" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO</button>
+                      <button class="conductor-btn active" data-net="off" onclick="toggleNetworkOutput(false)">SÓ HDMI</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>INTEGRAÇÃO EXTERNA (TOUCHDESIGNER & PYTHON BRAIN)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">TouchDesigner OSC UDP</span>
+                    <span class="prop-desc">Porta 7000 · 127.0.0.1 (/penumbra/take, crossfader, opacities)</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">OSC :7000 ATIVO</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Python Audio Brain Telemetry</span>
+                    <span class="prop-desc">Porta 8765 (WebSocket local, latência &lt; 4ms)</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-cyan">WS :8765 ATIVO</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 4: PERFORMANCE -->
-          <div class="settings-tab-panel" id="settings-panel-performance">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>MOTOR GRÁFICO & TAXA DE QUADROS</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">LIMITE DE TAXA DE QUADROS (FRAME LIMITER):</span>
-                  <div class="conductor-btn-group" id="group-cfg-fps" style="margin-top: 8px;">
-                    <button class="conductor-btn active" data-fps="30" onclick="setFpsLimit(30)">30 FPS (BATERIA)</button>
-                    <button class="conductor-btn" data-fps="60" onclick="setFpsLimit(60)">60 FPS (FLUIDO)</button>
-                    <button class="conductor-btn" data-fps="120" onclick="setFpsLimit(120)">120 FPS (PROMOTION)</button>
-                  </div>
-                  <span class="cfg-desc" style="display:block; margin-top: 8px;">O modo 60 FPS garante sincronia perfeita com projetores HDMI sem aquecer o MacBook 13".</span>
+            <!-- PANEL 8: ATALHOS DE TECLADO -->
+            <div class="settings-tab-panel" id="settings-panel-shortcuts">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>COMANDOS MASTER & BROADCAST</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PROTEÇÃO ESTROBOSCÓPICA (ANTI-BLOWOUT):</span>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-antiblowout" checked onchange="toggleAutopilotRule('anti_blowout', this.checked)">
-                    <span class="cfg-desc">Prevenir estouramento de branco e estroboscópio excessivo na pista</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>MEDIA POOL & CACHE DE VÍDEO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">INDEXADOR DE CLIPES & MATTES:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Escaneia a pasta física <code>1. In</code> e indexa automaticamente novos vídeos e máscaras procedurais sem reiniciar o servidor.
-                  </p>
-                  <button class="btn btn-primary btn-sm" style="margin-top: 10px;" onclick="rescanMediaWithFeedback()">🔄 RESCAN DE MÍDIAS AGORA</button>
-                  <div id="lbl-cfg-rescan-feedback" style="font-size: 11px; color: var(--emerald); margin-top: 6px; display: none;">✓ Mídias reindexadas com sucesso!</div>
-                </div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Alternar Módulos / Pro Timeline</span></div><div class="prop-control"><kbd>TAB</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Auto Take Suave (Dissolve gradual)</span></div><div class="prop-control"><kbd>SPACE</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Hard Cut Imediato (Corte seco)</span></div><div class="prop-control"><kbd>ENTER</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Resincronizar Downbeat (Início Bar 1.1.1)</span></div><div class="prop-control"><kbd>R</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Carregar Clipe no Program (Deck A)</span></div><div class="prop-control"><kbd>A</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Carregar Clipe no Preview (Deck B)</span></div><div class="prop-control"><kbd>B</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Mover Crossfader Manualmente</span></div><div class="prop-control"><kbd>← / →</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Módulos 1 a 6 (Biblioteca, Mixer, etc.)</span></div><div class="prop-control"><kbd>1 .. 6</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Abrir Preferências / Fechar Modais</span></div><div class="prop-control"><kbd>,</kbd> / <kbd>ESC</kbd></div></div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 5: REDE & OSC -->
-          <div class="settings-tab-panel" id="settings-panel-network">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>SAÍDAS DE VÍDEO (NETWORK)</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">TRANSMISSÃO NDI / SYPHON / SPOUT:</span>
-                  <div class="conductor-btn-group" id="group-cfg-network" style="margin-top: 8px;">
-                    <button class="conductor-btn" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO (REDE LOCAL)</button>
-                    <button class="conductor-btn active" data-net="off" onclick="toggleNetworkOutput(false)">DESLIGADO (SÓ HDMI)</button>
-                  </div>
-                  <span class="cfg-desc" style="display:block; margin-top: 8px;">Desligue saídas de rede para usar apenas HDMI no projetor, melhorando o desempenho e economizando bateria.</span>
+            <!-- PANEL 9: SISTEMA & DIAGNÓSTICO -->
+            <div class="settings-tab-panel" id="settings-panel-system">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>DIAGNÓSTICO DO MOTOR PENUMBRA</span>
                 </div>
-              </div>
-              <div class="shortcut-group">
-                <h3>TOUCHDESIGNER BRIDGE (OSC UDP)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">DESTINO OSC TOUCHDESIGNER:</span>
-                    <span class="cfg-badge text-emerald">PORTA 7000 · 127.0.0.1</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Versão do Engine</span>
+                    <span class="prop-desc">Penumbra VJ Engine v4.2 Pro (Build 2026.10)</span>
                   </div>
-                  <ul class="cfg-checklist" style="margin-top: 8px;">
-                    <li><code>/penumbra/take</code>: Pulso de corte A/B</li>
-                    <li><code>/penumbra/crossfader</code>: Posição linear do fader (0.0 a 1.0)</li>
-                    <li><code>/penumbra/layer0..4/opacity</code>: Opacidades por canal</li>
-                    <li><code>/penumbra/tonal/*</code>: Parâmetros analógicos de pós-processamento</li>
-                  </ul>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-cyan">ESTÁVEL</span>
+                  </div>
                 </div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>AUDIO BRAIN PYTHON (DSP WEBSOCKET)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">STREAM DE TELEMETRIA:</span>
-                    <span class="cfg-badge text-cyan">PORTA 8765 (WS)</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Motor de Renderização</span>
+                    <span class="prop-desc">Living Canvas 2D + Hardware Video Element Acceleration</span>
                   </div>
-                  <p class="cfg-desc" style="margin-top: 8px;">
-                    Transmite 6 bandas de frequência FFT, separação semântica de 4 stems e cálculo de probabilidade de Drop a cada 50ms.
-                  </p>
-                  <div class="cfg-pill-status" style="margin-top: 10px;">
-                    <span class="dot live"></span>
-                    <span>Latência estimada: &lt; 4ms (Loopback local)</span>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">HARDWARE GPU</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Zero-Allocation Loop</span>
+                    <span class="prop-desc">Invariantes de 60 FPS ativas sem coletas de lixo durante playback.</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">60 FPS VERIFICADO</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 6: ATALHOS & GUIA -->
-          <div class="settings-tab-panel" id="settings-panel-shortcuts">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>COMANDOS PRINCIPAIS BROADCAST</h3>
-                <div class="shortcut-row"><span class="sc-desc">Auto Take Suave (Dissolve gradual)</span><kbd>SPACE</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Hard Cut Imediato (Corte seco)</span><kbd>ENTER</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Resincronizar Downbeat (Início do Bar 1.1.1)</span><kbd>R</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Carregar Clipe no Program (Deck A)</span><kbd>A</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Carregar Clipe no Preview (Deck B / Cue)</span><kbd>B</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Mover Crossfader Manualmente</span><kbd>← / →</kbd></div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>NAVEGAÇÃO POR MÓDULOS</h3>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 1: Media Pool (Acervo)</span><kbd>1</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 2: Compositor 5 Camadas</span><kbd>2</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 3: Biblioteca de Mattes</span><kbd>3</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 4: Pós Analógica / Tonal</span><kbd>4</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 5: Autopilot Conductor</span><kbd>5</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 6: Motor FX</span><kbd>6</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Abrir este Menu de Configurações</span><kbd>,</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Fechar Modais</span><kbd>ESC</kbd></div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </div> <!-- /cfg-content-col -->
+        </div> <!-- /cfg-two-col-layout -->
       </div>
     </div>
 

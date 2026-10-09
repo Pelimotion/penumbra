@@ -1470,6 +1470,54 @@ html, body.penumbra-app {
 }
 
 /* ==========================================================================
+   WORKSPACE HORIZONTAL SPLITTER & DOCK VIEWS
+   ========================================================================== */
+.workspace-splitter-horizontal {
+  height: 6px;
+  min-height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: row-resize;
+  position: relative;
+  z-index: 50;
+  user-select: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.workspace-splitter-horizontal:hover,
+.workspace-splitter-horizontal.is-dragging {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.splitter-handle-bar {
+  width: 36px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.workspace-splitter-horizontal:hover .splitter-handle-bar,
+.workspace-splitter-horizontal.is-dragging .splitter-handle-bar {
+  background: var(--cyan);
+  width: 50px;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+body.resizing-workspace-active {
+  cursor: row-resize !important;
+  user-select: none !important;
+}
+body.resizing-workspace-active * {
+  user-select: none !important;
+}
+
+/* ==========================================================================
    5. BOTTOM DOCK: TABS & MODULAR INSPECTOR (Flex Remaining Viewport)
    ========================================================================== */
 .dock-zone {
@@ -1497,6 +1545,195 @@ html, body.penumbra-app {
   background: rgba(8, 10, 15, 0.98);
 }
 
+/* DOCK MASTER HEADER & VIEW MODE SELECTOR */
+.dock-master-header {
+  height: 36px;
+  min-height: 36px;
+  background: rgba(4, 5, 8, 0.98);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  user-select: none;
+}
+
+.dock-view-mode-selector {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.dock-mode-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.dock-mode-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dock-mode-btn.active {
+  background: rgba(0, 240, 255, 0.14);
+  color: var(--cyan);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+}
+
+.mode-badge-tab {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dock-modules-view-pane,
+.dock-timeline-view-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* PRO DEDICATED TIMELINE VIEW */
+.dock-timeline-view-pane {
+  background: #040609;
+}
+
+.pro-timeline-toolbar {
+  height: 34px;
+  min-height: 34px;
+  background: rgba(8, 11, 18, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  gap: 12px;
+}
+
+.tl-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tl-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: pulseCyan 1.5s infinite;
+}
+
+.tl-engine-title {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.tl-badge-mode {
+  font-size: 8.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  font-weight: 700;
+}
+
+.tl-transport-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tl-metrics-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: #94a3b8;
+}
+
+.pro-timeline-arrangement-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-tracks-sidebar {
+  width: 130px;
+  min-width: 130px;
+  background: rgba(6, 8, 13, 0.98);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-track-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.tl-track-header .track-tag {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.tl-track-header.track-master .track-tag { background: var(--emerald); color: #000; }
+.tl-track-header.track-cue .track-tag { background: var(--cyan); color: #000; }
+.tl-track-header.track-fx .track-tag { background: var(--accent-magenta, #ff2a85); color: #fff; }
+
+.timeline-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: #040508;
+  overflow: hidden;
+}
+
+#timeline-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .dock-action-btn {
   background: transparent;
   border: none;
@@ -1505,11 +1742,11 @@ html, body.penumbra-app {
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 4px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   transition: all 0.2s ease;
 }
 
@@ -1521,12 +1758,12 @@ html, body.penumbra-app {
 .dock-tabs {
   height: 34px;
   min-height: 34px;
-  background: rgba(4, 5, 8, 0.95);
-  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  border-bottom: none;
   display: flex;
-  padding: 0 16px;
+  padding: 0;
   gap: 2px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .dock-tab {
@@ -4148,7 +4385,18 @@ html, body.penumbra-app {
   border: 1px solid rgba(72, 187, 120, 0.2);
 }
 
-/* FOLDER & PROJECT CATEGORY FILTER */
+/* ==========================================================================
+   MEDIA POOL PRO: TOOLBAR, STREAM DRAWER & CATEGORY SMART BINS
+   ========================================================================== */
+.pool-dock-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #111215;
+  border-bottom: 1px solid #1f2127;
+}
+
 .dock-search-row {
   display: flex;
   align-items: center;
@@ -4163,27 +4411,531 @@ html, body.penumbra-app {
   color: var(--cyan);
   white-space: nowrap;
   background: rgba(0, 240, 255, 0.1);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 5px 8px;
+  border-radius: 3px;
   border: 1px solid rgba(0, 240, 255, 0.2);
 }
 
+.btn-pool-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1b1c22;
+  border: 1px solid #2d303b;
+  color: #cfd3dc;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-pool-action:hover {
+  background: #252833;
+  color: #fff;
+  border-color: #3f4453;
+}
+
+.btn-toggle-stream-ingest {
+  background: rgba(255, 51, 75, 0.12);
+  border-color: rgba(255, 51, 75, 0.35);
+  color: #ff4d64;
+}
+
+.btn-toggle-stream-ingest:hover, .btn-toggle-stream-ingest.active {
+  background: #ff334b;
+  border-color: #ff334b;
+  color: #000;
+  box-shadow: 0 0 10px rgba(255, 51, 75, 0.4);
+}
+
+.btn-toggle-group.active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* NEXUS STREAM & DOWNLOADER RETRACTABLE DRAWER */
+.nexus-stream-drawer {
+  background: #15161b;
+  border: 1px solid #2d313d;
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-top: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: slide-drawer-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-drawer-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nsd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.nsd-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nsd-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff334b;
+  box-shadow: 0 0 8px #ff334b;
+  animation: pulse-stream-dot 1.2s infinite alternate;
+}
+
+@keyframes pulse-stream-dot {
+  from { opacity: 0.4; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.3); }
+}
+
+.nsd-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.nsd-subtitle {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: #7b8094;
+}
+
+.nsd-close-btn {
+  background: transparent;
+  border: none;
+  color: #7b8094;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.nsd-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nsd-body {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.nsd-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nsd-field-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #8f94a6;
+  letter-spacing: 0.5px;
+}
+
+.nsd-input-col {
+  flex: 2;
+  min-width: 240px;
+}
+
+.nsd-input-col input, .nsd-title-col input {
+  background: #0d0e12;
+  border: 1px solid #282a33;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.nsd-input-col input:focus, .nsd-title-col input:focus {
+  border-color: #ff334b;
+}
+
+.nsd-cat-col {
+  flex: 1;
+  min-width: 160px;
+}
+
+.nsd-select {
+  background: #0d0e12;
+  border: 1px solid #282a33;
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 3px;
+  outline: none;
+  width: 100%;
+}
+
+.nsd-title-col {
+  flex: 1;
+  min-width: 140px;
+}
+
+.nsd-actions-col {
+  display: flex;
+  gap: 6px;
+}
+
+.nsd-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nsd-btn-download {
+  background: #00f0ff;
+  border: 1px solid #00f0ff;
+  color: #000;
+}
+
+.nsd-btn-download:hover {
+  background: #33f3ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.nsd-btn-stream {
+  background: #23252d;
+  border: 1px solid #ff334b;
+  color: #ff4d64;
+}
+
+.nsd-btn-stream:hover {
+  background: #ff334b;
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 51, 75, 0.4);
+}
+
+/* LIVE DOWNLOAD PROGRESS FEEDBACK */
+.nsd-progress-wrap {
+  margin-top: 10px;
+  background: #0d0e12;
+  border: 1px solid #262833;
+  border-radius: 3px;
+  padding: 8px 12px;
+}
+
+.nsd-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+.nsd-progress-status {
+  font-weight: 700;
+  color: #00f0ff;
+}
+
+.nsd-progress-metrics {
+  color: #8c90a2;
+}
+
+.nsd-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #1a1c24;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.nsd-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #00f0ff, #ff334b);
+  transition: width 0.2s ease;
+}
+
+/* FILTER STRIPS & PILLS */
 .filter-group {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .filter-group-label {
   font-family: var(--font-mono);
   font-size: 8px;
   font-weight: 800;
-  color: var(--text-dim);
+  color: #63687b;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  min-width: 65px;
+}
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #17181d;
+  border: 1px solid #252833;
+  color: #9da2b4;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.pill-btn:hover {
+  background: #20222a;
+  border-color: #3b3f4f;
+  color: #fff;
+}
+
+.pill-badge {
+  font-size: 7.5px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #8e93a6;
+}
+
+.pill-btn.active .pill-badge {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* SOURCE PILLS */
+.source-pills .pill-btn.active[data-source="ALL"] {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #fff;
+  color: #fff;
+}
+
+.source-pills .pill-btn.active[data-source="cdn"] {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.source-pills .pill-btn.active[data-source="local"] {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.source-pills .pill-btn.active[data-source="stream"] {
+  background: rgba(255, 51, 75, 0.15);
+  border-color: #ff334b;
+  color: #ff4d64;
+  box-shadow: 0 0 8px rgba(255, 51, 75, 0.2);
+}
+
+.src-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-cdn { background: #00f0ff; }
+.dot-local { background: #00ff88; }
+.dot-stream { background: #ff334b; }
+
+/* CATEGORY SMART BIN PILLS */
+.cat-pill-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.cat-ind-minimal { background: #00f0ff; }
+.cat-ind-abstract { background: #c084fc; }
+.cat-ind-figura { background: #ffb800; }
+.cat-ind-dense { background: #ff7700; }
+.cat-ind-chroma { background: #00ff88; }
+.cat-ind-stream { background: #ff334b; }
+.cat-ind-gen { background: #38bdf8; }
+
+.category-pills .pill-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--cyan);
+  color: #fff;
+}
+
+/* CATEGORY SECTION GROUPING VIEW */
+.category-group-section {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.category-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: #14161c;
+  border: 1px solid #232630;
+  border-left: 3px solid var(--cyan);
+  border-radius: 3px;
+  margin-bottom: 6px;
+  user-select: none;
+}
+
+.category-section-header.CAT-MINIMAL { border-left-color: #00f0ff; }
+.category-section-header.CAT-ABSTRACT { border-left-color: #c084fc; }
+.category-section-header.CAT-FIGURA { border-left-color: #ffb800; }
+.category-section-header.CAT-DENSE { border-left-color: #ff7700; }
+.category-section-header.CAT-CHROMA { border-left-color: #00ff88; }
+.category-section-header.CAT-STREAMS { border-left-color: #ff334b; }
+.category-section-header.CAT-GENERATIVE { border-left-color: #38bdf8; }
+
+.cat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-header-title {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.cat-header-count {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: #8c91a4;
+}
+
+.category-subgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+}
+
+/* ENHANCED MEDIA CARD BADGES & ACTIONS */
+.media-source-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  font-size: 7px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.3px;
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+.badge-source-cdn {
+  background: rgba(0, 0, 0, 0.85);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.badge-source-local {
+  background: rgba(0, 0, 0, 0.85);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.badge-source-yt {
+  background: rgba(255, 51, 75, 0.9);
+  color: #fff;
+  border: 1px solid #ff334b;
+}
+
+.badge-source-stream {
+  background: rgba(255, 119, 0, 0.9);
+  color: #fff;
+  border: 1px solid #ff7700;
+}
+
+.badge-source-dl {
+  background: rgba(0, 240, 255, 0.9);
+  color: #000;
+  font-weight: 900;
+}
+
+.media-cat-badge.MINIMAL { color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.3); }
+.media-cat-badge.ABSTRACT { color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+.media-cat-badge.FIGURA { color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.3); }
+.media-cat-badge.DENSE { color: #ff7700; border: 1px solid rgba(255, 119, 0, 0.3); }
+.media-cat-badge.CHROMA { color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
+.media-cat-badge.STREAM { color: #ff334b; border: 1px solid rgba(255, 51, 75, 0.4); }
+
+.btn-card-download {
+  background: rgba(0, 240, 255, 0.15) !important;
+  color: #00f0ff !important;
+  border-color: rgba(0, 240, 255, 0.4) !important;
+}
+
+.btn-card-download:hover {
+  background: #00f0ff !important;
+  color: #000 !important;
+}
+
+.btn-card-cat-picker {
+  background: transparent;
+  border: 1px solid #2d303b;
+  color: #8c90a2;
+  font-size: 7.5px;
+  padding: 3px 4px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.btn-card-cat-picker:hover {
+  background: #252833;
+  color: #fff;
+  border-color: var(--cyan);
 }
 
 .folder-pills .pill-btn {
@@ -4269,57 +5021,327 @@ html, body.penumbra-app {
 }
 
 /* ==========================================================================
-   ADVANCED TABBED HUD SETTINGS MODAL
+   ADVANCED TWO-COLUMN PRO PREFERENCES MODAL
    ========================================================================== */
 .settings-card-pro {
-  background: rgba(9, 13, 20, 0.98);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 240, 255, 0.15);
-  border-radius: 8px;
+  max-width: 980px;
+  width: 94vw;
+  height: 84vh;
+  max-height: 760px;
+  background: rgba(8, 11, 18, 0.98);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 240, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
 }
 
-.settings-tabs-nav {
-  display: flex;
-  background: rgba(6, 8, 13, 0.95);
+.cfg-modal-header {
+  height: 48px;
+  min-height: 48px;
+  background: rgba(6, 8, 14, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 6px 12px 0 12px;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 16px;
+}
+
+.cfg-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cfg-modal-icon {
+  font-size: 16px;
+}
+
+.cfg-title-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.cfg-main-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.cfg-sub-title {
+  font-size: 8.5px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.cfg-search-wrapper {
+  flex: 1;
+  max-width: 380px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cfg-search-wrapper input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 28px 6px 28px;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.cfg-search-wrapper input:focus {
+  outline: none;
+  background: rgba(0, 240, 255, 0.06);
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.cfg-search-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 11px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.cfg-search-clear {
+  position: absolute;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.cfg-search-clear:hover { color: #fff; }
+
+.cfg-two-col-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.cfg-sidebar-col {
+  width: 220px;
+  min-width: 220px;
+  background: rgba(4, 6, 11, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.cfg-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cfg-nav-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.cfg-nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+
+.cfg-nav-item.active {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--cyan);
+  font-weight: 700;
+  border-left: 3px solid var(--cyan);
+}
+
+.cfg-content-col {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: rgba(8, 11, 18, 0.95);
+}
+
+.cfg-group-card {
+  background: rgba(14, 18, 27, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.cfg-group-header {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cfg-prop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 16px;
+}
+
+.cfg-prop-row:last-child {
+  border-bottom: none;
+}
+
+.prop-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.prop-title {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.prop-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+/* MODERN PRO TOGGLE SWITCH */
+.cfg-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.cfg-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cfg-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.15);
+  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 18px;
+}
+
+.cfg-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #fff;
+  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cfg-switch input:checked + .cfg-switch-slider {
+  background: var(--emerald);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.cfg-switch input:checked + .cfg-switch-slider:before {
+  transform: translateX(16px);
+}
+
+/* UNIVERSAL CREATIVE ASSET LIBRARY TYPE SELECTOR BAR */
+.library-type-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
   overflow-x: auto;
 }
 
-.settings-tab-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
+.lib-type-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
   color: #94a3b8;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
-  padding: 8px 12px;
+  letter-spacing: 0.5px;
+  padding: 5px 10px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.settings-tab-btn:hover {
+.lib-type-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
   color: #fff;
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.settings-tab-btn.active {
-  color: var(--cyan);
-  background: rgba(14, 19, 28, 0.98);
+.lib-type-btn.active {
+  background: rgba(0, 240, 255, 0.12);
   border-color: rgba(0, 240, 255, 0.35);
-  border-bottom: 2px solid var(--cyan);
-  box-shadow: 0 -2px 10px rgba(0, 240, 255, 0.1);
+  color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.12);
 }
 
-.settings-tab-content {
-  padding: 16px;
-  max-height: 72vh;
-  overflow-y: auto;
+.lib-type-badge {
+  font-size: 8.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.lib-type-btn.active .lib-type-badge {
+  background: rgba(0, 240, 255, 0.2);
+  color: #fff;
 }
 
 .settings-tab-panel {
@@ -4334,23 +5356,6 @@ html, body.penumbra-app {
 @keyframes fadeInPanel {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.cfg-grid-two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 768px) {
-  .cfg-grid-two {
-    grid-template-columns: 1fr;
-  }
-}
-
-.cfg-field-block {
-  display: flex;
-  flex-direction: column;
 }
 
 .cfg-label-row {
@@ -4773,6 +5778,14 @@ html, body.penumbra-app {
   padding: 12px 16px;
 }
 
+.nsb-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
 .nsb-label {
   display: flex;
   align-items: center;
@@ -4781,7 +5794,30 @@ html, body.penumbra-app {
   font-family: var(--font-mono);
   letter-spacing: 1px;
   color: #8c8f9e;
-  margin-bottom: 8px;
+}
+
+.nsb-cat-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nsb-sub-lbl {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: #666a7b;
+  font-weight: 700;
+}
+
+.nsb-mini-select {
+  background: #111215;
+  border: 1px solid #28292f;
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  outline: none;
 }
 
 .nsb-input-group {
@@ -4818,9 +5854,18 @@ html, body.penumbra-app {
   padding: 0 16px;
   cursor: pointer;
   transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.nsb-submit-btn:hover {
+.nsb-btn-dl:hover {
+  background: #00f0ff;
+  border-color: #00f0ff;
+  color: #000;
+}
+
+.nsb-btn-stream:hover {
   background: #ff334b;
   border-color: #ff334b;
   color: #000;
@@ -5230,6 +6275,227 @@ html, body.penumbra-app {
   height: 14px;
 }
 
+/* ============================================================================
+   ZERO-WASTE CACHE & HOVER VIDEO PREVIEW ARCHITECTURE
+   ============================================================================ */
+.dock-cache-indicator {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 4px 9px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.media-card-thumb {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.28s ease-in-out;
+  background: #000;
+}
+
+.card-hover-video.is-active {
+  opacity: 1;
+}
+
+.badge-cache-status {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  z-index: 4;
+  backdrop-filter: blur(4px);
+}
+
+.badge-cache-status.is-cached {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.badge-cache-status.not-cached {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #67e8f9;
+}
+
+.badge-cache-status.is-stream {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.btn-card-cache-dl {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #34d399 !important;
+}
+
+.btn-card-cache-dl:hover {
+  background: rgba(16, 185, 129, 0.3) !important;
+  border-color: #10b981 !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.btn-pool-cache-manage {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
+}
+
+.btn-pool-cache-manage:hover {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: #10b981 !important;
+}
+
+/* ==========================================================================
+   UNIVERSAL CREATIVE ASSET LIBRARY CARDS (MATTES, FX & PRESETS)
+   ========================================================================== */
+.library-card-matte,
+.library-card-fx,
+.library-card-preset {
+  background: rgba(14, 18, 27, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+
+.library-card-matte:hover,
+.library-card-fx:hover,
+.library-card-preset:hover {
+  border-color: var(--cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+.library-card-thumb-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.library-card-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.library-card-matte:hover img {
+  transform: scale(1.05);
+}
+
+.library-card-fx-preview {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.3), rgba(255, 42, 133, 0.2) 60%, #06080d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.library-card-preset-preview {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(0, 240, 255, 0.15) 50%, #06080d);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.lib-badge-type {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+.lib-badge-matte { background: rgba(255, 42, 133, 0.3); border: 1px solid rgba(255, 42, 133, 0.5); color: #ff65a5; }
+.lib-badge-fx { background: rgba(0, 240, 255, 0.25); border: 1px solid rgba(0, 240, 255, 0.45); color: var(--cyan); }
+.lib-badge-preset { background: rgba(16, 185, 129, 0.25); border: 1px solid rgba(16, 185, 129, 0.45); color: #34d399; }
+
+.library-card-info {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.library-card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library-card-desc {
+  font-size: 9.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-card-actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px 8px 8px;
+}
+
+.library-card-actions button {
+  flex: 1;
+  font-size: 9px;
+  padding: 4px 6px;
+}
+
+
 
 
 </style>
@@ -5300,13 +6566,27 @@ html, body.penumbra-app {
 
         <!-- YOUTUBE / STREAM INGESTION BAR -->
         <div class="nexus-stream-bar">
-          <div class="nsb-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>INGESTÃO VIA URL / STREAM EXTERNO</span>
+          <div class="nsb-header-row">
+            <div class="nsb-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff334b" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>INGESTÃO VIA URL // STREAMING & DOWNLOADER DE MÍDIA</span>
+            </div>
+            <div class="nsb-cat-selector">
+              <span class="nsb-sub-lbl">CATEGORIA:</span>
+              <select id="select-nexus-yt-cat" class="nsb-mini-select">
+                <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                <option value="MINIMAL">MINIMAL</option>
+                <option value="ABSTRACT">ABSTRACT</option>
+                <option value="FIGURA">FIGURA</option>
+                <option value="DENSE">DENSE</option>
+                <option value="CHROMA">CHROMA</option>
+              </select>
+            </div>
           </div>
           <div class="nsb-input-group">
             <input type="text" id="input-nexus-yt" placeholder="Cole uma URL do YouTube ou feed HLS/MP4 direto..." autocomplete="off">
-            <button id="btn-nexus-yt-connect" class="nsb-submit-btn">INGEST</button>
+            <button id="btn-nexus-yt-download" class="nsb-submit-btn nsb-btn-dl" title="Baixa o vídeo para a pasta de downloads do Media Pool">⬇️ BAIXAR</button>
+            <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">📡 STREAM</button>
           </div>
         </div>
 
@@ -5701,51 +6981,128 @@ html, body.penumbra-app {
       </div>
     </div>
 
-    <!-- GLOBAL TIMELINE SEQUENCER (ALWAYS VISIBLE) -->
-    <div class="global-timeline-dock" style="background: var(--bg-dark); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid #000; padding: 8px 16px; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
-      <div class="box-title-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; padding-bottom: 0;">
-        <span class="box-title" style="font-size: 9px; font-weight: 700; color: var(--cyan); letter-spacing: 0.6px;">AUTOPILOT TIMELINE (GLOBAL SEQUENCE)</span>
-        <div class="q-actions-mini" style="display: flex; gap: 6px;">
-          <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata">TAKE</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP</button>
-          <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE</button>
-        </div>
-      </div>
-      <div class="timeline-container" id="autopilot-timeline-container" style="height: 100px; position: relative; background: #06080b; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; cursor: grab;">
-        <canvas id="timeline-canvas" style="display: block; width: 100%; height: 100%; object-fit: contain;"></canvas>
-        <div class="timeline-playhead-overlay" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); pointer-events: none;"></div>
-      </div>
+    <!-- WORKSPACE SPLITTER (DRAGGABLE RESIZE BETWEEN MONITORS AND DOCK) -->
+    <div class="workspace-splitter-horizontal" id="workspace-splitter" title="Arraste para redimensionar monitores e dock (Duplo clique para redefinir proporção padrão)">
+      <div class="splitter-handle-bar"></div>
     </div>
 
-    <!-- BOTTOM DOCK: TABS & MODULAR INSPECTOR (ZERO SCROLL) -->
-    <section class="dock-zone">
-      <!-- TAB NAVIGATION: 5 WORLD-CLASS MODULAR BLOCKS -->
-      <div class="dock-tabs">
-        <button class="dock-tab active" data-tab="tab-mediapool" data-shortcut="1">
-          <span class="tab-title-text"><kbd>1</kbd> MEDIA</span>
-          <span class="tab-pill-badge" id="dock-clip-count">74</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-layers" data-shortcut="2">
-          <span class="tab-title-text"><kbd>2</kbd> MIXER</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-mattes" data-shortcut="3">
-          <span class="tab-title-text"><kbd>3</kbd> MATTES</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-tonal" data-shortcut="4">
-          <span class="tab-title-text"><kbd>4</kbd> TONAL</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-queue" data-shortcut="5">
-          <span class="tab-title-text"><kbd>5</kbd> AUTOPILOT</span>
-        </button>
-        <button class="dock-tab" data-tab="tab-fx" data-shortcut="6">
-          <span class="tab-title-text"><kbd>6</kbd> FX ENGINE</span>
-        </button>
+    <!-- BOTTOM DOCK: TABS & MODULAR INSPECTOR (FULL HEIGHT & ZERO SCROLL) -->
+    <section class="dock-zone" id="workspace-dock-zone">
+      <!-- DOCK MASTER HEADER: VIEW MODE SWITCHER + TABS + ACTIONS -->
+      <div class="dock-master-header">
+        <!-- Master Mode Switcher: Módulos & Assets vs Pro Timeline -->
+        <div class="dock-view-mode-selector">
+          <button class="dock-mode-btn active" id="btn-mode-modules" onclick="setDockViewMode('modules')" title="Visualização de Módulos e Biblioteca de Assets (Atalho: TAB)">
+            <span class="mode-icon">▤</span>
+            <span class="mode-label">MÓDULOS & ASSETS</span>
+          </button>
+          <button class="dock-mode-btn" id="btn-mode-timeline" onclick="setDockViewMode('timeline')" title="Visualização da Timeline Pro de Arranjo (Atalho: TAB)">
+            <span class="mode-icon">⏱️</span>
+            <span class="mode-label">TIMELINE PRO</span>
+            <span class="mode-badge-tab">TAB</span>
+          </button>
+        </div>
+
+        <!-- Tab Navigation: 6 World-Class Modules -->
+        <div class="dock-tabs" id="dock-tabs-bar">
+          <button class="dock-tab active" data-tab="tab-mediapool" data-shortcut="1">
+            <span class="tab-title-text"><kbd>1</kbd> BIBLIOTECA</span>
+            <span class="tab-pill-badge" id="dock-clip-count">74</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-layers" data-shortcut="2">
+            <span class="tab-title-text"><kbd>2</kbd> MIXER</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-mattes" data-shortcut="3">
+            <span class="tab-title-text"><kbd>3</kbd> MATTES</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-tonal" data-shortcut="4">
+            <span class="tab-title-text"><kbd>4</kbd> TONAL</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-queue" data-shortcut="5">
+            <span class="tab-title-text"><kbd>5</kbd> AUTOPILOT</span>
+          </button>
+          <button class="dock-tab" data-tab="tab-fx" data-shortcut="6">
+            <span class="tab-title-text"><kbd>6</kbd> FX ENGINE</span>
+          </button>
+        </div>
+
         <div style="flex-grow: 1;"></div>
-        <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
-          MAXIMIZE
-        </button>
+
+        <!-- Dock Actions -->
+        <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
+          <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
+            <span id="lbl-quick-switch-text">⏱️ TIMELINE PRO</span> <kbd>TAB</kbd>
+          </button>
+          <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
+            MAXIMIZE <kbd>~</kbd>
+          </button>
+        </div>
       </div>
+
+      <!-- VIEW 1: DEDICATED PRO TIMELINE (FULL DOCK HEIGHT, ZERO SPACE COMPETITION) -->
+      <div class="dock-timeline-view-pane" id="dock-timeline-view" style="display: none;">
+        <div class="pro-timeline-toolbar">
+          <div class="tl-tool-group tl-status-group">
+            <span class="tl-pulse-dot"></span>
+            <span class="tl-engine-title">PRO TIMELINE ARRANGER</span>
+            <span class="tl-badge-mode" id="tl-mode-badge">AUTOPILOT ARMED</span>
+          </div>
+
+          <div class="tl-transport-controls">
+            <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata (Take)">TAKE</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-skip" title="Avançar próximo item">SKIP ⏭</button>
+            <button class="btn btn-outline btn-xs" id="btn-queue-shuffle" title="Embaralhar sem repetir recentes">SHUFFLE 🔀</button>
+            <button class="btn btn-outline btn-xs" id="btn-tl-cue-next" onclick="cueNextFromQueue()" title="Preparar próximo item no Deck B">CUE → B</button>
+          </div>
+
+          <div class="tl-metrics-group">
+            <span class="tl-metric-tag">PHRASE: <strong id="tl-phrase-step" class="text-cyan">1 / 16</strong></span>
+            <span class="tl-metric-tag">TENSION: <strong id="tl-tension-pct" class="text-emerald">24%</strong></span>
+            <span class="tl-metric-tag">BPM: <strong id="tl-current-bpm" class="text-white">128.0</strong></span>
+          </div>
+        </div>
+
+        <div class="pro-timeline-arrangement-body">
+          <div class="timeline-tracks-sidebar">
+            <div class="tl-track-header track-master">
+              <span class="track-tag">PGM</span>
+              <span class="track-name">L0 MASTER</span>
+              <span class="track-vol" id="lbl-tl-track-l0">100%</span>
+            </div>
+            <div class="tl-track-header track-l1">
+              <span class="track-tag">L1</span>
+              <span class="track-name">PULSE REFLEX</span>
+              <span class="track-vol" id="lbl-tl-track-l1">80%</span>
+            </div>
+            <div class="tl-track-header track-l2">
+              <span class="track-tag">L2</span>
+              <span class="track-name">SOBEL EDGE</span>
+              <span class="track-vol" id="lbl-tl-track-l2">60%</span>
+            </div>
+            <div class="tl-track-header track-cue">
+              <span class="track-tag">PRV</span>
+              <span class="track-name">L3 CUE BUS B</span>
+              <span class="track-vol" id="lbl-tl-track-l3">100%</span>
+            </div>
+            <div class="tl-track-header track-fx">
+              <span class="track-tag">FX</span>
+              <span class="track-name">AFTER EFFECTS</span>
+              <span class="track-vol" id="lbl-tl-track-fx">ACT</span>
+            </div>
+          </div>
+
+          <div class="timeline-container" id="autopilot-timeline-container">
+            <canvas id="timeline-canvas"></canvas>
+            <div class="timeline-playhead-overlay" id="timeline-playhead">
+              <div class="playhead-badge">NOW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: MODULAR WORKSPACE TABS CONTAINER -->
+      <div class="dock-modules-view-pane active" id="dock-modules-view">
 
       <!-- TAB 2: VISUAL 5-CHANNEL COMPOSITOR (WORLD-CLASS RESOLUME/TOUCHDESIGNER ARCHITECTURE) -->
       <div class="tab-content" id="tab-layers">
@@ -6841,17 +8198,181 @@ html, body.penumbra-app {
       </div>
       <!-- TAB: CLIP POOL 1.IN (SEARCH & 1-CLICK ROUTE) -->
       <div class="tab-content active" id="tab-mediapool">
-        <div class="dock-workflow-hint"><strong>ETAPA 1 (CLIP POOL):</strong> Banco de vídeos brutos 1.In. Clique no card para enviar ao PREVIEW (CUE) ou use <strong>→ L0</strong> (Base Ao Vivo), <strong>→ L3</strong> (Cue), <strong>→ L4</strong> (Drop).</div>
+        <div class="dock-workflow-hint"><strong>MÓDULO 1 (BIBLIOTECA CRIATIVA UNIFICADA):</strong> Acervo universal de Clipes de Vídeo, Máscaras Matte procedurais, Efeitos FX Shaders e Presets de Conductor. Aplique diretamente nas camadas L0..L4 ou na Timeline.</div>
         <div class="pool-dock-header">
+          <!-- TOP ROW: BUSCA + AÇÕES PRINCIPAIS -->
           <div class="dock-search-row">
-            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar por nome do arquivo ou pasta do projeto..." class="dock-search">
+            <input type="text" id="input-media-search" placeholder="SEARCH: Buscar clipes, mattes, efeitos FX ou presets..." class="dock-search">
             <span class="dock-search-count" id="lbl-search-count">74 CLIPES</span>
+            <span class="dock-cache-indicator" id="lbl-cache-stats" title="Status de arquivos em cache local vs nuvem">💾 0 OFFLINE · ☁️ 74 NUVEM</span>
+            
+            <button class="btn-pool-action btn-toggle-stream-ingest" id="btn-toggle-stream-panel" title="Abrir painel de Ingestão de Streams e Downloader">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>+ STREAM / DOWNLOADER</span>
+            </button>
+
+            <button class="btn-pool-action" id="btn-open-cache-settings" onclick="openCacheProfileSettings()" title="Gerenciar Cache Local e Perfil Portátil (penumbra_user_profile.json)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>💾 PERFIL & CACHE</span>
+            </button>
+
+            <button class="btn-pool-action" id="btn-add-local-folder" title="Vincular pasta do SSD local via File System Access API">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>+ ADD PASTA LOCAL</span>
+            </button>
+
+            <button class="btn-pool-action btn-toggle-group active" id="btn-toggle-group-categories" title="Alternar entre visualização por seções de categorias e grid contínuo">
+              <span>▤ SEÇÕES DE CATEGORIA</span>
+            </button>
           </div>
 
-          <div class="filter-group">
-            <span class="filter-group-label">DIRECTORIES / PROJECTS:</span>
-            <button class="btn-filter" id="btn-add-local-folder" style="background:#00f0ff; color:#000; font-weight:bold; margin-left: 10px; border:none; padding:4px 10px; cursor:pointer; font-size:11px;">+ ADD PASTA LOCAL</button>
-            <div class="filter-pills folder-pills" id="folder-pills-container" style="display:inline-block; margin-left: 10px;">
+          <!-- NEXUS STREAM & DOWNLOADER RETRACTABLE PANEL -->
+          <div class="nexus-stream-drawer" id="nexus-stream-drawer" style="display: none;">
+            <div class="nsd-header">
+              <div class="nsd-title-group">
+                <span class="nsd-pulse-dot"></span>
+                <span class="nsd-title">NEXUS MEDIA STREAMER & DOWNLOADER</span>
+                <span class="nsd-subtitle">// YOUTUBE, HLS, MP4 & DIRECT FEEDS</span>
+              </div>
+              <button class="nsd-close-btn" id="btn-close-stream-drawer" title="Fechar painel">✕</button>
+            </div>
+            
+            <div class="nsd-body">
+              <div class="nsd-input-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">URL DA MÍDIA / FEED:</span>
+                  <input type="text" id="input-pool-stream-url" placeholder="Cole link do YouTube (watch, shorts, live) ou URL direta .mp4/.webm/.m3u8..." autocomplete="off">
+                </div>
+              </div>
+
+              <div class="nsd-cat-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">CATEGORIA DE DESTINO:</span>
+                  <select id="select-stream-target-cat" class="nsd-select">
+                    <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
+                    <option value="MINIMAL">MINIMAL (Base Hipnótica)</option>
+                    <option value="ABSTRACT">ABSTRACT (Geometria/Partículas)</option>
+                    <option value="FIGURA">FIGURA (Silhuetas/Corpos)</option>
+                    <option value="DENSE">DENSE (Alta Frequência/Drop)</option>
+                    <option value="CHROMA">CHROMA (Recorte Alpha)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="nsd-title-col">
+                <div class="nsd-field-group">
+                  <span class="nsd-field-label">APELIDO (OPCIONAL):</span>
+                  <input type="text" id="input-pool-stream-title" placeholder="Nome para o Media Pool..." autocomplete="off">
+                </div>
+              </div>
+
+              <div class="nsd-actions-col">
+                <button class="nsd-btn nsd-btn-download" id="btn-pool-action-download" title="Baixa o vídeo no SSD em alta qualidade, gera thumbnail e adiciona como clipe local no Media Pool">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  BAIXAR PARA O POOL
+                </button>
+                <button class="nsd-btn nsd-btn-stream" id="btn-pool-action-stream" title="Ingere imediatamente como stream online em tempo real no Media Pool">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  STREAM AO VIVO
+                </button>
+              </div>
+            </div>
+
+            <!-- LIVE DOWNLOAD PROGRESS FEEDBACK -->
+            <div class="nsd-progress-wrap" id="nsd-progress-wrap" style="display: none;">
+              <div class="nsd-progress-info">
+                <span class="nsd-progress-status" id="nsd-progress-status">INICIANDO DOWNLOAD...</span>
+                <span class="nsd-progress-metrics" id="nsd-progress-metrics">0% · -- MB/s · ETA --:--</span>
+              </div>
+              <div class="nsd-progress-track">
+                <div class="nsd-progress-bar" id="nsd-progress-bar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MASTER ASSET TYPE SELECTOR (UNIVERSAL CREATIVE ASSET LIBRARY) -->
+          <div class="library-type-selector-bar">
+            <button class="lib-type-btn active" id="lib-type-all" data-asset-type="all" onclick="selectLibraryAssetType('all')">
+              <span class="lib-type-icon">✨</span>
+              <span class="lib-type-label">TODOS OS RECURSOS</span>
+              <span class="lib-type-badge" id="lib-count-all">115</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-clips" data-asset-type="clips" onclick="selectLibraryAssetType('clips')">
+              <span class="lib-type-icon">🎬</span>
+              <span class="lib-type-label">VÍDEOS & CLIPES</span>
+              <span class="lib-type-badge" id="lib-count-clips">74</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
+              <span class="lib-type-icon">🎭</span>
+              <span class="lib-type-label">MATTES & MÁSCARAS</span>
+              <span class="lib-type-badge" id="lib-count-mattes">29</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-fx" data-asset-type="fx" onclick="selectLibraryAssetType('fx')">
+              <span class="lib-type-icon">⚡</span>
+              <span class="lib-type-label">EFEITOS (FX SHADERS)</span>
+              <span class="lib-type-badge" id="lib-count-fx">6</span>
+            </button>
+            <button class="lib-type-btn" id="lib-type-presets" data-asset-type="presets" onclick="selectLibraryAssetType('presets')">
+              <span class="lib-type-icon">🎛️</span>
+              <span class="lib-type-label">PRESETS & CONDUCTOR</span>
+              <span class="lib-type-badge" id="lib-count-presets">6</span>
+            </button>
+          </div>
+
+          <!-- TOOLSTRIP 1: FILTROS DE ORIGEM DA MÍDIA (SOURCES) -->
+          <div class="filter-group pool-source-strip">
+            <span class="filter-group-label">ORIGEM:</span>
+            <div class="filter-pills source-pills" id="source-pills-container">
+              <button class="pill-btn active" data-source="ALL">
+                <span>TODAS AS ORIGENS</span> <span class="pill-badge" id="badge-count-src-all">0</span>
+              </button>
+              <button class="pill-btn" data-source="cdn">
+                <span class="src-dot dot-cdn"></span> <span>☁️ BUNNY CDN</span> <span class="pill-badge" id="badge-count-src-cdn">0</span>
+              </button>
+              <button class="pill-btn" data-source="local">
+                <span class="src-dot dot-local"></span> <span>📁 LOCAL (SSD)</span> <span class="pill-badge" id="badge-count-src-local">0</span>
+              </button>
+              <button class="pill-btn" data-source="stream">
+                <span class="src-dot dot-stream"></span> <span>▶️ YOUTUBE & STREAMS</span> <span class="pill-badge" id="badge-count-src-stream">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TOOLSTRIP 2: CATEGORIAS ARTÍSTICAS (SMART BINS) -->
+          <div class="filter-group pool-category-strip">
+            <span class="filter-group-label">CATEGORIA:</span>
+            <div class="filter-pills category-pills" id="category-pills-container">
+              <button class="pill-btn active" data-cat="ALL">
+                <span>TODAS</span> <span class="pill-badge" id="badge-count-cat-all">0</span>
+              </button>
+              <button class="pill-btn" data-cat="MINIMAL">
+                <span class="cat-pill-indicator cat-ind-minimal"></span> <span>MINIMAL</span> <span class="pill-badge" id="badge-count-cat-minimal">0</span>
+              </button>
+              <button class="pill-btn" data-cat="ABSTRACT">
+                <span class="cat-pill-indicator cat-ind-abstract"></span> <span>ABSTRACT</span> <span class="pill-badge" id="badge-count-cat-abstract">0</span>
+              </button>
+              <button class="pill-btn" data-cat="FIGURA">
+                <span class="cat-pill-indicator cat-ind-figura"></span> <span>FIGURA</span> <span class="pill-badge" id="badge-count-cat-figura">0</span>
+              </button>
+              <button class="pill-btn" data-cat="DENSE">
+                <span class="cat-pill-indicator cat-ind-dense"></span> <span>DENSE</span> <span class="pill-badge" id="badge-count-cat-dense">0</span>
+              </button>
+              <button class="pill-btn" data-cat="CHROMA">
+                <span class="cat-pill-indicator cat-ind-chroma"></span> <span>CHROMA</span> <span class="pill-badge" id="badge-count-cat-chroma">0</span>
+              </button>
+              <button class="pill-btn" data-cat="STREAMS & YOUTUBE">
+                <span class="cat-pill-indicator cat-ind-stream"></span> <span>STREAMS & YOUTUBE</span> <span class="pill-badge" id="badge-count-cat-stream">0</span>
+              </button>
+              <button class="pill-btn" data-cat="GENERATIVE">
+                <span class="cat-pill-indicator cat-ind-gen"></span> <span>GENERATIVE 3D</span> <span class="pill-badge" id="badge-count-cat-gen">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TOOLSTRIP 3: PROJETOS / PASTAS (SUB-BINS) -->
+          <div class="filter-group pool-folder-strip">
+            <span class="filter-group-label">PASTAS / BINS:</span>
+            <div class="filter-pills folder-pills" id="folder-pills-container">
               <!-- Dynamically populated from media manifest -->
             </div>
           </div>
@@ -7028,6 +8549,8 @@ html, body.penumbra-app {
           </div>
         </div>
       </div>
+      <!-- END VIEW 2: MODULAR WORKSPACE TABS CONTAINER -->
+      </div>
     </section>
 
     <!-- FOOTER STATUS DOCK (24px) -->
@@ -7089,389 +8612,566 @@ html, body.penumbra-app {
       <div class="pro-tooltip-desc" id="tooltip-desc">Descrição e tutorial rápido</div>
     </div>
 
-    <!-- INTERACTIVE ADVANCED SETTINGS HUD MODAL -->
+    <!-- INTERACTIVE ADVANCED SETTINGS HUD MODAL (PRO PREFERENCES) -->
     <div id="settings-modal" class="shortcuts-modal-overlay">
-      <div class="shortcuts-card settings-card-pro" style="max-width: 960px;">
-        <div class="shortcuts-header">
-          <div class="shortcuts-title-group">
-            <span class="shortcuts-icon">⚙️</span>
-            <h2>PENUMBRA ENGINE · CONFIGURAÇÕES DO SISTEMA & FLUXO VJ</h2>
+      <div class="shortcuts-card settings-card-pro">
+        <!-- Pro Preferences Header Bar -->
+        <div class="cfg-modal-header">
+          <div class="cfg-modal-title-group">
+            <span class="cfg-modal-icon">⚙️</span>
+            <div class="cfg-title-texts">
+              <span class="cfg-main-title">PREFERÊNCIAS & SISTEMA</span>
+              <span class="cfg-sub-title">PENUMBRA ENGINE VJ · BROADCAST SPEC</span>
+            </div>
+          </div>
+          <div class="cfg-search-wrapper">
+            <span class="cfg-search-icon">🔍</span>
+            <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
+            <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
           <button class="btn btn-danger btn-xs" id="btn-settings-close">✕ FECHAR (ESC)</button>
         </div>
 
-        <!-- Top Segmented Navigation Tabs -->
-        <div class="settings-tabs-nav">
-          <button class="settings-tab-btn" data-tab="source" onclick="setSettingsTab('source')">📁 ORIGEM DE MÍDIA</button>
-          <button class="settings-tab-btn active" data-tab="output" onclick="setSettingsTab('output')">📺 SAÍDA & PROJEÇÃO</button>
-          <button class="settings-tab-btn" data-tab="autopilot" onclick="setSettingsTab('autopilot')">🤖 PILOTO AUTOMÁTICO</button>
-          <button class="settings-tab-btn" data-tab="audio" onclick="setSettingsTab('audio')">🎙️ ÁUDIO & SINCRONIA</button>
-          <button class="settings-tab-btn" data-tab="performance" onclick="setSettingsTab('performance')">⚡ PERFORMANCE</button>
-          <button class="settings-tab-btn" data-tab="network" onclick="setSettingsTab('network')">🌐 REDE & OSC</button>
-          <button class="settings-tab-btn" data-tab="shortcuts" onclick="setSettingsTab('shortcuts')">⌨️ ATALHOS & GUIA</button>
-        </div>
+        <!-- Pro Two-Column Layout -->
+        <div class="cfg-two-col-layout">
+          <!-- Left Navigation Sidebar -->
+          <div class="cfg-sidebar-col">
+            <div class="cfg-nav-list">
+              <button class="cfg-nav-item active" data-tab="source" onclick="setSettingsTab('source')">
+                <span class="nav-icon">📁</span>
+                <span class="nav-label">Mídia & Origem</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="profile" onclick="setSettingsTab('profile')">
+                <span class="nav-icon">💾</span>
+                <span class="nav-label">Cache & Perfil Portátil</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="output" onclick="setSettingsTab('output')">
+                <span class="nav-icon">📺</span>
+                <span class="nav-label">Saída & Telão HDMI</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="autopilot" onclick="setSettingsTab('autopilot')">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">Piloto Automático</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="audio" onclick="setSettingsTab('audio')">
+                <span class="nav-icon">🎙️</span>
+                <span class="nav-label">Áudio & Sincronia BPM</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="performance" onclick="setSettingsTab('performance')">
+                <span class="nav-icon">⚡</span>
+                <span class="nav-label">GPU & Performance</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="network" onclick="setSettingsTab('network')">
+                <span class="nav-icon">🌐</span>
+                <span class="nav-label">Rede, OSC & NDI</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="shortcuts" onclick="setSettingsTab('shortcuts')">
+                <span class="nav-icon">⌨️</span>
+                <span class="nav-label">Atalhos de Teclado</span>
+              </button>
+              <button class="cfg-nav-item" data-tab="system" onclick="setSettingsTab('system')">
+                <span class="nav-icon">ℹ️</span>
+                <span class="nav-label">Sistema & Diagnóstico</span>
+              </button>
+            </div>
+          </div>
 
-        <div class="settings-tab-content">
-          <!-- TAB 0: ORIGEM DE MÍDIA (LOCAL / NUVEM) -->
-          <div class="settings-tab-panel" id="settings-panel-source">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>FONTE DO PROJETO & RECURSOS</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">ORIGEM ATIVA:</span>
-                    <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+          <!-- Right Content Area -->
+          <div class="cfg-content-col" id="cfg-content-panels">
+
+            <!-- PANEL 1: ORIGEM DE MÍDIA -->
+            <div class="settings-tab-panel active" id="settings-panel-source">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>FONTE ATIVA DE VÍDEOS & CLOUD STREAM</span>
+                  <span class="cfg-badge text-cyan" id="cfg-active-source-badge">NUVEM (BUNNY EDGE CDN)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Status da Origem</span>
+                    <span class="prop-desc" id="cfg-active-source-desc">Streaming direto via Bunny CDN com cache local sob demanda.</span>
                   </div>
-                  <p class="cfg-desc" style="margin-top: 8px;" id="cfg-active-source-desc">
-                    Streaming direto do portfólio via Edge CDN de alta performance com miniaturas inteligentes.
-                  </p>
-                  
-                  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-                    <button class="btn btn-studio-primary btn-sm" onclick="openStudioLauncher(); closeSettingsModal();" style="width: 100%;">
-                      🚀 REABRIR STUDIO LAUNCHER (ALTERAR FONTE)
-                    </button>
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()" style="width: 100%;">
-                      ☁️ RE-CONECTAR NUVEM EDGE (PIN 2026)
-                    </button>
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()" style="width: 100%;">
-                      📁 MONTAR PASTA LOCAL VIA DIRECT FS
-                    </button>
+                  <div class="prop-control">
+                    <button class="btn btn-studio-primary btn-xs" onclick="openStudioLauncher(); closeSettingsModal();">REABRIR LAUNCHER</button>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PREFERÊNCIA DE INICIALIZAÇÃO:</span>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
-                    <span class="cfg-desc">Lembrar fonte selecionada (pula o seletor inicial se autorizado)</span>
-                  </label>
-                  <div style="margin-top: 10px;">
-                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber);">
-                      🗑️ ESQUECER PREFERÊNCIA (SEMPRE PERGUNTAR AO INICIAR)
-                    </button>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Reconectar Nuvem Edge</span>
+                    <span class="prop-desc">Restabelece feed seguro Bunny CDN (PIN 2026).</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-reconnect-cdn" onclick="reconnectCloudSource()">☁️ RECONECTAR CDN</button>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Montar Pasta Local (SSD)</span>
+                    <span class="prop-desc">Vincular diretório físico via File System API.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-select-local" onclick="selectLocalDirectorySource()">📁 ESCOLHER PASTA</button>
                   </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>PASTAS LOCAIS & MÍDIAS ADICIONAIS</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">IMPORTAÇÃO DINÂMICA DE PASTAS:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Você pode conectar múltiplas pastas de vídeos do seu computador a qualquer momento. Os clipes serão indexados no Media Pool preservando os nomes originais.
-                  </p>
-                  <button class="btn btn-outline btn-sm" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()" style="margin-top: 10px; width: 100%;">
-                    📁 ADICIONAR NOVA PASTA DE VÍDEOS
-                  </button>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>PREFERÊNCIAS DE INICIALIZAÇÃO & ARQUIVOS</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">TOTAL DE CLIPES NO MEDIA POOL:</span>
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
-                    <span class="metric-val text-cyan" id="cfg-media-count-val">0</span>
-                    <span class="cfg-desc">clipes carregados no motor</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Lembrar Fonte Selecionada</span>
+                    <span class="prop-desc">Inicia direto na última fonte sem exibir tela inicial.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-remember-source" onchange="toggleRememberSource(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Total de Clipes Carregados</span>
+                    <span class="prop-desc">Mídias ativas disponíveis no motor gráfico.</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="metric-val text-cyan" id="cfg-media-count-val">0 CLIPES</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Adicionar Mais Pastas de Mídia</span>
+                    <span class="prop-desc">Indexa novos vídeos ao Media Pool sem reiniciar.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-add-more-folders" onclick="document.getElementById('btn-add-local-folder').click()">+ ADICIONAR PASTA</button>
+                    <button class="btn btn-outline btn-xs" onclick="resetSourcePreference()" style="color: var(--amber); margin-left: 6px;">REDEFINIR PREFERÊNCIA</button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 1: SAÍDA & PROJEÇÃO -->
-          <div class="settings-tab-panel active" id="settings-panel-output">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>MODO DE ORIENTAÇÃO MASTER (CONCEITO VISUAL)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">FORMATO DO PROGRAM:</span>
-                    <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
-                  </div>
-                  <div class="conductor-btn-group" style="margin-top: 8px;">
-                    <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">PADRÃO HORIZONTAL (16:9)</button>
-                    <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">MODO VERTICAL (9:16 PORTRAIT)</button>
-                  </div>
-                  <p class="cfg-desc" style="margin-top: 10px;">
-                    <strong>Conceito Vertical:</strong> Quando ativado, o monitor Program do Cockpit torna-se um preview vertical elegante e reto (sem rotação lateral/pescoço torto), ideal para totens de LED, banners verticais e projeções de arte contemporânea.
-                  </p>
+            <!-- PANEL 2: CACHE & PERFIL PORTÁTIL -->
+            <div class="settings-tab-panel" id="settings-panel-profile">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>PERFIL PORTÁTIL CENTRALIZADO</span>
+                  <span class="cfg-badge text-emerald" id="cfg-profile-file-badge">penumbra_user_profile.json</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">COMPENSAÇÃO PARA PROJETOR FÍSICO VIRADO A 90°:</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Backup & Portabilidade</span>
+                    <span class="prop-desc">Configurações, clipes do YouTube e inventário em arquivo único.</span>
                   </div>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
-                    <span class="cfg-desc">Rotacionar sinal HDMI 16:9 para projetores físicos instalados na vertical (ex: HY320/Epson virado 90° no tripé)</span>
-                  </label>
-                  <p class="cfg-desc" style="color: #64748b; font-size: 11px; margin-top: 6px;">
-                    Mantém o monitor Cockpit reto (upright) na sua tela, mas gira o feixe de saída para que a imagem projetada na parede fique reta e sem distorção.
-                  </p>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-studio-primary btn-xs" id="btn-export-user-profile" onclick="exportUserProfile()">💾 EXPORTAR JSON</button>
+                    <label class="btn btn-outline btn-xs" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center;">
+                      📥 IMPORTAR JSON
+                      <input type="file" id="input-import-user-profile" accept=".json" style="display: none;" onchange="importUserProfileFromFile(event)">
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Métricas da Sessão Salva</span>
+                    <span class="prop-desc" id="cfg-profile-details">
+                      Última gravação: <strong id="cfg-profile-last-saved" class="text-white">—</strong> · Clipes: <strong id="cfg-profile-custom-count" class="text-cyan">0</strong> · Tags: <strong id="cfg-profile-cat-count" class="text-cyan">0</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>MONITOR EXTERNO, TELÃO & BOAS PRÁTICAS MAC</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">JANELAS FLUTUANTES (POPOUTS PARA PROJETORES):</span>
-                  <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')">◱ ABRIR PROGRAM NO TELÃO</button>
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')">◱ ABRIR PREVIEW CUE</button>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CACHE LOCAL INTELIGENTE (ZERO-WASTE)</span>
+                  <span class="cfg-badge text-emerald" id="cfg-cache-size-badge">0.0 MB EM DISCO</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Download Offline Completo</span>
+                    <span class="prop-desc">Baixa todas as mídias da CDN para reprodução 100% offline.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline btn-xs" id="btn-sync-cache-status" onclick="refreshCacheStatus()">🔄 ATUALIZAR STATUS</button>
+                    <button class="btn btn-outline btn-xs text-cyan" onclick="downloadAllPendingClips()">⬇️ BAIXAR TUDO OFFLINE</button>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">CHECKLIST PRO BROADCAST (MAC + PROJETOR):</span>
-                  <ul class="cfg-checklist">
-                    <li><strong>Tela Estendida:</strong> Nos <em>Ajustes do Sistema > Telas</em> do macOS, selecione o projetor e marque <em>Tela Estendida</em> (nunca espelhamento).</li>
-                    <li><strong>Resolução HDMI:</strong> Force 1080p ou 720p se o projetor perder sincronia de sinal (No Signal).</li>
-                    <li><strong>Modo Tela Cheia:</strong> Arraste a janela Popout para o telão e pressione o botão ⛶ Tela Cheia.</li>
-                  </ul>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Preview de Vídeo no Hover (On-Demand)</span>
+                    <span class="prop-desc">Carrega vídeo no card apenas após repouso do mouse (280ms), poupando banda.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-hover-preview-enabled" checked onchange="toggleHoverPreview(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 2: PILOTO AUTOMÁTICO -->
-          <div class="settings-tab-panel" id="settings-panel-autopilot">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>CADÊNCIA MUSICAL & TRAVA DE SEGURANÇA</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">INTERVALO MÍNIMO ENTRE TAKES:</span>
-                    <span class="cfg-badge text-cyan" id="lbl-cfg-min-bars">16 BARS (PADRÃO)</span>
+            <!-- PANEL 3: SAÍDA & TELÃO HDMI -->
+            <div class="settings-tab-panel" id="settings-panel-output">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>FORMATO MASTER & GEOMETRIA DO PROGRAM</span>
+                  <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Orientação da Imagem Master</span>
+                    <span class="prop-desc">Alterna entre monitor horizontal padrão e preview vertical (totens LED / 9:16).</span>
                   </div>
-                  <div class="conductor-btn-group" id="group-cfg-min-bars" style="margin-top: 8px;">
-                    <button class="conductor-btn cfg-bars-btn" data-bars="8" onclick="setAutopilotBars(8)">8 BARS (~15s)</button>
-                    <button class="conductor-btn cfg-bars-btn active" data-bars="16" onclick="setAutopilotBars(16)">16 BARS (~31s)</button>
-                    <button class="conductor-btn cfg-bars-btn" data-bars="32" onclick="setAutopilotBars(32)">32 BARS (~62s)</button>
-                    <button class="conductor-btn cfg-bars-btn" data-bars="64" onclick="setAutopilotBars(64)">64 BARS (~124s)</button>
-                  </div>
-                  <div class="cfg-alert-box" style="margin-top: 12px;">
-                    <span class="alert-icon">🛡️</span>
-                    <span class="alert-text"><strong>PROTEÇÃO ANTIRRISCO ATIVA:</strong> O Piloto Automático NUNCA dispara takes a cada 1 compasso. Todas as transições são travadas no fraseado musical (mínimo 8 compassos).</span>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group">
+                      <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">HORIZONTAL (16:9)</button>
+                      <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">VERTICAL (9:16)</button>
+                    </div>
                   </div>
                 </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Compensação de Projetor Físico a 90°</span>
+                    <span class="prop-desc">Gira o feixe HDMI para projetores montados fisicamente deitados/na vertical.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
 
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">REGRAS DE CONDUÇÃO:</span>
-                  <div class="cfg-checkbox-list" style="margin-top: 8px;">
-                    <label class="cfg-check-item">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>POPOUTS FLUTUANTES (TELÃO & PREVIEW EXTERNO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Janelas Destacadas em Tempo Real</span>
+                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast.</span>
+                  </div>
+                  <div class="prop-control" style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')">◱ PROGRAM NO TELÃO</button>
+                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')">◱ PREVIEW CUE</button>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Recomendações Mac + Telão</span>
+                    <span class="prop-desc">Use Tela Estendida no macOS (nunca espelhamento) e force 1080p 60Hz.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 4: PILOTO AUTOMÁTICO (CONDUCTOR) -->
+            <div class="settings-tab-panel" id="settings-panel-autopilot">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CADÊNCIA MUSICAL & SEGURANÇA</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-min-bars">16 BARS (PADRÃO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Intervalo Mínimo Entre Takes</span>
+                    <span class="prop-desc">Trava antirrisco: nunca corta a cada compasso; respeita o fraseado musical.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-min-bars">
+                      <button class="conductor-btn cfg-bars-btn" data-bars="8" onclick="setAutopilotBars(8)">8 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn active" data-bars="16" onclick="setAutopilotBars(16)">16 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn" data-bars="32" onclick="setAutopilotBars(32)">32 BARS</button>
+                      <button class="conductor-btn cfg-bars-btn" data-bars="64" onclick="setAutopilotBars(64)">64 BARS</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Estilo da Transição Automática</span>
+                    <span class="prop-desc">Curva de fusão executada no Take do Conductor.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group">
+                      <button class="conductor-btn active" id="btn-cfg-trans-dissolve" onclick="setAutopilotTransMode('dissolve')">DISSOLVE</button>
+                      <button class="conductor-btn" id="btn-cfg-trans-dip" onclick="setAutopilotTransMode('dip')">DIP TO BLACK</button>
+                      <button class="conductor-btn" id="btn-cfg-trans-sync" onclick="setAutopilotTransMode('sync')">BEAT SYNC</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>REGRAS INTELIGENTES DE CONDUÇÃO</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Rotação na Cabeça da Frase (Bar 1 Beat 1)</span>
+                    <span class="prop-desc">Transição milimetricamente alinhada no início do compasso master.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
                       <input type="checkbox" id="chk-cfg-autocycle" checked onchange="toggleAutopilotRule('auto_cycle', this.checked)">
-                      <span>Rotação Automática na Cabeça da Frase (Bar 1 Beat 1)</span>
-                    </label>
-                    <label class="cfg-check-item">
-                      <input type="checkbox" id="chk-cfg-droptake" checked onchange="toggleAutopilotRule('auto_drop_take', this.checked)">
-                      <span>Take Único na Entrada do Drop (Com trava anti-repetição de compasso)</span>
-                    </label>
-                    <label class="cfg-check-item">
-                      <input type="checkbox" id="chk-cfg-armdrop" checked onchange="toggleAutopilotRule('auto_arm_drop', this.checked)">
-                      <span>Pulsação da Camada L1 (Reflexo Pulse) nos Graves do Clímax</span>
+                      <span class="cfg-switch-slider"></span>
                     </label>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PASTAS DO MEDIA POOL (ATIVAS NO AUTOPILOT):</span>
-                  <div class="cfg-checkbox-list" id="autopilot-folders-list" style="margin-top: 8px; max-height: 140px; overflow-y: auto; padding-right: 8px;">
-                    <!-- Preenchido dinamicamente via app.js com as categorias existentes -->
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Take Único no Clímax (Drop Detect)</span>
+                    <span class="prop-desc">Disparo pontual na quebra musical com trava anti-repetição.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-droptake" checked onchange="toggleAutopilotRule('auto_drop_take', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Pulsação da Camada L1 (Reflexo)</span>
+                    <span class="prop-desc">Ativa modulação orgânica nos graves e build-ups.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-armdrop" checked onchange="toggleAutopilotRule('auto_arm_drop', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Histórico FIFO Anti-Repetição</span>
+                    <span class="prop-desc" id="lbl-cfg-fifo-status">FIFO Ativo: 15 clipes em buffer</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                  <span class="prop-title">Pastas do Media Pool no Piloto Automático:</span>
+                  <div class="cfg-checkbox-list" id="autopilot-folders-list" style="width: 100%; max-height: 100px; overflow-y: auto;">
                     <div style="font-size: 11px; color: rgba(255,255,255,0.4);">Carregando pastas...</div>
                   </div>
                 </div>
               </div>
-
-              <div class="shortcut-group">
-                <h3>TRANSIÇÃO & MEMÓRIA ANTI-REPETIÇÃO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">ESTILO DA TRANSIÇÃO AUTOMÁTICA:</span>
-                  <div class="conductor-btn-group" style="margin-top: 8px;">
-                    <button class="conductor-btn active" id="btn-cfg-trans-dissolve" onclick="setAutopilotTransMode('dissolve')">EQUAL DISSOLVE</button>
-                    <button class="conductor-btn" id="btn-cfg-trans-dip" onclick="setAutopilotTransMode('dip')">DIP TO BLACK</button>
-                    <button class="conductor-btn" id="btn-cfg-trans-sync" onclick="setAutopilotTransMode('sync')">BEAT SYNC</button>
-                  </div>
-                </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">HISTÓRICO FIFO ANTI-REPETIÇÃO:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Garante que nenhum clipe seja repetido antes de passarem pelo menos 15 transições distintas.
-                  </p>
-                  <div class="cfg-pill-status" style="margin-top: 8px;">
-                    <span class="dot live"></span>
-                    <span id="lbl-cfg-fifo-status">FIFO Ativo: 15 clipes em buffer</span>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
 
-          <!-- TAB 3: ÁUDIO & SINCRONIA -->
-          <div class="settings-tab-panel" id="settings-panel-audio">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>ROTEAMENTO DE ENTRADA & GANHO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">FONTE DE ÁUDIO ATIVA:</span>
-                  <div class="audio-src-pills" style="margin-top: 8px;">
-                    <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">🎵 TESTE (MP3)</button>
-                    <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">🎙️ MIC MAC</button>
-                    <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">🔌 P2 LINE</button>
-                    <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">🎛️ USB DJ</button>
+            <!-- PANEL 5: ÁUDIO & SINCRONIA BPM -->
+            <div class="settings-tab-panel" id="settings-panel-audio">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>DISPOSITIVO DE ÁUDIO & ENTRADA</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-audio-dev">MP3 Interno</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Fonte de Áudio Ativa</span>
+                    <span class="prop-desc">Selecione entre faixa de teste interna, microfone do Mac ou interface USB DJ.</span>
                   </div>
-                  <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">
-                    Dispositivo: <strong id="lbl-cfg-audio-dev" style="color: #fff;">MP3 Interno (01 REC-2024-04-28.mp3)</strong>
+                  <div class="prop-control">
+                    <div class="audio-src-pills">
+                      <button class="src-pill active" id="btn-cfg-src-test" data-source="test" onclick="switchAudioSource('test')">🎵 TESTE (MP3)</button>
+                      <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">🎙️ MIC MAC</button>
+                      <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">🔌 P2 LINE</button>
+                      <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">🎛️ USB DJ</button>
+                    </div>
                   </div>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">GANHO / SENSIBILIDADE DE ENTRADA:</span>
-                    <span class="cfg-badge" id="lbl-cfg-gain">0 dB (100%)</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Ganho / Sensibilidade de Entrada</span>
+                    <span class="prop-desc">Compensa ambientes silenciosos ou caixas de som de club saturadas.</span>
                   </div>
-                  <input type="range" class="pro-slider" id="sli-cfg-gain" min="50" max="250" value="100" style="margin-top: 8px; width: 100%;" oninput="setAudioInputGain(this.value)">
-                  <span class="cfg-desc" style="display:block; margin-top: 6px;">Ajuste para compensar caixas de som baixas ou ambientes de club com som saturado.</span>
+                  <div class="prop-control" style="width: 200px; display: flex; align-items: center; gap: 8px;">
+                    <input type="range" class="pro-slider" id="sli-cfg-gain" min="50" max="250" value="100" style="flex: 1;" oninput="setAudioInputGain(this.value)">
+                    <span class="cfg-badge" id="lbl-cfg-gain" style="min-width: 55px; text-align: center;">0 dB</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Monitoramento de Áudio (Fone CUE)</span>
+                    <span class="prop-desc" id="lbl-cfg-cue-status">Monitoramento Desativado</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-outline btn-xs" id="btn-cfg-cue-listen" onclick="toggleAudioMonitor()">OUVIR ENTRADA (CUE)</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="shortcut-group">
-                <h3>CLOCK MUSICAL & SINCRONIA DE FRASE</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">BPM ENGINE:</span>
-                    <span class="cfg-badge text-cyan" id="lbl-cfg-bpm-mode">AUTO DETECT</span>
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>CLOCK MUSICAL & SINCRONIA DE FRASE</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-bpm-mode">AUTO DETECT</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Comandos de Alinhamento Rítmico</span>
+                    <span class="prop-desc">Trava de andamento, Tap Tempo manual e sincronia imediata na cabeça 1.1.1.</span>
                   </div>
-                  <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                  <div class="prop-control" style="display: flex; gap: 6px;">
                     <button class="btn btn-outline btn-xs" id="btn-cfg-tap-tempo" onclick="handleTapTempo()">TAP TEMPO</button>
                     <button class="btn btn-outline btn-xs" id="btn-cfg-lock-bpm" onclick="toggleBpmLock()">TRAVAR BPM</button>
                     <button class="btn btn-primary btn-xs" id="btn-cfg-align-downbeat" onclick="resetMusicalPhrase()">ALINHAR DOWNBEAT (1.1.1)</button>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">MONITORAMENTO DE ÁUDIO INTERNO (FONE):</span>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
-                    <button class="btn btn-outline btn-xs" id="btn-cfg-cue-listen" onclick="toggleAudioMonitor()">OUVIR ENTRADA (CUE)</button>
-                    <span class="cfg-desc" id="lbl-cfg-cue-status">Monitoramento Desativado</span>
+            <!-- PANEL 6: GPU & PERFORMANCE -->
+            <div class="settings-tab-panel" id="settings-panel-performance">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>MOTOR GRÁFICO & TAXA DE QUADROS</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Limite de Taxa de Quadros (Frame Limiter)</span>
+                    <span class="prop-desc">30 FPS para economia de bateria, 60 FPS padrão broadcast, 120 FPS ProMotion.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-fps">
+                      <button class="conductor-btn active" data-fps="30" onclick="setFpsLimit(30)">30 FPS</button>
+                      <button class="conductor-btn" data-fps="60" onclick="setFpsLimit(60)">60 FPS</button>
+                      <button class="conductor-btn" data-fps="120" onclick="setFpsLimit(120)">120 FPS</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Proteção Estroboscópica (Anti-Blowout)</span>
+                    <span class="prop-desc">Evita clarões brancos repentinos e flashing excessivo na projeção.</span>
+                  </div>
+                  <div class="prop-control">
+                    <label class="cfg-switch">
+                      <input type="checkbox" id="chk-cfg-antiblowout" checked onchange="toggleAutopilotRule('anti_blowout', this.checked)">
+                      <span class="cfg-switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>INDEXADOR DE MÍDIAS & MATTES</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Re-escanear Pasta Física "1. In"</span>
+                    <span class="prop-desc">Detecta novos arquivos MP4 e PNG sem reiniciar o servidor.</span>
+                  </div>
+                  <div class="prop-control">
+                    <button class="btn btn-primary btn-xs" onclick="rescanMediaWithFeedback()">🔄 RESCAN DE MÍDIAS</button>
+                  </div>
+                </div>
+                <div id="lbl-cfg-rescan-feedback" style="font-size: 11px; color: var(--emerald); padding-top: 4px; display: none;">✓ Mídias reindexadas com sucesso!</div>
+              </div>
+            </div>
+
+            <!-- PANEL 7: REDE, OSC & NDI -->
+            <div class="settings-tab-panel" id="settings-panel-network">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>SAÍDAS DE VÍDEO EM REDE</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Transmissão NDI / Syphon / Spout</span>
+                    <span class="prop-desc">Desligue para operar puramente em HDMI físico, economizando recursos.</span>
+                  </div>
+                  <div class="prop-control">
+                    <div class="conductor-btn-group" id="group-cfg-network">
+                      <button class="conductor-btn" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO</button>
+                      <button class="conductor-btn active" data-net="off" onclick="toggleNetworkOutput(false)">SÓ HDMI</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>INTEGRAÇÃO EXTERNA (TOUCHDESIGNER & PYTHON BRAIN)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">TouchDesigner OSC UDP</span>
+                    <span class="prop-desc">Porta 7000 · 127.0.0.1 (/penumbra/take, crossfader, opacities)</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">OSC :7000 ATIVO</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Python Audio Brain Telemetry</span>
+                    <span class="prop-desc">Porta 8765 (WebSocket local, latência &lt; 4ms)</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-cyan">WS :8765 ATIVO</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 4: PERFORMANCE -->
-          <div class="settings-tab-panel" id="settings-panel-performance">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>MOTOR GRÁFICO & TAXA DE QUADROS</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">LIMITE DE TAXA DE QUADROS (FRAME LIMITER):</span>
-                  <div class="conductor-btn-group" id="group-cfg-fps" style="margin-top: 8px;">
-                    <button class="conductor-btn active" data-fps="30" onclick="setFpsLimit(30)">30 FPS (BATERIA)</button>
-                    <button class="conductor-btn" data-fps="60" onclick="setFpsLimit(60)">60 FPS (FLUIDO)</button>
-                    <button class="conductor-btn" data-fps="120" onclick="setFpsLimit(120)">120 FPS (PROMOTION)</button>
-                  </div>
-                  <span class="cfg-desc" style="display:block; margin-top: 8px;">O modo 60 FPS garante sincronia perfeita com projetores HDMI sem aquecer o MacBook 13".</span>
+            <!-- PANEL 8: ATALHOS DE TECLADO -->
+            <div class="settings-tab-panel" id="settings-panel-shortcuts">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>COMANDOS MASTER & BROADCAST</span>
                 </div>
-
-                <div class="cfg-field-block" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
-                  <span class="cfg-title">PROTEÇÃO ESTROBOSCÓPICA (ANTI-BLOWOUT):</span>
-                  <label class="cfg-toggle-label" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer;">
-                    <input type="checkbox" id="chk-cfg-antiblowout" checked onchange="toggleAutopilotRule('anti_blowout', this.checked)">
-                    <span class="cfg-desc">Prevenir estouramento de branco e estroboscópio excessivo na pista</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>MEDIA POOL & CACHE DE VÍDEO</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">INDEXADOR DE CLIPES & MATTES:</span>
-                  <p class="cfg-desc" style="margin-top: 6px;">
-                    Escaneia a pasta física <code>1. In</code> e indexa automaticamente novos vídeos e máscaras procedurais sem reiniciar o servidor.
-                  </p>
-                  <button class="btn btn-primary btn-sm" style="margin-top: 10px;" onclick="rescanMediaWithFeedback()">🔄 RESCAN DE MÍDIAS AGORA</button>
-                  <div id="lbl-cfg-rescan-feedback" style="font-size: 11px; color: var(--emerald); margin-top: 6px; display: none;">✓ Mídias reindexadas com sucesso!</div>
-                </div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Alternar Módulos / Pro Timeline</span></div><div class="prop-control"><kbd>TAB</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Auto Take Suave (Dissolve gradual)</span></div><div class="prop-control"><kbd>SPACE</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Hard Cut Imediato (Corte seco)</span></div><div class="prop-control"><kbd>ENTER</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Resincronizar Downbeat (Início Bar 1.1.1)</span></div><div class="prop-control"><kbd>R</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Carregar Clipe no Program (Deck A)</span></div><div class="prop-control"><kbd>A</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Carregar Clipe no Preview (Deck B)</span></div><div class="prop-control"><kbd>B</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Mover Crossfader Manualmente</span></div><div class="prop-control"><kbd>← / →</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Módulos 1 a 6 (Biblioteca, Mixer, etc.)</span></div><div class="prop-control"><kbd>1 .. 6</kbd></div></div>
+                <div class="cfg-prop-row"><div class="prop-meta"><span class="prop-title">Abrir Preferências / Fechar Modais</span></div><div class="prop-control"><kbd>,</kbd> / <kbd>ESC</kbd></div></div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 5: REDE & OSC -->
-          <div class="settings-tab-panel" id="settings-panel-network">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>SAÍDAS DE VÍDEO (NETWORK)</h3>
-                <div class="cfg-field-block">
-                  <span class="cfg-title">TRANSMISSÃO NDI / SYPHON / SPOUT:</span>
-                  <div class="conductor-btn-group" id="group-cfg-network" style="margin-top: 8px;">
-                    <button class="conductor-btn" data-net="on" onclick="toggleNetworkOutput(true)">LIGADO (REDE LOCAL)</button>
-                    <button class="conductor-btn active" data-net="off" onclick="toggleNetworkOutput(false)">DESLIGADO (SÓ HDMI)</button>
-                  </div>
-                  <span class="cfg-desc" style="display:block; margin-top: 8px;">Desligue saídas de rede para usar apenas HDMI no projetor, melhorando o desempenho e economizando bateria.</span>
+            <!-- PANEL 9: SISTEMA & DIAGNÓSTICO -->
+            <div class="settings-tab-panel" id="settings-panel-system">
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>DIAGNÓSTICO DO MOTOR PENUMBRA</span>
                 </div>
-              </div>
-              <div class="shortcut-group">
-                <h3>TOUCHDESIGNER BRIDGE (OSC UDP)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">DESTINO OSC TOUCHDESIGNER:</span>
-                    <span class="cfg-badge text-emerald">PORTA 7000 · 127.0.0.1</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Versão do Engine</span>
+                    <span class="prop-desc">Penumbra VJ Engine v4.2 Pro (Build 2026.10)</span>
                   </div>
-                  <ul class="cfg-checklist" style="margin-top: 8px;">
-                    <li><code>/penumbra/take</code>: Pulso de corte A/B</li>
-                    <li><code>/penumbra/crossfader</code>: Posição linear do fader (0.0 a 1.0)</li>
-                    <li><code>/penumbra/layer0..4/opacity</code>: Opacidades por canal</li>
-                    <li><code>/penumbra/tonal/*</code>: Parâmetros analógicos de pós-processamento</li>
-                  </ul>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-cyan">ESTÁVEL</span>
+                  </div>
                 </div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>AUDIO BRAIN PYTHON (DSP WEBSOCKET)</h3>
-                <div class="cfg-field-block">
-                  <div class="cfg-label-row">
-                    <span class="cfg-title">STREAM DE TELEMETRIA:</span>
-                    <span class="cfg-badge text-cyan">PORTA 8765 (WS)</span>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Motor de Renderização</span>
+                    <span class="prop-desc">Living Canvas 2D + Hardware Video Element Acceleration</span>
                   </div>
-                  <p class="cfg-desc" style="margin-top: 8px;">
-                    Transmite 6 bandas de frequência FFT, separação semântica de 4 stems e cálculo de probabilidade de Drop a cada 50ms.
-                  </p>
-                  <div class="cfg-pill-status" style="margin-top: 10px;">
-                    <span class="dot live"></span>
-                    <span>Latência estimada: &lt; 4ms (Loopback local)</span>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">HARDWARE GPU</span>
+                  </div>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Zero-Allocation Loop</span>
+                    <span class="prop-desc">Invariantes de 60 FPS ativas sem coletas de lixo durante playback.</span>
+                  </div>
+                  <div class="prop-control">
+                    <span class="cfg-badge text-emerald">60 FPS VERIFICADO</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TAB 6: ATALHOS & GUIA -->
-          <div class="settings-tab-panel" id="settings-panel-shortcuts">
-            <div class="cfg-grid-two">
-              <div class="shortcut-group">
-                <h3>COMANDOS PRINCIPAIS BROADCAST</h3>
-                <div class="shortcut-row"><span class="sc-desc">Auto Take Suave (Dissolve gradual)</span><kbd>SPACE</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Hard Cut Imediato (Corte seco)</span><kbd>ENTER</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Resincronizar Downbeat (Início do Bar 1.1.1)</span><kbd>R</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Carregar Clipe no Program (Deck A)</span><kbd>A</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Carregar Clipe no Preview (Deck B / Cue)</span><kbd>B</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Mover Crossfader Manualmente</span><kbd>← / →</kbd></div>
-              </div>
-
-              <div class="shortcut-group">
-                <h3>NAVEGAÇÃO POR MÓDULOS</h3>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 1: Media Pool (Acervo)</span><kbd>1</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 2: Compositor 5 Camadas</span><kbd>2</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 3: Biblioteca de Mattes</span><kbd>3</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 4: Pós Analógica / Tonal</span><kbd>4</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 5: Autopilot Conductor</span><kbd>5</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Módulo 6: Motor FX</span><kbd>6</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Abrir este Menu de Configurações</span><kbd>,</kbd></div>
-                <div class="shortcut-row"><span class="sc-desc">Fechar Modais</span><kbd>ESC</kbd></div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </div> <!-- /cfg-content-col -->
+        </div> <!-- /cfg-two-col-layout -->
       </div>
     </div>
 
@@ -7925,6 +9625,19 @@ const MediaProvider = {
 
   initCDN: async () => {
     MediaProvider.mode = 'cdn';
+    // 0. If running on localhost, prefer controller server manifest to include downloads and local edits
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const resLocal = await fetch('/api/manifest');
+        if (resLocal.ok) {
+          const localClips = await resLocal.json();
+          if (Array.isArray(localClips) && localClips.length > 0) {
+            console.log(`[MediaProvider] Loaded manifest from local controller (${localClips.length} clips)`);
+            return localClips;
+          }
+        }
+      } catch (e) {}
+    }
     // 1. Try Bunny Edge CDN
     try {
       const res = await fetch('https://gigantera-penumbra.b-cdn.net/media_manifest.json');
@@ -7954,31 +9667,82 @@ const MediaProvider = {
     return [];
   },
 
-  getMediaUrl: (relativePath) => {
-    if (!relativePath) return '';
-    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) return relativePath;
+  getMediaUrl: (clipOrPath) => {
+    if (!clipOrPath) return '';
+    const clip = typeof clipOrPath === 'object' ? clipOrPath : allClips.find(c => c.relative_path === clipOrPath || c.filename === clipOrPath || c.id === clipOrPath);
+    const relPath = typeof clipOrPath === 'string' ? clipOrPath : (clip ? (clip.relative_path || clip.filename) : '');
+    
+    // 0. Check local cache registry (Zero-waste disk playback)
+    if (clip && typeof UserProfileManager !== 'undefined') {
+      const cacheInfo = UserProfileManager.getCacheDetails(clip);
+      if (cacheInfo.isCached && cacheInfo.local_path) {
+        const clean = cacheInfo.local_path.startsWith('/') ? cacheInfo.local_path : `/${cacheInfo.local_path}`;
+        return clean;
+      }
+    }
+
+    // 1. Direct stream url if resolved
+    if (clip && clip.stream_url) {
+      if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !clip.stream_url.includes('/api/stream/proxy')) {
+        return `/api/stream/proxy?url=${encodeURIComponent(clip.stream_url)}`;
+      }
+      return clip.stream_url;
+    }
+
+    // 2. Direct external HTTP URL
+    if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
+      if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
+        return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
+      }
+      return relPath;
+    }
+
+    // 3. Local downloaded files (media_pool/downloads)
+    if (relPath.startsWith('downloads/') || (clip && clip.is_downloaded)) {
+      const cleanDown = relPath.startsWith('/') ? relPath : `/${relPath}`;
+      return cleanDown;
+    }
+
+    // 4. Standalone File System Access API
     if (MediaProvider.mode === 'local') {
-      const file = MediaProvider.localFilesMap.get(relativePath);
+      const file = MediaProvider.localFilesMap.get(relPath);
       return file ? URL.createObjectURL(file) : '';
     }
+
+    // 5. Bunny Edge CDN
     if (MediaProvider.mode === 'cdn') {
-      const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
       return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
     }
+
+    // 6. LAN / Origin fallback
     if (MediaProvider.mode === 'lan') {
-      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relativePath)}`);
+      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relPath)}`);
     }
-    return relativePath;
+
+    return relPath;
   },
 
   getThumbUrl: (clip) => {
-    if (!clip || !clip.thumbnail) return '';
-    if (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://')) return clip.thumbnail;
-    if (MediaProvider.mode === 'local') {
+    if (!clip) return '';
+    if (clip.thumbnail && (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://'))) {
+      return clip.thumbnail;
+    }
+    // YouTube automated fallback thumbnail
+    const ytId = clip.youtube_id || extractYouTubeId(clip.filename) || extractYouTubeId(clip.relative_path);
+    if (ytId) {
+      return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+    if (!clip.thumbnail) return '';
+    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) {
+      const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
+      return `/thumbnails/${cleanThumb}`;
+    }
+    if (MediaProvider.mode === 'local' && !clip.is_downloaded) {
       return ''; 
     }
     const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-    if (MediaProvider.mode === 'cdn') {
+    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) {
       return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
     }
     return HARS.resolveUrl(`/thumbnails/${cleanThumb}`);
@@ -8153,8 +9917,20 @@ let appState = {
 };
 window.appState = appState;
 
+function extractYouTubeId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/);
+  return match ? match[1] : null;
+}
+function isYouTubeUrl(url) {
+  return Boolean(extractYouTubeId(url));
+}
+
 let allClips = [];
 let activeCategoryFilter = 'ALL';
+let activeSourceFilter = 'ALL';
+let isGroupedByCategory = true;
+let activeDownloadJobs = new Map();
 let allMattes = [];
 let activeMatteCategoryFilter = 'ALL';
 let activeSelectedMatte = null;
@@ -8398,8 +10174,81 @@ function initWebSocket() {
         updateAudioSourceUI(msg.data);
       } else if (msg.type === 'manifest_updated') {
         allClips = msg.data;
+        loadCustomClipsFromStorage();
         renderFolderPills();
         renderMediaCards();
+      } else if (msg.type === 'download_progress') {
+        const job = msg.job;
+        if (job) {
+          activeDownloadJobs.set(job.id, job);
+          const pWrap = document.getElementById('nsd-progress-wrap');
+          const pStatus = document.getElementById('nsd-progress-status');
+          const pMetrics = document.getElementById('nsd-progress-metrics');
+          const pBar = document.getElementById('nsd-progress-bar');
+          if (pWrap) pWrap.style.display = 'block';
+          if (pStatus) pStatus.textContent = `BAIXANDO: ${job.title || 'MÍDIA'}...`;
+          if (pMetrics) pMetrics.textContent = `${job.progress}% · ${job.speed || ''} · ETA ${job.eta || ''}`;
+          if (pBar) pBar.style.width = `${job.progress}%`;
+        }
+      } else if (msg.type === 'download_complete') {
+        const job = msg.job;
+        const newClip = msg.clip;
+        if (job) activeDownloadJobs.delete(job.id);
+        const pStatus = document.getElementById('nsd-progress-status');
+        const pBar = document.getElementById('nsd-progress-bar');
+        if (pStatus) pStatus.textContent = `DOWNLOAD CONCLUÍDO: ${newClip ? newClip.filename : 'OK'}`;
+        if (pBar) pBar.style.width = '100%';
+        setTimeout(() => {
+          const pWrap = document.getElementById('nsd-progress-wrap');
+          if (pWrap) pWrap.style.display = 'none';
+        }, 3000);
+        if (newClip && !allClips.some(c => c.id === newClip.id)) {
+          allClips.unshift(newClip);
+          renderFolderPills();
+          renderMediaCards();
+        }
+      } else if (msg.type === 'download_error') {
+        const pStatus = document.getElementById('nsd-progress-status');
+        if (pStatus) pStatus.textContent = `ERRO NO DOWNLOAD: ${msg.job?.error || 'Falha'}`;
+      } else if (msg.type === 'clip_updated') {
+        const updated = msg.clip;
+        if (updated) {
+          const idx = allClips.findIndex(c => c.id === updated.id);
+          if (idx !== -1) allClips[idx] = { ...allClips[idx], ...updated };
+          renderMediaCards();
+        }
+      } else if (msg.type === 'user_profile_updated') {
+        if (msg.profile && typeof UserProfileManager !== 'undefined') {
+          UserProfileManager.profile = {
+            ...UserProfileManager.profile,
+            ...msg.profile,
+            settings: { ...UserProfileManager.profile.settings, ...(msg.profile.settings || {}) },
+            category_overrides: { ...(msg.profile.category_overrides || {}) },
+            cached_media_registry: { ...(msg.profile.cached_media_registry || {}) }
+          };
+          UserProfileManager.updateCacheUI();
+          UserProfileManager.applyCategoryOverrides();
+          renderMediaCards();
+        }
+      } else if (msg.type === 'clip_cached') {
+        if (msg.clipId) {
+          const clip = allClips.find(c => c.id === msg.clipId || c.filename === msg.filename);
+          if (clip) {
+            clip.is_downloaded = true;
+            clip.relative_path = msg.local_path;
+          }
+          if (typeof UserProfileManager !== 'undefined') {
+            if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+            UserProfileManager.profile.cached_media_registry[msg.clipId] = {
+              filename: msg.filename,
+              local_path: msg.local_path,
+              size_mb: msg.size_mb,
+              is_downloaded: true
+            };
+            UserProfileManager.updateCacheUI();
+          }
+          renderMediaCards();
+        }
       }
     } catch (e) {
       console.warn('WS message parsing error:', e);
@@ -8427,11 +10276,12 @@ function syncVideoSources() {
       if (!playerL0.paused) playerL0.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer0.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL0.muted = true;
       playerL0.playsInline = true;
       playerL0.loop = true;
-      if (!playerL0.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL0.src.includes(targetSrc) || playerL0.dataset.activeSrc !== targetSrc)) {
+        playerL0.dataset.activeSrc = targetSrc;
         playerL0.src = targetSrc;
         playerL0.load();
         playerL0.play().catch(() => {});
@@ -8447,11 +10297,12 @@ function syncVideoSources() {
       if (!playerL3.paused) playerL3.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer3.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL3.muted = true;
       playerL3.playsInline = true;
       playerL3.loop = true;
-      if (!playerL3.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL3.src.includes(targetSrc) || playerL3.dataset.activeSrc !== targetSrc)) {
+        playerL3.dataset.activeSrc = targetSrc;
         playerL3.src = targetSrc;
         playerL3.load();
         playerL3.play().catch(() => {});
@@ -8467,11 +10318,12 @@ function syncVideoSources() {
       if (!playerL4.paused) playerL4.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer4.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL4.muted = true;
       playerL4.playsInline = true;
       playerL4.loop = true;
-      if (!playerL4.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL4.src.includes(targetSrc) || playerL4.dataset.activeSrc !== targetSrc)) {
+        playerL4.dataset.activeSrc = targetSrc;
         playerL4.src = targetSrc;
         playerL4.load();
         playerL4.play().catch(() => {});
@@ -12213,10 +14065,152 @@ function renderQueueCards() {
   
   // Set real canvas resolution based on display size to avoid blur
   const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
   canvas.width = rect.width;
   canvas.height = rect.height;
   
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // If in Pro Timeline Arrangement View (Expanded Height >= 120px)
+  if (rect.height >= 120) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const rulerH = 22;
+    const tracksH = h - rulerH;
+    const numTracks = 5;
+    const trackH = tracksH / numTracks;
+
+    // 1. Draw Top Time Ruler
+    ctx.fillStyle = '#06090e';
+    ctx.fillRect(0, 0, w, rulerH);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, rulerH);
+    ctx.lineTo(w, rulerH);
+    ctx.stroke();
+
+    // Bar ticks (every 4 bars / 16 bars)
+    const barWidth = w / 16;
+    for (let b = 0; b <= 16; b++) {
+      const bx = b * barWidth;
+      ctx.strokeStyle = b % 4 === 0 ? 'rgba(0, 240, 255, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+      ctx.beginPath();
+      ctx.moveTo(bx, rulerH - (b % 4 === 0 ? 10 : 5));
+      ctx.lineTo(bx, rulerH);
+      ctx.stroke();
+
+      if (b % 4 === 0 && b < 16) {
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.7)';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`BAR ${b+1}`, bx + 4, rulerH - 4);
+      }
+    }
+
+    // 2. Track Lanes Background & Dividing Lines
+    const trackColors = [
+      'rgba(0, 255, 136, 0.04)',
+      'rgba(255, 255, 255, 0.02)',
+      'rgba(255, 255, 255, 0.02)',
+      'rgba(0, 240, 255, 0.04)',
+      'rgba(255, 42, 133, 0.04)'
+    ];
+
+    for (let t = 0; t < numTracks; t++) {
+      const ty = rulerH + (t * trackH);
+      ctx.fillStyle = trackColors[t] || '#05070a';
+      ctx.fillRect(0, ty, w, trackH);
+
+      // Grid line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.moveTo(0, ty + trackH);
+      ctx.lineTo(w, ty + trackH);
+      ctx.stroke();
+
+      // Vertical measure lines across tracks
+      for (let b = 1; b < 16; b++) {
+        const bx = b * barWidth;
+        ctx.strokeStyle = b % 4 === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.015)';
+        ctx.beginPath();
+        ctx.moveTo(bx, ty);
+        ctx.lineTo(bx, ty + trackH);
+        ctx.stroke();
+      }
+    }
+
+    // 3. Render Active Program Clip on Track 0 (L0 Master)
+    const l0Clip = appState.layers?.layer0;
+    const l0Y = rulerH + 2;
+    const block0W = barWidth * 8;
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.18)';
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(10, l0Y, block0W - 10, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('▶ L0 PROGRAM: ' + ((l0Clip?.name || 'MASTER').substring(0, 24)), 18, l0Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText('MATTE: ' + (l0Clip?.matte || 'FULL'), 18, l0Y + trackH - 8);
+
+    // 4. Render Active Cue Clip on Track 3 (L3 Cue Bus B)
+    const l3Clip = appState.layers?.layer3;
+    const l3Y = rulerH + (3 * trackH) + 2;
+    const block3X = 10 + (barWidth * 4);
+    const block3W = barWidth * 8;
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.18)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(block3X, l3Y, block3W, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◱ CUE BUS B: ' + ((l3Clip?.name || 'PREVIEW').substring(0, 22)), block3X + 8, l3Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText('NEXT IN QUEUE', block3X + 8, l3Y + trackH - 8);
+
+    // 5. Render Queue Future Sequence Blocks
+    if (queueList && queueList.length > 0) {
+      queueList.slice(0, 4).forEach((qItem, qIdx) => {
+        const qX = 10 + ((qIdx + 2) * barWidth * 3);
+        if (qX < w - 80) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(qX, l0Y, barWidth * 2.8, trackH - 4, 3);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.font = '8px monospace';
+          ctx.fillText(`+${qIdx+1} ` + (qItem.name || '').substring(0, 10), qX + 6, l0Y + 12);
+        }
+      });
+    }
+
+    // 6. Tension Waveform Indicator along bottom track
+    const fxY = rulerH + (4 * trackH);
+    ctx.fillStyle = 'rgba(255, 42, 133, 0.1)';
+    ctx.fillRect(0, fxY, w, trackH);
+    ctx.fillStyle = 'rgba(255, 42, 133, 0.8)';
+    ctx.font = 'bold 8.5px monospace';
+    ctx.fillText('FX ENGINE: ' + (appState.fx?.enabled ? 'ACTIVE (' + (appState.fx?.activeEffect || 'AUTO') + ')' : 'BYPASS'), 10, fxY + 13);
+
+    return;
+  }
   
   if (!queueList || queueList.length === 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
@@ -12784,6 +14778,12 @@ async function loadMediaPool(providedClips = null) {
       }
     }
 
+    // Initialize Centralized User Profile & Cache Registry
+    if (typeof UserProfileManager !== 'undefined') {
+      await UserProfileManager.init();
+    }
+    loadCustomClipsFromStorage();
+
     // Dynamic 3D Model Override from CDN or Local Storage
     const customModel = allClips.find(c => c.type === 'model' && c.filename.includes('espinhaco_spine_points.json'));
     if (customModel && (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'local')) {
@@ -12893,25 +14893,942 @@ window.toggleAutopilotFolder = function(folder, isActive) {
   sendAction('set_autopilot_folders', { active_folders: active });
 };
 
+// ============================================================================
+// CENTRALIZED USER PROFILE & ZERO-WASTE LOCAL CACHE MANAGER
+// ============================================================================
+const UserProfileManager = {
+  profile: {
+    schema_version: "1.2.0",
+    app: "Penumbra System VJ Engine",
+    last_saved: new Date().toISOString(),
+    settings: {
+      media_source: "cdn",
+      remember_source: true,
+      cdn_pin: "2026",
+      target_fps: 30,
+      osc_enabled: false,
+      lan_ip: "localhost",
+      active_macro_state: "GROOVE",
+      active_macro_preset: "Pure Clean Cinema",
+      grading: { gamma: 0.85, black_pedestal: -0.05, mid_density: 1.0, sobel_mix: 0.22, contrast: 1.0 },
+      audio: { input: "line_in", headphone_monitor: false, headphone_volume: 0.8 },
+      ui: { group_by_category: true, active_source_filter: "ALL", active_category_filter: "ALL", hover_preview_enabled: true, hover_preview_delay_ms: 280 }
+    },
+    custom_clips: [],
+    category_overrides: {},
+    cached_media_registry: {}
+  },
+
+  init: async () => {
+    let loadedFromServer = false;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data === 'object') {
+            UserProfileManager.profile = {
+              ...UserProfileManager.profile,
+              ...data,
+              settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+              category_overrides: { ...(data.category_overrides || {}) },
+              cached_media_registry: { ...(data.cached_media_registry || {}) }
+            };
+            if (Array.isArray(data.custom_clips)) {
+              UserProfileManager.profile.custom_clips = data.custom_clips;
+            }
+            loadedFromServer = true;
+            console.log('[UserProfileManager] Perfil centralizado carregado do servidor (penumbra_user_profile.json)');
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!loadedFromServer) {
+      try {
+        const raw = localStorage.getItem('penumbra_user_profile');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && typeof data === 'object') {
+            UserProfileManager.profile = {
+              ...UserProfileManager.profile,
+              ...data,
+              settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+              category_overrides: { ...(data.category_overrides || {}) },
+              cached_media_registry: { ...(data.cached_media_registry || {}) }
+            };
+            if (Array.isArray(data.custom_clips)) {
+              UserProfileManager.profile.custom_clips = data.custom_clips;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    UserProfileManager.applyCategoryOverrides();
+    UserProfileManager.rehydrateCustomClips();
+    UserProfileManager.updateCacheUI();
+  },
+
+  save: (syncServer = true) => {
+    try {
+      UserProfileManager.profile.last_saved = new Date().toISOString();
+      localStorage.setItem('penumbra_user_profile', JSON.stringify(UserProfileManager.profile));
+      if (syncServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(UserProfileManager.profile)
+        }).catch(() => {});
+      }
+      UserProfileManager.updateCacheUI();
+    } catch (e) {}
+  },
+
+  getSetting: (key, fallback = null) => {
+    return (UserProfileManager.profile.settings && UserProfileManager.profile.settings[key] !== undefined)
+      ? UserProfileManager.profile.settings[key]
+      : fallback;
+  },
+
+  setSetting: (key, val) => {
+    if (!UserProfileManager.profile.settings) UserProfileManager.profile.settings = {};
+    UserProfileManager.profile.settings[key] = val;
+    UserProfileManager.save(true);
+  },
+
+  applyCategoryOverrides: () => {
+    if (!UserProfileManager.profile.category_overrides) return;
+    const overrides = UserProfileManager.profile.category_overrides;
+    allClips.forEach(c => {
+      if (overrides[c.id]) {
+        c.category = overrides[c.id];
+        if (c.category === 'CHROMA') c.has_chroma = true;
+      }
+    });
+  },
+
+  rehydrateCustomClips: () => {
+    if (!Array.isArray(UserProfileManager.profile.custom_clips)) return;
+    UserProfileManager.profile.custom_clips.forEach(c => {
+      if (!allClips.some(existing => existing.id === c.id || existing.filename === c.filename)) {
+        allClips.unshift(c);
+      }
+    });
+  },
+
+  isClipCached: (clip) => {
+    if (!clip) return false;
+    if (clip.is_local && MediaProvider.mode === 'local') return true;
+    if (clip.is_downloaded) return true;
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    if (reg[clip.id] && reg[clip.id].is_downloaded) return true;
+    if (reg[clip.filename] && reg[clip.filename].is_downloaded) return true;
+    const baseName = clip.relative_path ? clip.relative_path.split('/').pop() : '';
+    if (baseName && reg[baseName] && reg[baseName].is_downloaded) return true;
+    return false;
+  },
+
+  getCacheDetails: (clip) => {
+    if (!clip) return { isCached: false, size_mb: 0 };
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    const item = reg[clip.id] || reg[clip.filename] || (clip.relative_path ? reg[clip.relative_path.split('/').pop()] : null);
+    if (item && item.is_downloaded) {
+      return { isCached: true, size_mb: item.size_mb || clip.size_mb || 0, local_path: item.local_path };
+    }
+    if (clip.is_downloaded) {
+      return { isCached: true, size_mb: clip.size_mb || 0, local_path: clip.relative_path };
+    }
+    if (clip.is_local && MediaProvider.mode === 'local') {
+      return { isCached: true, size_mb: clip.size_mb || 0, local_path: clip.absolute_path || clip.relative_path };
+    }
+    return { isCached: false, size_mb: clip.size_mb || 0 };
+  },
+
+  updateCacheUI: () => {
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    const cachedItems = Object.values(reg).filter(v => v.is_downloaded);
+    const totalCachedMb = cachedItems.reduce((acc, it) => acc + (it.size_mb || 0), 0);
+    const offlineClipsCount = allClips.filter(c => UserProfileManager.isClipCached(c)).length;
+    const remoteClipsCount = Math.max(0, allClips.length - offlineClipsCount);
+
+    const lblCacheStats = document.getElementById('lbl-cache-stats');
+    if (lblCacheStats) {
+      lblCacheStats.textContent = `💾 ${offlineClipsCount} OFFLINE · ☁️ ${remoteClipsCount} NUVEM`;
+    }
+
+    const badgeCacheSize = document.getElementById('cfg-cache-size-badge');
+    if (badgeCacheSize) {
+      badgeCacheSize.textContent = `${Math.round(totalCachedMb * 10) / 10} MB EM DISCO`;
+    }
+
+    const lblLastSaved = document.getElementById('cfg-profile-last-saved');
+    if (lblLastSaved && UserProfileManager.profile.last_saved) {
+      const d = new Date(UserProfileManager.profile.last_saved);
+      lblLastSaved.textContent = d.toLocaleString();
+    }
+
+    const lblCustomCount = document.getElementById('cfg-profile-custom-count');
+    if (lblCustomCount) {
+      lblCustomCount.textContent = (UserProfileManager.profile.custom_clips || []).length;
+    }
+
+    const lblCatCount = document.getElementById('cfg-profile-cat-count');
+    if (lblCatCount) {
+      lblCatCount.textContent = Object.keys(UserProfileManager.profile.category_overrides || {}).length;
+    }
+  }
+};
+window.UserProfileManager = UserProfileManager;
+
+function saveCustomClipsToStorage() {
+  try {
+    const custom = allClips.filter(c => c.is_stream || c.is_downloaded || c.id.startsWith('stream_') || c.id.startsWith('clip_dl_'));
+    UserProfileManager.profile.custom_clips = custom;
+    UserProfileManager.save(true);
+    localStorage.setItem('penumbra_custom_clips', JSON.stringify(custom));
+  } catch (e) {}
+}
+
+function loadCustomClipsFromStorage() {
+  UserProfileManager.rehydrateCustomClips();
+}
+
+function getClipSource(clip) {
+  if (clip.is_generative || clip.id === 'clip_gen_plexus_spine') return 'generative';
+  if (clip.is_stream || clip.id.startsWith('stream_') || (clip.relative_path && (clip.relative_path.startsWith('http://') || clip.relative_path.startsWith('https://')))) {
+    return isYouTubeUrl(clip.relative_path || clip.filename) ? 'youtube' : 'stream';
+  }
+  if (clip.is_downloaded || (clip.relative_path && clip.relative_path.startsWith('downloads/'))) {
+    return 'downloaded';
+  }
+  if (clip.is_local || clip.id.startsWith('local_')) return 'local';
+  return 'cdn';
+}
+
+function updateCategoryAndSourceBadges() {
+  const countsSrc = { ALL: allClips.length, cdn: 0, local: 0, stream: 0 };
+  const countsCat = { ALL: allClips.length, MINIMAL: 0, ABSTRACT: 0, FIGURA: 0, DENSE: 0, CHROMA: 0, 'STREAMS & YOUTUBE': 0, GENERATIVE: 0 };
+
+  allClips.forEach(c => {
+    const src = getClipSource(c);
+    if (src === 'cdn') countsSrc.cdn++;
+    else if (src === 'local' || src === 'downloaded') countsSrc.local++;
+    else if (src === 'youtube' || src === 'stream') countsSrc.stream++;
+
+    if (c.has_chroma || c.category === 'CHROMA') countsCat.CHROMA++;
+    else if (countsCat[c.category] !== undefined) countsCat[c.category]++;
+    else countsCat['STREAMS & YOUTUBE']++;
+  });
+
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('badge-count-src-all', countsSrc.ALL);
+  setTxt('badge-count-src-cdn', countsSrc.cdn);
+  setTxt('badge-count-src-local', countsSrc.local);
+  setTxt('badge-count-src-stream', countsSrc.stream);
+
+  setTxt('badge-count-cat-all', countsCat.ALL);
+  setTxt('badge-count-cat-minimal', countsCat.MINIMAL);
+  setTxt('badge-count-cat-abstract', countsCat.ABSTRACT);
+  setTxt('badge-count-cat-figura', countsCat.FIGURA);
+  setTxt('badge-count-cat-dense', countsCat.DENSE);
+  setTxt('badge-count-cat-chroma', countsCat.CHROMA);
+  setTxt('badge-count-cat-stream', countsCat['STREAMS & YOUTUBE']);
+  setTxt('badge-count-cat-gen', countsCat.GENERATIVE);
+}
+
+window.setClipCategory = function(clipId, newCat) {
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+  clip.category = newCat;
+  if (clip.has_chroma && newCat !== 'CHROMA') clip.has_chroma = false;
+  if (newCat === 'CHROMA') clip.has_chroma = true;
+
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    fetch(`/api/clips/${clipId}/category`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: newCat })
+    }).catch(() => {});
+  }
+  saveCustomClipsToStorage();
+  renderMediaCards();
+};
+
+window.openCategorySelector = function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', 'STREAMS & YOUTUBE', 'GENERATIVE'];
+  const newCat = prompt(`Alterar categoria do clipe "${clip.filename}":\n\nCategorias disponíveis:\n${categories.join(' · ')}`, clip.category || 'MINIMAL');
+  if (newCat && categories.includes(newCat.trim().toUpperCase())) {
+    window.setClipCategory(clipId, newCat.trim().toUpperCase());
+  } else if (newCat && newCat.trim()) {
+    window.setClipCategory(clipId, newCat.trim().toUpperCase());
+  }
+};
+
+window.downloadStreamClip = function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+  const targetUrl = clip.stream_url || clip.relative_path || clip.filename;
+  ingestStreamMedia(targetUrl, clip.category, clip.filename, 'download');
+};
+
+async function ingestStreamMedia(rawUrl, targetCategory, customTitle, mode = 'stream') {
+  const url = (rawUrl || '').trim();
+  if (!url) {
+    alert('Por favor, informe uma URL válida.');
+    return;
+  }
+  const category = targetCategory || 'STREAMS & YOUTUBE';
+  const title = (customTitle || '').trim();
+  const progressWrap = document.getElementById('nsd-progress-wrap');
+  const progressStatus = document.getElementById('nsd-progress-status');
+  const progressMetrics = document.getElementById('nsd-progress-metrics');
+  const progressBar = document.getElementById('nsd-progress-bar');
+
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR...' : 'CONECTANDO FEED EXTERNO...';
+  if (progressBar) progressBar.style.width = '15%';
+
+  const isServerAvailable = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (mode === 'download' && isServerAvailable) {
+    try {
+      const res = await fetch('/api/stream/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, category, title })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (progressStatus) progressStatus.textContent = 'DOWNLOAD EM ANDAMENTO...';
+        console.log('[Nexus Downloader] Job iniciado:', data.jobId);
+      } else {
+        throw new Error(data.error || 'Falha ao iniciar download');
+      }
+    } catch (err) {
+      console.warn('[Nexus Downloader] Erro no servidor:', err);
+      if (progressStatus) progressStatus.textContent = 'ERRO NO DOWNLOAD: ' + err.message;
+    }
+  } else if (mode === 'stream' && isServerAvailable) {
+    try {
+      const res = await fetch('/api/stream/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const streamClip = {
+          id: `stream_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+          filename: title || data.title || url,
+          folder: "YOUTUBE & STREAMS",
+          relative_path: url,
+          stream_url: data.streamUrl || url,
+          category: category,
+          suggested_layer: 0,
+          has_chroma: false,
+          is_stream: true,
+          thumbnail: data.thumbnail || '',
+          duration: data.duration || 9999,
+          fps: 30,
+          width: 1920,
+          height: 1080,
+          notes: `Stream ativo: ${url}`,
+          project: "Feeds Externos",
+          project_folder: "STREAM",
+          source: data.is_youtube ? 'youtube' : 'stream',
+          youtube_id: data.videoId || null
+        };
+        allClips.unshift(streamClip);
+        saveCustomClipsToStorage();
+        renderMediaCards();
+        if (progressWrap) progressWrap.style.display = 'none';
+        console.log('[✓] Stream conectado com sucesso ao Media Pool:', streamClip);
+      } else {
+        throw new Error('Falha ao resolver stream');
+      }
+    } catch (err) {
+      console.warn('[Nexus Stream] Falha ao resolver via servidor, fallback direto:', err);
+      createDirectStreamClip(url, category, title);
+    }
+  } else {
+    createDirectStreamClip(url, category, title);
+  }
+}
+
+function createDirectStreamClip(url, category, customTitle) {
+  const isYt = isYouTubeUrl(url);
+  const ytId = extractYouTubeId(url);
+  const cleanTitle = customTitle || (isYt ? `YouTube [${ytId}]` : (url.split('/').pop().split('?')[0] || 'Stream Feed'));
+  const thumbUrl = isYt ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '';
+
+  const streamClip = {
+    id: `stream_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    filename: cleanTitle,
+    folder: "YOUTUBE & STREAMS",
+    relative_path: url,
+    stream_url: url,
+    category: category || 'STREAMS & YOUTUBE',
+    suggested_layer: 0,
+    has_chroma: false,
+    is_stream: true,
+    thumbnail: thumbUrl,
+    duration: 9999,
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    notes: `Stream ingest: ${url}`,
+    project: "Feeds Externos",
+    project_folder: "STREAM",
+    source: isYt ? 'youtube' : 'stream',
+    youtube_id: ytId
+  };
+
+  allClips.unshift(streamClip);
+  saveCustomClipsToStorage();
+  renderMediaCards();
+  const progressWrap = document.getElementById('nsd-progress-wrap');
+  if (progressWrap) progressWrap.style.display = 'none';
+}
+
+window.cacheMediaClip = async function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  const btn = event?.currentTarget;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ BAIXANDO...';
+  }
+
+  // 1. If running with Node server controller
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    try {
+      const mediaUrl = MediaProvider.getMediaUrl(clip);
+      const res = await fetch('/api/cache/download-clip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clipId: clip.id,
+          url: mediaUrl,
+          filename: clip.filename,
+          category: clip.category
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        clip.is_downloaded = true;
+        clip.relative_path = data.local_path;
+        if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+        UserProfileManager.profile.cached_media_registry[clip.id] = {
+          filename: clip.filename,
+          local_path: data.local_path,
+          size_mb: data.size_mb,
+          is_downloaded: true
+        };
+        UserProfileManager.save(false);
+        renderMediaCards();
+        console.log(`[✓] Clipe ${clip.filename} salvo no cache local.`);
+        return;
+      }
+    } catch (e) {
+      console.warn('[Cache] Erro no download do servidor:', e);
+    }
+  }
+
+  // 2. Standalone Browser Cache Storage API Fallback
+  if ('caches' in window) {
+    try {
+      const mediaUrl = MediaProvider.getMediaUrl(clip);
+      const cache = await caches.open('penumbra-media-cache');
+      await cache.add(mediaUrl);
+      clip.is_downloaded = true;
+      if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+      UserProfileManager.profile.cached_media_registry[clip.id] = {
+        filename: clip.filename,
+        local_path: mediaUrl,
+        size_mb: clip.size_mb || 20,
+        is_downloaded: true,
+        is_browser_cache: true
+      };
+      UserProfileManager.save(true);
+      renderMediaCards();
+      console.log(`[✓] Clipe ${clip.filename} armazenado no Cache Storage do navegador.`);
+    } catch (err) {
+      console.warn('[Cache] Falha no Cache API:', err);
+      alert('Não foi possível salvar o clipe offline no navegador.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '⬇️ CACHE';
+      }
+    }
+  }
+};
+
+window.exportUserProfile = function() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.location.href = '/api/user/profile/export';
+    return;
+  }
+  const jsonStr = JSON.stringify(UserProfileManager.profile, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'penumbra_user_profile.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+window.importUserProfileFromFile = function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object') throw new Error('Formato inválido');
+
+      UserProfileManager.profile = {
+        ...UserProfileManager.profile,
+        ...data,
+        settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+        category_overrides: { ...(data.category_overrides || {}) },
+        cached_media_registry: { ...(data.cached_media_registry || {}) }
+      };
+      if (Array.isArray(data.custom_clips)) {
+        UserProfileManager.profile.custom_clips = data.custom_clips;
+      }
+      UserProfileManager.save(true);
+      UserProfileManager.applyCategoryOverrides();
+      UserProfileManager.rehydrateCustomClips();
+      renderFolderPills();
+      renderMediaCards();
+      alert('✓ Perfil do usuário importado e restaurado com sucesso!');
+    } catch (err) {
+      alert(`Falha ao importar perfil: ${err.message}`);
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.openCacheProfileSettings = function() {
+  openSettingsModal();
+  setSettingsTab('profile');
+};
+
+window.refreshCacheStatus = async function() {
+  await UserProfileManager.init();
+  renderMediaCards();
+};
+
+window.toggleHoverPreview = function(enabled) {
+  UserProfileManager.setSetting('hover_preview_enabled', Boolean(enabled));
+};
+
+window.downloadAllPendingClips = async function() {
+  const unCached = allClips.filter(c => !UserProfileManager.isClipCached(c) && !c.is_generative);
+  if (unCached.length === 0) {
+    alert('Todos os clipes já estão baixados e cacheados localmente no seu computador!');
+    return;
+  }
+  const confirmDl = confirm(`Deseja iniciar o download de ${unCached.length} clipes para o cache local permanente?`);
+  if (!confirmDl) return;
+
+  for (const c of unCached) {
+    try {
+      await window.cacheMediaClip(c.id);
+    } catch (e) {}
+  }
+  alert('Processamento de download em lote concluído!');
+};
+
+function createMediaCardElement(clip) {
+  const card = document.createElement('div');
+  const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
+  const clipSource = getClipSource(clip);
+  card.className = `media-card ${isGen ? 'is-generative' : ''} source-${clipSource}`;
+  const thumbSrc = MediaProvider.getThumbUrl(clip);
+  const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
+  const projName = clip.project || '1.In';
+
+  let srcBadgeHtml = '';
+  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ CDN</span>';
+  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD</span>';
+  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">⬇️ OFFLINE</span>';
+  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">▶️ YT</span>';
+  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">📡 STREAM</span>';
+
+  // Cache Status Check
+  const cacheInfo = UserProfileManager.getCacheDetails(clip);
+  let cacheBadgeHtml = '';
+  if (cacheInfo.isCached) {
+    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">💾 LOCAL</span>`;
+  } else if (clipSource === 'cdn') {
+    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">☁️ NUVEM</span>`;
+  } else if (clipSource === 'youtube' || clipSource === 'stream') {
+    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">📡 STREAM</span>`;
+  }
+
+  const categoryName = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
+  const catClass = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL').replace(/\s+/g, '-');
+
+  const showCacheBtn = !cacheInfo.isCached && (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream');
+
+  card.innerHTML = `
+    <div class="media-card-thumb">
+      ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
+      ${srcBadgeHtml}
+      ${cacheBadgeHtml}
+      ${isGen 
+        ? `<span class="badge-generative">3D GENERATIVE</span>`
+        : `<span class="media-cat-badge ${catClass}" onclick="openCategorySelector('${clip.id}', event)" title="Clique para reatribuir categoria">${categoryName}</span>`
+      }
+    </div>
+    <div class="media-card-info">
+      <div class="media-card-title" title="${clip.filename}">
+        <span class="media-project-badge">${projName}</span>${clip.display_title || clip.filename}
+      </div>
+      <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
+      <div class="card-actions-row">
+        <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
+        <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
+        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
+        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  // ON-DEMAND HOVER VIDEO PREVIEW (Netflix / Steam / YouTube Standard)
+  let hoverTimeout = null;
+  let hoverVideoEl = null;
+
+  card.addEventListener('mouseenter', () => {
+    focusedClipId = clip.id;
+    const img = card.querySelector('.dynamic-preview-img');
+    if (img && img.dataset.anim) img.src = img.dataset.anim;
+
+    const hoverEnabled = UserProfileManager.getSetting('hover_preview_enabled', true);
+    if (!hoverEnabled || isGen) return;
+
+    const delayMs = UserProfileManager.getSetting('hover_preview_delay_ms', 280);
+    hoverTimeout = setTimeout(() => {
+      const videoUrl = MediaProvider.getMediaUrl(clip);
+      if (!videoUrl) return;
+
+      const thumbContainer = card.querySelector('.media-card-thumb');
+      if (!thumbContainer || thumbContainer.querySelector('.card-hover-video')) return;
+
+      hoverVideoEl = document.createElement('video');
+      hoverVideoEl.className = 'card-hover-video';
+      hoverVideoEl.muted = true;
+      hoverVideoEl.playsInline = true;
+      hoverVideoEl.loop = true;
+      hoverVideoEl.preload = 'metadata';
+      hoverVideoEl.src = videoUrl;
+
+      hoverVideoEl.oncanplay = () => {
+        if (hoverVideoEl) {
+          hoverVideoEl.play().catch(() => {});
+          hoverVideoEl.classList.add('is-active');
+        }
+      };
+
+      thumbContainer.appendChild(hoverVideoEl);
+    }, delayMs);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    const img = card.querySelector('.dynamic-preview-img');
+    if (img && img.dataset.static) img.src = img.dataset.static;
+
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      hoverTimeout = null;
+    }
+    if (hoverVideoEl) {
+      hoverVideoEl.pause();
+      hoverVideoEl.removeAttribute('src');
+      hoverVideoEl.load();
+      hoverVideoEl.remove();
+      hoverVideoEl = null;
+    }
+    const stray = card.querySelectorAll('.card-hover-video');
+    stray.forEach(v => {
+      v.pause();
+      v.removeAttribute('src');
+      v.load();
+      v.remove();
+    });
+  });
+
+  const btnA = card.querySelector('.btn-bus-a');
+  if (btnA) {
+    btnA.addEventListener('click', (e) => {
+      e.stopPropagation();
+      routeClipToBus(clip.id, 'A');
+    });
+  }
+
+  const btnB = card.querySelector('.btn-bus-b');
+  if (btnB) {
+    btnB.addEventListener('click', (e) => {
+      e.stopPropagation();
+      routeClipToBus(clip.id, 'B');
+    });
+  }
+
+  const btnL4 = card.querySelector('[data-layer="layer4"]');
+  if (btnL4) {
+    btnL4.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appState.layers.layer4.clipId = clip.id;
+      appState.layers.layer4.name = clip.filename;
+      sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
+      updateUI();
+      syncVideoSources();
+    });
+  }
+
+  card.addEventListener('click', () => {
+    routeClipToBus(clip.id, 'B');
+  });
+
+  return card;
+}
+
+// ============================================================================
+// UNIVERSAL CREATIVE ASSET LIBRARY (VIDEOS, MATTES, FX & PRESETS)
+// ============================================================================
+let activeLibraryAssetType = 'all'; // 'all' | 'clips' | 'mattes' | 'fx' | 'presets'
+
+const FX_LIBRARY_CATALOG = {
+  pixel_stretch: { title: 'Pixel Stretch (Satori)', summary: 'Alongamento subpixel não-linear por luminância e canais RGBA.', icon: '🌌' },
+  pixel_sorter: { title: 'Pixel Sorter 3 (Wunkolo)', summary: 'Ordenação de pixels por threshold de brilho sincronizada ao beat.', icon: '📶' },
+  bad_tv: { title: 'Bad TV (Motion Boutique)', summary: 'Distorção de tubo catódico analógico, scanlines CRT e ruído VHS.', icon: '📺' },
+  rxxr: { title: 'Rxxr2 (Defcon)', summary: 'Glitch cibernético avançado, deslocamento RGB e estilhaçamento de blocos.', icon: '⚡' },
+  modulation: { title: 'Modulation (Zaebects)', summary: 'Distorção analógica baseada em ondas oscilatórias e offset CMYK.', icon: '〰️' }
+};
+
+const PRESETS_LIBRARY_CATALOG = {
+  ambient_drift: { title: 'Ambient Drift', desc: 'Base hipnótica profunda, transições longas e saturação controlada.', icon: '🌙', bpm: '118 BPM' },
+  pixel_melt_drop: { title: 'Pixel Melt Drop', desc: 'Clímax agressivo com disparo automático no drop e modulação L1.', icon: '🔥', bpm: '132 BPM' },
+  cyber_matrix: { title: 'Cyber Matrix RXXR', desc: 'Estética industrial de alta frequência com glitch estocástico.', icon: '👾', bpm: '130 BPM' },
+  satori_stretch: { title: 'Satori Stretch', desc: 'Distorção cósmica subpixel sincronizada com acentos rítmicos.', icon: '✨', bpm: '126 BPM' },
+  zaebects_cmyk: { title: 'Zaebects CMYK', desc: 'Deslocamento cromático analógico e texturas retrô de fita.', icon: '🎞️', bpm: '124 BPM' },
+  bypass_clean: { title: 'Bypass Clean', desc: 'Sinal 100% puro para exibição direta das mídias originais.', icon: '💎', bpm: 'N/A' }
+};
+
+function selectLibraryAssetType(type) {
+  activeLibraryAssetType = type;
+  document.querySelectorAll('.lib-type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.assetType === type);
+  });
+
+  const sourceStrip = document.querySelector('.pool-source-strip');
+  const catStrip = document.querySelector('.pool-category-strip');
+  const folderStrip = document.querySelector('.pool-folder-strip');
+
+  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_active_asset_type', type);
+  }
+
+  renderMediaCards();
+}
+window.selectLibraryAssetType = selectLibraryAssetType;
+
+function createMatteCardForLibrary(matte) {
+  const card = document.createElement('div');
+  card.className = 'library-card-matte';
+  const targetL = appState.matte_target_layer || 'layer3';
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}">
+      <span class="lib-badge-type lib-badge-matte">🎭 MATTE</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${matte.name}</div>
+      <div class="library-card-desc">${matte.description || matte.category}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer4', '${matte.path}')" title="Aplicar no Layer 4 (Accent)">→ L4</button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    onLayerMatteChange(targetL, matte.path);
+  });
+
+  return card;
+}
+
+function createFxCardForLibrary(pluginId, pluginInfo) {
+  const card = document.createElement('div');
+  card.className = 'library-card-fx';
+  const isAct = Boolean(appState.fx?.enabled && appState.fx?.activeEffect === pluginId);
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <div class="library-card-fx-preview">${pluginInfo.icon || '⚡'}</div>
+      <span class="lib-badge-type lib-badge-fx">⚡ FX ENGINE</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${pluginInfo.title}</div>
+      <div class="library-card-desc">${pluginInfo.summary}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn ${isAct ? 'btn-primary' : 'btn-outline'} btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); if(!appState.fx.enabled) toggleFxMaster();">
+        ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
+      </button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_a');">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_b');">→ L3</button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    selectFxPlugin(pluginId);
+    switchTab('tab-fx');
+  });
+
+  return card;
+}
+
+function createPresetCardForLibrary(presetId, presetInfo) {
+  const card = document.createElement('div');
+  card.className = 'library-card-preset';
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <div class="library-card-preset-preview">
+        <span style="font-size:24px;">${presetInfo.icon || '🎛️'}</span>
+        <span style="font-family:var(--font-mono); font-size:9px; color:#fff; font-weight:700;">${presetInfo.bpm || 'AUTO BPM'}</span>
+      </div>
+      <span class="lib-badge-type lib-badge-preset">🎛️ PRESET</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${presetInfo.title}</div>
+      <div class="library-card-desc">${presetInfo.desc}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn btn-studio-primary btn-xs" style="width:100%;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
+        CARREGAR PRESET
+      </button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    applyMacroPreset(presetId, 0, true);
+  });
+
+  return card;
+}
+
 function renderMediaCards() {
   const container = document.getElementById('media-cards-container');
   if (!container) return;
   container.innerHTML = '';
 
+  updateCategoryAndSourceBadges();
+
   const searchVal = (document.getElementById('input-media-search')?.value || '').toLowerCase();
 
+  // Update counts on badges
+  const badgeClips = document.getElementById('lib-count-clips');
+  if (badgeClips) badgeClips.textContent = allClips.length;
+  const badgeMattes = document.getElementById('lib-count-mattes');
+  if (badgeMattes) badgeMattes.textContent = allMattes.length;
+  const badgeFx = document.getElementById('lib-count-fx');
+  if (badgeFx) badgeFx.textContent = Object.keys(FX_LIBRARY_CATALOG).length;
+  const badgePresets = document.getElementById('lib-count-presets');
+  if (badgePresets) badgePresets.textContent = Object.keys(PRESETS_LIBRARY_CATALOG).length;
+  const badgeAll = document.getElementById('lib-count-all');
+  if (badgeAll) badgeAll.textContent = allClips.length + allMattes.length + 5 + 6;
+
+  // 1. MATTES VIEW
+  if (activeLibraryAssetType === 'mattes') {
+    const filteredMattes = allMattes.filter(m => {
+      return !searchVal || m.name.toLowerCase().includes(searchVal) || m.description.toLowerCase().includes(searchVal) || m.category.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${filteredMattes.length} / ${allMattes.length} MATTES`;
+
+    filteredMattes.forEach(m => {
+      container.appendChild(createMatteCardForLibrary(m));
+    });
+    return;
+  }
+
+  // 2. FX PLUGINS VIEW
+  if (activeLibraryAssetType === 'fx') {
+    const plugins = Object.entries(FX_LIBRARY_CATALOG).filter(([id, info]) => {
+      return !searchVal || id.includes(searchVal) || info.title.toLowerCase().includes(searchVal) || info.summary.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${plugins.length} / ${Object.keys(FX_LIBRARY_CATALOG).length} PLUGINS FX`;
+
+    plugins.forEach(([id, info]) => {
+      container.appendChild(createFxCardForLibrary(id, info));
+    });
+    return;
+  }
+
+  // 3. PRESETS VIEW
+  if (activeLibraryAssetType === 'presets') {
+    const presets = Object.entries(PRESETS_LIBRARY_CATALOG).filter(([id, info]) => {
+      return !searchVal || id.includes(searchVal) || info.title.toLowerCase().includes(searchVal) || info.desc.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${presets.length} / ${Object.keys(PRESETS_LIBRARY_CATALOG).length} PRESETS`;
+
+    presets.forEach(([id, info]) => {
+      container.appendChild(createPresetCardForLibrary(id, info));
+    });
+    return;
+  }
+
+  // 4. CLIPS & ALL VIEW
   const filtered = allClips.filter(c => {
     const projText = (c.project || '').toLowerCase();
     const folderText = (c.project_folder || '').toLowerCase();
     const nameText = (c.filename || '').toLowerCase();
-    const matchSearch = !searchVal || nameText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
+    const titleText = (c.display_title || '').toLowerCase();
+    const matchSearch = !searchVal || nameText.includes(searchVal) || titleText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
     if (!matchSearch) return false;
 
+    // Filter by Project / Folder
     if (activeProjectFilter !== 'ALL' && c.project !== activeProjectFilter) return false;
 
-    if (activeCategoryFilter === 'ALL') return true;
-    if (activeCategoryFilter === 'CHROMA') return c.has_chroma;
-    return c.category === activeCategoryFilter;
+    // Filter by Source
+    if (activeSourceFilter !== 'ALL') {
+      const src = getClipSource(c);
+      if (activeSourceFilter === 'cdn' && src !== 'cdn') return false;
+      if (activeSourceFilter === 'local' && (src !== 'local' && src !== 'downloaded')) return false;
+      if (activeSourceFilter === 'stream' && (src !== 'stream' && src !== 'youtube')) return false;
+    }
+
+    // Filter by Category
+    if (activeCategoryFilter !== 'ALL') {
+      if (activeCategoryFilter === 'CHROMA') return Boolean(c.has_chroma || c.category === 'CHROMA');
+      return c.category === activeCategoryFilter;
+    }
+
+    return true;
   });
 
   const searchCountLbl = document.getElementById('lbl-search-count');
@@ -12919,84 +15836,76 @@ function renderMediaCards() {
     searchCountLbl.textContent = `${filtered.length} / ${allClips.length} CLIPES`;
   }
 
-  filtered.forEach(clip => {
-    const card = document.createElement('div');
-    const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
-    card.className = `media-card ${isGen ? 'is-generative' : ''}`;
-    const thumbSrc = MediaProvider.getThumbUrl(clip);
-    const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
-    const projName = clip.project || '1.In';
+  // Grouped by Category View Mode
+  if (isGroupedByCategory && activeCategoryFilter === 'ALL') {
+    const predefinedOrder = [
+      'MINIMAL',
+      'ABSTRACT',
+      'FIGURA',
+      'DENSE',
+      'CHROMA',
+      'STREAMS & YOUTUBE',
+      'GENERATIVE'
+    ];
 
-    card.innerHTML = `
-      <div class="media-card-thumb">
-        ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
-        ${isGen 
-          ? `<span class="badge-generative">3D GENERATIVE</span>`
-          : `<span class="media-cat-badge ${clip.has_chroma ? 'CHROMA' : clip.category}">${clip.has_chroma ? 'CHROMA' : clip.category}</span>`
-        }
-      </div>
-      <div class="media-card-info">
-        <div class="media-card-title" title="${clip.filename}">
-          <span class="media-project-badge">${projName}</span>${clip.filename}
+    const grouped = {};
+    predefinedOrder.forEach(cat => { grouped[cat] = []; });
+
+    filtered.forEach(clip => {
+      let cat = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(clip);
+    });
+
+    Object.keys(grouped).forEach(cat => {
+      const list = grouped[cat];
+      if (list.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = 'category-group-section';
+
+      const catHeader = document.createElement('div');
+      const catCssKey = cat.replace(/[^a-zA-Z]/g, '').toUpperCase();
+      catHeader.className = `category-section-header CAT-${catCssKey}`;
+      catHeader.innerHTML = `
+        <div class="cat-header-left">
+          <span class="cat-pill-indicator cat-ind-${cat.toLowerCase().split(' ')[0]}"></span>
+          <span class="cat-header-title">${cat}</span>
+          <span class="cat-header-count">${list.length} CLIPES</span>
         </div>
-        <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
-        <div class="card-actions-row">
-          <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
-          <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-          <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
-        </div>
-      </div>
-    `;
+      `;
+      section.appendChild(catHeader);
 
-    card.addEventListener('mouseenter', () => {
-      focusedClipId = clip.id;
-      const img = card.querySelector('.dynamic-preview-img');
-      if (img && img.dataset.anim) {
-        img.src = img.dataset.anim;
-      }
-    });
-
-    card.addEventListener('mouseleave', () => {
-      const img = card.querySelector('.dynamic-preview-img');
-      if (img && img.dataset.static) {
-        img.src = img.dataset.static;
-      }
-    });
-
-    const btnA = card.querySelector('.btn-bus-a');
-    if (btnA) {
-      btnA.addEventListener('click', (e) => {
-        e.stopPropagation();
-        routeClipToBus(clip.id, 'A');
+      const subgrid = document.createElement('div');
+      subgrid.className = 'category-subgrid';
+      list.forEach(clip => {
+        subgrid.appendChild(createMediaCardElement(clip));
       });
-    }
+      section.appendChild(subgrid);
 
-    const btnB = card.querySelector('.btn-bus-b');
-    if (btnB) {
-      btnB.addEventListener('click', (e) => {
-        e.stopPropagation();
-        routeClipToBus(clip.id, 'B');
-      });
-    }
-
-    const btnL4 = card.querySelector('[data-layer="layer4"]');
-    if (btnL4) {
-      btnL4.addEventListener('click', (e) => {
-        e.stopPropagation();
-        appState.layers.layer4.clipId = clip.id;
-        appState.layers.layer4.name = clip.filename;
-        sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
-        updateUI();
-        syncVideoSources();
-      });
-    }
-
-    card.addEventListener('click', () => {
-      routeClipToBus(clip.id, 'B');
+      container.appendChild(section);
     });
+  } else {
+    // Flat Grid View Mode
+    filtered.forEach(clip => {
+      container.appendChild(createMediaCardElement(clip));
+    });
+  }
 
-    container.appendChild(card);
-  });
+  // If in 'all' mode and search query matches mattes or fx, also append quick sections
+  if (activeLibraryAssetType === 'all' && searchVal) {
+    const matchingMattes = allMattes.filter(m => m.name.toLowerCase().includes(searchVal) || m.description.toLowerCase().includes(searchVal)).slice(0, 4);
+    if (matchingMattes.length > 0) {
+      const matteSec = document.createElement('div');
+      matteSec.className = 'category-group-section';
+      matteSec.innerHTML = `<div class="category-section-header" style="color:#ff65a5;"><span>🎭 MÁSCARAS MATTE RELACIONADAS (${matchingMattes.length})</span></div>`;
+      const subgrid = document.createElement('div');
+      subgrid.className = 'category-subgrid';
+      matchingMattes.forEach(m => subgrid.appendChild(createMatteCardForLibrary(m)));
+      matteSec.appendChild(subgrid);
+      container.appendChild(matteSec);
+    }
+  }
 }
 
 function setAudioSource(mode, deviceId = null) {
@@ -13143,15 +16052,96 @@ function setupEvents() {
   initKeyboardShortcuts();
   initRichTooltips();
 
-  // Filter Pills (Media Pool Visual Categories)
-  document.querySelectorAll('.filter-pills:not(.folder-pills) .pill-btn').forEach(pill => {
+  // 1. Source Filter Pills (ALL / CDN / LOCAL / STREAM)
+  document.querySelectorAll('#source-pills-container .pill-btn').forEach(pill => {
     pill.addEventListener('click', () => {
-      document.querySelectorAll('.filter-pills:not(.folder-pills) .pill-btn').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('#source-pills-container .pill-btn').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeSourceFilter = pill.dataset.source;
+      renderMediaCards();
+    });
+  });
+
+  // 2. Category Filter Pills (ALL / MINIMAL / ABSTRACT / etc.)
+  document.querySelectorAll('#category-pills-container .pill-btn').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#category-pills-container .pill-btn').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       activeCategoryFilter = pill.dataset.cat;
       renderMediaCards();
     });
   });
+
+  // 3. Toggle Grouped by Category View Mode
+  const btnToggleGroup = document.getElementById('btn-toggle-group-categories');
+  if (btnToggleGroup) {
+    btnToggleGroup.addEventListener('click', () => {
+      isGroupedByCategory = !isGroupedByCategory;
+      btnToggleGroup.classList.toggle('active', isGroupedByCategory);
+      btnToggleGroup.innerHTML = isGroupedByCategory ? '<span>▤ SEÇÕES DE CATEGORIA</span>' : '<span>▦ GRID CONTÍNUO</span>';
+      renderMediaCards();
+    });
+  }
+
+  // 4. Retractable Stream & Downloader Drawer Controls
+  const btnToggleStream = document.getElementById('btn-toggle-stream-panel');
+  const streamDrawer = document.getElementById('nexus-stream-drawer');
+  const btnCloseStream = document.getElementById('btn-close-stream-drawer');
+
+  if (btnToggleStream && streamDrawer) {
+    btnToggleStream.addEventListener('click', () => {
+      const isVisible = streamDrawer.style.display !== 'none';
+      streamDrawer.style.display = isVisible ? 'none' : 'block';
+      btnToggleStream.classList.toggle('active', !isVisible);
+      if (!isVisible) {
+        const inp = document.getElementById('input-pool-stream-url');
+        if (inp) inp.focus();
+      }
+    });
+  }
+
+  if (btnCloseStream && streamDrawer) {
+    btnCloseStream.addEventListener('click', () => {
+      streamDrawer.style.display = 'none';
+      if (btnToggleStream) btnToggleStream.classList.remove('active');
+    });
+  }
+
+  // 5. Ingest Stream Actions inside Media Pool
+  const btnPoolDl = document.getElementById('btn-pool-action-download');
+  const btnPoolStream = document.getElementById('btn-pool-action-stream');
+  const inputPoolUrl = document.getElementById('input-pool-stream-url');
+  const selectPoolCat = document.getElementById('select-stream-target-cat');
+  const inputPoolTitle = document.getElementById('input-pool-stream-title');
+
+  if (btnPoolDl) {
+    btnPoolDl.addEventListener('click', () => {
+      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
+      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+      ingestStreamMedia(url, cat, title, 'download');
+    });
+  }
+
+  if (btnPoolStream) {
+    btnPoolStream.addEventListener('click', () => {
+      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
+      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+      ingestStreamMedia(url, cat, title, 'stream');
+    });
+  }
+
+  if (inputPoolUrl) {
+    inputPoolUrl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const url = inputPoolUrl.value.trim();
+        const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+        const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+        ingestStreamMedia(url, cat, title, 'stream');
+      }
+    });
+  }
 
   // Multi-Source Audio Input Selector Pills (TEST / MIC / P2 / USB)
   document.querySelectorAll('.src-pill').forEach(btn => {
@@ -13922,33 +16912,27 @@ function bootstrapApp() {
       });
     }
 
-    // 4. YOUTUBE / STREAM INGESTION
-    const btnYT = document.getElementById('btn-nexus-yt-connect');
+    // 4. YOUTUBE / STREAM INGESTION & DOWNLOADER IN STUDIO LAUNCHER
+    const btnYTStream = document.getElementById('btn-nexus-yt-connect');
+    const btnYTDl = document.getElementById('btn-nexus-yt-download');
     const inputYT = document.getElementById('input-nexus-yt');
-    const handleYTIngest = () => {
+    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+
+    const handleLauncherStream = (mode) => {
       const url = (inputYT ? inputYT.value : '').trim();
       if (!url) return;
-      console.log('[Media Nexus] YouTube/Stream Ingest:', url);
-      const streamClip = {
-        id: `stream_${Date.now()}`,
-        filename: url,
-        project: 'STREAM FEED',
-        category: 'YOUTUBE / STREAM',
-        relative_path: url,
-        is_stream: true,
-        thumbnail: '',
-        duration: 9999
-      };
-      allClips.unshift(streamClip);
-      renderMediaGrid();
+      const cat = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
+      console.log(`[Studio Launcher] YouTube/Stream Ingest (${mode}):`, url);
+      ingestStreamMedia(url, cat, '', mode);
       updateSourceUI('stream');
       closeStudioLauncher();
     };
 
-    if (btnYT) btnYT.addEventListener('click', handleYTIngest);
+    if (btnYTStream) btnYTStream.addEventListener('click', () => handleLauncherStream('stream'));
+    if (btnYTDl) btnYTDl.addEventListener('click', () => handleLauncherStream('download'));
     if (inputYT) {
       inputYT.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleYTIngest();
+        if (e.key === 'Enter') handleLauncherStream('stream');
       });
     }
 
@@ -13985,7 +16969,8 @@ function bootstrapApp() {
         const newClips = await MediaProvider.scanExtraDir(handle);
         if (newClips.length > 0) {
           allClips.push(...newClips);
-          renderMediaGrid();
+          renderFolderPills();
+          renderMediaCards();
           updateSourceUI('local');
           console.log(`[Media Nexus] Adicionado ${newClips.length} novos clipes locais.`);
         }
@@ -13999,6 +16984,9 @@ function bootstrapApp() {
 
   setupEvents();
   setupProFaders();
+  if (typeof initWorkspaceSplitter === 'function') initWorkspaceSplitter();
+  if (typeof initDockViewModes === 'function') initDockViewModes();
+  if (typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
@@ -14335,12 +17323,20 @@ function initKeyboardShortcuts() {
       return;
     }
 
-    // Number keys 1-5: Switch Dock Modules
-    if (key === '1') { e.preventDefault(); switchTab('tab-mediapool'); return; }
-    if (key === '2') { e.preventDefault(); switchTab('tab-layers'); return; }
-    if (key === '3') { e.preventDefault(); switchTab('tab-mattes'); return; }
-    if (key === '4') { e.preventDefault(); switchTab('tab-tonal'); return; }
-    if (key === '5') { e.preventDefault(); switchTab('tab-queue'); return; }
+    // TAB: Alternar entre Módulos de Trabalho e Timeline Pro
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      toggleDockViewMode();
+      return;
+    }
+
+    // Number keys 1-6: Switch Dock Modules
+    if (key === '1') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-mediapool'); return; }
+    if (key === '2') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-layers'); return; }
+    if (key === '3') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-mattes'); return; }
+    if (key === '4') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-tonal'); return; }
+    if (key === '5') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-queue'); return; }
+    if (key === '6') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-fx'); return; }
 
     // Route focused or selected clip: A for Program, B for Preview
     if (key === 'a' || key === 'A') {
@@ -14647,6 +17643,192 @@ setTimeout(() => {
     }
   });
 }, 500);
+
+// ============================================================================
+// WORKSPACE RESIZE SPLITTER (DUAL MONITORS vs PRO DOCK)
+// ============================================================================
+function initWorkspaceSplitter() {
+  const splitter = document.getElementById('workspace-splitter');
+  const topZone = document.querySelector('.top-zone');
+  if (!splitter || !topZone) return;
+
+  // Restore saved height from UserProfileManager
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedH = UserProfileManager.getSetting('workspace_top_height', null);
+    if (savedH && typeof savedH === 'number' && savedH >= 160 && savedH <= window.innerHeight * 0.75) {
+      topZone.style.height = `${savedH}px`;
+    }
+  }
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  const onPointerDown = (e) => {
+    isDragging = true;
+    startY = e.clientY;
+    startHeight = topZone.getBoundingClientRect().height;
+    splitter.classList.add('is-dragging');
+    document.body.classList.add('resizing-workspace-active');
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    if (!isDragging) return;
+    const deltaY = e.clientY - startY;
+    const minH = 160;
+    const maxH = Math.max(minH, window.innerHeight - 180);
+    const newHeight = Math.min(Math.max(startHeight + deltaY, minH), maxH);
+    topZone.style.height = `${newHeight}px`;
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    splitter.classList.remove('is-dragging');
+    document.body.classList.remove('resizing-workspace-active');
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+
+    const finalH = Math.round(topZone.getBoundingClientRect().height);
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('workspace_top_height', finalH);
+    }
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  };
+
+  splitter.addEventListener('pointerdown', onPointerDown);
+
+  // Double-click resets default 32% viewport height
+  splitter.addEventListener('dblclick', () => {
+    const defH = Math.round(window.innerHeight * 0.32);
+    topZone.style.height = `${defH}px`;
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('workspace_top_height', defH);
+    }
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  });
+}
+window.initWorkspaceSplitter = initWorkspaceSplitter;
+
+// ============================================================================
+// DOCK VIEW MODES: MÓDULOS & ASSETS vs PRO TIMELINE (ZERO SPACE COMPETITION)
+// ============================================================================
+let currentDockViewMode = 'modules'; // 'modules' | 'timeline'
+
+function setDockViewMode(mode) {
+  currentDockViewMode = mode;
+  const btnModules = document.getElementById('btn-mode-modules');
+  const btnTimeline = document.getElementById('btn-mode-timeline');
+  const viewModules = document.getElementById('dock-modules-view');
+  const viewTimeline = document.getElementById('dock-timeline-view');
+  const tabsBar = document.getElementById('dock-tabs-bar');
+  const lblQuick = document.getElementById('lbl-quick-switch-text');
+
+  if (mode === 'timeline') {
+    if (btnModules) btnModules.classList.remove('active');
+    if (btnTimeline) btnTimeline.classList.add('active');
+    if (viewModules) viewModules.style.display = 'none';
+    if (viewTimeline) viewTimeline.style.display = 'flex';
+    if (tabsBar) tabsBar.style.display = 'none';
+    if (lblQuick) lblQuick.textContent = '▤ VER MÓDULOS';
+
+    // Trigger canvas render to match full expanded height
+    requestAnimationFrame(() => {
+      if (typeof renderQueueCards === 'function') renderQueueCards();
+    });
+  } else {
+    if (btnModules) btnModules.classList.add('active');
+    if (btnTimeline) btnTimeline.classList.remove('active');
+    if (viewModules) viewModules.style.display = 'flex';
+    if (viewTimeline) viewTimeline.style.display = 'none';
+    if (tabsBar) tabsBar.style.display = 'flex';
+    if (lblQuick) lblQuick.textContent = '⏱️ TIMELINE PRO';
+  }
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('dock_view_mode', mode);
+  }
+}
+window.setDockViewMode = setDockViewMode;
+
+function toggleDockViewMode() {
+  setDockViewMode(currentDockViewMode === 'timeline' ? 'modules' : 'timeline');
+}
+window.toggleDockViewMode = toggleDockViewMode;
+
+function initDockViewModes() {
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedMode = UserProfileManager.getSetting('dock_view_mode', 'modules');
+    if (savedMode === 'timeline') {
+      setDockViewMode('timeline');
+    }
+    const savedAssetType = UserProfileManager.getSetting('library_active_asset_type', 'all');
+    if (savedAssetType && typeof selectLibraryAssetType === 'function') {
+      selectLibraryAssetType(savedAssetType);
+    }
+  }
+}
+window.initDockViewModes = initDockViewModes;
+
+function cueNextFromQueue() {
+  if (queueList && queueList.length > 0) {
+    const nextItem = queueList[0];
+    if (nextItem && nextItem.id) {
+      routeClipToBus(nextItem.id, 'B');
+    }
+  }
+}
+window.cueNextFromQueue = cueNextFromQueue;
+
+// ============================================================================
+// PRO PREFERENCES SEARCH & FILTERING ENGINE
+// ============================================================================
+function filterPreferencesSearch(query) {
+  const q = (query || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('.cfg-prop-row');
+  let firstMatchTab = null;
+
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const match = !q || text.includes(q);
+    row.style.display = match ? 'flex' : 'none';
+
+    if (match && !firstMatchTab && q) {
+      const panel = row.closest('.settings-tab-panel');
+      if (panel) {
+        firstMatchTab = panel.id.replace('settings-panel-', '');
+      }
+    }
+  });
+
+  // If search term entered, automatically navigate to first tab with matches if active has 0
+  if (q && firstMatchTab) {
+    const activePanel = document.querySelector('.settings-tab-panel.active');
+    const visibleCount = activePanel ? Array.from(activePanel.querySelectorAll('.cfg-prop-row')).filter(r => r.style.display !== 'none').length : 0;
+    if (visibleCount === 0) {
+      setSettingsTab(firstMatchTab);
+    }
+  }
+}
+window.filterPreferencesSearch = filterPreferencesSearch;
+
+function clearPreferencesSearch() {
+  const input = document.getElementById('cfg-search-input');
+  if (input) input.value = '';
+  filterPreferencesSearch('');
+}
+window.clearPreferencesSearch = clearPreferencesSearch;
+
 
 </script>
   </body>

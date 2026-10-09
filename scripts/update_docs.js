@@ -128,6 +128,17 @@ function updateState() {
 - **FPS Padrão:** 30 FPS · **Rede/OSC:** DESLIGADO por padrão
 - **PIN de Acesso Cloud:** 2026
 
+## Nexus Stream Engine & Media Pool Smart Bins
+- **Ingestão Dual-Mode:**
+  - **📡 Stream Ao Vivo:** Resolução instantânea de URLs externas/YouTube com proxy CORS HTTP 206 para amostragem no canvas a 60 FPS sem SecurityError.
+  - **⬇️ Media Downloader:** Download assíncrono em background via \`yt-dlp\`, extração de frames-chave para thumbnail via \`ffmpeg\`, inspeção de metadados via \`ffprobe\` e registro automático no manifesto.
+- **Organização por Categorias & Smart Bins:**
+  - Bins estéticos dedicados: \`MINIMAL\`, \`ABSTRACT\`, \`FIGURA\`, \`DENSE\`, \`CHROMA\`, \`STREAMS & YOUTUBE\`, \`GENERATIVE\`.
+  - Agrupamento visual colapsável por seções de categoria ou modo grade contínua.
+  - Filtro cruzado por Origem (\`TODAS\`, \`☁️ BUNNY CDN\`, \`📁 LOCAL SSD\`, \`▶️ YOUTUBE & STREAMS\`).
+  - Reatribuição de categorias in-place com persistência imediata no manifesto do disco e no storage do navegador.
+  - Botão 1-click para download direto a partir de qualquer card de stream ao vivo.
+
 ## Conexões & Roteamento
 - **Entrada de Áudio:** RCA mesa DJ → Adaptador P2 blindado → MacBook Built-in Audio / UMC22
 - **Saída de Vídeo:** MacBook Felipe → NDI (Gigabit Ethernet / Wi-Fi) → MacBook Bê (MadMapper)

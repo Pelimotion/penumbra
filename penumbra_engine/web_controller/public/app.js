@@ -252,6 +252,19 @@ const MediaProvider = {
 
   initCDN: async () => {
     MediaProvider.mode = 'cdn';
+    // 0. If running on localhost, prefer controller server manifest to include downloads and local edits
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const resLocal = await fetch('/api/manifest');
+        if (resLocal.ok) {
+          const localClips = await resLocal.json();
+          if (Array.isArray(localClips) && localClips.length > 0) {
+            console.log(`[MediaProvider] Loaded manifest from local controller (${localClips.length} clips)`);
+            return localClips;
+          }
+        }
+      } catch (e) {}
+    }
     // 1. Try Bunny Edge CDN
     try {
       const res = await fetch('https://gigantera-penumbra.b-cdn.net/media_manifest.json');
@@ -281,31 +294,82 @@ const MediaProvider = {
     return [];
   },
 
-  getMediaUrl: (relativePath) => {
-    if (!relativePath) return '';
-    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) return relativePath;
+  getMediaUrl: (clipOrPath) => {
+    if (!clipOrPath) return '';
+    const clip = typeof clipOrPath === 'object' ? clipOrPath : allClips.find(c => c.relative_path === clipOrPath || c.filename === clipOrPath || c.id === clipOrPath);
+    const relPath = typeof clipOrPath === 'string' ? clipOrPath : (clip ? (clip.relative_path || clip.filename) : '');
+    
+    // 0. Check local cache registry (Zero-waste disk playback)
+    if (clip && typeof UserProfileManager !== 'undefined') {
+      const cacheInfo = UserProfileManager.getCacheDetails(clip);
+      if (cacheInfo.isCached && cacheInfo.local_path) {
+        const clean = cacheInfo.local_path.startsWith('/') ? cacheInfo.local_path : `/${cacheInfo.local_path}`;
+        return clean;
+      }
+    }
+
+    // 1. Direct stream url if resolved
+    if (clip && clip.stream_url) {
+      if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !clip.stream_url.includes('/api/stream/proxy')) {
+        return `/api/stream/proxy?url=${encodeURIComponent(clip.stream_url)}`;
+      }
+      return clip.stream_url;
+    }
+
+    // 2. Direct external HTTP URL
+    if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
+      if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
+        return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
+      }
+      return relPath;
+    }
+
+    // 3. Local downloaded files (media_pool/downloads)
+    if (relPath.startsWith('downloads/') || (clip && clip.is_downloaded)) {
+      const cleanDown = relPath.startsWith('/') ? relPath : `/${relPath}`;
+      return cleanDown;
+    }
+
+    // 4. Standalone File System Access API
     if (MediaProvider.mode === 'local') {
-      const file = MediaProvider.localFilesMap.get(relativePath);
+      const file = MediaProvider.localFilesMap.get(relPath);
       return file ? URL.createObjectURL(file) : '';
     }
+
+    // 5. Bunny Edge CDN
     if (MediaProvider.mode === 'cdn') {
-      const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
       return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
     }
+
+    // 6. LAN / Origin fallback
     if (MediaProvider.mode === 'lan') {
-      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relativePath)}`);
+      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relPath)}`);
     }
-    return relativePath;
+
+    return relPath;
   },
 
   getThumbUrl: (clip) => {
-    if (!clip || !clip.thumbnail) return '';
-    if (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://')) return clip.thumbnail;
-    if (MediaProvider.mode === 'local') {
+    if (!clip) return '';
+    if (clip.thumbnail && (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://'))) {
+      return clip.thumbnail;
+    }
+    // YouTube automated fallback thumbnail
+    const ytId = clip.youtube_id || extractYouTubeId(clip.filename) || extractYouTubeId(clip.relative_path);
+    if (ytId) {
+      return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+    if (!clip.thumbnail) return '';
+    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) {
+      const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
+      return `/thumbnails/${cleanThumb}`;
+    }
+    if (MediaProvider.mode === 'local' && !clip.is_downloaded) {
       return ''; 
     }
     const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-    if (MediaProvider.mode === 'cdn') {
+    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) {
       return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
     }
     return HARS.resolveUrl(`/thumbnails/${cleanThumb}`);
@@ -480,8 +544,20 @@ let appState = {
 };
 window.appState = appState;
 
+function extractYouTubeId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/);
+  return match ? match[1] : null;
+}
+function isYouTubeUrl(url) {
+  return Boolean(extractYouTubeId(url));
+}
+
 let allClips = [];
 let activeCategoryFilter = 'ALL';
+let activeSourceFilter = 'ALL';
+let isGroupedByCategory = true;
+let activeDownloadJobs = new Map();
 let allMattes = [];
 let activeMatteCategoryFilter = 'ALL';
 let activeSelectedMatte = null;
@@ -725,8 +801,81 @@ function initWebSocket() {
         updateAudioSourceUI(msg.data);
       } else if (msg.type === 'manifest_updated') {
         allClips = msg.data;
+        loadCustomClipsFromStorage();
         renderFolderPills();
         renderMediaCards();
+      } else if (msg.type === 'download_progress') {
+        const job = msg.job;
+        if (job) {
+          activeDownloadJobs.set(job.id, job);
+          const pWrap = document.getElementById('nsd-progress-wrap');
+          const pStatus = document.getElementById('nsd-progress-status');
+          const pMetrics = document.getElementById('nsd-progress-metrics');
+          const pBar = document.getElementById('nsd-progress-bar');
+          if (pWrap) pWrap.style.display = 'block';
+          if (pStatus) pStatus.textContent = `BAIXANDO: ${job.title || 'MÍDIA'}...`;
+          if (pMetrics) pMetrics.textContent = `${job.progress}% · ${job.speed || ''} · ETA ${job.eta || ''}`;
+          if (pBar) pBar.style.width = `${job.progress}%`;
+        }
+      } else if (msg.type === 'download_complete') {
+        const job = msg.job;
+        const newClip = msg.clip;
+        if (job) activeDownloadJobs.delete(job.id);
+        const pStatus = document.getElementById('nsd-progress-status');
+        const pBar = document.getElementById('nsd-progress-bar');
+        if (pStatus) pStatus.textContent = `DOWNLOAD CONCLUÍDO: ${newClip ? newClip.filename : 'OK'}`;
+        if (pBar) pBar.style.width = '100%';
+        setTimeout(() => {
+          const pWrap = document.getElementById('nsd-progress-wrap');
+          if (pWrap) pWrap.style.display = 'none';
+        }, 3000);
+        if (newClip && !allClips.some(c => c.id === newClip.id)) {
+          allClips.unshift(newClip);
+          renderFolderPills();
+          renderMediaCards();
+        }
+      } else if (msg.type === 'download_error') {
+        const pStatus = document.getElementById('nsd-progress-status');
+        if (pStatus) pStatus.textContent = `ERRO NO DOWNLOAD: ${msg.job?.error || 'Falha'}`;
+      } else if (msg.type === 'clip_updated') {
+        const updated = msg.clip;
+        if (updated) {
+          const idx = allClips.findIndex(c => c.id === updated.id);
+          if (idx !== -1) allClips[idx] = { ...allClips[idx], ...updated };
+          renderMediaCards();
+        }
+      } else if (msg.type === 'user_profile_updated') {
+        if (msg.profile && typeof UserProfileManager !== 'undefined') {
+          UserProfileManager.profile = {
+            ...UserProfileManager.profile,
+            ...msg.profile,
+            settings: { ...UserProfileManager.profile.settings, ...(msg.profile.settings || {}) },
+            category_overrides: { ...(msg.profile.category_overrides || {}) },
+            cached_media_registry: { ...(msg.profile.cached_media_registry || {}) }
+          };
+          UserProfileManager.updateCacheUI();
+          UserProfileManager.applyCategoryOverrides();
+          renderMediaCards();
+        }
+      } else if (msg.type === 'clip_cached') {
+        if (msg.clipId) {
+          const clip = allClips.find(c => c.id === msg.clipId || c.filename === msg.filename);
+          if (clip) {
+            clip.is_downloaded = true;
+            clip.relative_path = msg.local_path;
+          }
+          if (typeof UserProfileManager !== 'undefined') {
+            if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+            UserProfileManager.profile.cached_media_registry[msg.clipId] = {
+              filename: msg.filename,
+              local_path: msg.local_path,
+              size_mb: msg.size_mb,
+              is_downloaded: true
+            };
+            UserProfileManager.updateCacheUI();
+          }
+          renderMediaCards();
+        }
       }
     } catch (e) {
       console.warn('WS message parsing error:', e);
@@ -754,11 +903,12 @@ function syncVideoSources() {
       if (!playerL0.paused) playerL0.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer0.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL0.muted = true;
       playerL0.playsInline = true;
       playerL0.loop = true;
-      if (!playerL0.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL0.src.includes(targetSrc) || playerL0.dataset.activeSrc !== targetSrc)) {
+        playerL0.dataset.activeSrc = targetSrc;
         playerL0.src = targetSrc;
         playerL0.load();
         playerL0.play().catch(() => {});
@@ -774,11 +924,12 @@ function syncVideoSources() {
       if (!playerL3.paused) playerL3.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer3.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL3.muted = true;
       playerL3.playsInline = true;
       playerL3.loop = true;
-      if (!playerL3.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL3.src.includes(targetSrc) || playerL3.dataset.activeSrc !== targetSrc)) {
+        playerL3.dataset.activeSrc = targetSrc;
         playerL3.src = targetSrc;
         playerL3.load();
         playerL3.play().catch(() => {});
@@ -794,11 +945,12 @@ function syncVideoSources() {
       if (!playerL4.paused) playerL4.pause();
     } else {
       const clip = allClips.find(c => c.id === appState.layers.layer4.clipId);
-      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
       playerL4.muted = true;
       playerL4.playsInline = true;
       playerL4.loop = true;
-      if (!playerL4.src.includes(targetSrc)) {
+      if (targetSrc && (!playerL4.src.includes(targetSrc) || playerL4.dataset.activeSrc !== targetSrc)) {
+        playerL4.dataset.activeSrc = targetSrc;
         playerL4.src = targetSrc;
         playerL4.load();
         playerL4.play().catch(() => {});
@@ -4535,10 +4687,152 @@ function renderQueueCards() {
   
   // Set real canvas resolution based on display size to avoid blur
   const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
   canvas.width = rect.width;
   canvas.height = rect.height;
   
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // If in Pro Timeline Arrangement View (Expanded Height >= 120px)
+  if (rect.height >= 120) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const rulerH = 22;
+    const tracksH = h - rulerH;
+    const numTracks = 5;
+    const trackH = tracksH / numTracks;
+
+    // 1. Draw Top Time Ruler
+    ctx.fillStyle = '#06090e';
+    ctx.fillRect(0, 0, w, rulerH);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, rulerH);
+    ctx.lineTo(w, rulerH);
+    ctx.stroke();
+
+    // Bar ticks (every 4 bars / 16 bars)
+    const barWidth = w / 16;
+    for (let b = 0; b <= 16; b++) {
+      const bx = b * barWidth;
+      ctx.strokeStyle = b % 4 === 0 ? 'rgba(0, 240, 255, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+      ctx.beginPath();
+      ctx.moveTo(bx, rulerH - (b % 4 === 0 ? 10 : 5));
+      ctx.lineTo(bx, rulerH);
+      ctx.stroke();
+
+      if (b % 4 === 0 && b < 16) {
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.7)';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`BAR ${b+1}`, bx + 4, rulerH - 4);
+      }
+    }
+
+    // 2. Track Lanes Background & Dividing Lines
+    const trackColors = [
+      'rgba(0, 255, 136, 0.04)',
+      'rgba(255, 255, 255, 0.02)',
+      'rgba(255, 255, 255, 0.02)',
+      'rgba(0, 240, 255, 0.04)',
+      'rgba(255, 42, 133, 0.04)'
+    ];
+
+    for (let t = 0; t < numTracks; t++) {
+      const ty = rulerH + (t * trackH);
+      ctx.fillStyle = trackColors[t] || '#05070a';
+      ctx.fillRect(0, ty, w, trackH);
+
+      // Grid line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.moveTo(0, ty + trackH);
+      ctx.lineTo(w, ty + trackH);
+      ctx.stroke();
+
+      // Vertical measure lines across tracks
+      for (let b = 1; b < 16; b++) {
+        const bx = b * barWidth;
+        ctx.strokeStyle = b % 4 === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.015)';
+        ctx.beginPath();
+        ctx.moveTo(bx, ty);
+        ctx.lineTo(bx, ty + trackH);
+        ctx.stroke();
+      }
+    }
+
+    // 3. Render Active Program Clip on Track 0 (L0 Master)
+    const l0Clip = appState.layers?.layer0;
+    const l0Y = rulerH + 2;
+    const block0W = barWidth * 8;
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.18)';
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(10, l0Y, block0W - 10, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('▶ L0 PROGRAM: ' + ((l0Clip?.name || 'MASTER').substring(0, 24)), 18, l0Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText('MATTE: ' + (l0Clip?.matte || 'FULL'), 18, l0Y + trackH - 8);
+
+    // 4. Render Active Cue Clip on Track 3 (L3 Cue Bus B)
+    const l3Clip = appState.layers?.layer3;
+    const l3Y = rulerH + (3 * trackH) + 2;
+    const block3X = 10 + (barWidth * 4);
+    const block3W = barWidth * 8;
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.18)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(block3X, l3Y, block3W, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◱ CUE BUS B: ' + ((l3Clip?.name || 'PREVIEW').substring(0, 22)), block3X + 8, l3Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText('NEXT IN QUEUE', block3X + 8, l3Y + trackH - 8);
+
+    // 5. Render Queue Future Sequence Blocks
+    if (queueList && queueList.length > 0) {
+      queueList.slice(0, 4).forEach((qItem, qIdx) => {
+        const qX = 10 + ((qIdx + 2) * barWidth * 3);
+        if (qX < w - 80) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(qX, l0Y, barWidth * 2.8, trackH - 4, 3);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.font = '8px monospace';
+          ctx.fillText(`+${qIdx+1} ` + (qItem.name || '').substring(0, 10), qX + 6, l0Y + 12);
+        }
+      });
+    }
+
+    // 6. Tension Waveform Indicator along bottom track
+    const fxY = rulerH + (4 * trackH);
+    ctx.fillStyle = 'rgba(255, 42, 133, 0.1)';
+    ctx.fillRect(0, fxY, w, trackH);
+    ctx.fillStyle = 'rgba(255, 42, 133, 0.8)';
+    ctx.font = 'bold 8.5px monospace';
+    ctx.fillText('FX ENGINE: ' + (appState.fx?.enabled ? 'ACTIVE (' + (appState.fx?.activeEffect || 'AUTO') + ')' : 'BYPASS'), 10, fxY + 13);
+
+    return;
+  }
   
   if (!queueList || queueList.length === 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
@@ -5106,6 +5400,12 @@ async function loadMediaPool(providedClips = null) {
       }
     }
 
+    // Initialize Centralized User Profile & Cache Registry
+    if (typeof UserProfileManager !== 'undefined') {
+      await UserProfileManager.init();
+    }
+    loadCustomClipsFromStorage();
+
     // Dynamic 3D Model Override from CDN or Local Storage
     const customModel = allClips.find(c => c.type === 'model' && c.filename.includes('espinhaco_spine_points.json'));
     if (customModel && (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'local')) {
@@ -5215,25 +5515,942 @@ window.toggleAutopilotFolder = function(folder, isActive) {
   sendAction('set_autopilot_folders', { active_folders: active });
 };
 
+// ============================================================================
+// CENTRALIZED USER PROFILE & ZERO-WASTE LOCAL CACHE MANAGER
+// ============================================================================
+const UserProfileManager = {
+  profile: {
+    schema_version: "1.2.0",
+    app: "Penumbra System VJ Engine",
+    last_saved: new Date().toISOString(),
+    settings: {
+      media_source: "cdn",
+      remember_source: true,
+      cdn_pin: "2026",
+      target_fps: 30,
+      osc_enabled: false,
+      lan_ip: "localhost",
+      active_macro_state: "GROOVE",
+      active_macro_preset: "Pure Clean Cinema",
+      grading: { gamma: 0.85, black_pedestal: -0.05, mid_density: 1.0, sobel_mix: 0.22, contrast: 1.0 },
+      audio: { input: "line_in", headphone_monitor: false, headphone_volume: 0.8 },
+      ui: { group_by_category: true, active_source_filter: "ALL", active_category_filter: "ALL", hover_preview_enabled: true, hover_preview_delay_ms: 280 }
+    },
+    custom_clips: [],
+    category_overrides: {},
+    cached_media_registry: {}
+  },
+
+  init: async () => {
+    let loadedFromServer = false;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data === 'object') {
+            UserProfileManager.profile = {
+              ...UserProfileManager.profile,
+              ...data,
+              settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+              category_overrides: { ...(data.category_overrides || {}) },
+              cached_media_registry: { ...(data.cached_media_registry || {}) }
+            };
+            if (Array.isArray(data.custom_clips)) {
+              UserProfileManager.profile.custom_clips = data.custom_clips;
+            }
+            loadedFromServer = true;
+            console.log('[UserProfileManager] Perfil centralizado carregado do servidor (penumbra_user_profile.json)');
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!loadedFromServer) {
+      try {
+        const raw = localStorage.getItem('penumbra_user_profile');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && typeof data === 'object') {
+            UserProfileManager.profile = {
+              ...UserProfileManager.profile,
+              ...data,
+              settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+              category_overrides: { ...(data.category_overrides || {}) },
+              cached_media_registry: { ...(data.cached_media_registry || {}) }
+            };
+            if (Array.isArray(data.custom_clips)) {
+              UserProfileManager.profile.custom_clips = data.custom_clips;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    UserProfileManager.applyCategoryOverrides();
+    UserProfileManager.rehydrateCustomClips();
+    UserProfileManager.updateCacheUI();
+  },
+
+  save: (syncServer = true) => {
+    try {
+      UserProfileManager.profile.last_saved = new Date().toISOString();
+      localStorage.setItem('penumbra_user_profile', JSON.stringify(UserProfileManager.profile));
+      if (syncServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(UserProfileManager.profile)
+        }).catch(() => {});
+      }
+      UserProfileManager.updateCacheUI();
+    } catch (e) {}
+  },
+
+  getSetting: (key, fallback = null) => {
+    return (UserProfileManager.profile.settings && UserProfileManager.profile.settings[key] !== undefined)
+      ? UserProfileManager.profile.settings[key]
+      : fallback;
+  },
+
+  setSetting: (key, val) => {
+    if (!UserProfileManager.profile.settings) UserProfileManager.profile.settings = {};
+    UserProfileManager.profile.settings[key] = val;
+    UserProfileManager.save(true);
+  },
+
+  applyCategoryOverrides: () => {
+    if (!UserProfileManager.profile.category_overrides) return;
+    const overrides = UserProfileManager.profile.category_overrides;
+    allClips.forEach(c => {
+      if (overrides[c.id]) {
+        c.category = overrides[c.id];
+        if (c.category === 'CHROMA') c.has_chroma = true;
+      }
+    });
+  },
+
+  rehydrateCustomClips: () => {
+    if (!Array.isArray(UserProfileManager.profile.custom_clips)) return;
+    UserProfileManager.profile.custom_clips.forEach(c => {
+      if (!allClips.some(existing => existing.id === c.id || existing.filename === c.filename)) {
+        allClips.unshift(c);
+      }
+    });
+  },
+
+  isClipCached: (clip) => {
+    if (!clip) return false;
+    if (clip.is_local && MediaProvider.mode === 'local') return true;
+    if (clip.is_downloaded) return true;
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    if (reg[clip.id] && reg[clip.id].is_downloaded) return true;
+    if (reg[clip.filename] && reg[clip.filename].is_downloaded) return true;
+    const baseName = clip.relative_path ? clip.relative_path.split('/').pop() : '';
+    if (baseName && reg[baseName] && reg[baseName].is_downloaded) return true;
+    return false;
+  },
+
+  getCacheDetails: (clip) => {
+    if (!clip) return { isCached: false, size_mb: 0 };
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    const item = reg[clip.id] || reg[clip.filename] || (clip.relative_path ? reg[clip.relative_path.split('/').pop()] : null);
+    if (item && item.is_downloaded) {
+      return { isCached: true, size_mb: item.size_mb || clip.size_mb || 0, local_path: item.local_path };
+    }
+    if (clip.is_downloaded) {
+      return { isCached: true, size_mb: clip.size_mb || 0, local_path: clip.relative_path };
+    }
+    if (clip.is_local && MediaProvider.mode === 'local') {
+      return { isCached: true, size_mb: clip.size_mb || 0, local_path: clip.absolute_path || clip.relative_path };
+    }
+    return { isCached: false, size_mb: clip.size_mb || 0 };
+  },
+
+  updateCacheUI: () => {
+    const reg = UserProfileManager.profile.cached_media_registry || {};
+    const cachedItems = Object.values(reg).filter(v => v.is_downloaded);
+    const totalCachedMb = cachedItems.reduce((acc, it) => acc + (it.size_mb || 0), 0);
+    const offlineClipsCount = allClips.filter(c => UserProfileManager.isClipCached(c)).length;
+    const remoteClipsCount = Math.max(0, allClips.length - offlineClipsCount);
+
+    const lblCacheStats = document.getElementById('lbl-cache-stats');
+    if (lblCacheStats) {
+      lblCacheStats.textContent = `💾 ${offlineClipsCount} OFFLINE · ☁️ ${remoteClipsCount} NUVEM`;
+    }
+
+    const badgeCacheSize = document.getElementById('cfg-cache-size-badge');
+    if (badgeCacheSize) {
+      badgeCacheSize.textContent = `${Math.round(totalCachedMb * 10) / 10} MB EM DISCO`;
+    }
+
+    const lblLastSaved = document.getElementById('cfg-profile-last-saved');
+    if (lblLastSaved && UserProfileManager.profile.last_saved) {
+      const d = new Date(UserProfileManager.profile.last_saved);
+      lblLastSaved.textContent = d.toLocaleString();
+    }
+
+    const lblCustomCount = document.getElementById('cfg-profile-custom-count');
+    if (lblCustomCount) {
+      lblCustomCount.textContent = (UserProfileManager.profile.custom_clips || []).length;
+    }
+
+    const lblCatCount = document.getElementById('cfg-profile-cat-count');
+    if (lblCatCount) {
+      lblCatCount.textContent = Object.keys(UserProfileManager.profile.category_overrides || {}).length;
+    }
+  }
+};
+window.UserProfileManager = UserProfileManager;
+
+function saveCustomClipsToStorage() {
+  try {
+    const custom = allClips.filter(c => c.is_stream || c.is_downloaded || c.id.startsWith('stream_') || c.id.startsWith('clip_dl_'));
+    UserProfileManager.profile.custom_clips = custom;
+    UserProfileManager.save(true);
+    localStorage.setItem('penumbra_custom_clips', JSON.stringify(custom));
+  } catch (e) {}
+}
+
+function loadCustomClipsFromStorage() {
+  UserProfileManager.rehydrateCustomClips();
+}
+
+function getClipSource(clip) {
+  if (clip.is_generative || clip.id === 'clip_gen_plexus_spine') return 'generative';
+  if (clip.is_stream || clip.id.startsWith('stream_') || (clip.relative_path && (clip.relative_path.startsWith('http://') || clip.relative_path.startsWith('https://')))) {
+    return isYouTubeUrl(clip.relative_path || clip.filename) ? 'youtube' : 'stream';
+  }
+  if (clip.is_downloaded || (clip.relative_path && clip.relative_path.startsWith('downloads/'))) {
+    return 'downloaded';
+  }
+  if (clip.is_local || clip.id.startsWith('local_')) return 'local';
+  return 'cdn';
+}
+
+function updateCategoryAndSourceBadges() {
+  const countsSrc = { ALL: allClips.length, cdn: 0, local: 0, stream: 0 };
+  const countsCat = { ALL: allClips.length, MINIMAL: 0, ABSTRACT: 0, FIGURA: 0, DENSE: 0, CHROMA: 0, 'STREAMS & YOUTUBE': 0, GENERATIVE: 0 };
+
+  allClips.forEach(c => {
+    const src = getClipSource(c);
+    if (src === 'cdn') countsSrc.cdn++;
+    else if (src === 'local' || src === 'downloaded') countsSrc.local++;
+    else if (src === 'youtube' || src === 'stream') countsSrc.stream++;
+
+    if (c.has_chroma || c.category === 'CHROMA') countsCat.CHROMA++;
+    else if (countsCat[c.category] !== undefined) countsCat[c.category]++;
+    else countsCat['STREAMS & YOUTUBE']++;
+  });
+
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('badge-count-src-all', countsSrc.ALL);
+  setTxt('badge-count-src-cdn', countsSrc.cdn);
+  setTxt('badge-count-src-local', countsSrc.local);
+  setTxt('badge-count-src-stream', countsSrc.stream);
+
+  setTxt('badge-count-cat-all', countsCat.ALL);
+  setTxt('badge-count-cat-minimal', countsCat.MINIMAL);
+  setTxt('badge-count-cat-abstract', countsCat.ABSTRACT);
+  setTxt('badge-count-cat-figura', countsCat.FIGURA);
+  setTxt('badge-count-cat-dense', countsCat.DENSE);
+  setTxt('badge-count-cat-chroma', countsCat.CHROMA);
+  setTxt('badge-count-cat-stream', countsCat['STREAMS & YOUTUBE']);
+  setTxt('badge-count-cat-gen', countsCat.GENERATIVE);
+}
+
+window.setClipCategory = function(clipId, newCat) {
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+  clip.category = newCat;
+  if (clip.has_chroma && newCat !== 'CHROMA') clip.has_chroma = false;
+  if (newCat === 'CHROMA') clip.has_chroma = true;
+
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    fetch(`/api/clips/${clipId}/category`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: newCat })
+    }).catch(() => {});
+  }
+  saveCustomClipsToStorage();
+  renderMediaCards();
+};
+
+window.openCategorySelector = function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', 'STREAMS & YOUTUBE', 'GENERATIVE'];
+  const newCat = prompt(`Alterar categoria do clipe "${clip.filename}":\n\nCategorias disponíveis:\n${categories.join(' · ')}`, clip.category || 'MINIMAL');
+  if (newCat && categories.includes(newCat.trim().toUpperCase())) {
+    window.setClipCategory(clipId, newCat.trim().toUpperCase());
+  } else if (newCat && newCat.trim()) {
+    window.setClipCategory(clipId, newCat.trim().toUpperCase());
+  }
+};
+
+window.downloadStreamClip = function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+  const targetUrl = clip.stream_url || clip.relative_path || clip.filename;
+  ingestStreamMedia(targetUrl, clip.category, clip.filename, 'download');
+};
+
+async function ingestStreamMedia(rawUrl, targetCategory, customTitle, mode = 'stream') {
+  const url = (rawUrl || '').trim();
+  if (!url) {
+    alert('Por favor, informe uma URL válida.');
+    return;
+  }
+  const category = targetCategory || 'STREAMS & YOUTUBE';
+  const title = (customTitle || '').trim();
+  const progressWrap = document.getElementById('nsd-progress-wrap');
+  const progressStatus = document.getElementById('nsd-progress-status');
+  const progressMetrics = document.getElementById('nsd-progress-metrics');
+  const progressBar = document.getElementById('nsd-progress-bar');
+
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (progressStatus) progressStatus.textContent = mode === 'download' ? 'INICIANDO DOWNLOAD NO SERVIDOR...' : 'CONECTANDO FEED EXTERNO...';
+  if (progressBar) progressBar.style.width = '15%';
+
+  const isServerAvailable = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (mode === 'download' && isServerAvailable) {
+    try {
+      const res = await fetch('/api/stream/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, category, title })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (progressStatus) progressStatus.textContent = 'DOWNLOAD EM ANDAMENTO...';
+        console.log('[Nexus Downloader] Job iniciado:', data.jobId);
+      } else {
+        throw new Error(data.error || 'Falha ao iniciar download');
+      }
+    } catch (err) {
+      console.warn('[Nexus Downloader] Erro no servidor:', err);
+      if (progressStatus) progressStatus.textContent = 'ERRO NO DOWNLOAD: ' + err.message;
+    }
+  } else if (mode === 'stream' && isServerAvailable) {
+    try {
+      const res = await fetch('/api/stream/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const streamClip = {
+          id: `stream_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+          filename: title || data.title || url,
+          folder: "YOUTUBE & STREAMS",
+          relative_path: url,
+          stream_url: data.streamUrl || url,
+          category: category,
+          suggested_layer: 0,
+          has_chroma: false,
+          is_stream: true,
+          thumbnail: data.thumbnail || '',
+          duration: data.duration || 9999,
+          fps: 30,
+          width: 1920,
+          height: 1080,
+          notes: `Stream ativo: ${url}`,
+          project: "Feeds Externos",
+          project_folder: "STREAM",
+          source: data.is_youtube ? 'youtube' : 'stream',
+          youtube_id: data.videoId || null
+        };
+        allClips.unshift(streamClip);
+        saveCustomClipsToStorage();
+        renderMediaCards();
+        if (progressWrap) progressWrap.style.display = 'none';
+        console.log('[✓] Stream conectado com sucesso ao Media Pool:', streamClip);
+      } else {
+        throw new Error('Falha ao resolver stream');
+      }
+    } catch (err) {
+      console.warn('[Nexus Stream] Falha ao resolver via servidor, fallback direto:', err);
+      createDirectStreamClip(url, category, title);
+    }
+  } else {
+    createDirectStreamClip(url, category, title);
+  }
+}
+
+function createDirectStreamClip(url, category, customTitle) {
+  const isYt = isYouTubeUrl(url);
+  const ytId = extractYouTubeId(url);
+  const cleanTitle = customTitle || (isYt ? `YouTube [${ytId}]` : (url.split('/').pop().split('?')[0] || 'Stream Feed'));
+  const thumbUrl = isYt ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '';
+
+  const streamClip = {
+    id: `stream_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    filename: cleanTitle,
+    folder: "YOUTUBE & STREAMS",
+    relative_path: url,
+    stream_url: url,
+    category: category || 'STREAMS & YOUTUBE',
+    suggested_layer: 0,
+    has_chroma: false,
+    is_stream: true,
+    thumbnail: thumbUrl,
+    duration: 9999,
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    notes: `Stream ingest: ${url}`,
+    project: "Feeds Externos",
+    project_folder: "STREAM",
+    source: isYt ? 'youtube' : 'stream',
+    youtube_id: ytId
+  };
+
+  allClips.unshift(streamClip);
+  saveCustomClipsToStorage();
+  renderMediaCards();
+  const progressWrap = document.getElementById('nsd-progress-wrap');
+  if (progressWrap) progressWrap.style.display = 'none';
+}
+
+window.cacheMediaClip = async function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  const btn = event?.currentTarget;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ BAIXANDO...';
+  }
+
+  // 1. If running with Node server controller
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    try {
+      const mediaUrl = MediaProvider.getMediaUrl(clip);
+      const res = await fetch('/api/cache/download-clip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clipId: clip.id,
+          url: mediaUrl,
+          filename: clip.filename,
+          category: clip.category
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        clip.is_downloaded = true;
+        clip.relative_path = data.local_path;
+        if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+        UserProfileManager.profile.cached_media_registry[clip.id] = {
+          filename: clip.filename,
+          local_path: data.local_path,
+          size_mb: data.size_mb,
+          is_downloaded: true
+        };
+        UserProfileManager.save(false);
+        renderMediaCards();
+        console.log(`[✓] Clipe ${clip.filename} salvo no cache local.`);
+        return;
+      }
+    } catch (e) {
+      console.warn('[Cache] Erro no download do servidor:', e);
+    }
+  }
+
+  // 2. Standalone Browser Cache Storage API Fallback
+  if ('caches' in window) {
+    try {
+      const mediaUrl = MediaProvider.getMediaUrl(clip);
+      const cache = await caches.open('penumbra-media-cache');
+      await cache.add(mediaUrl);
+      clip.is_downloaded = true;
+      if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
+      UserProfileManager.profile.cached_media_registry[clip.id] = {
+        filename: clip.filename,
+        local_path: mediaUrl,
+        size_mb: clip.size_mb || 20,
+        is_downloaded: true,
+        is_browser_cache: true
+      };
+      UserProfileManager.save(true);
+      renderMediaCards();
+      console.log(`[✓] Clipe ${clip.filename} armazenado no Cache Storage do navegador.`);
+    } catch (err) {
+      console.warn('[Cache] Falha no Cache API:', err);
+      alert('Não foi possível salvar o clipe offline no navegador.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '⬇️ CACHE';
+      }
+    }
+  }
+};
+
+window.exportUserProfile = function() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.location.href = '/api/user/profile/export';
+    return;
+  }
+  const jsonStr = JSON.stringify(UserProfileManager.profile, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'penumbra_user_profile.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+window.importUserProfileFromFile = function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object') throw new Error('Formato inválido');
+
+      UserProfileManager.profile = {
+        ...UserProfileManager.profile,
+        ...data,
+        settings: { ...UserProfileManager.profile.settings, ...(data.settings || {}) },
+        category_overrides: { ...(data.category_overrides || {}) },
+        cached_media_registry: { ...(data.cached_media_registry || {}) }
+      };
+      if (Array.isArray(data.custom_clips)) {
+        UserProfileManager.profile.custom_clips = data.custom_clips;
+      }
+      UserProfileManager.save(true);
+      UserProfileManager.applyCategoryOverrides();
+      UserProfileManager.rehydrateCustomClips();
+      renderFolderPills();
+      renderMediaCards();
+      alert('✓ Perfil do usuário importado e restaurado com sucesso!');
+    } catch (err) {
+      alert(`Falha ao importar perfil: ${err.message}`);
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.openCacheProfileSettings = function() {
+  openSettingsModal();
+  setSettingsTab('profile');
+};
+
+window.refreshCacheStatus = async function() {
+  await UserProfileManager.init();
+  renderMediaCards();
+};
+
+window.toggleHoverPreview = function(enabled) {
+  UserProfileManager.setSetting('hover_preview_enabled', Boolean(enabled));
+};
+
+window.downloadAllPendingClips = async function() {
+  const unCached = allClips.filter(c => !UserProfileManager.isClipCached(c) && !c.is_generative);
+  if (unCached.length === 0) {
+    alert('Todos os clipes já estão baixados e cacheados localmente no seu computador!');
+    return;
+  }
+  const confirmDl = confirm(`Deseja iniciar o download de ${unCached.length} clipes para o cache local permanente?`);
+  if (!confirmDl) return;
+
+  for (const c of unCached) {
+    try {
+      await window.cacheMediaClip(c.id);
+    } catch (e) {}
+  }
+  alert('Processamento de download em lote concluído!');
+};
+
+function createMediaCardElement(clip) {
+  const card = document.createElement('div');
+  const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
+  const clipSource = getClipSource(clip);
+  card.className = `media-card ${isGen ? 'is-generative' : ''} source-${clipSource}`;
+  const thumbSrc = MediaProvider.getThumbUrl(clip);
+  const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
+  const projName = clip.project || '1.In';
+
+  let srcBadgeHtml = '';
+  if (clipSource === 'cdn') srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ CDN</span>';
+  else if (clipSource === 'local') srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD</span>';
+  else if (clipSource === 'downloaded') srcBadgeHtml = '<span class="media-source-badge badge-source-dl">⬇️ OFFLINE</span>';
+  else if (clipSource === 'youtube') srcBadgeHtml = '<span class="media-source-badge badge-source-yt">▶️ YT</span>';
+  else if (clipSource === 'stream') srcBadgeHtml = '<span class="media-source-badge badge-source-stream">📡 STREAM</span>';
+
+  // Cache Status Check
+  const cacheInfo = UserProfileManager.getCacheDetails(clip);
+  let cacheBadgeHtml = '';
+  if (cacheInfo.isCached) {
+    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">💾 LOCAL</span>`;
+  } else if (clipSource === 'cdn') {
+    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN">☁️ NUVEM</span>`;
+  } else if (clipSource === 'youtube' || clipSource === 'stream') {
+    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">📡 STREAM</span>`;
+  }
+
+  const categoryName = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
+  const catClass = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL').replace(/\s+/g, '-');
+
+  const showCacheBtn = !cacheInfo.isCached && (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream');
+
+  card.innerHTML = `
+    <div class="media-card-thumb">
+      ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
+      ${srcBadgeHtml}
+      ${cacheBadgeHtml}
+      ${isGen 
+        ? `<span class="badge-generative">3D GENERATIVE</span>`
+        : `<span class="media-cat-badge ${catClass}" onclick="openCategorySelector('${clip.id}', event)" title="Clique para reatribuir categoria">${categoryName}</span>`
+      }
+    </div>
+    <div class="media-card-info">
+      <div class="media-card-title" title="${clip.filename}">
+        <span class="media-project-badge">${projName}</span>${clip.display_title || clip.filename}
+      </div>
+      <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
+      <div class="card-actions-row">
+        <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
+        <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
+        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
+        ${showCacheBtn ? `<button class="btn-route btn-card-cache-dl" onclick="window.cacheMediaClip('${clip.id}', event)" title="Baixar clipe para cache local permanente no SSD">⬇️ CACHE</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  // ON-DEMAND HOVER VIDEO PREVIEW (Netflix / Steam / YouTube Standard)
+  let hoverTimeout = null;
+  let hoverVideoEl = null;
+
+  card.addEventListener('mouseenter', () => {
+    focusedClipId = clip.id;
+    const img = card.querySelector('.dynamic-preview-img');
+    if (img && img.dataset.anim) img.src = img.dataset.anim;
+
+    const hoverEnabled = UserProfileManager.getSetting('hover_preview_enabled', true);
+    if (!hoverEnabled || isGen) return;
+
+    const delayMs = UserProfileManager.getSetting('hover_preview_delay_ms', 280);
+    hoverTimeout = setTimeout(() => {
+      const videoUrl = MediaProvider.getMediaUrl(clip);
+      if (!videoUrl) return;
+
+      const thumbContainer = card.querySelector('.media-card-thumb');
+      if (!thumbContainer || thumbContainer.querySelector('.card-hover-video')) return;
+
+      hoverVideoEl = document.createElement('video');
+      hoverVideoEl.className = 'card-hover-video';
+      hoverVideoEl.muted = true;
+      hoverVideoEl.playsInline = true;
+      hoverVideoEl.loop = true;
+      hoverVideoEl.preload = 'metadata';
+      hoverVideoEl.src = videoUrl;
+
+      hoverVideoEl.oncanplay = () => {
+        if (hoverVideoEl) {
+          hoverVideoEl.play().catch(() => {});
+          hoverVideoEl.classList.add('is-active');
+        }
+      };
+
+      thumbContainer.appendChild(hoverVideoEl);
+    }, delayMs);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    const img = card.querySelector('.dynamic-preview-img');
+    if (img && img.dataset.static) img.src = img.dataset.static;
+
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      hoverTimeout = null;
+    }
+    if (hoverVideoEl) {
+      hoverVideoEl.pause();
+      hoverVideoEl.removeAttribute('src');
+      hoverVideoEl.load();
+      hoverVideoEl.remove();
+      hoverVideoEl = null;
+    }
+    const stray = card.querySelectorAll('.card-hover-video');
+    stray.forEach(v => {
+      v.pause();
+      v.removeAttribute('src');
+      v.load();
+      v.remove();
+    });
+  });
+
+  const btnA = card.querySelector('.btn-bus-a');
+  if (btnA) {
+    btnA.addEventListener('click', (e) => {
+      e.stopPropagation();
+      routeClipToBus(clip.id, 'A');
+    });
+  }
+
+  const btnB = card.querySelector('.btn-bus-b');
+  if (btnB) {
+    btnB.addEventListener('click', (e) => {
+      e.stopPropagation();
+      routeClipToBus(clip.id, 'B');
+    });
+  }
+
+  const btnL4 = card.querySelector('[data-layer="layer4"]');
+  if (btnL4) {
+    btnL4.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appState.layers.layer4.clipId = clip.id;
+      appState.layers.layer4.name = clip.filename;
+      sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
+      updateUI();
+      syncVideoSources();
+    });
+  }
+
+  card.addEventListener('click', () => {
+    routeClipToBus(clip.id, 'B');
+  });
+
+  return card;
+}
+
+// ============================================================================
+// UNIVERSAL CREATIVE ASSET LIBRARY (VIDEOS, MATTES, FX & PRESETS)
+// ============================================================================
+let activeLibraryAssetType = 'all'; // 'all' | 'clips' | 'mattes' | 'fx' | 'presets'
+
+const FX_LIBRARY_CATALOG = {
+  pixel_stretch: { title: 'Pixel Stretch (Satori)', summary: 'Alongamento subpixel não-linear por luminância e canais RGBA.', icon: '🌌' },
+  pixel_sorter: { title: 'Pixel Sorter 3 (Wunkolo)', summary: 'Ordenação de pixels por threshold de brilho sincronizada ao beat.', icon: '📶' },
+  bad_tv: { title: 'Bad TV (Motion Boutique)', summary: 'Distorção de tubo catódico analógico, scanlines CRT e ruído VHS.', icon: '📺' },
+  rxxr: { title: 'Rxxr2 (Defcon)', summary: 'Glitch cibernético avançado, deslocamento RGB e estilhaçamento de blocos.', icon: '⚡' },
+  modulation: { title: 'Modulation (Zaebects)', summary: 'Distorção analógica baseada em ondas oscilatórias e offset CMYK.', icon: '〰️' }
+};
+
+const PRESETS_LIBRARY_CATALOG = {
+  ambient_drift: { title: 'Ambient Drift', desc: 'Base hipnótica profunda, transições longas e saturação controlada.', icon: '🌙', bpm: '118 BPM' },
+  pixel_melt_drop: { title: 'Pixel Melt Drop', desc: 'Clímax agressivo com disparo automático no drop e modulação L1.', icon: '🔥', bpm: '132 BPM' },
+  cyber_matrix: { title: 'Cyber Matrix RXXR', desc: 'Estética industrial de alta frequência com glitch estocástico.', icon: '👾', bpm: '130 BPM' },
+  satori_stretch: { title: 'Satori Stretch', desc: 'Distorção cósmica subpixel sincronizada com acentos rítmicos.', icon: '✨', bpm: '126 BPM' },
+  zaebects_cmyk: { title: 'Zaebects CMYK', desc: 'Deslocamento cromático analógico e texturas retrô de fita.', icon: '🎞️', bpm: '124 BPM' },
+  bypass_clean: { title: 'Bypass Clean', desc: 'Sinal 100% puro para exibição direta das mídias originais.', icon: '💎', bpm: 'N/A' }
+};
+
+function selectLibraryAssetType(type) {
+  activeLibraryAssetType = type;
+  document.querySelectorAll('.lib-type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.assetType === type);
+  });
+
+  const sourceStrip = document.querySelector('.pool-source-strip');
+  const catStrip = document.querySelector('.pool-category-strip');
+  const folderStrip = document.querySelector('.pool-folder-strip');
+
+  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('library_active_asset_type', type);
+  }
+
+  renderMediaCards();
+}
+window.selectLibraryAssetType = selectLibraryAssetType;
+
+function createMatteCardForLibrary(matte) {
+  const card = document.createElement('div');
+  card.className = 'library-card-matte';
+  const targetL = appState.matte_target_layer || 'layer3';
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}">
+      <span class="lib-badge-type lib-badge-matte">🎭 MATTE</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${matte.name}</div>
+      <div class="library-card-desc">${matte.description || matte.category}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer4', '${matte.path}')" title="Aplicar no Layer 4 (Accent)">→ L4</button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    onLayerMatteChange(targetL, matte.path);
+  });
+
+  return card;
+}
+
+function createFxCardForLibrary(pluginId, pluginInfo) {
+  const card = document.createElement('div');
+  card.className = 'library-card-fx';
+  const isAct = Boolean(appState.fx?.enabled && appState.fx?.activeEffect === pluginId);
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <div class="library-card-fx-preview">${pluginInfo.icon || '⚡'}</div>
+      <span class="lib-badge-type lib-badge-fx">⚡ FX ENGINE</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${pluginInfo.title}</div>
+      <div class="library-card-desc">${pluginInfo.summary}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn ${isAct ? 'btn-primary' : 'btn-outline'} btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); if(!appState.fx.enabled) toggleFxMaster();">
+        ${isAct ? '✓ ATIVO' : '+ ATIVAR'}
+      </button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'master');">→ MASTER</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_a');">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); selectFxPlugin('${pluginId}'); setFxMasterParam('target', 'deck_b');">→ L3</button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    selectFxPlugin(pluginId);
+    switchTab('tab-fx');
+  });
+
+  return card;
+}
+
+function createPresetCardForLibrary(presetId, presetInfo) {
+  const card = document.createElement('div');
+  card.className = 'library-card-preset';
+
+  card.innerHTML = `
+    <div class="library-card-thumb-wrap">
+      <div class="library-card-preset-preview">
+        <span style="font-size:24px;">${presetInfo.icon || '🎛️'}</span>
+        <span style="font-family:var(--font-mono); font-size:9px; color:#fff; font-weight:700;">${presetInfo.bpm || 'AUTO BPM'}</span>
+      </div>
+      <span class="lib-badge-type lib-badge-preset">🎛️ PRESET</span>
+    </div>
+    <div class="library-card-info">
+      <div class="library-card-title">${presetInfo.title}</div>
+      <div class="library-card-desc">${presetInfo.desc}</div>
+    </div>
+    <div class="library-card-actions">
+      <button class="btn btn-studio-primary btn-xs" style="width:100%;" onclick="event.stopPropagation(); applyMacroPreset('${presetId}', 0, true);">
+        CARREGAR PRESET
+      </button>
+    </div>
+  `;
+
+  card.addEventListener('click', () => {
+    applyMacroPreset(presetId, 0, true);
+  });
+
+  return card;
+}
+
 function renderMediaCards() {
   const container = document.getElementById('media-cards-container');
   if (!container) return;
   container.innerHTML = '';
 
+  updateCategoryAndSourceBadges();
+
   const searchVal = (document.getElementById('input-media-search')?.value || '').toLowerCase();
 
+  // Update counts on badges
+  const badgeClips = document.getElementById('lib-count-clips');
+  if (badgeClips) badgeClips.textContent = allClips.length;
+  const badgeMattes = document.getElementById('lib-count-mattes');
+  if (badgeMattes) badgeMattes.textContent = allMattes.length;
+  const badgeFx = document.getElementById('lib-count-fx');
+  if (badgeFx) badgeFx.textContent = Object.keys(FX_LIBRARY_CATALOG).length;
+  const badgePresets = document.getElementById('lib-count-presets');
+  if (badgePresets) badgePresets.textContent = Object.keys(PRESETS_LIBRARY_CATALOG).length;
+  const badgeAll = document.getElementById('lib-count-all');
+  if (badgeAll) badgeAll.textContent = allClips.length + allMattes.length + 5 + 6;
+
+  // 1. MATTES VIEW
+  if (activeLibraryAssetType === 'mattes') {
+    const filteredMattes = allMattes.filter(m => {
+      return !searchVal || m.name.toLowerCase().includes(searchVal) || m.description.toLowerCase().includes(searchVal) || m.category.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${filteredMattes.length} / ${allMattes.length} MATTES`;
+
+    filteredMattes.forEach(m => {
+      container.appendChild(createMatteCardForLibrary(m));
+    });
+    return;
+  }
+
+  // 2. FX PLUGINS VIEW
+  if (activeLibraryAssetType === 'fx') {
+    const plugins = Object.entries(FX_LIBRARY_CATALOG).filter(([id, info]) => {
+      return !searchVal || id.includes(searchVal) || info.title.toLowerCase().includes(searchVal) || info.summary.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${plugins.length} / ${Object.keys(FX_LIBRARY_CATALOG).length} PLUGINS FX`;
+
+    plugins.forEach(([id, info]) => {
+      container.appendChild(createFxCardForLibrary(id, info));
+    });
+    return;
+  }
+
+  // 3. PRESETS VIEW
+  if (activeLibraryAssetType === 'presets') {
+    const presets = Object.entries(PRESETS_LIBRARY_CATALOG).filter(([id, info]) => {
+      return !searchVal || id.includes(searchVal) || info.title.toLowerCase().includes(searchVal) || info.desc.toLowerCase().includes(searchVal);
+    });
+    const searchCountLbl = document.getElementById('lbl-search-count');
+    if (searchCountLbl) searchCountLbl.textContent = `${presets.length} / ${Object.keys(PRESETS_LIBRARY_CATALOG).length} PRESETS`;
+
+    presets.forEach(([id, info]) => {
+      container.appendChild(createPresetCardForLibrary(id, info));
+    });
+    return;
+  }
+
+  // 4. CLIPS & ALL VIEW
   const filtered = allClips.filter(c => {
     const projText = (c.project || '').toLowerCase();
     const folderText = (c.project_folder || '').toLowerCase();
     const nameText = (c.filename || '').toLowerCase();
-    const matchSearch = !searchVal || nameText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
+    const titleText = (c.display_title || '').toLowerCase();
+    const matchSearch = !searchVal || nameText.includes(searchVal) || titleText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
     if (!matchSearch) return false;
 
+    // Filter by Project / Folder
     if (activeProjectFilter !== 'ALL' && c.project !== activeProjectFilter) return false;
 
-    if (activeCategoryFilter === 'ALL') return true;
-    if (activeCategoryFilter === 'CHROMA') return c.has_chroma;
-    return c.category === activeCategoryFilter;
+    // Filter by Source
+    if (activeSourceFilter !== 'ALL') {
+      const src = getClipSource(c);
+      if (activeSourceFilter === 'cdn' && src !== 'cdn') return false;
+      if (activeSourceFilter === 'local' && (src !== 'local' && src !== 'downloaded')) return false;
+      if (activeSourceFilter === 'stream' && (src !== 'stream' && src !== 'youtube')) return false;
+    }
+
+    // Filter by Category
+    if (activeCategoryFilter !== 'ALL') {
+      if (activeCategoryFilter === 'CHROMA') return Boolean(c.has_chroma || c.category === 'CHROMA');
+      return c.category === activeCategoryFilter;
+    }
+
+    return true;
   });
 
   const searchCountLbl = document.getElementById('lbl-search-count');
@@ -5241,84 +6458,76 @@ function renderMediaCards() {
     searchCountLbl.textContent = `${filtered.length} / ${allClips.length} CLIPES`;
   }
 
-  filtered.forEach(clip => {
-    const card = document.createElement('div');
-    const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
-    card.className = `media-card ${isGen ? 'is-generative' : ''}`;
-    const thumbSrc = MediaProvider.getThumbUrl(clip);
-    const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
-    const projName = clip.project || '1.In';
+  // Grouped by Category View Mode
+  if (isGroupedByCategory && activeCategoryFilter === 'ALL') {
+    const predefinedOrder = [
+      'MINIMAL',
+      'ABSTRACT',
+      'FIGURA',
+      'DENSE',
+      'CHROMA',
+      'STREAMS & YOUTUBE',
+      'GENERATIVE'
+    ];
 
-    card.innerHTML = `
-      <div class="media-card-thumb">
-        ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
-        ${isGen 
-          ? `<span class="badge-generative">3D GENERATIVE</span>`
-          : `<span class="media-cat-badge ${clip.has_chroma ? 'CHROMA' : clip.category}">${clip.has_chroma ? 'CHROMA' : clip.category}</span>`
-        }
-      </div>
-      <div class="media-card-info">
-        <div class="media-card-title" title="${clip.filename}">
-          <span class="media-project-badge">${projName}</span>${clip.filename}
+    const grouped = {};
+    predefinedOrder.forEach(cat => { grouped[cat] = []; });
+
+    filtered.forEach(clip => {
+      let cat = clip.has_chroma ? 'CHROMA' : (clip.category || 'MINIMAL');
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(clip);
+    });
+
+    Object.keys(grouped).forEach(cat => {
+      const list = grouped[cat];
+      if (list.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = 'category-group-section';
+
+      const catHeader = document.createElement('div');
+      const catCssKey = cat.replace(/[^a-zA-Z]/g, '').toUpperCase();
+      catHeader.className = `category-section-header CAT-${catCssKey}`;
+      catHeader.innerHTML = `
+        <div class="cat-header-left">
+          <span class="cat-pill-indicator cat-ind-${cat.toLowerCase().split(' ')[0]}"></span>
+          <span class="cat-header-title">${cat}</span>
+          <span class="cat-header-count">${list.length} CLIPES</span>
         </div>
-        <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
-        <div class="card-actions-row">
-          <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
-          <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-          <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4 DROP</button>
-        </div>
-      </div>
-    `;
+      `;
+      section.appendChild(catHeader);
 
-    card.addEventListener('mouseenter', () => {
-      focusedClipId = clip.id;
-      const img = card.querySelector('.dynamic-preview-img');
-      if (img && img.dataset.anim) {
-        img.src = img.dataset.anim;
-      }
-    });
-
-    card.addEventListener('mouseleave', () => {
-      const img = card.querySelector('.dynamic-preview-img');
-      if (img && img.dataset.static) {
-        img.src = img.dataset.static;
-      }
-    });
-
-    const btnA = card.querySelector('.btn-bus-a');
-    if (btnA) {
-      btnA.addEventListener('click', (e) => {
-        e.stopPropagation();
-        routeClipToBus(clip.id, 'A');
+      const subgrid = document.createElement('div');
+      subgrid.className = 'category-subgrid';
+      list.forEach(clip => {
+        subgrid.appendChild(createMediaCardElement(clip));
       });
-    }
+      section.appendChild(subgrid);
 
-    const btnB = card.querySelector('.btn-bus-b');
-    if (btnB) {
-      btnB.addEventListener('click', (e) => {
-        e.stopPropagation();
-        routeClipToBus(clip.id, 'B');
-      });
-    }
-
-    const btnL4 = card.querySelector('[data-layer="layer4"]');
-    if (btnL4) {
-      btnL4.addEventListener('click', (e) => {
-        e.stopPropagation();
-        appState.layers.layer4.clipId = clip.id;
-        appState.layers.layer4.name = clip.filename;
-        sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
-        updateUI();
-        syncVideoSources();
-      });
-    }
-
-    card.addEventListener('click', () => {
-      routeClipToBus(clip.id, 'B');
+      container.appendChild(section);
     });
+  } else {
+    // Flat Grid View Mode
+    filtered.forEach(clip => {
+      container.appendChild(createMediaCardElement(clip));
+    });
+  }
 
-    container.appendChild(card);
-  });
+  // If in 'all' mode and search query matches mattes or fx, also append quick sections
+  if (activeLibraryAssetType === 'all' && searchVal) {
+    const matchingMattes = allMattes.filter(m => m.name.toLowerCase().includes(searchVal) || m.description.toLowerCase().includes(searchVal)).slice(0, 4);
+    if (matchingMattes.length > 0) {
+      const matteSec = document.createElement('div');
+      matteSec.className = 'category-group-section';
+      matteSec.innerHTML = `<div class="category-section-header" style="color:#ff65a5;"><span>🎭 MÁSCARAS MATTE RELACIONADAS (${matchingMattes.length})</span></div>`;
+      const subgrid = document.createElement('div');
+      subgrid.className = 'category-subgrid';
+      matchingMattes.forEach(m => subgrid.appendChild(createMatteCardForLibrary(m)));
+      matteSec.appendChild(subgrid);
+      container.appendChild(matteSec);
+    }
+  }
 }
 
 function setAudioSource(mode, deviceId = null) {
@@ -5465,15 +6674,96 @@ function setupEvents() {
   initKeyboardShortcuts();
   initRichTooltips();
 
-  // Filter Pills (Media Pool Visual Categories)
-  document.querySelectorAll('.filter-pills:not(.folder-pills) .pill-btn').forEach(pill => {
+  // 1. Source Filter Pills (ALL / CDN / LOCAL / STREAM)
+  document.querySelectorAll('#source-pills-container .pill-btn').forEach(pill => {
     pill.addEventListener('click', () => {
-      document.querySelectorAll('.filter-pills:not(.folder-pills) .pill-btn').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('#source-pills-container .pill-btn').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeSourceFilter = pill.dataset.source;
+      renderMediaCards();
+    });
+  });
+
+  // 2. Category Filter Pills (ALL / MINIMAL / ABSTRACT / etc.)
+  document.querySelectorAll('#category-pills-container .pill-btn').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#category-pills-container .pill-btn').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       activeCategoryFilter = pill.dataset.cat;
       renderMediaCards();
     });
   });
+
+  // 3. Toggle Grouped by Category View Mode
+  const btnToggleGroup = document.getElementById('btn-toggle-group-categories');
+  if (btnToggleGroup) {
+    btnToggleGroup.addEventListener('click', () => {
+      isGroupedByCategory = !isGroupedByCategory;
+      btnToggleGroup.classList.toggle('active', isGroupedByCategory);
+      btnToggleGroup.innerHTML = isGroupedByCategory ? '<span>▤ SEÇÕES DE CATEGORIA</span>' : '<span>▦ GRID CONTÍNUO</span>';
+      renderMediaCards();
+    });
+  }
+
+  // 4. Retractable Stream & Downloader Drawer Controls
+  const btnToggleStream = document.getElementById('btn-toggle-stream-panel');
+  const streamDrawer = document.getElementById('nexus-stream-drawer');
+  const btnCloseStream = document.getElementById('btn-close-stream-drawer');
+
+  if (btnToggleStream && streamDrawer) {
+    btnToggleStream.addEventListener('click', () => {
+      const isVisible = streamDrawer.style.display !== 'none';
+      streamDrawer.style.display = isVisible ? 'none' : 'block';
+      btnToggleStream.classList.toggle('active', !isVisible);
+      if (!isVisible) {
+        const inp = document.getElementById('input-pool-stream-url');
+        if (inp) inp.focus();
+      }
+    });
+  }
+
+  if (btnCloseStream && streamDrawer) {
+    btnCloseStream.addEventListener('click', () => {
+      streamDrawer.style.display = 'none';
+      if (btnToggleStream) btnToggleStream.classList.remove('active');
+    });
+  }
+
+  // 5. Ingest Stream Actions inside Media Pool
+  const btnPoolDl = document.getElementById('btn-pool-action-download');
+  const btnPoolStream = document.getElementById('btn-pool-action-stream');
+  const inputPoolUrl = document.getElementById('input-pool-stream-url');
+  const selectPoolCat = document.getElementById('select-stream-target-cat');
+  const inputPoolTitle = document.getElementById('input-pool-stream-title');
+
+  if (btnPoolDl) {
+    btnPoolDl.addEventListener('click', () => {
+      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
+      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+      ingestStreamMedia(url, cat, title, 'download');
+    });
+  }
+
+  if (btnPoolStream) {
+    btnPoolStream.addEventListener('click', () => {
+      const url = (inputPoolUrl ? inputPoolUrl.value : '').trim();
+      const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+      const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+      ingestStreamMedia(url, cat, title, 'stream');
+    });
+  }
+
+  if (inputPoolUrl) {
+    inputPoolUrl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const url = inputPoolUrl.value.trim();
+        const cat = selectPoolCat ? selectPoolCat.value : 'STREAMS & YOUTUBE';
+        const title = (inputPoolTitle ? inputPoolTitle.value : '').trim();
+        ingestStreamMedia(url, cat, title, 'stream');
+      }
+    });
+  }
 
   // Multi-Source Audio Input Selector Pills (TEST / MIC / P2 / USB)
   document.querySelectorAll('.src-pill').forEach(btn => {
@@ -6244,33 +7534,27 @@ function bootstrapApp() {
       });
     }
 
-    // 4. YOUTUBE / STREAM INGESTION
-    const btnYT = document.getElementById('btn-nexus-yt-connect');
+    // 4. YOUTUBE / STREAM INGESTION & DOWNLOADER IN STUDIO LAUNCHER
+    const btnYTStream = document.getElementById('btn-nexus-yt-connect');
+    const btnYTDl = document.getElementById('btn-nexus-yt-download');
     const inputYT = document.getElementById('input-nexus-yt');
-    const handleYTIngest = () => {
+    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+
+    const handleLauncherStream = (mode) => {
       const url = (inputYT ? inputYT.value : '').trim();
       if (!url) return;
-      console.log('[Media Nexus] YouTube/Stream Ingest:', url);
-      const streamClip = {
-        id: `stream_${Date.now()}`,
-        filename: url,
-        project: 'STREAM FEED',
-        category: 'YOUTUBE / STREAM',
-        relative_path: url,
-        is_stream: true,
-        thumbnail: '',
-        duration: 9999
-      };
-      allClips.unshift(streamClip);
-      renderMediaGrid();
+      const cat = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
+      console.log(`[Studio Launcher] YouTube/Stream Ingest (${mode}):`, url);
+      ingestStreamMedia(url, cat, '', mode);
       updateSourceUI('stream');
       closeStudioLauncher();
     };
 
-    if (btnYT) btnYT.addEventListener('click', handleYTIngest);
+    if (btnYTStream) btnYTStream.addEventListener('click', () => handleLauncherStream('stream'));
+    if (btnYTDl) btnYTDl.addEventListener('click', () => handleLauncherStream('download'));
     if (inputYT) {
       inputYT.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleYTIngest();
+        if (e.key === 'Enter') handleLauncherStream('stream');
       });
     }
 
@@ -6307,7 +7591,8 @@ function bootstrapApp() {
         const newClips = await MediaProvider.scanExtraDir(handle);
         if (newClips.length > 0) {
           allClips.push(...newClips);
-          renderMediaGrid();
+          renderFolderPills();
+          renderMediaCards();
           updateSourceUI('local');
           console.log(`[Media Nexus] Adicionado ${newClips.length} novos clipes locais.`);
         }
@@ -6321,6 +7606,9 @@ function bootstrapApp() {
 
   setupEvents();
   setupProFaders();
+  if (typeof initWorkspaceSplitter === 'function') initWorkspaceSplitter();
+  if (typeof initDockViewModes === 'function') initDockViewModes();
+  if (typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
@@ -6657,12 +7945,20 @@ function initKeyboardShortcuts() {
       return;
     }
 
-    // Number keys 1-5: Switch Dock Modules
-    if (key === '1') { e.preventDefault(); switchTab('tab-mediapool'); return; }
-    if (key === '2') { e.preventDefault(); switchTab('tab-layers'); return; }
-    if (key === '3') { e.preventDefault(); switchTab('tab-mattes'); return; }
-    if (key === '4') { e.preventDefault(); switchTab('tab-tonal'); return; }
-    if (key === '5') { e.preventDefault(); switchTab('tab-queue'); return; }
+    // TAB: Alternar entre Módulos de Trabalho e Timeline Pro
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      toggleDockViewMode();
+      return;
+    }
+
+    // Number keys 1-6: Switch Dock Modules
+    if (key === '1') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-mediapool'); return; }
+    if (key === '2') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-layers'); return; }
+    if (key === '3') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-mattes'); return; }
+    if (key === '4') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-tonal'); return; }
+    if (key === '5') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-queue'); return; }
+    if (key === '6') { e.preventDefault(); setDockViewMode('modules'); switchTab('tab-fx'); return; }
 
     // Route focused or selected clip: A for Program, B for Preview
     if (key === 'a' || key === 'A') {
@@ -6969,3 +8265,189 @@ setTimeout(() => {
     }
   });
 }, 500);
+
+// ============================================================================
+// WORKSPACE RESIZE SPLITTER (DUAL MONITORS vs PRO DOCK)
+// ============================================================================
+function initWorkspaceSplitter() {
+  const splitter = document.getElementById('workspace-splitter');
+  const topZone = document.querySelector('.top-zone');
+  if (!splitter || !topZone) return;
+
+  // Restore saved height from UserProfileManager
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedH = UserProfileManager.getSetting('workspace_top_height', null);
+    if (savedH && typeof savedH === 'number' && savedH >= 160 && savedH <= window.innerHeight * 0.75) {
+      topZone.style.height = `${savedH}px`;
+    }
+  }
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  const onPointerDown = (e) => {
+    isDragging = true;
+    startY = e.clientY;
+    startHeight = topZone.getBoundingClientRect().height;
+    splitter.classList.add('is-dragging');
+    document.body.classList.add('resizing-workspace-active');
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    if (!isDragging) return;
+    const deltaY = e.clientY - startY;
+    const minH = 160;
+    const maxH = Math.max(minH, window.innerHeight - 180);
+    const newHeight = Math.min(Math.max(startHeight + deltaY, minH), maxH);
+    topZone.style.height = `${newHeight}px`;
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    splitter.classList.remove('is-dragging');
+    document.body.classList.remove('resizing-workspace-active');
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+
+    const finalH = Math.round(topZone.getBoundingClientRect().height);
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('workspace_top_height', finalH);
+    }
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  };
+
+  splitter.addEventListener('pointerdown', onPointerDown);
+
+  // Double-click resets default 32% viewport height
+  splitter.addEventListener('dblclick', () => {
+    const defH = Math.round(window.innerHeight * 0.32);
+    topZone.style.height = `${defH}px`;
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('workspace_top_height', defH);
+    }
+    if (typeof renderQueueCards === 'function') {
+      renderQueueCards();
+    }
+  });
+}
+window.initWorkspaceSplitter = initWorkspaceSplitter;
+
+// ============================================================================
+// DOCK VIEW MODES: MÓDULOS & ASSETS vs PRO TIMELINE (ZERO SPACE COMPETITION)
+// ============================================================================
+let currentDockViewMode = 'modules'; // 'modules' | 'timeline'
+
+function setDockViewMode(mode) {
+  currentDockViewMode = mode;
+  const btnModules = document.getElementById('btn-mode-modules');
+  const btnTimeline = document.getElementById('btn-mode-timeline');
+  const viewModules = document.getElementById('dock-modules-view');
+  const viewTimeline = document.getElementById('dock-timeline-view');
+  const tabsBar = document.getElementById('dock-tabs-bar');
+  const lblQuick = document.getElementById('lbl-quick-switch-text');
+
+  if (mode === 'timeline') {
+    if (btnModules) btnModules.classList.remove('active');
+    if (btnTimeline) btnTimeline.classList.add('active');
+    if (viewModules) viewModules.style.display = 'none';
+    if (viewTimeline) viewTimeline.style.display = 'flex';
+    if (tabsBar) tabsBar.style.display = 'none';
+    if (lblQuick) lblQuick.textContent = '▤ VER MÓDULOS';
+
+    // Trigger canvas render to match full expanded height
+    requestAnimationFrame(() => {
+      if (typeof renderQueueCards === 'function') renderQueueCards();
+    });
+  } else {
+    if (btnModules) btnModules.classList.add('active');
+    if (btnTimeline) btnTimeline.classList.remove('active');
+    if (viewModules) viewModules.style.display = 'flex';
+    if (viewTimeline) viewTimeline.style.display = 'none';
+    if (tabsBar) tabsBar.style.display = 'flex';
+    if (lblQuick) lblQuick.textContent = '⏱️ TIMELINE PRO';
+  }
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('dock_view_mode', mode);
+  }
+}
+window.setDockViewMode = setDockViewMode;
+
+function toggleDockViewMode() {
+  setDockViewMode(currentDockViewMode === 'timeline' ? 'modules' : 'timeline');
+}
+window.toggleDockViewMode = toggleDockViewMode;
+
+function initDockViewModes() {
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedMode = UserProfileManager.getSetting('dock_view_mode', 'modules');
+    if (savedMode === 'timeline') {
+      setDockViewMode('timeline');
+    }
+    const savedAssetType = UserProfileManager.getSetting('library_active_asset_type', 'all');
+    if (savedAssetType && typeof selectLibraryAssetType === 'function') {
+      selectLibraryAssetType(savedAssetType);
+    }
+  }
+}
+window.initDockViewModes = initDockViewModes;
+
+function cueNextFromQueue() {
+  if (queueList && queueList.length > 0) {
+    const nextItem = queueList[0];
+    if (nextItem && nextItem.id) {
+      routeClipToBus(nextItem.id, 'B');
+    }
+  }
+}
+window.cueNextFromQueue = cueNextFromQueue;
+
+// ============================================================================
+// PRO PREFERENCES SEARCH & FILTERING ENGINE
+// ============================================================================
+function filterPreferencesSearch(query) {
+  const q = (query || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('.cfg-prop-row');
+  let firstMatchTab = null;
+
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const match = !q || text.includes(q);
+    row.style.display = match ? 'flex' : 'none';
+
+    if (match && !firstMatchTab && q) {
+      const panel = row.closest('.settings-tab-panel');
+      if (panel) {
+        firstMatchTab = panel.id.replace('settings-panel-', '');
+      }
+    }
+  });
+
+  // If search term entered, automatically navigate to first tab with matches if active has 0
+  if (q && firstMatchTab) {
+    const activePanel = document.querySelector('.settings-tab-panel.active');
+    const visibleCount = activePanel ? Array.from(activePanel.querySelectorAll('.cfg-prop-row')).filter(r => r.style.display !== 'none').length : 0;
+    if (visibleCount === 0) {
+      setSettingsTab(firstMatchTab);
+    }
+  }
+}
+window.filterPreferencesSearch = filterPreferencesSearch;
+
+function clearPreferencesSearch() {
+  const input = document.getElementById('cfg-search-input');
+  if (input) input.value = '';
+  filterPreferencesSearch('');
+}
+window.clearPreferencesSearch = clearPreferencesSearch;
+

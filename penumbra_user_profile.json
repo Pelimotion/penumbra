@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.2.0",
+  "app": "Penumbra System VJ Engine",
+  "last_saved": "2026-10-09T14:37:46.418Z",
+  "settings": {
+    "media_source": "cdn",
+    "remember_source": true,
+    "cdn_pin": "2026",
+    "target_fps": 30,
+    "osc_enabled": false,
+    "lan_ip": "localhost",
+    "active_macro_state": "GROOVE",
+    "active_macro_preset": "Pure Clean Cinema",
+    "grading": {
+      "gamma": 0.85,
+      "black_pedestal": -0.05,
+      "mid_density": 1,
+      "sobel_mix": 0.22,
+      "contrast": 1
+    },
+    "audio": {
+      "input": "line_in",
+      "headphone_monitor": false,
+      "headphone_volume": 0.8
+    },
+    "ui": {
+      "group_by_category": true,
+      "active_source_filter": "ALL",
+      "active_category_filter": "ALL",
+      "hover_preview_enabled": true,
+      "hover_preview_delay_ms": 280
+    },
+    "library_active_asset_type": "all"
+  },
+  "custom_clips": [],
+  "category_overrides": {},
+  "cached_media_registry": {
+    "test_file.svg": {
+      "filename": "test_file.svg",
+      "local_path": "downloads/test_file.svg",
+      "size_mb": 0,
+      "cached_at": "2026-10-09T08:39:48.343Z",
+      "is_downloaded": true
+    },
+    "clip_test_1": {
+      "filename": "test_file.svg",
+      "local_path": "downloads/test_file.svg",
+      "size_mb": 0,
+      "cached_at": "2026-10-09T08:39:48.343Z",
+      "is_downloaded": true
+    }
+  }
+}

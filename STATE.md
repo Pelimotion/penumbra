@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 04:53:19 BRT
+- **Última Atualização:** 09/10/2026, 11:38:45 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -15,10 +15,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 6,972 | 273.3 KB |
-| `styles.css` | 5,223 | 101.5 KB |
-| `index.html` | 2,314 | 141.9 KB |
-| `Penumbra_Portable.html` | — | 523.0 KB |
+| `app.js` | 8,454 | 333.0 KB |
+| `styles.css` | 6,489 | 126.7 KB |
+| `index.html` | 2,748 | 163.4 KB |
+| `Penumbra_Portable.html` | — | 629.5 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
@@ -26,9 +26,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `4859515` — feat(launcher): fix startup launcher trigger, add source switcher in header and Settings tab
-- **Data:** 2026-10-09 04:52:50
-- **Total de Commits:** 20
+- **Último Commit:** `f1a6951` — docs: add ADR-0013 and update changelog for source orchestration
+- **Data:** 2026-10-09 04:53:26
+- **Total de Commits:** 21
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
@@ -43,6 +43,17 @@
   - Sem interação do operador, o modo manual permanece estritamente em `GROOVE` (`Pure Clean Cinema`): zero efeitos pesados, sem distorção, máscaras limpas e vídeo original a 30 FPS cristalino.
 - **FPS Padrão:** 30 FPS · **Rede/OSC:** DESLIGADO por padrão
 - **PIN de Acesso Cloud:** 2026
+
+## Nexus Stream Engine & Media Pool Smart Bins
+- **Ingestão Dual-Mode:**
+  - **📡 Stream Ao Vivo:** Resolução instantânea de URLs externas/YouTube com proxy CORS HTTP 206 para amostragem no canvas a 60 FPS sem SecurityError.
+  - **⬇️ Media Downloader:** Download assíncrono em background via `yt-dlp`, extração de frames-chave para thumbnail via `ffmpeg`, inspeção de metadados via `ffprobe` e registro automático no manifesto.
+- **Organização por Categorias & Smart Bins:**
+  - Bins estéticos dedicados: `MINIMAL`, `ABSTRACT`, `FIGURA`, `DENSE`, `CHROMA`, `STREAMS & YOUTUBE`, `GENERATIVE`.
+  - Agrupamento visual colapsável por seções de categoria ou modo grade contínua.
+  - Filtro cruzado por Origem (`TODAS`, `☁️ BUNNY CDN`, `📁 LOCAL SSD`, `▶️ YOUTUBE & STREAMS`).
+  - Reatribuição de categorias in-place com persistência imediata no manifesto do disco e no storage do navegador.
+  - Botão 1-click para download direto a partir de qualquer card de stream ao vivo.
 
 ## Conexões & Roteamento
 - **Entrada de Áudio:** RCA mesa DJ → Adaptador P2 blindado → MacBook Built-in Audio / UMC22
