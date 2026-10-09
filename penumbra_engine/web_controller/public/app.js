@@ -5933,26 +5933,63 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    document.getElementById('btn-nexus-cdn').addEventListener('click', async () => {
-      const pin = prompt('🔒 AUTENTICAÇÃO CDN\\nInsira o PIN de acesso seguro à nuvem Gigantera:');
-      if (!pin) return;
+    document.getElementById('btn-nexus-cdn').addEventListener('click', () => {
+      const pinOverlay = document.getElementById('pin-modal-overlay');
+      const pinInput = document.getElementById('pin-modal-input');
+      const btnConfirm = document.getElementById('btn-pin-confirm');
+      const btnCancel = document.getElementById('btn-pin-cancel');
       
-      const msgBuffer = new TextEncoder().encode(pin);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      pinOverlay.style.display = 'flex';
+      pinInput.value = '';
+      pinInput.focus();
       
-      // SHA-256 of '2026'
-      if (hashHex !== '195cbbf6016cc99c852dc779c118742b8ec2be6bd31a23da24a35cfba78434ce') {
-        alert('❌ PIN INCORRETO. Acesso negado à CDN.');
-        return;
-      }
+      const closeModal = () => {
+        pinOverlay.style.display = 'none';
+        btnConfirm.removeEventListener('click', verifyPin);
+        btnCancel.removeEventListener('click', closeModal);
+        pinInput.removeEventListener('keyup', onEnter);
+      };
       
-      console.log('[Media Nexus] CDN Mode Activated (PIN Verified)');
-      nexusModal.close();
-      const clips = await MediaProvider.initCDN();
-      await loadMediaPool(clips);
-      await loadMattesCatalog();
+      const verifyPin = async () => {
+        const pin = pinInput.value;
+        if (!pin) return;
+        
+        const pinEncoded = btoa(pin);
+        if (pinEncoded !== 'MjAyNg==') {
+          pinInput.style.borderColor = 'red';
+          pinInput.style.animation = 'shake 0.3s';
+          setTimeout(() => { pinInput.style.animation = ''; }, 300);
+          pinInput.value = '';
+          return;
+        }
+        
+        closeModal();
+        console.log('[Media Nexus] CDN Mode Activated (PIN Verified)');
+        nexusModal.close();
+        
+        // Show loading state
+        const loadingDiv = document.createElement('div');
+        loadingDiv.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#b05bff;z-index:99999;font-family:var(--font-mono);text-align:center;font-size:18px;letter-spacing:2px;';
+        loadingDiv.innerHTML = '<div class="logo-pulse" style="margin:0 auto 20px auto;background:#b05bff;box-shadow:0 0 15px #b05bff;"></div>CONECTANDO GIGANTERA CLOUD...';
+        document.body.appendChild(loadingDiv);
+        
+        try {
+          const clips = await MediaProvider.initCDN();
+          await loadMediaPool(clips);
+          await loadMattesCatalog();
+        } finally {
+          loadingDiv.remove();
+        }
+      };
+      
+      const onEnter = (e) => {
+        if (e.key === 'Enter') verifyPin();
+        if (e.key === 'Escape') closeModal();
+      };
+      
+      btnConfirm.addEventListener('click', verifyPin);
+      btnCancel.addEventListener('click', closeModal);
+      pinInput.addEventListener('keyup', onEnter);
     });
 
     // Add Extra Local Folder logic
