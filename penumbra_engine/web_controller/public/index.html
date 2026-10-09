@@ -11,6 +11,48 @@
   <link rel="stylesheet" href="styles.css?t=20261007_03">
 </head>
 <body class="penumbra-app">
+  <!-- MEDIA NEXUS MODAL (INITIAL STATE) -->
+  <dialog id="media-nexus-modal" class="glass-dialog">
+    <div class="dialog-content">
+      <div class="nexus-header">
+        <h2>MEDIA NEXUS <span class="badge badge-preview">OFFLINE</span></h2>
+        <p class="subtitle">Selecione a fonte primária de ingestão visual (Zero-Server Architecture)</p>
+      </div>
+      
+      <div class="source-grid">
+        <!-- Pilar A: Local -->
+        <button class="btn-source source-local" id="btn-nexus-local">
+          <div class="source-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <div class="source-info">
+            <h3>LOCAL DRIVE</h3>
+            <p>Ler pasta via File System API (Zero Latency)</p>
+          </div>
+        </button>
+
+        <!-- Pilar B: CDN -->
+        <button class="btn-source source-cdn" id="btn-nexus-cdn">
+          <div class="source-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+          </div>
+          <div class="source-info">
+            <h3>BUNNY.NET CDN</h3>
+            <p>Cloud Streaming Portfólio</p>
+          </div>
+        </button>
+
+        <!-- Pilar C: YouTube -->
+        <div class="source-yt">
+          <div class="yt-input-wrapper">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff0033" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+            <input type="text" id="input-nexus-yt" placeholder="Cole a URL do YouTube Premium..." />
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <!-- TOP MASTER BAR -->
   <header class="app-header">
     <div class="brand">

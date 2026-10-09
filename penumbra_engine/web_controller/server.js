@@ -23,14 +23,12 @@ const AUDIO_TRACK_PATH = '/Volumes/PLM_SSD_01/Musica/Tracks Autorais/01 REC-2024
 
 // Middleware
 app.use((req, res, next) => {
-  const allowedOrigins = ['https://gigantera.xyz', 'https://www.gigantera.xyz', 'http://localhost:3000'];
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || (origin && origin.includes('vercel.app')) || (origin && origin.startsWith('http://192.168.'))) {
+  // SECURITY: Restrict strictly to localhost to prevent unauthorized remote control
+  if (origin === 'http://localhost:3000' || origin === 'https://localhost:3000') {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Fallback for LAN
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();

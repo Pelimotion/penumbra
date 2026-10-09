@@ -43,6 +43,83 @@ const HARS = {
 };
 
 // ============================================================================
+// 0.5 TRI-SOURCE MEDIA PROVIDER (STANDALONE VJ ARCHITECTURE)
+// ============================================================================
+const MediaProvider = {
+  mode: 'none', // 'local', 'cdn', 'youtube'
+  localDirHandle: null,
+  localFilesMap: new Map(), // relative_path -> File object
+
+  initLocal: async (dirHandle) => {
+    MediaProvider.mode = 'local';
+    MediaProvider.localDirHandle = dirHandle;
+    MediaProvider.localFilesMap.clear();
+    const clips = [];
+    
+    // Recursive folder scan
+    async function scanDir(handle, currentPath = '') {
+      for await (const entry of handle.values()) {
+        const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+        if (entry.kind === 'file') {
+          const ext = entry.name.split('.').pop().toLowerCase();
+          if (['mp4', 'mov', 'webm'].includes(ext)) {
+            const file = await entry.getFile();
+            MediaProvider.localFilesMap.set(entryPath, file);
+            
+            // Build dynamic manifest entry
+            clips.push({
+              id: `local_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+              filename: entry.name,
+              folder: currentPath || 'ROOT',
+              relative_path: entryPath,
+              absolute_path: entryPath,
+              width: 1920, height: 1080, duration: 10.0, fps: 60.0, // Assumed defaults
+              codec: ext,
+              category: currentPath.toUpperCase() || 'UNCATEGORIZED',
+              suggested_layer: 0,
+              thumbnail: '', // Local thumbnails can be generated via Canvas extraction later
+              is_local: true
+            });
+          }
+        } else if (entry.kind === 'directory') {
+          await scanDir(entry, entryPath);
+        }
+      }
+    }
+    
+    await scanDir(dirHandle);
+    return clips;
+  },
+
+  initCDN: async () => {
+    MediaProvider.mode = 'cdn';
+    const res = await fetch(HARS.resolveUrl('/api/manifest'));
+    if (!res.ok) throw new Error('CDN Manifest not found');
+    return await res.json();
+  },
+
+  getMediaUrl: (relativePath) => {
+    if (MediaProvider.mode === 'local') {
+      const file = MediaProvider.localFilesMap.get(relativePath);
+      return file ? URL.createObjectURL(file) : '';
+    }
+    if (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'lan') {
+      return HARS.resolveUrl(`/api/raw-video?path=${encodeURIComponent(relativePath)}`); // We'll need to adapt the endpoint or use direct paths
+    }
+    return relativePath;
+  },
+
+  getThumbUrl: (clip) => {
+    if (!clip || !clip.thumbnail) return '';
+    if (MediaProvider.mode === 'local') {
+      // Future: extract frame from local File blob and cache it. For now, empty skeleton.
+      return ''; 
+    }
+    return HARS.resolveUrl(`/thumbnails/${clip.thumbnail}`);
+  }
+};
+
+// ============================================================================
 // 1. APPLICATION STATE
 // ============================================================================
 let appState = {
@@ -472,7 +549,8 @@ function syncVideoSources() {
     if (appState.layers.layer0.clipId === 'clip_gen_plexus_spine') {
       if (!playerL0.paused) playerL0.pause();
     } else {
-      const targetSrc = `/api/raw-video/${appState.layers.layer0.clipId}`;
+      const clip = allClips.find(c => c.id === appState.layers.layer0.clipId);
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
       playerL0.muted = true;
       playerL0.playsInline = true;
       playerL0.loop = true;
@@ -491,7 +569,8 @@ function syncVideoSources() {
     if (appState.layers.layer3.clipId === 'clip_gen_plexus_spine') {
       if (!playerL3.paused) playerL3.pause();
     } else {
-      const targetSrc = `/api/raw-video/${appState.layers.layer3.clipId}`;
+      const clip = allClips.find(c => c.id === appState.layers.layer3.clipId);
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
       playerL3.muted = true;
       playerL3.playsInline = true;
       playerL3.loop = true;
@@ -510,7 +589,8 @@ function syncVideoSources() {
     if (appState.layers.layer4.clipId === 'clip_gen_plexus_spine') {
       if (!playerL4.paused) playerL4.pause();
     } else {
-      const targetSrc = `/api/raw-video/${appState.layers.layer4.clipId}`;
+      const clip = allClips.find(c => c.id === appState.layers.layer4.clipId);
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip.relative_path) : '';
       playerL4.muted = true;
       playerL4.playsInline = true;
       playerL4.loop = true;
@@ -568,7 +648,8 @@ function getMatteImage(relPath) {
 
 function getClipImage(clip) {
   if (!clip || !clip.thumbnail) return null;
-  const src = `/thumbnails/${clip.thumbnail}`;
+  const src = MediaProvider.getThumbUrl(clip);
+  if (!src) return null; // local mode skeleton
   if (!imageCache[src]) {
     const img = new Image();
     img.src = src;
@@ -4799,10 +4880,16 @@ function updateTimelineDisplay() {
 // ============================================================================
 // 9. MEDIA POOL & 1-CLICK DOCK ROUTER
 // ============================================================================
-async function loadMediaPool() {
+async function loadMediaPool(providedClips = null) {
   try {
-    const res = await fetch('/api/manifest');
-    allClips = await res.json();
+    if (providedClips) {
+      allClips = providedClips;
+    } else {
+      // Fallback if loadMediaPool is called directly
+      if (MediaProvider.mode === 'none') {
+        allClips = await MediaProvider.initCDN();
+      }
+    }
 
     // Ensure Plexus 3D Espinhaço Generative clip is prepended and available in Media Pool
     if (!allClips.some(c => c.id === 'clip_gen_plexus_spine')) {
@@ -4841,7 +4928,7 @@ async function loadMediaPool() {
     renderQueueCards();
     syncVideoSources();
   } catch (e) {
-    console.error('[!] Failed to load manifest:', e);
+    console.error('[!] Failed to load media pool:', e);
   }
 }
 
@@ -4928,7 +5015,7 @@ function renderMediaCards() {
     const card = document.createElement('div');
     const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
     card.className = `media-card ${isGen ? 'is-generative' : ''}`;
-    const thumbSrc = clip.thumbnail ? `/thumbnails/${clip.thumbnail}` : '';
+    const thumbSrc = MediaProvider.getThumbUrl(clip);
     const projName = clip.project || '1.In';
 
     card.innerHTML = `
@@ -5605,7 +5692,39 @@ function applyTonalPreset(g, b, m, c, em, et) {
 // ============================================================================
 window.addEventListener('DOMContentLoaded', () => {
   initWebSocket();
-  loadMediaPool();
+  
+  // Initialize Media Nexus Modal
+  const nexusModal = document.getElementById('media-nexus-modal');
+  if (nexusModal) {
+    nexusModal.showModal();
+    
+    document.getElementById('btn-nexus-local').addEventListener('click', async () => {
+      try {
+        const dirHandle = await window.showDirectoryPicker({
+          mode: 'read',
+          startIn: 'videos'
+        });
+        console.log('[Media Nexus] Local directory mounted:', dirHandle.name);
+        nexusModal.close();
+        
+        // Pass dirHandle to Media Pool Provider
+        const clips = await MediaProvider.initLocal(dirHandle);
+        await loadMediaPool(clips);
+      } catch (err) {
+        console.warn('[Media Nexus] Directory selection cancelled or failed:', err);
+      }
+    });
+
+    document.getElementById('btn-nexus-cdn').addEventListener('click', async () => {
+      console.log('[Media Nexus] CDN Mode Activated');
+      nexusModal.close();
+      // Connect to Bunny.net manifest
+      const clips = await MediaProvider.initCDN();
+      await loadMediaPool(clips);
+    });
+  } else {
+    loadMediaPool();
+  }
   loadMattesCatalog();
   setupEvents();
   setupProFaders();

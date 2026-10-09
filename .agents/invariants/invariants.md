@@ -37,15 +37,13 @@ As regras abaixo são **inegociáveis**. Nenhuma alteração de código ou funci
 
 ---
 
-## 🌐 3. Invariantes de Hibridismo e Cloud (Hybrid Cloud Invariants)
+## 🌐 3. Invariantes de Cloud e Tri-Source Media (Standalone Browser VJ)
 
-1. **Agnosticismo de Origem (HARS - Hybrid Asset Resolution):**
-   * A interface Web (Cockpit) **nunca** deve quebrar se o servidor Node.js local estiver offline.
-   * **Cascata de Resolução Obrigatória:**
-     1. Tenta WebSocket/API em `localhost` (para operação local).
-     2. Tenta WebSocket/API no `IP da LAN` configurado (para operação via iPad/Vercel no mesmo WiFi).
-     3. Fallback automático para `Bunny.net CDN` servindo um `manifest.json` estático e vídeos cacheados (para modo Portfólio Cloud-only).
-2. **Performance de Streaming CDN (Anti-Stuttering):**
-   * Quando operando no modo Bunny.net, vídeos devem utilizar estratégias agressivas de buffer (`preload="auto"`) e Service Workers para cache de Blob, garantindo que cortes de VJ (takes) ocorram em 60 FPS sem engasgos de rede.
-3. **Segurança e CORS:**
-   * O servidor Node.js local deve ter headers CORS abertos estritamente para `gigantera.xyz` e `localhost`, permitindo que a Vercel controle a máquina física sem bloqueios de segurança do browser.
+1. **Segurança Máxima (Zero Remote Control):**
+   * O servidor Node.js local (quando rodado) deve ser estritamente bloqueado para acesso externo. CORS configurado exclusivamente para `localhost`. Nenhuma máquina na rede ou internet pode controlar a máquina física.
+2. **Independência de Backend (Standalone Mode):**
+   * A aplicação Web hospedada na Vercel deve atuar como um VJ Engine Autônomo. Ela não requer o Node.js para rodar.
+3. **Múltiplas Fontes de Mídia (Tri-Source Resolution):**
+   * **Local via File System Access API:** A aplicação na Vercel deve permitir ao usuário, através das configurações, selecionar a pasta local de mídias no próprio navegador (sem precisar do Node), injetando os vídeos direto no Canvas.
+   * **CDN (Bunny.net):** Fallback padrão. A aplicação puxa os vídeos cacheados da nuvem para operação em qualquer computador.
+   * **YouTube Iframe/MSE Ingestion:** Suporte para injetar streams do YouTube Premium sem anúncios nas layers da Penumbra, com suporte a cache local via IndexedDB e Service Workers para vídeos em loop.
