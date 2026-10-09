@@ -1,9 +1,10 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 12:48:17 BRT
+- **Última Atualização:** 09/10/2026, 13:34:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO EM PRODUÇÃO (`https://gigantera.xyz/penumbra`) & CDN BUNNY (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Online:** [https://gigantera.xyz/penumbra](https://gigantera.xyz/penumbra) (Redirecionamento automático para `/penumbra/`)
 - **Painel Local:** [http://localhost:3000](http://localhost:3000)
+- **Central de Ingestão de Mídias (Ingest Hub):** 🟢 ATIVA (Mídia Local SSD com Drag & Drop, Sincronização Bunny CDN offline e Ingestão de Streams/YouTube com preview ao vivo)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
@@ -16,20 +17,22 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 8,927 | 352.8 KB |
-| `styles.css` | 7,183 | 139.8 KB |
-| `index.html` | 2,892 | 181.3 KB |
-| `Penumbra_Portable.html` | — | 680.4 KB |
+| `app.js` | 9,228 | 372.0 KB |
+| `styles.css` | 7,693 | 152.0 KB |
+| `index.html` | 3,024 | 195.9 KB |
+| `Penumbra_Portable.html` | — | 722.5 KB |
 
-## 🎬 Media Pool
-- **Clipes no Manifesto:** 75 entradas
+## 🎬 Media Pool & Ingestão
+- **Clipes no Manifesto:** 75 entradas base + clipes dinâmicos
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
+- **Central de Ingestão Unificada:** Atalho `I` no teclado ou botões `+ INGESTÃO`, `LOCAL`, `BUNNY`, `YOUTUBE` na barra do Media Pool.
+- **Detecção YouTube oEmbed:** Pré-visualização instantânea de título e miniatura em tempo real ao colar a URL.
+- **Drag & Drop Universal:** Arraste vídeos ou áudios para dentro do cockpit para ingestão imediata via blob.
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `e0839ec` — feat(library): studio two-column layout, sidebar bins and instant parameter edit navigation
-- **Data:** 2026-10-09 12:23:59
-- **Total de Commits:** 23
+- **Último Commit:** `59149e4` — build(vercel): configure buildCommand and outputDirectory for automated static deployment
+- **Data:** 2026-10-09 13:33:41
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
