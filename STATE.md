@@ -1,14 +1,16 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 03:15:00 BRT
+- **Última Atualização:** 10/10/2026, 04:05:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Studio Inspector de Vanguarda:** 🟢 ATIVO (Drawer lateral padrão DaVinci Resolve com seletor de alvo 🎯 Clipe / 📑 Camada / 🌐 Master & FX e sub-abas 📐 Transformação / 🎨 Cor & Luz / ⚡ FX & Mattes)
+- **Suíte de Correção Básica de Cor & Luz:** 🟢 ATIVO (Exposição/Ganho, Black Pedestal para pretos profundos de projetor, Contraste, Gamma, Saturação, Balanço Kelvin -50 a +50, Matiz e 6 Looks Rápidos de 1-Clique)
+- **Navegação de Bins & Breadcrumbs:** 🟢 ATIVO (Barra de breadcrumbs persistente `.library-breadcrumb-nav` com retorno `[◂ VER TODAS AS PASTAS [✕]]`, banner de pasta ativa e resolução do corte da busca)
 - **Dual-Bank MIDI M-Vave (SMC-MIXER):** 🟢 ATIVO (Banco A: Live Mix, Takes & Levels / Banco B: FX Engine, Mattes & Sculpt, Safe Solo Toggle, atalhos `[` e `]`, `H` para alternar)
-- **Studio Inspector Unificado:** 🟢 ATIVO (Drawer lateral padrão DaVinci/AE via atalho `[I]` ou header, abas Camada, Clipe Pré-Ar e FX & Color, topo dos monitores despoluído)
 - **Find Edges (Layer 2) com Alta Luminância:** 🟢 ATIVO (Camada 2 acima de L0/L1, Sobel com boost 2.8x e renderização nítida de contornos giz/neon sobre `#000000` em Solo)
 - **Expansão de FX Presets (50 Curados) & Macros:** 🟢 ATIVO (10 presets por plugin AE, nomes ergonômicos e ágeis no Autopilot)
-- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
+- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Integrado no Studio Inspector com Rotação, Flips H/V, Enquadramento Fit/Fill/Wings, Escala e Micro-Nudge Pad com centralizador `[0,0]`)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
