@@ -308,6 +308,11 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
 
+      <!-- Master FX Quick Toggle / Bypass Button -->
+      <button class="btn btn-outline btn-sm btn-header-fx" id="btn-header-toggle-fx" onclick="toggleFxMaster()" data-tooltip-title="MASTER FX ENGINE (ON / BYPASS)" data-tooltip-desc="Liga ou desliga todo o processamento de efeitos no sinal de saída de vídeo (Pixel Sorter, Stretch, Glitch, etc.). Pressione Shift+X no teclado." data-shortcut="Shift+X">
+        <span class="status-dot"></span> <span id="txt-header-fx">FX: BYPASS</span>
+      </button>
+
       <!-- Auto / Manual Mode Toggle -->
       <button class="btn btn-outline btn-sm" id="btn-auto-toggle" data-tooltip-title="ALTERNAR AUTOPILOT" data-tooltip-desc="Ativa ou pausa a condução inteligente musical autônoma." data-shortcut="P">
         <span id="txt-auto-mode">AUTO ON</span>
@@ -625,6 +630,9 @@
 
         <!-- Dock Actions -->
         <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
+          <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
+            <span id="lbl-quick-switch-text">TIMELINE PRO</span> <kbd>TAB</kbd>
+          </button>
           <button class="dock-action-btn" id="btn-dock-toggle-inspector" onclick="toggleStudioInspector()" title="Abrir/Fechar Studio Inspector [I]">
             <span>🔍 INSPETOR</span> <kbd>I</kbd>
           </button>
@@ -1228,6 +1236,9 @@
             <button class="btn btn-fx-autopilot" id="btn-toggle-fx-autopilot" onclick="toggleFxAutopilot()" title="Ligar/Desligar Autopilot musical inteligente da FX Engine">
               <span class="autopilot-pulse"></span> AUTOPILOT FX: <strong id="lbl-fx-autopilot-status">OFF</strong>
             </button>
+            <button class="btn btn-fx-lock" id="btn-toggle-fx-lock" onclick="toggleFxManualLock()" title="Trava manual: quando ativado, o Autopilot NUNCA substitui ou remove seu efeito atual">
+              <span class="lock-icon" id="icon-fx-lock">🔒</span> <strong id="lbl-fx-lock-status">MANUAL FIXADO</strong>
+            </button>
             <div class="fx-target-select-wrap" title="Define em qual estágio do sinal de vídeo os efeitos serão processados">
               <span class="fx-target-label">ROUTING:</span>
               <select id="sel-fx-target" class="pro-select fx-target-select" onchange="setFxMasterParam('target', this.value)">
@@ -1273,7 +1284,7 @@
             <div class="fx-sidebar-header">AFTER EFFECTS PLUGIN RACK</div>
 
             <!-- Card 1: Pixel Stretch (Satori) -->
-            <div class="fx-plugin-card active" id="card-fx-pixel_stretch" onclick="selectFxPlugin('pixel_stretch')">
+            <div class="fx-plugin-card active" id="card-fx-pixel_stretch" onclick="selectFxPlugin('pixel_stretch', true)">
               <div class="fx-card-top">
                 <div class="fx-card-title">1. PIXEL STRETCH</div>
                 <label class="fx-toggle-badge" onclick="event.stopPropagation()">
@@ -1286,7 +1297,7 @@
             </div>
 
             <!-- Card 2: AE Pixel Sorter (Gabriel Schama) -->
-            <div class="fx-plugin-card" id="card-fx-pixel_sorter" onclick="selectFxPlugin('pixel_sorter')">
+            <div class="fx-plugin-card" id="card-fx-pixel_sorter" onclick="selectFxPlugin('pixel_sorter', true)">
               <div class="fx-card-top">
                 <div class="fx-card-title">2. AE PIXEL SORTER</div>
                 <label class="fx-toggle-badge" onclick="event.stopPropagation()">
@@ -1299,7 +1310,7 @@
             </div>
 
             <!-- Card 3: Bad TV (Rowbyte) -->
-            <div class="fx-plugin-card" id="card-fx-bad_tv" onclick="selectFxPlugin('bad_tv')">
+            <div class="fx-plugin-card" id="card-fx-bad_tv" onclick="selectFxPlugin('bad_tv', true)">
               <div class="fx-card-top">
                 <div class="fx-card-title">3. BAD TV</div>
                 <label class="fx-toggle-badge" onclick="event.stopPropagation()">
@@ -1312,7 +1323,7 @@
             </div>
 
             <!-- Card 4: RXXR (ASCII Glitch Generator) -->
-            <div class="fx-plugin-card" id="card-fx-rxxr" onclick="selectFxPlugin('rxxr')">
+            <div class="fx-plugin-card" id="card-fx-rxxr" onclick="selectFxPlugin('rxxr', true)">
               <div class="fx-card-top">
                 <div class="fx-card-title">4. RXXR TECHNO-ASCII</div>
                 <label class="fx-toggle-badge" onclick="event.stopPropagation()">
@@ -1325,7 +1336,7 @@
             </div>
 
             <!-- Card 5: Modulation Matrix (Zaebects) -->
-            <div class="fx-plugin-card" id="card-fx-modulation" onclick="selectFxPlugin('modulation')">
+            <div class="fx-plugin-card" id="card-fx-modulation" onclick="selectFxPlugin('modulation', true)">
               <div class="fx-card-top">
                 <div class="fx-card-title">5. MODULATION MATRIX</div>
                 <label class="fx-toggle-badge" onclick="event.stopPropagation()">

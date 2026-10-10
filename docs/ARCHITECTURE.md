@@ -1,6 +1,6 @@
 # 🎛️ PENUMBRA SYSTEM · ARQUITETURA TÉCNICA
 
-> Auto-gerado por `scripts/update_docs.js` · 10/10/2026, 02:35:08 BRT
+> Auto-gerado por `scripts/update_docs.js` · 10/10/2026, 16:45:05 BRT
 
 ---
 
@@ -27,10 +27,10 @@ O **Penumbra System** é um VJ Engine audio-reativo de alta performance executad
 
 | Arquivo | Descrição | Linhas |
 |---|---|---|
-| `public/app.js` | Motor principal VJ (render, media, autopilot, FX) | 10,963 |
-| `public/styles.css` | Design System Dark Studio (DaVinci/Cavalry/Adobe) | 9,180 |
-| `public/index.html` | Cockpit HTML + Studio Launcher + PIN Gate | 3,462 |
-| `public/midi.js` | MIDI Controller Bridge | 2,339 |
+| `public/app.js` | Motor principal VJ (render, media, autopilot, FX) | 14,235 |
+| `public/styles.css` | Design System Dark Studio (DaVinci/Cavalry/Adobe) | 11,228 |
+| `public/index.html` | Cockpit HTML + Studio Launcher + PIN Gate | 3,581 |
+| `public/midi.js` | MIDI Controller Bridge | 2,473 |
 | `server.js` | Express + WebSocket Server (modo local) | 1,367 |
 | `scripts/deploy_cdn.js` | Deploy automático Bunny Edge CDN | 174 |
 | `scripts/build_portable.js` | Bundler HTML portátil offline | 56 |
@@ -38,15 +38,15 @@ O **Penumbra System** é um VJ Engine audio-reativo de alta performance executad
 
 ## Media Pool
 
-- **Total de Clipes:** 81
+- **Total de Clipes:** 75
 
 | Categoria | Clipes |
 |---|---|
-| ABSTRACT | 45 |
-| MINIMAL | 20 |
-| FIGURA | 10 |
-| CHROMA | 4 |
-| GENERATIVE | 2 |
+| ABSTRACT | 43 |
+| MINIMAL | 19 |
+| FIGURA | 9 |
+| CHROMA | 3 |
+| GENERATIVE | 1 |
 
 ## Fontes de Mídia (Tri-Source Architecture)
 

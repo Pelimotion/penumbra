@@ -1,7 +1,7 @@
 {
   "schema_version": "1.2.0",
   "app": "Penumbra System VJ Engine",
-  "last_saved": "2026-10-10T19:05:30.471Z",
+  "last_saved": "2026-10-10T19:45:29.065Z",
   "settings": {
     "media_source": "cdn",
     "remember_source": true,
@@ -31,11 +31,14 @@
       "hover_preview_delay_ms": 280
     },
     "library_active_asset_type": "all",
-    "dock_view_mode": "library",
+    "dock_view_mode": "modules",
     "library_sidebar_collapsed": true,
     "workspace_top_height": 219,
     "library_sidebar_width": 258,
-    "library_view_mode": "grid"
+    "library_view_mode": "grid",
+    "fx_active": false,
+    "fx_manual_locked": true,
+    "autopilot_delegation_fx": false
   },
   "custom_clips": [],
   "category_overrides": {},
@@ -67,8 +70,20 @@
     }
   },
   "autopilot_pool": {
-    "active_folders": [],
+    "excluded_folders": [],
     "excluded_clips": [],
-    "view_filter": "ALL"
+    "active_folders": [
+      "Espinhaço/1. In",
+      "Espinhaço/1. In/mar",
+      "GENERATIVE 3D",
+      "Nostalgia/1. In",
+      "Sta Teresa/takes rj",
+      "Tetropode/1. In",
+      "Video Art Drinkzinho/1. In",
+      "Vo David/1. In",
+      "Zimbro/1. In"
+    ],
+    "view_filter": "ALL",
+    "toolbar_expanded": false
   }
 }

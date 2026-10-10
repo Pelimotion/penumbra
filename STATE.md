@@ -1,22 +1,20 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 16:15:00 BRT
+- **Última Atualização:** 10/10/2026, 16:45:05 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
-- **Barra Compacta do Media Pool & Recuperação de Espaço Vertical (28px):** 🟢 RESOLVIDO (Barra unificada de 28px de altura, breadcrumbs integrados com cápsula do Autopilot Pool `⚡ POOL: X/Y`, filtros rápidos e gaveta retrátil de ações `[⚡ AÇÕES ▾]`, recuperando mais de 100px verticais para os cards de vídeo)
-- **Operação Intuitiva de Takes do Autopilot & Trava Manual:** 🟢 RESOLVIDO (Badges explícitas e botões `⚡ NO AUTO` vs `🔒 MANUAL` com ícone de cadeado âmbar, com alternância instantânea por clique no botão ou na miniatura)
-- **Sincronização de Pastas do Autopilot nas Configurações:** 🟢 RESOLVIDO (Arquitetura determinística `excluded_folders: string[]` eliminando o bug de pastas que persistiam marcadas, com botões em lote `[✓ MARCAR TODAS]` e `[✕ DESMARCAR TODAS]`)
-- **Pro Timeline Arranger (Padrão Resolume Arena 7 / DaVinci Resolve 19):** 🟢 ATIVO (Escalonamento rítmico dinâmico 4B-64B, horizonte preditivo de fila com thumbnails reais, playhead sub-pixel 60 FPS com badge `BAR X.Y`, 7 tracks sincronizados, régua SMPTE com estados narrativos e integração bidirecional com Studio Inspector)
-- **Studio Inspector Unificado (Padrão DaVinci/Resolume):** 🟢 ATIVO (Eliminação da barra comprimida da timeline, nova `.tl-inspector-bridge`, controles de Pos X/Y, Nudge Pad, Escala e Reset integrados no drawer lateral)
-- **Motor Per-Matte & Inspeção Desacoplada:** 🟢 ATIVO (Inspeção imediata ao clicar em qualquer máscara ou clipe na biblioteca/Media Pool sem alterar camadas ao vivo, motor isolado `mattes_config`, modo Pin `[⚡ SEGUIR]`/`[📌 FIXADO]`)
-- **Eliminação de Flash em Transições & Sobel Find Edges Redesign:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
-- **Entrada de Linha (P2) & Microfone:** 🟢 ATIVO (Smart auto-detection de dispositivos P2/Line-in, filtros Biquad HPF 24Hz e LPF 16kHz, VU meter hardware-grade RMS/Peak dB e spectral flux BPM)
-- **BPM Permanente & Tap Tempo HUD:** 🟢 ATIVO (Capsule no cabeçalho com LED downbeat, pill no Master Control Bridge, Tap Tempo com média móvel ponderada, contador de toques e animação neon)
-- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`)
+- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
+- **Estabilização da Barra Central:** 🟢 RESOLVIDO (Cápsula de 215px fixa, eliminação de jitter e tag estável `FORÇADO`)
+- **Persistência de Áudio Mic/P2:** 🟢 CORRIGIDO (Estado `audio_source` persistido no backend e protegido no frontend contra sobrescrita de telemetria)
+- **Vídeo em Nuvem (Anti-Freeze 60 FPS):** 🟢 RESOLVIDO (6 clipes nativos CDN adicionados ao topo, fallback resiliente, crossOrigin anonymous, sem telas congeladas)
+- **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
+- **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
+- **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
+- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -27,20 +25,20 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 14,020 | 606.3 KB |
-| `styles.css` | 11,085 | 223.1 KB |
-| `index.html` | 3,569 | 237.5 KB |
-| `Penumbra_Portable.html` | — | 1,142.0 KB |
+| `app.js` | 14,235 | 602.3 KB |
+| `styles.css` | 11,228 | 220.6 KB |
+| `index.html` | 3,581 | 233.5 KB |
+| `Penumbra_Portable.html` | — | 1.1 MB |
 
 ## 🎬 Media Pool
-- **Clipes no Manifesto:** 81 entradas
+- **Clipes no Manifesto:** 75 entradas
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
-- **Branch:** `feat/vj-inspector-midi-findedges-redesign`
-- **Último Commit:** `1a7e7c6` — docs: update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
-- **Data:** 2026-10-10 04:04:47
-- **Total de Commits:** 50
+- **Branch:** `feat/autopilot-fx-master-control-and-manual-lock`
+- **Último Commit:** `d7ded29` — fix(autopilot-pool): compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
+- **Data:** 2026-10-10 16:07:37
+- **Total de Commits:** 56
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.

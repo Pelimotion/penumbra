@@ -1,12 +1,29 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 02:35:08 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 16:45:05 BRT
 
 ---
 
 ## Outubro de 2026
 
+### 🐛 Correções
+- `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
+- `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
+- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
+- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
+- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
+- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
+- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
+- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
+- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
+
 ### ✨ Novos Recursos
+- `a21e5b7` **(timeline)** implement pro arrangement timeline with dynamic rhythm scaling and forward predictability
+- `75fa793` **(inspector)** unify studio inspector for layers and mattes with per-matte engine, follow selection mode and pin toggle
+- `3e8893b` **(engine)** transition flash elimination, granular autopilot pool, line-in p2 & permanent bpm hud
+- `57b7e26` **(audio-vj)** live mic hardware VU meter, decoupled CUE, matte & 3d generative inspector, and bank C midi
+- `61f2c91` **(ui)** redesign lower section navigation, Studio Inspector and color/light controls
+- `e5452c3` **(vj-studio)** implement Studio Inspector, dual-bank M-Vave MIDI, Find Edges luminance boost, and 50 FX presets
 - `8903b66` **(transform-vj)** implement dual-tier clip pre-air transforms, Layer 5 overlay deck, locked master matte, and visual MIDI click-to-map
 - `f8026d4` **(media)** corrigir biblioteca de mattes e adicionar persistencia e relink de midias locais
 - `d1f2258` **(midi)** suporte dual-preset M-Vave (Banco 1 Faders ◄ & Banco 2 Botões ►) e navegação B1-B4
@@ -23,6 +40,8 @@
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 
 ### 📚 Documentação
+- `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
+- `1ee13ab` **(architecture)** sync technical architecture, state, graphify and knowledge base for next session
 - `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
 - `a87bbba` **(state)** atualizar links de preview e handover
 - `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
@@ -32,15 +51,6 @@
 - `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
 - `f1a6951` add ADR-0013 and update changelog for source orchestration
 - `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
-
-### 🐛 Correções
-- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
-- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
-- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
-- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
-- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
-- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
-- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
 
 ### 🔧 Manutenção
 - `8acad70` Merge pull request #1 from Pelimotion/feat/collab-branch-pr-governance

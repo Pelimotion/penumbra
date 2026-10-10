@@ -882,6 +882,7 @@ let appState = {
     anti_blowout: true,
     auto_mattes: false
   },
+  autopilot_delegation: { media: true, mattes: false, fx: false, kinetics: false },
   autopilot_min_bars: 16,
   macro_preset_indices: {
     INTRO: 0,
@@ -902,13 +903,14 @@ let appState = {
   network_output_enabled: false,
   fx: {
     active: false,
+    manual_locked: false,
     target: 'master', // 'master' (Master PGM Output), 'deck_a' (Deck A L0), 'deck_b' (Deck B L3)
     activeEffect: 'pixel_stretch',
     masterIntensity: 0.8,
     masterSpeed: 1.0,
     auto_adapt: true,
     autopilotActive: false,
-    autopilotPreset: 'ambient_drift',
+    autopilotPreset: 'bypass_clean',
     lastAutopilotChangeBar: 0,
     pixel_stretch: {
       enabled: true,
@@ -2598,33 +2600,43 @@ function applyMacroPreset(state, presetIndex = null, isUserAction = false) {
     }
   }
 
-  // 3. FX Engine Configuration
-  if (!appState.fx) appState.fx = { target: 'master' };
-  if (preset.fx.active) {
-    appState.fx.active = true;
-    appState.fx.target = 'master'; // Targets Master Video Output directly
-    appState.fx.masterIntensity = preset.fx.intensity;
-    selectFxPlugin(preset.fx.plugin);
-    loadPluginPreset(preset.fx.plugin, preset.fx.preset);
-  } else {
-    // 100% LIMPO: Master FX OFF
-    appState.fx.active = false;
-    appState.fx.masterIntensity = 0.0;
-  }
-  updateFxUI();
+  // 3. FX Engine Configuration (Respeita rigorosamente a delegação do Autopilot e a trava manual do operador)
+  const isFxDelegated = Boolean(appState.autopilot_delegation?.fx);
+  const isFxLocked = Boolean(appState.fx?.manual_locked);
+  const allowFxChange = isUserAction || (appState.auto_mode && isFxDelegated && !isFxLocked);
 
-  // 4. Layers Opacity & Blends
+  if (!appState.fx) appState.fx = { target: 'master', active: false, manual_locked: false };
+
+  if (allowFxChange) {
+    if (preset.fx.active) {
+      appState.fx.active = true;
+      appState.fx.target = 'master'; // Targets Master Video Output directly
+      appState.fx.masterIntensity = preset.fx.intensity;
+      selectFxPlugin(preset.fx.plugin, false);
+      loadPluginPreset(preset.fx.plugin, preset.fx.preset, false);
+    } else {
+      // 100% LIMPO: Master FX OFF
+      appState.fx.active = false;
+      appState.fx.masterIntensity = 0.0;
+    }
+    updateFxUI();
+  }
+
+  // 4. Layers Opacity & Blends (Respeita delegação e travas manuais)
   if (preset.layers) {
-    if (appState.layers.layer1) {
-      appState.layers.layer1.opacity = preset.layers.l1_opacity;
-      if (preset.layers.blend) appState.layers.layer1.blend = preset.layers.blend;
-    }
-    if (appState.layers.layer2) {
-      appState.layers.layer2.opacity = preset.layers.l2_opacity;
-    }
-    if (appState.layers.layer4) {
-      appState.layers.layer4.opacity = preset.layers.l4_opacity;
-      appState.layers.layer4.active = preset.layers.l4_opacity > 0.3;
+    const allowLayerFxAutomation = isUserAction || (appState.auto_mode && isFxDelegated);
+    if (allowLayerFxAutomation) {
+      if (appState.layers.layer1 && !appState.layers.layer1.locked) {
+        appState.layers.layer1.opacity = preset.layers.l1_opacity;
+        if (preset.layers.blend) appState.layers.layer1.blend = preset.layers.blend;
+      }
+      if (appState.layers.layer2 && !appState.layers.layer2.locked) {
+        appState.layers.layer2.opacity = preset.layers.l2_opacity;
+      }
+      if (appState.layers.layer4 && !appState.layers.layer4.locked) {
+        appState.layers.layer4.opacity = preset.layers.l4_opacity;
+        appState.layers.layer4.active = preset.layers.l4_opacity > 0.3;
+      }
     }
   }
 
@@ -5227,9 +5239,23 @@ window.applyFXEngine = applyFXEngine;
 // 7.2 FX UI INSPECTOR & AUTOPILOT CONTROLLERS
 // ============================================================================
 
-function selectFxPlugin(pluginId) {
+function selectFxPlugin(pluginId, isUserAction = false) {
   if (!appState.fx) return;
   appState.fx.activeEffect = pluginId;
+
+  if (isUserAction) {
+    appState.fx.manual_locked = true;
+    appState.fx.active = true;
+    const pluginNames = {
+      pixel_stretch: 'Pixel Stretch',
+      pixel_sorter: 'Pixel Sorter',
+      bad_tv: 'Bad TV',
+      rxxr: 'RXXR Techno-ASCII',
+      modulation: 'Modulation Matrix'
+    };
+    showMacroToast('🔒 EFEITO FIXADO: ' + (pluginNames[pluginId] || pluginId.toUpperCase()) + ' (Autopilot não altera)');
+    updateFxUI();
+  }
 
   // Update card active classes
   document.querySelectorAll('.fx-plugin-card').forEach(card => {
@@ -5247,43 +5273,73 @@ window.selectFxPlugin = selectFxPlugin;
 function toggleFxModuleEnabled(pluginId, enabled) {
   if (!appState.fx || !appState.fx[pluginId]) return;
   appState.fx[pluginId].enabled = enabled;
+  appState.fx.manual_locked = true;
+  updateFxUI();
   const chk = document.getElementById('chk-enable-' + pluginId);
   if (chk) chk.checked = enabled;
 }
 window.toggleFxModuleEnabled = toggleFxModuleEnabled;
 
-function toggleFxMaster() {
+function toggleFxMaster(forceVal = null) {
   if (!appState.fx) return;
-  appState.fx.active = !appState.fx.active;
-  const btn = document.getElementById('btn-toggle-fx');
-  const lbl = document.getElementById('lbl-fx-master-status');
-  if (btn) btn.classList.toggle('active', appState.fx.active);
-  if (lbl) lbl.textContent = appState.fx.active ? 'ON' : 'OFF';
+  const isNowActive = forceVal !== null ? Boolean(forceVal) : !appState.fx.active;
+  appState.fx.active = isNowActive;
+  appState.fx.manual_locked = true; // Manual choice overrides Autopilot
+  updateFxUI();
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('fx_active', isNowActive);
+    UserProfileManager.setSetting('fx_manual_locked', true);
+  }
+
+  if (isNowActive) {
+    const plg = appState.fx.activeEffect || 'pixel_stretch';
+    showMacroToast('✨ FX MASTER ATIVADO (' + plg.toUpperCase() + ') · 🔒 FIXADO EM MANUAL');
+  } else {
+    showMacroToast('🚫 FX MASTER BYPASS (100% VÍDEO LIMPO)');
+  }
 }
 window.toggleFxMaster = toggleFxMaster;
+
+function toggleFxManualLock(forceVal = null) {
+  if (!appState.fx) return;
+  const targetVal = forceVal !== null ? Boolean(forceVal) : !appState.fx.manual_locked;
+  appState.fx.manual_locked = targetVal;
+  updateFxUI();
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('fx_manual_locked', targetVal);
+  }
+
+  if (targetVal) {
+    showMacroToast('🔒 FX TRAVADO EM MODO MANUAL (O Autopilot não irá alterar seu efeito)');
+  } else {
+    showMacroToast('⚡ FX EM MODO DINÂMICO (Seguindo Autopilot se ativado)');
+  }
+}
+window.toggleFxManualLock = toggleFxManualLock;
 
 function toggleFxAutopilot(forceState = null) {
   if (!appState.fx) return;
   
-  const isNowOn = forceState !== null ? forceState : !appState.fx.autopilotActive;
+  const isNowOn = forceState !== null ? Boolean(forceState) : !appState.fx.autopilotActive;
   appState.fx.autopilotActive = isNowOn;
+  if (!appState.autopilot_delegation) appState.autopilot_delegation = {};
   appState.autopilot_delegation.fx = isNowOn;
-  
-  if (isNowOn && !appState.fx.active) {
-    appState.fx.active = true;
-    const btnM = document.getElementById('btn-toggle-fx');
-    const lblM = document.getElementById('lbl-fx-master-status');
-    if (btnM) btnM.classList.add('active');
-    if (lblM) lblM.textContent = 'ON';
-  }
-  
-  const btn = document.getElementById('btn-toggle-fx-autopilot');
-  const lbl = document.getElementById('lbl-fx-autopilot-status');
-  if (btn) btn.classList.toggle('active', isNowOn);
-  if (lbl) lbl.textContent = isNowOn ? 'ON' : 'OFF';
 
-  const chk = document.getElementById('chk-delegate-fx');
-  if (chk) chk.checked = isNowOn;
+  if (isNowOn) {
+    appState.fx.manual_locked = false; // releases lock so autopilot has control
+    showMacroToast('🤖 AUTOPILOT FX ATIVADO (Sincronizado com Builds e Drops)');
+  } else {
+    showMacroToast('🔒 AUTOPILOT FX DESATIVADO (Modo Manual 100% no seu controle)');
+  }
+
+  if (typeof UserProfileManager !== 'undefined') {
+    UserProfileManager.setSetting('autopilot_delegation_fx', isNowOn);
+    UserProfileManager.setSetting('fx_manual_locked', appState.fx.manual_locked);
+  }
+
+  updateFxUI();
 }
 window.toggleFxAutopilot = toggleFxAutopilot;
 
@@ -5301,11 +5357,18 @@ function toggleMattesAutopilot(forceState = null) {
 }
 window.toggleMattesAutopilot = toggleMattesAutopilot;
 
-function loadPluginPreset(pluginId, presetName) {
+function loadPluginPreset(pluginId, presetName, isUserAction = true) {
   if (!appState.fx || !ROADMAP_PRESETS[pluginId] || !ROADMAP_PRESETS[pluginId][presetName]) return;
   const presetData = ROADMAP_PRESETS[pluginId][presetName];
 
   Object.assign(appState.fx[pluginId], presetData);
+
+  if (isUserAction) {
+    appState.fx.manual_locked = true;
+    appState.fx.active = true;
+    updateFxUI();
+    showMacroToast('🔒 PRESET FIXADO: ' + presetName.toUpperCase().replace(/_/g, ' ') + ' (Autopilot não altera)');
+  }
 
   // Sync UI controls for the active plugin
   if (pluginId === 'pixel_stretch') {
@@ -5504,9 +5567,13 @@ function applyFxAutopilotPreset(presetName) {
   updateFxUI();
 }
 
-function setFxMasterParam(param, val) {
+function setFxMasterParam(param, val, isUserAction = true) {
   if (!appState.fx) return;
   appState.fx[param] = val;
+  if (isUserAction && param === 'masterIntensity') {
+    appState.fx.manual_locked = true;
+    updateFxUI();
+  }
   if (param === 'masterIntensity') {
     const lbl = document.getElementById('val-fx-intensity');
     if (lbl) lbl.textContent = Math.round(val * 100) + '%';
@@ -5696,16 +5763,47 @@ function updateFxUI() {
   if (!appState.fx) return;
   const fx = appState.fx;
 
-  // Master & Autopilot buttons
+  // Master & Autopilot buttons (Tab 6 Toolbar)
   const btnM = document.getElementById('btn-toggle-fx');
   const lblM = document.getElementById('lbl-fx-master-status');
   if (btnM) btnM.classList.toggle('active', fx.active);
   if (lblM) lblM.textContent = fx.active ? 'ON' : 'OFF';
 
+  // Header quick toggle button (Always accessible)
+  const btnHdr = document.getElementById('btn-header-toggle-fx');
+  const txtHdr = document.getElementById('txt-header-fx');
+  if (btnHdr) {
+    btnHdr.classList.toggle('active', fx.active);
+    btnHdr.classList.toggle('is-locked', Boolean(fx.manual_locked && fx.active));
+  }
+  if (txtHdr) {
+    const lockIcon = (fx.manual_locked && fx.active) ? '🔒 ' : '';
+    txtHdr.textContent = fx.active ? `${lockIcon}FX: ON` : 'FX: BYPASS';
+  }
+
+  // FX Lock button in toolbar
+  const btnLock = document.getElementById('btn-toggle-fx-lock');
+  const lblLock = document.getElementById('lbl-fx-lock-status');
+  const iconLock = document.getElementById('icon-fx-lock');
+  const isLocked = Boolean(fx.manual_locked);
+  if (btnLock) {
+    btnLock.classList.toggle('active', isLocked);
+    btnLock.title = isLocked
+      ? 'Efeito travado manualmente: o Autopilot NÃO irá alterar este efeito. Clique para liberar.'
+      : 'Efeito dinâmico: segue o Autopilot se ativado. Clique para travar manualmente.';
+  }
+  if (lblLock) lblLock.textContent = isLocked ? 'MANUAL FIXADO' : 'SEGUIR AUTO';
+  if (iconLock) iconLock.textContent = isLocked ? '🔒' : '⚡';
+
+  // Autopilot button in toolbar
   const btnAuto = document.getElementById('btn-toggle-fx-autopilot');
   const lblAuto = document.getElementById('lbl-fx-autopilot-status');
   if (btnAuto) btnAuto.classList.toggle('active', fx.autopilotActive);
   if (lblAuto) lblAuto.textContent = fx.autopilotActive ? 'ON' : 'OFF';
+
+  // Tab 5 delegation checkbox
+  const chkDel = document.getElementById('chk-delegate-fx');
+  if (chkDel) chkDel.checked = Boolean(appState.autopilot_delegation?.fx);
 
   // Target Routing Select
   const selTarget = document.getElementById('sel-fx-target');
@@ -5714,8 +5812,8 @@ function updateFxUI() {
   // Master Sliders
   const sliInt = document.getElementById('slider-fx-intensity');
   const valInt = document.getElementById('val-fx-intensity');
-  if (sliInt) sliInt.value = Math.round((fx.masterIntensity || 0.8) * 100);
-  if (valInt) valInt.textContent = Math.round((fx.masterIntensity || 0.8) * 100) + '%';
+  if (sliInt) sliInt.value = Math.round((fx.masterIntensity !== undefined ? fx.masterIntensity : 0.8) * 100);
+  if (valInt) valInt.textContent = Math.round((fx.masterIntensity !== undefined ? fx.masterIntensity : 0.8) * 100) + '%';
 
   const sliSpd = document.getElementById('slider-fx-speed');
   const valSpd = document.getElementById('val-fx-speed');
@@ -5727,8 +5825,8 @@ function updateFxUI() {
     pill.classList.toggle('active', pill.dataset.preset === fx.autopilotPreset);
   });
 
-  // Active effect selection
-  selectFxPlugin(fx.activeEffect || 'pixel_stretch');
+  // Active effect selection (internal sync without manual lock trigger)
+  selectFxPlugin(fx.activeEffect || 'pixel_stretch', false);
 }
 window.updateFxUI = updateFxUI;
 
@@ -5774,7 +5872,7 @@ window.toggleProgramFocus = toggleProgramFocus;
 
 // Musical Autopilot Engine for FX
 function runFxAutopilotEngine() {
-  if (!appState.fx || !appState.fx.autopilotActive) return;
+  if (!appState.fx || !appState.fx.autopilotActive || appState.fx.manual_locked) return;
 
   const totalBars = appState.phrase?.total_bars || 1;
   const barsElapsed = totalBars - (appState.fx.lastAutopilotChangeBar || 0);
@@ -5875,8 +5973,8 @@ function runAutopilotEngine() {
     }
   }
 
-  // 3. FX OVERDRIVE DELEGATION
-  if (del.fx) {
+  // 3. FX OVERDRIVE DELEGATION (Respeita trava manual do operador)
+  if (del.fx && !appState.fx?.manual_locked) {
     // Ramp FX intensity during BUILD
     if (appState.macro_state === 'BUILD') {
        if (appState.fx && appState.fx.active) {
@@ -5900,7 +5998,7 @@ function runAutopilotEngine() {
 
   // 4. KINETICS & BLENDS DELEGATION
   if (del.kinetics) {
-    if (appState.matte && appState.matte.deform && appState.kinematics_auto !== false) {
+    if (stateChanged && appState.matte && appState.matte.deform && appState.kinematics_auto !== false) {
       applyMacroStateAesthetics(appState.macro_state || 'GROOVE');
     }
 
@@ -11842,6 +11940,16 @@ function bootstrapApp() {
   if (typeof initLibrarySidebarSplitter === 'function') initLibrarySidebarSplitter();
   if (typeof initDockViewModes === 'function') initDockViewModes();
   if (typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
+  // Restaurar preferências de FX Master do Perfil do Usuário
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedFxActive = UserProfileManager.getSetting('fx_active', false);
+    const savedFxLocked = UserProfileManager.getSetting('fx_manual_locked', false);
+    if (appState.fx) {
+      appState.fx.active = !!savedFxActive;
+      appState.fx.manual_locked = !!savedFxLocked;
+    }
+  }
+
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
@@ -12242,6 +12350,13 @@ function initKeyboardShortcuts() {
         crossfader.value = Math.min(100, Number(crossfader.value) + 5);
         crossfader.dispatchEvent(new Event('input'));
       }
+      return;
+    }
+
+    // SHIFT+X: Toggle Master FX (Engage / Bypass com Lock Manual)
+    if ((key === 'x' || key === 'X') && e.shiftKey) {
+      e.preventDefault();
+      if (typeof toggleFxMaster === 'function') toggleFxMaster();
       return;
     }
 
