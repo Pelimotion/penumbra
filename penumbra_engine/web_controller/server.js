@@ -78,17 +78,22 @@ const MATTES_MANIFEST_PATH = path.join(ROOT_DIR, 'media_pool', 'mattes_manifest.
 
 // In-memory Manifest Cache
 let cachedManifest = null;
+let lastManifestMtime = 0;
 function getManifest() {
-  if (cachedManifest) return cachedManifest;
   if (fs.existsSync(MANIFEST_PATH)) {
     try {
+      const stat = fs.statSync(MANIFEST_PATH);
+      if (cachedManifest && stat.mtimeMs === lastManifestMtime) {
+        return cachedManifest;
+      }
       cachedManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf-8'));
+      lastManifestMtime = stat.mtimeMs;
       return cachedManifest;
     } catch (e) {
       console.warn('Error reading manifest file:', e);
     }
   }
-  return [];
+  return cachedManifest || [];
 }
 
 function saveManifest(manifestData) {

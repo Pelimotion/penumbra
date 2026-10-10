@@ -2308,9 +2308,9 @@
 
     <!-- HIDDEN VIDEO STREAM CACHE (HTML5 HARDWARE DECODE) -->
     <div id="video-stream-cache" class="hardware-video-cache">
-      <video id="player-l0" muted loop playsinline preload="auto"></video>
-      <video id="player-l3" muted loop playsinline preload="auto"></video>
-      <video id="player-l4" muted loop playsinline preload="auto"></video>
+      <video id="player-l0" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
+      <video id="player-l3" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
+      <video id="player-l4" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
     </div>
 
     <!-- THEATER / EXPANDED MONITOR MODAL (MODO CINEMA) -->
@@ -2755,6 +2755,11 @@
                       <button class="src-pill" id="btn-cfg-src-mic" data-source="mic" onclick="switchAudioSource('mic')">MICROFONE</button>
                       <button class="src-pill" id="btn-cfg-src-p2" data-source="p2" onclick="switchAudioSource('p2')">LINE IN (P2)</button>
                       <button class="src-pill" id="btn-cfg-src-usb" data-source="usb" onclick="switchAudioSource('usb')">USB DJ</button>
+                    </div>
+                    <div id="audio-input-device-wrap" style="margin-top: 8px; display: none;">
+                      <select id="sel-audio-input-device" class="form-control select-dark select-sm" style="font-size: 11px; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,240,255,0.3); color: #00f0ff; padding: 4px 8px; border-radius: 4px; width: 100%;" onchange="window.PenumbraWebAudio && window.PenumbraWebAudio.selectDevice(this.value)">
+                        <option value="">Dispositivo Padrão do Sistema</option>
+                      </select>
                     </div>
                   </div>
                 </div>

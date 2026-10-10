@@ -1,7 +1,7 @@
 {
   "schema_version": "1.2.0",
   "app": "Penumbra System VJ Engine",
-  "last_saved": "2026-10-10T01:38:56.331Z",
+  "last_saved": "2026-10-10T04:01:41.029Z",
   "settings": {
     "media_source": "cdn",
     "remember_source": true,
@@ -31,8 +31,9 @@
       "hover_preview_delay_ms": 280
     },
     "library_active_asset_type": "all",
-    "dock_view_mode": "modules",
-    "library_sidebar_collapsed": false
+    "dock_view_mode": "timeline",
+    "library_sidebar_collapsed": false,
+    "workspace_top_height": 140
   },
   "custom_clips": [],
   "category_overrides": {},
@@ -51,5 +52,6 @@
       "cached_at": "2026-10-09T08:39:48.343Z",
       "is_downloaded": true
     }
-  }
+  },
+  "last_local_folder_name": ""
 }
