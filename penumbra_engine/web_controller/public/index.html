@@ -349,6 +349,7 @@
                 <button class="geom-pill" id="btn-prv-rot-cw" onclick="setLayerRotation('layer3', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
                 <button class="geom-pill" id="btn-prv-fit-wings" onclick="setLayerFitMode('layer3', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
                 <button class="geom-pill" id="btn-prv-fit-mode" onclick="toggleLayerFitMode('layer3')" title="Alternar FIT / FILL">FIT</button>
+                <button class="geom-pill" id="btn-prv-clip-tf" onclick="openPreviewClipTransform()" title="Transformação Geométrica Individual do Clipe em Cue (Rotação/Escala/Posição antes de ir pro Ar)" style="background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; color: #22d3ee; font-weight: 700;">📐 CLIPE</button>
               </div>
             </div>
             <div class="screen-actions-right">
@@ -418,6 +419,7 @@
       <div class="audio-strip-col col-state">
         <div class="state-strip-header">
           <span class="state-badge-label" id="badge-macro-state-strip">GROOVE</span>
+          <span class="state-forced-tag" id="badge-macro-forced-tag" style="display: none;">FORÇADO</span>
           <span class="macro-preset-tag clean" id="badge-macro-preset-name" title="Preset ativo (Clique no botão para alternar variações)">1/3 · PURE CLEAN CINEMA</span>
         </div>
         <div class="state-buttons-row">
@@ -616,6 +618,48 @@
             <span class="tl-metric-tag">TENSION: <strong id="tl-tension-pct" class="text-emerald">24%</strong></span>
             <span class="tl-metric-tag">BPM: <strong id="tl-current-bpm" class="text-white">128.0</strong></span>
           </div>
+
+          <!-- Individual Layer / Clip Transform Inspector -->
+          <div class="tl-transform-inspector" id="tl-transform-inspector">
+            <div class="tl-tf-title">INSPECTOR:</div>
+            <div class="tl-tf-layers">
+              <button class="tl-tf-pill active" data-layer="layer0" onclick="selectTimelineLayer('layer0')">L0</button>
+              <button class="tl-tf-pill" data-layer="layer1" onclick="selectTimelineLayer('layer1')">L1</button>
+              <button class="tl-tf-pill" data-layer="layer2" onclick="selectTimelineLayer('layer2')">L2</button>
+              <button class="tl-tf-pill" data-layer="layer3" onclick="selectTimelineLayer('layer3')">L3</button>
+              <button class="tl-tf-pill" data-layer="layer4" onclick="selectTimelineLayer('layer4')">L4</button>
+              <button class="tl-tf-pill" data-layer="layer5" onclick="selectTimelineLayer('layer5')">L5</button>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">ZOOM:</span>
+              <input type="range" min="20" max="300" value="100" class="tl-tf-slider" id="tl-tf-scale-slider" oninput="setLayerScale(activeTimelineSelectedLayer, this.value/100); document.getElementById('tl-tf-scale-val').textContent=this.value+'%'">
+              <span class="tl-tf-val" id="tl-tf-scale-val">100%</span>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">X:</span>
+              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posx-input" onchange="setLayerPosition(activeTimelineSelectedLayer, this.value, undefined)">
+              <span class="tl-tf-label">Y:</span>
+              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posy-input" onchange="setLayerPosition(activeTimelineSelectedLayer, undefined, this.value)">
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">BLEND:</span>
+              <select class="tl-tf-select" id="tl-tf-blend-select" onchange="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].blend = this.value; }">
+                <option value="Normal">Normal</option>
+                <option value="Multiply">Multiply</option>
+                <option value="Screen">Screen</option>
+                <option value="Overlay">Overlay</option>
+                <option value="Soft Light">Soft Light</option>
+                <option value="Difference">Difference</option>
+                <option value="Color Dodge">Color Dodge</option>
+              </select>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">OPAC:</span>
+              <input type="range" min="0" max="100" value="100" class="tl-tf-slider" id="tl-tf-opac-slider" oninput="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].opacity = this.value/100; document.getElementById('tl-tf-opac-val').textContent=this.value+'%'; }">
+              <span class="tl-tf-val" id="tl-tf-opac-val">100%</span>
+            </div>
+            <button class="btn btn-outline btn-xs" onclick="resetLayerTransform(activeTimelineSelectedLayer)" title="Resetar escala e posição da camada">↺ RESET</button>
+          </div>
         </div>
 
         <div class="pro-timeline-arrangement-body">
@@ -639,6 +683,11 @@
               <span class="track-tag">PRV</span>
               <span class="track-name">L3 CUE BUS B</span>
               <span class="track-vol" id="lbl-tl-track-l3">100%</span>
+            </div>
+            <div class="tl-track-header track-l5">
+              <span class="track-tag">L5</span>
+              <span class="track-name">OVERLAY DECK</span>
+              <span class="track-vol" id="lbl-tl-track-l5">100%</span>
             </div>
             <div class="tl-track-header track-fx">
               <span class="track-tag">FX</span>
@@ -878,6 +927,58 @@
             <div class="ch-fader-slot">
               <input type="range" class="pro-slider ch-slider" id="l4-opacity" min="0" max="100" value="0" oninput="onLayerOpacityChange('layer4', this.value)">
               <span class="ch-val" id="lbl-l4-opacity">0%</span>
+            </div>
+          </div>
+
+          <!-- L5: DEDICATED OVERLAY DECK (SOBREPOSIÇÃO PRINCIPAL) -->
+          <div class="pro-channel-strip" id="strip-layer5">
+            <div class="ch-header">
+              <button class="btn-solo" id="btn-toggle-l5" onclick="toggleLayerActive('layer5')">L5</button>
+              <div class="ch-meta">
+                <span class="ch-name">OVERLAY DECK (SOBREPOSIÇÃO)</span>
+                <span class="ch-clip-name" id="l5-sub-text">VAZIO (SELECIONE NO POOL)</span>
+              </div>
+            </div>
+            <div class="ch-geom">
+              <button class="ch-pill-rot active" id="l5-rot-0" onclick="setLayerRotation('layer5', 0)">0°</button>
+              <button class="ch-pill-rot" id="l5-rot-ccw" onclick="setLayerRotation('layer5', -90)">↺-90</button>
+              <button class="ch-pill-rot" id="l5-rot-cw" onclick="setLayerRotation('layer5', 90)">↻+90</button>
+              <button class="ch-pill-rot" id="l5-fit-wings" onclick="setLayerFitMode('layer5', 'wings')">WINGS</button>
+            </div>
+            <div class="ch-playback" style="display: flex; gap: 4px; margin-bottom: 4px; align-items: center;">
+              <button class="ch-pill-rot" id="l5-play-pause" onclick="toggleLayerPlayback('layer5')" title="Play/Pause">⏸</button>
+              <button class="ch-pill-rot" id="l5-pingpong" onclick="toggleLayerPingPong('layer5')" title="Ping-Pong Loop">⮂</button>
+              <input type="range" class="pro-slider" style="flex:1" id="l5-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer5', this.value)" title="Playback Speed (Time-Stretch)">
+              <span class="ch-val" id="lbl-l5-speed" style="width: 28px;">1.0x</span>
+            </div>
+            <div class="ch-matte-slot">
+              <span class="ch-slot-icon">M</span>
+              <select class="pro-select select-matte" id="l5-matte" onchange="onLayerMatteChange('layer5', this.value)" title="Máscara Própria de L5">
+                <option value="none" selected>NENHUMA (FULL FRAME)</option>
+                <option value="cat_a_solids/matte_a_half_left.png">Matte A: 50% Esquerda</option>
+                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
+                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Radial</option>
+                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas</option>
+                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
+                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
+              </select>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Matte">✕</button>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
+              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Máscara">INV</button>
+            </div>
+            <div class="ch-blend-slot">
+              <select class="pro-select" id="l5-blend" onchange="onLayerBlendChange('layer5', this.value)">
+                <option value="Screen" selected>SCREEN</option>
+                <option value="Soft Light">SOFT LIGHT</option>
+                <option value="Overlay">OVERLAY</option>
+                <option value="Multiply">MULTIPLY</option>
+                <option value="Normal">NORMAL</option>
+                <option value="Add">ADD</option>
+              </select>
+            </div>
+            <div class="ch-fader-slot">
+              <input type="range" class="pro-slider ch-slider" id="l5-opacity" min="0" max="100" value="0" oninput="onLayerOpacityChange('layer5', this.value)">
+              <span class="ch-val" id="lbl-l5-opacity">0%</span>
             </div>
           </div>
 
@@ -2143,12 +2244,20 @@
                 <button class="target-layer-pill" data-target="layer2" onclick="setMatteTargetLayer('layer2')"><span class="pill-dot"></span> L2 (SOBEL)</button>
                 <button class="target-layer-pill active" data-target="layer3" onclick="setMatteTargetLayer('layer3')"><span class="pill-dot"></span> L3 (CUE)</button>
                 <button class="target-layer-pill" data-target="layer4" onclick="setMatteTargetLayer('layer4')"><span class="pill-dot"></span> L4 (ACCENT)</button>
+                <button class="target-layer-pill" data-target="layer5" onclick="setMatteTargetLayer('layer5')"><span class="pill-dot"></span> L5 (OVERLAY)</button>
               </div>
             </div>
             <div class="target-ribbon-actions">
               <div class="target-active-info">
                 <span>MÁSCARA:</span>
                 <span class="target-active-matte-title" id="target-active-matte-title">CARREGANDO...</span>
+              </div>
+              <!-- MASTER LOCKED MATTE TOGGLE & STATUS -->
+              <div class="master-matte-lock-panel" style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                <button class="btn btn-outline btn-xs" id="btn-toggle-master-matte-lock" onclick="toggleMasterLockedMatte()" title="Travar máscara estática na saída Master que o Autopilot e Presets NUNCA alteram">
+                  🔒 TRAVAR MÁSCARA MASTER
+                </button>
+                <span class="badge" id="badge-master-locked-matte" style="display: none; font-size: 10px; background: rgba(34,211,238,0.15); color: #22d3ee; border: 1px solid #22d3ee;">TRAVADA</span>
               </div>
               <button class="btn btn-fx-autopilot" id="btn-toggle-mattes-autopilot" onclick="toggleMattesAutopilot()" title="Delegar evolução de máscaras ao Autopilot">
                 <span class="autopilot-pulse"></span> AUTOPILOT MATTES: <strong id="lbl-mattes-autopilot-status">OFF</strong>
@@ -2311,6 +2420,7 @@
       <video id="player-l0" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
       <video id="player-l3" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
       <video id="player-l4" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
+      <video id="player-l5" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
     </div>
 
     <!-- THEATER / EXPANDED MONITOR MODAL (MODO CINEMA) -->
@@ -3083,7 +3193,18 @@
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
                   <span>GÊMEO VIRTUAL INTERATIVO · M-VAVE SMC-MIXER (HARDWARE TWIN)</span>
-                  <span class="cfg-badge text-cyan">OPERÁVEL VIA MIDI, TECLADO OU MOUSE</span>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="hw-mode-switch" style="display: inline-flex; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+                      <button class="btn btn-xs active" id="btn-hw-mode-live" onclick="setHwTwinMode('live')" style="padding: 2px 8px; background: rgba(34,211,238,0.2); color: #22d3ee; border: none;">LIVE CONTROL</button>
+                      <button class="btn btn-xs" id="btn-hw-mode-map" onclick="setHwTwinMode('map')" style="padding: 2px 8px; background: transparent; color: #94a3b8; border: none;" title="Clique em qualquer knob/fader para remapear">🎯 CLICK TO MAP</button>
+                    </div>
+                    <select class="pro-select" id="sel-hw-midi-preset" onchange="loadMidiPreset(this.value)" style="font-size: 10px; padding: 2px 6px;">
+                      <option value="preset_master_jam">PRESET 1: Master Jam 6-Decks & Crossfader</option>
+                      <option value="preset_layer_sculpt">PRESET 2: Layer Geometry & Overlay Sculptor</option>
+                      <option value="preset_conductor_flow">PRESET 3: Ambient Conductor & Matte Flow</option>
+                      <option value="preset_climax_battle">PRESET 4: 4-Deck Battle & Hard Strobe Clímax</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div class="hw-twin-container" id="hw-twin-container">

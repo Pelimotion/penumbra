@@ -803,11 +803,12 @@ let appState = {
   stems: { drums: 0.65, bass: 0.70, other: 0.45, vocals: 0.30 },
   bands: { sub: 0.65, bass: 0.70, lo_mid: 0.45, hi_mid: 0.35, presence: 0.28, air: 0.20 },
   layers: {
-    layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' }
+    layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer5: { active: true, opacity: 0.0, blend: 'Screen', clipId: 'clip_002', name: 'Installation_documentation_breat…_202603282136.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' }
   },
   phrase: {
     length_bars: 16,
@@ -819,6 +820,9 @@ let appState = {
   },
   matte_target_layer: 'master',
   master_matte: 'none',
+  master_locked_matte: 'none',
+  master_locked_matte_active: false,
+  master_locked_matte_invert: false,
   tonal: {
     gamma: 0.85,
     brightness: -0.05,
@@ -1082,20 +1086,25 @@ const btnRescan = document.getElementById('btn-rescan-media');
 let playerL0 = document.getElementById('player-l0');
 let playerL3 = document.getElementById('player-l3');
 const playerL4 = document.getElementById('player-l4');
+let playerL5 = document.getElementById('player-l5');
 
 // Active Project & Audio Source States
 let activeProjectFilter = 'ALL';
 let currentAudioSource = { mode: 'test', device_name: 'MP3 Interno (01 REC-2024-04-28.mp3)', devices: [] };
 
-// Offscreen Canvases for Tonal & Edge Processing
+// Offscreen Canvases for Tonal, Edge & Overlay Processing
 const offscreenA = document.createElement('canvas');
 const offscreenB = document.createElement('canvas');
+const offscreenOverlay = document.createElement('canvas');
 const offCtxA = offscreenA.getContext('2d');
 const offCtxB = offscreenB.getContext('2d');
+const offCtxOverlay = offscreenOverlay.getContext('2d');
 offscreenA.width = 640;
 offscreenA.height = 360;
 offscreenB.width = 640;
 offscreenB.height = 360;
+offscreenOverlay.width = 640;
+offscreenOverlay.height = 360;
 
 // Dual Persistent Broadcast Buses (Bus A = Program Master, Bus B = Preview Cue)
 const busCanvasA = document.createElement('canvas');
@@ -1411,6 +1420,30 @@ function syncVideoSources() {
     }
   }
 
+  // Layer 5 Dedicated Overlay Video (Loop / Foreground Channel)
+  if (!playerL5) playerL5 = document.getElementById('player-l5');
+  if (playerL5 && appState.layers.layer5 && appState.layers.layer5.clipId) {
+    attachPlayerErrorHandler(playerL5, 'L5');
+    playerL5.crossOrigin = 'anonymous';
+    playerL5.muted = true;
+    playerL5.playsInline = true;
+    playerL5.loop = true;
+    if (appState.layers.layer5.clipId === 'clip_gen_plexus_spine') {
+      if (!playerL5.paused) playerL5.pause();
+    } else {
+      const clip = allClips.find(c => c.id === appState.layers.layer5.clipId);
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
+      if (targetSrc && (!playerL5.src.includes(targetSrc) || playerL5.dataset.activeSrc !== targetSrc)) {
+        playerL5.dataset.activeSrc = targetSrc;
+        playerL5.src = targetSrc;
+        playerL5.load();
+        playerL5.play().catch(() => {});
+      } else if (playerL5.paused && playerL5.readyState >= 2) {
+        playerL5.play().catch(() => {});
+      }
+    }
+  }
+
   // Sync Bus Labels on Central Transition Strip
   const stripA = document.getElementById('me-bus-a-title');
   if (stripA) stripA.textContent = `BASE: ${appState.layers.layer0.name || appState.layers.layer0.clipId}`;
@@ -1468,7 +1501,7 @@ function getClipImage(clip) {
 // ============================================================================
 // 5. ASPECT RATIO PRESERVING FIT ENGINE (ZERO DISTORTION GUARANTEE)
 // ============================================================================
-function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0) {
+function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0, scale = 1.0, posX = 0, posY = 0) {
   if (!source) return null;
   
   const srcW = source.videoWidth || source.naturalWidth || targetW;
@@ -1486,24 +1519,29 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.drawImage(source, (targetW - bgW) / 2, (targetH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: crisp centered 9:16 with soft drop shadow
+    // Foreground: crisp centered 9:16 with soft drop shadow & transform
     const fgRatio = srcW / srcH;
     const fgH = targetH;
     const fgW = targetH * fgRatio;
     const fgX = (targetW - fgW) / 2;
     ctx.save();
+    ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
+    if (scale && scale !== 1.0) ctx.scale(scale, scale);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
     ctx.shadowBlur = 20;
-    ctx.drawImage(source, fgX, 0, fgW, fgH);
+    ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
     ctx.restore();
     return { x: fgX, y: 0, w: fgW, h: fgH };
   }
 
-  // 2. ROTATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
+  // 2. ROTATION, SCALE, TRANSLATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
   ctx.save();
-  ctx.translate(targetW / 2, targetH / 2);
+  ctx.translate((targetW / 2) + (posX || 0), (targetH / 2) + (posY || 0));
   if (rotation && rotation !== 0) {
     ctx.rotate((rotation * Math.PI) / 180);
+  }
+  if (scale && scale !== 1.0) {
+    ctx.scale(scale, scale);
   }
 
   const isQuarterTurn = Math.abs(rotation % 180) === 90;
@@ -1541,6 +1579,286 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   ctx.restore();
   return { x: 0, y: 0, w: targetW, h: targetH };
 }
+
+// ============================================================================
+// 5.1 COMPOSITING BLEND OPS & DUAL-TIER TRANSFORM HIERARCHY (CLIP & LAYER)
+// ============================================================================
+function getCanvasCompositeOp(blendName) {
+  const b = String(blendName || '').toLowerCase().trim();
+  switch (b) {
+    case 'screen': return 'screen';
+    case 'multiply': return 'multiply';
+    case 'add':
+    case 'lighter': return 'lighter';
+    case 'soft light':
+    case 'soft-light':
+    case 'softlight': return 'soft-light';
+    case 'difference': return 'difference';
+    case 'exclusion': return 'exclusion';
+    case 'overlay': return 'overlay';
+    case 'normal':
+    default: return 'source-over';
+  }
+}
+window.getCanvasCompositeOp = getCanvasCompositeOp;
+
+function getClipTransform(clipId) {
+  if (!clipId) return { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 };
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  if (clip && clip.transform) return clip.transform;
+  const saved = (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile?.custom_clip_transforms)
+    ? UserProfileManager.profile.custom_clip_transforms[clipId] : null;
+  const tf = saved ? { ...saved } : { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 };
+  if (clip) clip.transform = tf;
+  return tf;
+}
+window.getClipTransform = getClipTransform;
+
+function setClipTransform(clipId, partial) {
+  if (!clipId) return;
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  const cur = getClipTransform(clipId);
+  const updated = { ...cur, ...partial };
+  if (clip) clip.transform = updated;
+  if (typeof UserProfileManager !== 'undefined') {
+    if (!UserProfileManager.profile.custom_clip_transforms) {
+      UserProfileManager.profile.custom_clip_transforms = {};
+    }
+    UserProfileManager.profile.custom_clip_transforms[clipId] = updated;
+    UserProfileManager.saveProfile();
+  }
+}
+window.setClipTransform = setClipTransform;
+
+function resetClipTransform(clipId) {
+  setClipTransform(clipId, { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 });
+}
+window.resetClipTransform = resetClipTransform;
+
+function setLayerScale(layerId, scale) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].scale = Math.max(0.1, Math.min(4.0, Number(scale) || 1.0));
+  updateTimelineTransformInspector();
+}
+window.setLayerScale = setLayerScale;
+
+function setLayerPosition(layerId, posX, posY) {
+  if (!appState.layers[layerId]) return;
+  if (posX !== undefined) appState.layers[layerId].pos_x = Math.round(Number(posX) || 0);
+  if (posY !== undefined) appState.layers[layerId].pos_y = Math.round(Number(posY) || 0);
+  updateTimelineTransformInspector();
+}
+window.setLayerPosition = setLayerPosition;
+
+function setLayerRotation(layerId, rot) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].rotation = Number(rot) || 0;
+  updateTimelineTransformInspector();
+}
+window.setLayerRotation = setLayerRotation;
+
+function resetLayerTransform(layerId) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].scale = 1.0;
+  appState.layers[layerId].pos_x = 0;
+  appState.layers[layerId].pos_y = 0;
+  appState.layers[layerId].rotation = 0;
+  updateTimelineTransformInspector();
+  showMacroToast(`Resetado Transform: ${layerId.toUpperCase()}`);
+}
+window.resetLayerTransform = resetLayerTransform;
+
+// Master Output Locked Matte
+function setMasterLockedMatte(mattePath) {
+  appState.master_locked_matte = mattePath || 'none';
+  appState.master_locked_matte_active = (mattePath && mattePath !== 'none');
+  updateMasterLockedMatteUI();
+  showMacroToast(appState.master_locked_matte_active ? `🔒 Master Matte Travado: ${(mattePath || '').split('/').pop()}` : '🔓 Master Matte Destravado');
+}
+window.setMasterLockedMatte = setMasterLockedMatte;
+
+function toggleMasterLockedMatte(forceState) {
+  if (forceState !== undefined) {
+    appState.master_locked_matte_active = Boolean(forceState);
+  } else {
+    appState.master_locked_matte_active = !appState.master_locked_matte_active;
+  }
+  updateMasterLockedMatteUI();
+  showMacroToast(appState.master_locked_matte_active ? '🔒 Master Matte Travado' : '🔓 Master Matte Destravado');
+}
+window.toggleMasterLockedMatte = toggleMasterLockedMatte;
+
+function updateMasterLockedMatteUI() {
+  const btnLock = document.getElementById('btn-lock-master-matte');
+  const badge = document.getElementById('badge-master-locked-status');
+  const isLocked = Boolean(appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none');
+  if (btnLock) {
+    btnLock.classList.toggle('locked', isLocked);
+    btnLock.innerHTML = isLocked ? '🔒 TRAVADO NO MASTER' : '🔓 DESTRAVADO (LIVRE)';
+  }
+  if (badge) {
+    badge.style.display = isLocked ? 'inline-block' : 'none';
+    badge.textContent = `🔒 MASTER LOCKED: ${(appState.master_locked_matte || '').split('/').pop()}`;
+  }
+}
+window.updateMasterLockedMatteUI = updateMasterLockedMatteUI;
+
+// Unificação de Rótulos do Macro State (Evita Oscilação e Flicker)
+function refreshMacroStateBadges() {
+  const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
+  const st = appState.manual_forced_state || appState.macro_state || 'GROOVE';
+
+  const badgeState = document.getElementById('badge-macro-state');
+  if (badgeState) {
+    badgeState.textContent = st;
+    badgeState.style.color = getStateColor(st);
+  }
+
+  const badgeStrip = document.getElementById('badge-macro-state-strip');
+  if (badgeStrip) {
+    badgeStrip.textContent = st;
+    badgeStrip.style.color = getStateColor(st);
+    badgeStrip.classList.toggle('state-forced-glow', isForced);
+  }
+
+  const forcedTag = document.getElementById('badge-macro-forced-tag');
+  if (forcedTag) {
+    forcedTag.style.display = isForced ? 'inline-block' : 'none';
+  }
+
+  document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.state === st);
+  });
+}
+window.refreshMacroStateBadges = refreshMacroStateBadges;
+
+// Active selected layer in Timeline Transform Inspector ('layer0'..'layer5')
+let activeTimelineSelectedLayer = 'layer0';
+
+function selectTimelineLayer(layerId) {
+  activeTimelineSelectedLayer = layerId;
+  document.querySelectorAll('.tl-tf-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.layer === layerId);
+  });
+  updateTimelineTransformInspector();
+}
+window.selectTimelineLayer = selectTimelineLayer;
+
+function updateTimelineTransformInspector() {
+  const l = appState.layers[activeTimelineSelectedLayer];
+  if (!l) return;
+  const sliderScale = document.getElementById('tl-tf-scale-slider');
+  const valScale = document.getElementById('tl-tf-scale-val');
+  const inputPosX = document.getElementById('tl-tf-posx-input');
+  const inputPosY = document.getElementById('tl-tf-posy-input');
+  const selBlend = document.getElementById('tl-tf-blend-select');
+  const sliderOpac = document.getElementById('tl-tf-opac-slider');
+  const valOpac = document.getElementById('tl-tf-opac-val');
+
+  if (sliderScale) sliderScale.value = Math.round((l.scale || 1.0) * 100);
+  if (valScale) valScale.textContent = `${Math.round((l.scale || 1.0) * 100)}%`;
+  if (inputPosX && document.activeElement !== inputPosX) inputPosX.value = l.pos_x || 0;
+  if (inputPosY && document.activeElement !== inputPosY) inputPosY.value = l.pos_y || 0;
+  if (selBlend) selBlend.value = l.blend || 'Normal';
+  if (sliderOpac) sliderOpac.value = Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100);
+  if (valOpac) valOpac.textContent = `${Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100)}%`;
+}
+window.updateTimelineTransformInspector = updateTimelineTransformInspector;
+
+// Modal para Transformação Geométrica Individual do Clipe
+function openClipTransformModal(clipId) {
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  if (!clip) return;
+  const tf = getClipTransform(clipId);
+
+  const existing = document.getElementById('modal-clip-transform');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-clip-transform';
+  modal.className = 'modal-midi-overlay';
+  modal.innerHTML = `
+    <div class="modal-midi-card" style="max-width: 480px;">
+      <div class="modal-midi-header">
+        <div class="modal-midi-title">
+          <span>📐 TRANSFORMAÇÃO DO CLIPE: ${(clip.filename || clip.id).slice(0, 26)}</span>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">✕</button>
+      </div>
+      <div class="modal-midi-body">
+        <div style="font-size: 10px; color: #94a3b8; line-height: 1.4;">
+          Ajuste fino de rotação, escala e posição individual antes de enviar ao ar. Esses valores compõem com a transformação da camada no telão.
+        </div>
+
+        <div class="modal-midi-prop">
+          <label class="modal-midi-lbl">ROTAÇÃO DO CLIPE</label>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline btn-xs ${tf.rotation === 0 ? 'active' : ''}" id="btn-clip-rot-0" onclick="updateClipRot('${clip.id}', 0)">0° NORMAL</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 90 ? 'active' : ''}" id="btn-clip-rot-90" onclick="updateClipRot('${clip.id}', 90)">+90° CW</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 180 ? 'active' : ''}" id="btn-clip-rot-180" onclick="updateClipRot('${clip.id}', 180)">180° FLIP</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 270 || tf.rotation === -90 ? 'active' : ''}" id="btn-clip-rot-270" onclick="updateClipRot('${clip.id}', 270)">-90° CCW</button>
+          </div>
+        </div>
+
+        <div class="modal-midi-prop">
+          <div style="display:flex; justify-content:space-between;">
+            <label class="modal-midi-lbl">ESCALA / ZOOM (INTRÍNSECO)</label>
+            <span class="text-cyan font-mono" id="lbl-clip-scale">${Math.round((tf.scale || 1.0) * 100)}%</span>
+          </div>
+          <input type="range" min="20" max="300" value="${Math.round((tf.scale || 1.0) * 100)}" class="cfg-slider" id="rng-clip-scale" oninput="onClipScaleInput('${clip.id}', this.value)">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">POSIÇÃO X (OFFSET PX)</label>
+            <input type="number" value="${tf.pos_x || 0}" step="5" class="modal-midi-input" id="inp-clip-posx" onchange="onClipPosInput('${clip.id}')">
+          </div>
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">POSIÇÃO Y (OFFSET PX)</label>
+            <input type="number" value="${tf.pos_y || 0}" step="5" class="modal-midi-input" id="inp-clip-posy" onchange="onClipPosInput('${clip.id}')">
+          </div>
+        </div>
+      </div>
+      <div class="modal-midi-footer">
+        <button class="btn btn-outline btn-xs" onclick="resetClipTransform('${clip.id}'); document.getElementById('modal-clip-transform').remove(); openClipTransformModal('${clip.id}')">↺ RESETAR TRANSFORM</button>
+        <button class="btn btn-studio-primary btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">CONCLUÍDO</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+window.openClipTransformModal = openClipTransformModal;
+
+function openPreviewClipTransform() {
+  const cueClipId = appState.preview_clip || (appState.layers.layer3 && appState.layers.layer3.clipId) || (appState.layers.layer3 && appState.layers.layer3.clip && appState.layers.layer3.clip.id);
+  if (!cueClipId) {
+    if (typeof showHudToast === 'function') showHudToast('Nenhum clipe carregado no Preview (Deck B)', 'warn');
+    return;
+  }
+  openClipTransformModal(cueClipId);
+}
+window.openPreviewClipTransform = openPreviewClipTransform;
+
+window.updateClipRot = function(clipId, rot) {
+  setClipTransform(clipId, { rotation: rot });
+  ['0', '90', '180', '270'].forEach(r => {
+    const b = document.getElementById(`btn-clip-rot-${r}`);
+    if (b) b.classList.toggle('active', Number(r) === rot);
+  });
+};
+
+window.onClipScaleInput = function(clipId, val) {
+  const sc = Number(val) / 100.0;
+  setClipTransform(clipId, { scale: sc });
+  const lbl = document.getElementById('lbl-clip-scale');
+  if (lbl) lbl.textContent = `${val}%`;
+};
+
+window.onClipPosInput = function(clipId) {
+  const px = Number(document.getElementById('inp-clip-posx')?.value) || 0;
+  const py = Number(document.getElementById('inp-clip-posy')?.value) || 0;
+  setClipTransform(clipId, { pos_x: px, pos_y: py });
+};
 
 // ============================================================================
 // 5.5 TONAL GRADING & MATTE KINEMATICS ENGINE
@@ -2128,20 +2446,7 @@ function applyMacroPreset(state, presetIndex = null, isUserAction = false) {
 window.applyMacroPreset = applyMacroPreset;
 
 function updateMacroStateUI(state, preset, isUserAction = false) {
-  // Update header badges
-  const badgeState = document.getElementById('badge-macro-state');
-  if (badgeState) {
-    badgeState.textContent = state;
-    badgeState.style.color = getStateColor(state);
-  }
-
-  const badgeStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeStrip) {
-    const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
-    badgeStrip.textContent = isForced ? state + ' [FORÇADO]' : state;
-    badgeStrip.style.color = getStateColor(state);
-    badgeStrip.classList.toggle('state-forced-glow', isForced);
-  }
+  refreshMacroStateBadges();
 
   // Preset tag in strip
   const badgePreset = document.getElementById('badge-macro-preset-name');
@@ -2151,11 +2456,6 @@ function updateMacroStateUI(state, preset, isUserAction = false) {
     badgePreset.textContent = curIdx + '/' + list.length + ' · ' + preset.name.toUpperCase();
     badgePreset.className = 'macro-preset-tag ' + (state === 'DROP' ? 'drop' : (state === 'BUILD' ? 'build' : (state === 'GROOVE' ? 'clean' : '')));
   }
-
-  // State buttons active class
-  document.querySelectorAll('.state-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.state === state);
-  });
 
   // Tab 5 panel status label
   const lblStatus = document.getElementById('lbl-macro-mode-status');
@@ -2904,8 +3204,14 @@ function renderVisuals(time) {
       offCtxA.fillStyle = '#050608';
       offCtxA.fillRect(0, 0, w, h);
 
-      // Render base with rotation & fit
-      drawFittedImage(offCtxA, baseSource, w, h, appState.layers.layer0.fit_mode || 'fit', appState.layers.layer0.rotation || 0);
+      // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
+      const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+      const l0 = appState.layers.layer0;
+      const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
+      const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
+      const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
+      const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
+      drawFittedImage(offCtxA, baseSource, w, h, l0.fit_mode || 'fit', totalRot0, totalScale0, totalPosX0, totalPosY0);
 
       // Program Rotation Dissolve: blend smoothly from old rotation so there is zero abrupt cut
       if (programRotDissolve.active) {
@@ -2996,8 +3302,14 @@ function renderVisuals(time) {
       offCtxB.fillStyle = '#050608';
       offCtxB.fillRect(0, 0, w, h);
 
-      // Render secondary with rotation & fit
-      drawFittedImage(offCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+      // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
+      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+      const l3 = appState.layers.layer3;
+      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+      drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
 
       // Apply Layer 3 Matte with invert support
       const matteL3 = getMatteImage(appState.layers.layer3.matte);
@@ -3150,7 +3462,13 @@ function renderVisuals(time) {
 
         if (accentSource) {
           offCtxB.clearRect(0, 0, w, h);
-          drawFittedImage(offCtxB, accentSource, w, h, appState.layers.layer4.fit_mode || 'fit', appState.layers.layer4.rotation || 0);
+          const clipTf4 = getClipTransform(appState.layers.layer4.clipId);
+          const l4 = appState.layers.layer4;
+          const totalRot4 = (l4.rotation || 0) + (clipTf4.rotation || 0);
+          const totalScale4 = (l4.scale || 1.0) * (clipTf4.scale || 1.0);
+          const totalPosX4 = (l4.pos_x || 0) + (clipTf4.pos_x || 0);
+          const totalPosY4 = (l4.pos_y || 0) + (clipTf4.pos_y || 0);
+          drawFittedImage(offCtxB, accentSource, w, h, l4.fit_mode || 'fit', totalRot4, totalScale4, totalPosX4, totalPosY4);
 
           const matteL4 = getMatteImage(appState.layers.layer4.matte);
           if (matteL4 && appState.layers.layer4.matte !== 'none') {
@@ -3167,10 +3485,52 @@ function renderVisuals(time) {
           prgCtx.restore();
         }
       }
+
+      // 4.4. LAYER 5: DEDICATED OVERLAY DECK (PRIMARY FOREGROUND & INDEPENDENT LOOP COMPOSITING)
+      if (appState.layers.layer5 && appState.layers.layer5.active && (appState.layers.layer5.opacity || 0) > 0.005) {
+        const overlayClip = allClips.find(c => c.id === appState.layers.layer5.clipId) || allClips[1] || allClips[0];
+        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine');
+        const videoL5Ready = playerL5 && playerL5.readyState >= 2;
+        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
+
+        if (overlaySource) {
+          offCtxOverlay.clearRect(0, 0, w, h);
+          const clipTf5 = getClipTransform(appState.layers.layer5.clipId);
+          const l5 = appState.layers.layer5;
+          const totalRot5 = (l5.rotation || 0) + (clipTf5.rotation || 0);
+          const totalScale5 = (l5.scale || 1.0) * (clipTf5.scale || 1.0);
+          const totalPosX5 = (l5.pos_x || 0) + (clipTf5.pos_x || 0);
+          const totalPosY5 = (l5.pos_y || 0) + (clipTf5.pos_y || 0);
+          drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5);
+
+          const matteL5 = getMatteImage(l5.matte);
+          if (matteL5 && l5.matte !== 'none') {
+            offCtxOverlay.save();
+            offCtxOverlay.globalCompositeOperation = 'destination-in';
+            drawDeformedMatte(offCtxOverlay, matteL5, w, h, simTime, appState.matte?.deform, l5.matte_invert);
+            offCtxOverlay.restore();
+          }
+
+          prgCtx.save();
+          prgCtx.globalAlpha = Math.min(1.0, Math.max(0.0, l5.opacity || 0));
+          prgCtx.globalCompositeOperation = getCanvasCompositeOp(l5.blend || 'Screen');
+          drawBusToProgram(prgCtx, offscreenOverlay, pw, ph, isVert);
+          prgCtx.restore();
+        }
+      }
     }
 
-    // 4.5. MASTER MATTE APPLICATION
-    if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
+    // 4.5. MASTER LOCKED MATTE (STATIC FRAMING OVERLAY) vs DYNAMIC MASTER MATTE
+    if (!isBlackout && appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none') {
+      const lockedMatteImg = getMatteImage(appState.master_locked_matte);
+      if (lockedMatteImg) {
+        prgCtx.save();
+        prgCtx.globalCompositeOperation = 'destination-in';
+        // Renderizado 100% estático sem deformações procedurais ou oscilação
+        prgCtx.drawImage(lockedMatteImg, 0, 0, pw, ph);
+        prgCtx.restore();
+      }
+    } else if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
       const masterMatteImg = getMatteImage(appState.master_matte);
       if (masterMatteImg) {
         prgCtx.save();
@@ -5150,7 +5510,7 @@ function renderQueueCards() {
     const h = canvas.height;
     const rulerH = 22;
     const tracksH = h - rulerH;
-    const numTracks = 5;
+    const numTracks = 6;
     const trackH = tracksH / numTracks;
 
     // 1. Draw Top Time Ruler
@@ -5187,6 +5547,7 @@ function renderQueueCards() {
       'rgba(255, 255, 255, 0.02)',
       'rgba(255, 255, 255, 0.02)',
       'rgba(0, 240, 255, 0.04)',
+      'rgba(192, 132, 252, 0.05)',
       'rgba(255, 42, 133, 0.04)'
     ];
 
@@ -5274,8 +5635,28 @@ function renderQueueCards() {
       });
     }
 
-    // 6. Tension Waveform Indicator along bottom track
-    const fxY = rulerH + (4 * trackH);
+    // 5. Render Layer 5 (Dedicated Overlay Deck) on Track 4
+    const l5Clip = appState.layers?.layer5;
+    const l5Y = rulerH + (4 * trackH) + 2;
+    const l5Opacity = l5Clip?.opacity || 0;
+    ctx.fillStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.22)' : 'rgba(255, 255, 255, 0.04)';
+    ctx.strokeStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.85)' : 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(10, l5Y, barWidth * 12, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#c084fc';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◪ L5 OVERLAY: ' + ((l5Clip?.name || 'OVERLAY DECK').substring(0, 22)) + ` · ${Math.round(l5Opacity * 100)}% (${l5Clip?.blend || 'Screen'})`, 18, l5Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText(`ZOOM: ${Math.round((l5Clip?.scale || 1.0) * 100)}% · POS: (${l5Clip?.pos_x || 0}, ${l5Clip?.pos_y || 0}) · MATTE: ${l5Clip?.matte || 'NONE'}`, 18, l5Y + trackH - 8);
+
+    // 6. Tension Waveform Indicator along bottom track (Track 5)
+    const fxY = rulerH + (5 * trackH);
     ctx.fillStyle = 'rgba(255, 42, 133, 0.1)';
     ctx.fillRect(0, fxY, w, trackH);
     ctx.fillStyle = 'rgba(255, 42, 133, 0.8)';
@@ -5581,17 +5962,9 @@ function renderMattesCards() {
 // 8. TELEMETRY & UI UPDATERS
 // ============================================================================
 function updateUI() {
-  if (badgeState) {
-    badgeState.textContent = appState.macro_state;
-    badgeState.style.color = getStateColor(appState.macro_state);
-  }
-  const badgeStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeStrip && appState.macro_state) {
-    const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
-    badgeStrip.textContent = isForced ? appState.macro_state + ' [FORÇADO]' : appState.macro_state;
-    badgeStrip.style.color = getStateColor(appState.macro_state);
-    badgeStrip.classList.toggle('state-forced-glow', isForced);
-  }
+  refreshMacroStateBadges();
+  updateMasterLockedMatteUI();
+  updateTimelineTransformInspector();
   const badgePreset = document.getElementById('badge-macro-preset-name');
   if (badgePreset && appState.macro_state) {
     const p = appState.active_macro_preset || getActiveMacroPreset(appState.macro_state);
@@ -5808,19 +6181,7 @@ function updateMeters() {
   if (bpmDisplayEl && appState.bpm) {
     bpmDisplayEl.textContent = `${Number(appState.bpm).toFixed(1)} BPM`;
   }
-  const badgeMacroState = document.getElementById('badge-macro-state');
-  if (badgeMacroState && appState.macro_state) {
-    badgeMacroState.textContent = appState.macro_state;
-    badgeMacroState.style.color = getStateColor(appState.macro_state);
-  }
-  const badgeMacroStateStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeMacroStateStrip && appState.macro_state) {
-    badgeMacroStateStrip.textContent = appState.macro_state;
-    badgeMacroStateStrip.style.color = getStateColor(appState.macro_state);
-  }
-  document.querySelectorAll('.state-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.state === appState.macro_state);
-  });
+  refreshMacroStateBadges();
 
   const buildPct = Math.min(100, Math.round((appState.buildup_score || 0) * 100));
   if (valBuildup) valBuildup.textContent = `${buildPct}%`;
@@ -6996,8 +7357,10 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
+        <button class="btn-route btn-edit-clip-transform" onclick="event.stopPropagation(); openClipTransformModal('${clip.id}')" title="Transformação Geométrica Individual (Rotação, Escala, Posição)">📐 POS</button>
         <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">LOOK</button>
         <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
+        <button class="btn-route" data-layer="layer5" data-tooltip-title="CAMADA 5 (OVERLAY DECK)" data-tooltip-desc="Arma clipe na camada dedicada de sobreposição (Loop ou Foreground).">L5</button>
         ${actionBtnHtml}
       </div>
     </div>
@@ -7091,6 +7454,19 @@ function createMediaCardElement(clip) {
       sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
+    });
+  }
+
+  const btnL5 = card.querySelector('[data-layer="layer5"]');
+  if (btnL5) {
+    btnL5.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appState.layers.layer5.clipId = clip.id;
+      appState.layers.layer5.name = clip.filename;
+      sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
+      updateUI();
+      syncVideoSources();
+      showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
     });
   }
 
@@ -7726,6 +8102,9 @@ const PenumbraWebAudio = {
     if (deviceId) this.selectedDeviceId = deviceId;
     this.initContext();
     if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch (e) {}
+    }
 
     // Se estiver tocando áudio de teste de arquivo, pausa para não sobrepor
     if (audioCuePlayer && !audioCuePlayer.paused) {
@@ -7967,19 +8346,31 @@ function setAudioSource(mode, deviceId = null) {
     cfgLbl.textContent = names[mode] || mode.toUpperCase();
   }
 
+  currentAudioSource.mode = mode;
+  if (deviceId) currentAudioSource.device_id = deviceId;
+
   if (mode === 'test') {
     PenumbraWebAudio.stopMicrophone();
     playOnlineTestTrack();
   } else {
+    // Para e silencia o MP3 interno imediatamente
+    if (audioCuePlayer) {
+      audioCuePlayer.pause();
+      audioCuePlayer.currentTime = 0;
+    }
     PenumbraWebAudio.startMicrophone(mode, deviceId);
   }
 
-  sendAction('set_audio_source', { mode, device_id: deviceId });
+  sendAction('set_audio_source', { mode, device_id: deviceId, device_name: names[mode] || mode });
 }
 window.setAudioSource = setAudioSource;
 
 function updateAudioSourceUI(srcInfo) {
   if (!srcInfo) return;
+  // Se o WebAudio estiver ativo no microfone ou linha, NÃO deixe telemetria 'test' sobrescrever a preferência do usuário!
+  if (PenumbraWebAudio.isActive && srcInfo.mode === 'test') {
+    return;
+  }
   currentAudioSource = { ...currentAudioSource, ...srcInfo };
   const mode = srcInfo.mode || srcInfo.current_mode;
   if (mode) {

@@ -1331,6 +1331,11 @@ wss.on('connection', (ws) => {
           sendOsc('/penumbra/bpm', currentState.bpm);
         }
       } else if (msg.action === 'set_audio_source') {
+        if (!currentState.audio_source) currentState.audio_source = { mode: 'test', device_index: null };
+        if (msg.mode) currentState.audio_source.mode = msg.mode;
+        if (msg.device_id !== undefined) currentState.audio_source.device_id = msg.device_id;
+        if (msg.device_index !== undefined) currentState.audio_source.device_index = msg.device_index;
+        if (msg.device_name !== undefined) currentState.audio_source.device_name = msg.device_name;
         if (audioBrainSocket && audioBrainSocket.readyState === WebSocket.OPEN) {
           audioBrainSocket.send(JSON.stringify(msg));
         }

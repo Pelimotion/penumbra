@@ -657,7 +657,7 @@ class PenumbraMidiHub {
     // Fader 8: Master Brightness / Fade to Black
     // -------------------------------------------------------------
     if (this.activeBank === 1) {
-      if (faderIdx >= 0 && faderIdx <= 4) {
+      if (faderIdx >= 0 && faderIdx <= 5) {
         const layerKey = `layer${faderIdx}`;
         const inputId = `l${faderIdx}-opacity`;
         const el = document.getElementById(inputId);
@@ -667,19 +667,15 @@ class PenumbraMidiHub {
         if (takeover.allowUpdate) {
           this.setLayerOpacityDirect(layerKey, takeover.finalValue * 100);
         }
-      } else if (faderIdx === 5) {
-        // Master FX Intensity
+      } else if (faderIdx === 6) {
+        // Crossfader Master Bus A/B
         const el = document.getElementById('crossfader');
         const currNorm = el ? (Number(el.value) / 100.0) : 0.5;
-        const takeover = this.applySoftTakeover(`b1_fader_5`, normValue, currNorm);
+        const takeover = this.applySoftTakeover(`b1_fader_6`, normValue, currNorm);
         if (takeover.allowUpdate && el) {
           el.value = (takeover.finalValue * 100).toFixed(1);
           el.dispatchEvent(new Event('input'));
         }
-      } else if (faderIdx === 6) {
-        // Master Video Playback Speed (0.25x a 3.0x)
-        const speed = 0.25 + (normValue * 2.75);
-        this.setPlaybackSpeedGlobal(speed);
       } else if (faderIdx === 7) {
         // Master Dimmer / Brightness
         this.setMasterBrightnessDimmer(normValue);
@@ -1342,7 +1338,70 @@ class PenumbraMidiHub {
     this.notifyUI();
   }
 
+  executeDirectTarget(target, normVal, rawVal, opts = {}) {
+    let val = normVal;
+    if (opts.invert) val = 1.0 - val;
+    if (opts.curve === 'exp') val = Math.pow(val, 2);
+    else if (opts.curve === 'log') val = Math.sqrt(val);
+    else if (opts.curve === 'scurve') val = val * val * (3 - 2 * val);
+
+    if (target.startsWith('l') && target.includes('_opacity')) {
+      const idx = target.split('_')[0].replace('l', '');
+      this.setLayerOpacityDirect(`layer${idx}`, val * 100);
+    } else if (target.startsWith('l') && target.includes('_scale')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerScale) window.setLayerScale(`layer${idx}`, 0.2 + val * 2.8);
+    } else if (target.startsWith('l') && target.includes('_pos_x')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerPosition) window.setLayerPosition(`layer${idx}`, Math.round((val - 0.5) * 400), undefined);
+    } else if (target.startsWith('l') && target.includes('_pos_y')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerPosition) window.setLayerPosition(`layer${idx}`, undefined, Math.round((val - 0.5) * 400));
+    } else if (target === 'cue_clip_scale') {
+      const cueClipId = window.appState?.preview_clip || window.appState?.layers?.layer3?.clipId;
+      if (cueClipId && window.setClipTransform) window.setClipTransform(cueClipId, { scale: 0.2 + val * 2.8 });
+    } else if (target === 'cue_clip_rot') {
+      const cueClipId = window.appState?.preview_clip || window.appState?.layers?.layer3?.clipId;
+      const rots = [0, 90, 180, 270];
+      const rot = rots[Math.min(3, Math.floor(val * 4))];
+      if (cueClipId && window.setClipTransform) window.setClipTransform(cueClipId, { rotation: rot });
+    } else if (target === 'crossfader') {
+      const el = document.getElementById('crossfader');
+      if (el) {
+        el.value = (val * 100).toFixed(1);
+        el.dispatchEvent(new Event('input'));
+      }
+    } else if (target === 'auto_take' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-auto-take');
+      if (btn) btn.click();
+    } else if (target === 'cut' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-cut-instant');
+      if (btn) btn.click();
+    } else if (target === 'blackout' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-blackout');
+      if (btn) btn.click();
+    } else if (target === 'master_locked_matte' && (rawVal === undefined || rawVal > 64)) {
+      if (window.toggleMasterLockedMatte) window.toggleMasterLockedMatte();
+    } else if (target === 'gamma') {
+      const el = document.getElementById('fader-gamma');
+      if (el) { el.value = Math.round(40 + val * 120); el.dispatchEvent(new Event('input')); }
+    } else if (target === 'contrast') {
+      const el = document.getElementById('fader-contrast');
+      if (el) { el.value = Math.round(80 + val * 80); el.dispatchEvent(new Event('input')); }
+    } else if (target === 'edge_mix') {
+      const el = document.getElementById('fader-edge-mix');
+      if (el) { el.value = Math.round(val * 40); el.dispatchEvent(new Event('input')); }
+    } else if (target.startsWith('macro_state_') && (rawVal === undefined || rawVal > 64)) {
+      const st = target.replace('macro_state_', '').toUpperCase();
+      if (window.setMacroState) window.setMacroState(st);
+    }
+  }
+
   executeMappedAction(mapping, normValue, rawValue) {
+    if (mapping.target) {
+      this.executeDirectTarget(mapping.target, normValue, rawValue, mapping);
+      return;
+    }
     if (mapping.action === 'fader') {
       this.handleFaderInput(mapping.index, normValue);
     } else if (mapping.action === 'knob') {
@@ -1581,7 +1640,7 @@ class HardwareTwinUI {
         4: ['GAMMA', 'BLACKS', 'MIDS', 'CONTRAST', 'EDGE MIX', 'THRESH', 'COLOR BAL', 'GRAIN']
       },
       faders: {
-        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CROSS', 'SPEED', 'DIMMER'],
+        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'L5 OVERLAY', 'CROSS', 'DIMMER'],
         2: ['CROP TOP', 'CROP BTM', 'CROP LFT', 'CROP RGT', 'DSP SUB', 'DSP BASS', 'DSP MIDS', 'DSP AIR'],
         3: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CHAOS FX', 'NUDGE', 'DIMMER'],
         4: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CONTRAST', 'EDGE MIX', 'DIMMER']
@@ -1821,6 +1880,10 @@ class HardwareTwinUI {
 // ============================================================================
 
 window.handleHwFaderDrag = function(chIdx, e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('fader', chIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   const track = document.getElementById(`hw-fader-track-${chIdx}`);
   if (!track || !window.penumbraMidi) return;
 
@@ -1843,6 +1906,10 @@ window.handleHwFaderDrag = function(chIdx, e) {
 };
 
 window.handleHwMasterFaderDrag = function(e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('master_fader', 0, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   const track = document.getElementById('hw-master-fader-track');
   if (!track || !window.penumbraMidi) return;
 
@@ -1865,6 +1932,10 @@ window.handleHwMasterFaderDrag = function(e) {
 };
 
 window.handleHwKnobDrag = function(knobIdx, e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('knob', knobIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   if (!window.penumbraMidi) return;
   const startY = e.clientY;
   const initialVal = window.penumbraMidi.twinState.knobs[knobIdx] || 0.5;
@@ -1886,6 +1957,7 @@ window.handleHwKnobDrag = function(knobIdx, e) {
 };
 
 window.handleHwKnobWheel = function(knobIdx, e) {
+  if (window.hwTwinMode === 'map') return;
   if (!window.penumbraMidi) return;
   e.preventDefault();
   const delta = e.deltaY < 0 ? 0.04 : -0.04;
@@ -1896,6 +1968,10 @@ window.handleHwKnobWheel = function(knobIdx, e) {
 };
 
 window.handleHwButtonClick = function(type, chIdx) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal(type, chIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   if (!window.penumbraMidi) return;
   if (type === 'mute') window.penumbraMidi.handleButtonMute(chIdx);
   else if (type === 'solo') window.penumbraMidi.handleButtonSolo(chIdx);
@@ -2033,6 +2109,225 @@ window.setHardwareBank = function(bank) {
   if (window.penumbraMidi) {
     window.penumbraMidi.setHardwareBank(bank);
   }
+};
+
+// ============================================================================
+// 14. CLICK-TO-MAP SUITE & PRO FACTORY PRESETS
+// ============================================================================
+window.hwTwinMode = 'live';
+
+window.setHwTwinMode = function(mode) {
+  window.hwTwinMode = mode;
+  const btnLive = document.getElementById('btn-hw-mode-live');
+  const btnMap = document.getElementById('btn-hw-mode-map');
+  const container = document.getElementById('hw-twin-container');
+
+  if (btnLive) {
+    btnLive.classList.toggle('active', mode === 'live');
+    btnLive.style.background = (mode === 'live') ? 'rgba(34,211,238,0.2)' : 'transparent';
+    btnLive.style.color = (mode === 'live') ? '#22d3ee' : '#94a3b8';
+  }
+  if (btnMap) {
+    btnMap.classList.toggle('active', mode === 'map');
+    btnMap.style.background = (mode === 'map') ? 'rgba(236,72,153,0.2)' : 'transparent';
+    btnMap.style.color = (mode === 'map') ? '#ec4899' : '#94a3b8';
+  }
+  if (container) {
+    container.classList.toggle('hw-mapping-mode', mode === 'map');
+  }
+  if (window.penumbraMidi) {
+    window.penumbraMidi.flashToastHud(mode === 'map' ? 'MODO MAPEAMENTO ATIVO: CLIQUE EM QUALQUER CONTROLE' : 'MODO LIVE CONTROL RESTAURADO');
+  }
+};
+
+window.openMidiMapModal = function(type, index, bank) {
+  const b = bank || window.penumbraMidi?.activeBank || 1;
+  const mappingKey = `b${b}_${type}_${index}`;
+  const existing = window.penumbraMidi?.customMappings[mappingKey] || {};
+
+  const oldModal = document.getElementById('modal-midi-map');
+  if (oldModal) oldModal.remove();
+
+  const titleText = `${type.toUpperCase()} ${type === 'master_fader' ? 'MASTER' : (index + 1)} · BANCO ${b}`;
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-midi-map';
+  modal.className = 'modal-midi-overlay';
+  modal.innerHTML = `
+    <div class="modal-midi-card">
+      <div class="modal-midi-header">
+        <div class="modal-midi-title">
+          <span>🎯 MAPEAMENTO VISUAL: ${titleText}</span>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="document.getElementById('modal-midi-map').remove()">✕</button>
+      </div>
+      <div class="modal-midi-body">
+        <div style="font-size: 10px; color: #94a3b8; line-height: 1.4;">
+          Vincule este controle físico ou virtual a qualquer parâmetro do Penumbra, com resposta tátil e curva configurável.
+        </div>
+
+        <div class="modal-midi-prop">
+          <label class="modal-midi-lbl">PARÂMETRO DE DESTINO</label>
+          <select class="modal-midi-select" id="sel-map-target">
+            <optgroup label="OPACIDADE DE CAMADAS (LAYERS)">
+              <option value="l0_opacity" ${existing.target === 'l0_opacity' ? 'selected' : ''}>L0: Master Base (Opacidade)</option>
+              <option value="l1_opacity" ${existing.target === 'l1_opacity' ? 'selected' : ''}>L1: Pulse Mirror (Opacidade)</option>
+              <option value="l2_opacity" ${existing.target === 'l2_opacity' ? 'selected' : ''}>L2: Sobel Edges (Opacidade)</option>
+              <option value="l3_opacity" ${existing.target === 'l3_opacity' ? 'selected' : ''}>L3: Cue Bus B (Opacidade)</option>
+              <option value="l4_opacity" ${existing.target === 'l4_opacity' ? 'selected' : ''}>L4: Drop Climax Accent (Opacidade)</option>
+              <option value="l5_opacity" ${existing.target === 'l5_opacity' ? 'selected' : ''}>L5: Overlay Deck (Opacidade Sobreposição)</option>
+            </optgroup>
+            <optgroup label="ESCALA / ZOOM DE CAMADAS">
+              <option value="l0_scale" ${existing.target === 'l0_scale' ? 'selected' : ''}>L0: Master Base (Escala 20%..300%)</option>
+              <option value="l1_scale" ${existing.target === 'l1_scale' ? 'selected' : ''}>L1: Pulse Mirror (Escala 20%..300%)</option>
+              <option value="l2_scale" ${existing.target === 'l2_scale' ? 'selected' : ''}>L2: Sobel Edges (Escala 20%..300%)</option>
+              <option value="l3_scale" ${existing.target === 'l3_scale' ? 'selected' : ''}>L3: Cue Bus B (Escala 20%..300%)</option>
+              <option value="l4_scale" ${existing.target === 'l4_scale' ? 'selected' : ''}>L4: Drop Climax Accent (Escala)</option>
+              <option value="l5_scale" ${existing.target === 'l5_scale' ? 'selected' : ''}>L5: Overlay Deck (Escala 20%..300%)</option>
+            </optgroup>
+            <optgroup label="POSIÇÃO X / Y DE CAMADAS">
+              <option value="l0_pos_x" ${existing.target === 'l0_pos_x' ? 'selected' : ''}>L0: Master Base (Posição X)</option>
+              <option value="l0_pos_y" ${existing.target === 'l0_pos_y' ? 'selected' : ''}>L0: Master Base (Posição Y)</option>
+              <option value="l3_pos_x" ${existing.target === 'l3_pos_x' ? 'selected' : ''}>L3: Cue Bus B (Posição X)</option>
+              <option value="l3_pos_y" ${existing.target === 'l3_pos_y' ? 'selected' : ''}>L3: Cue Bus B (Posição Y)</option>
+              <option value="l5_pos_x" ${existing.target === 'l5_pos_x' ? 'selected' : ''}>L5: Overlay Deck (Posição X)</option>
+              <option value="l5_pos_y" ${existing.target === 'l5_pos_y' ? 'selected' : ''}>L5: Overlay Deck (Posição Y)</option>
+            </optgroup>
+            <optgroup label="CLIPE INDIVIDUAL EM CUE (DECK B)">
+              <option value="cue_clip_scale" ${existing.target === 'cue_clip_scale' ? 'selected' : ''}>Clipe em Cue: Escala Intrínseca</option>
+              <option value="cue_clip_rot" ${existing.target === 'cue_clip_rot' ? 'selected' : ''}>Clipe em Cue: Rotação (0° / 90° / 180° / 270°)</option>
+            </optgroup>
+            <optgroup label="MASTER & TRANSIÇÃO">
+              <option value="crossfader" ${existing.target === 'crossfader' ? 'selected' : ''}>Crossfader (Bus A ↔ Bus B)</option>
+              <option value="auto_take" ${existing.target === 'auto_take' ? 'selected' : ''}>Auto Take (Transição Suave)</option>
+              <option value="cut" ${existing.target === 'cut' ? 'selected' : ''}>Cut (Corte Seco Instantâneo)</option>
+              <option value="blackout" ${existing.target === 'blackout' ? 'selected' : ''}>Master Blackout (Escurecer)</option>
+              <option value="master_locked_matte" ${existing.target === 'master_locked_matte' ? 'selected' : ''}>Trava de Máscara Master (Locked Matte)</option>
+            </optgroup>
+            <optgroup label="GRADING TONAL & SOBEL">
+              <option value="gamma" ${existing.target === 'gamma' ? 'selected' : ''}>Curva Gamma</option>
+              <option value="contrast" ${existing.target === 'contrast' ? 'selected' : ''}>Contraste Penumbra</option>
+              <option value="edge_mix" ${existing.target === 'edge_mix' ? 'selected' : ''}>Sobel Find Edges Mix</option>
+            </optgroup>
+            <optgroup label="MACRO PRESETS (AUTOPILOT)">
+              <option value="macro_state_intro" ${existing.target === 'macro_state_intro' ? 'selected' : ''}>Disparar INTRO</option>
+              <option value="macro_state_groove" ${existing.target === 'macro_state_groove' ? 'selected' : ''}>Disparar GROOVE</option>
+              <option value="macro_state_build" ${existing.target === 'macro_state_build' ? 'selected' : ''}>Disparar BUILD</option>
+              <option value="macro_state_drop" ${existing.target === 'macro_state_drop' ? 'selected' : ''}>Disparar DROP</option>
+              <option value="macro_state_break" ${existing.target === 'macro_state_break' ? 'selected' : ''}>Disparar BREAK</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">CURVA DE RESPOSTA</label>
+            <select class="modal-midi-select" id="sel-map-curve">
+              <option value="linear" ${(!existing.curve || existing.curve === 'linear') ? 'selected' : ''}>Linear (1:1)</option>
+              <option value="exp" ${existing.curve === 'exp' ? 'selected' : ''}>Exponencial (Fino no início)</option>
+              <option value="log" ${existing.curve === 'log' ? 'selected' : ''}>Logarítmico (Rápido no início)</option>
+              <option value="scurve" ${existing.curve === 'scurve' ? 'selected' : ''}>S-Curve (Sigmoidal suave)</option>
+            </select>
+          </div>
+          <div class="modal-midi-prop" style="display:flex; flex-direction:column; justify-content:center;">
+            <label class="modal-midi-lbl">DIREÇÃO</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:#f8fafc; cursor:pointer;">
+              <input type="checkbox" id="chk-map-invert" ${existing.invert ? 'checked' : ''}>
+              Inverter Sentido (127 ↔ 0)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-midi-footer">
+        <button class="btn btn-outline btn-xs" onclick="window.removeMidiMapping('${mappingKey}'); document.getElementById('modal-midi-map').remove()">DESVINCULAR</button>
+        <button class="btn btn-studio-primary btn-xs" onclick="window.saveMidiMapBindingFromModal('${mappingKey}', '${type}', ${index}, ${b})">SALVAR MAPEAMENTO</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.saveMidiMapBindingFromModal = function(mappingKey, type, index, bank) {
+  const target = document.getElementById('sel-map-target')?.value;
+  const curve = document.getElementById('sel-map-curve')?.value || 'linear';
+  const invert = Boolean(document.getElementById('chk-map-invert')?.checked);
+
+  if (!window.penumbraMidi) return;
+  window.penumbraMidi.customMappings[mappingKey] = {
+    target,
+    curve,
+    invert,
+    type,
+    index,
+    bank,
+    name: `${type.toUpperCase()} ${index + 1} → ${target}`
+  };
+  window.penumbraMidi.saveCustomMappings();
+  if (window.penumbraHwTwin) window.penumbraHwTwin.renderMappingsTable();
+  window.penumbraMidi.flashToastHud(`MAPEAMENTO SALVO: ${target}`);
+  document.getElementById('modal-midi-map')?.remove();
+};
+
+window.loadMidiPreset = function(presetId) {
+  if (!window.penumbraMidi) return;
+  const pm = window.penumbraMidi;
+
+  if (presetId === 'preset_master_jam') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Master Base' },
+      'b1_fader_1': { target: 'l1_opacity', name: 'L1 Pulse Mirror' },
+      'b1_fader_2': { target: 'l2_opacity', name: 'L2 Sobel Edge' },
+      'b1_fader_3': { target: 'l3_opacity', name: 'L3 Cue Bus B' },
+      'b1_fader_4': { target: 'l4_opacity', name: 'L4 Climax Accent' },
+      'b1_fader_5': { target: 'l5_opacity', name: 'L5 Overlay Deck' },
+      'b1_fader_6': { target: 'crossfader', name: 'Crossfader' },
+      'b1_master_fader_0': { target: 'crossfader', name: 'Master Crossfader' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: MASTER JAM 6-DECKS');
+  } else if (presetId === 'preset_layer_sculpt') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_scale', name: 'L0 Zoom' },
+      'b1_fader_1': { target: 'l1_scale', name: 'L1 Zoom' },
+      'b1_fader_2': { target: 'l2_scale', name: 'L2 Zoom' },
+      'b1_fader_3': { target: 'l3_scale', name: 'L3 Zoom' },
+      'b1_fader_4': { target: 'l4_scale', name: 'L4 Zoom' },
+      'b1_fader_5': { target: 'l5_scale', name: 'L5 Zoom' },
+      'b1_knob_0': { target: 'l0_pos_x', name: 'L0 Pan X' },
+      'b1_knob_1': { target: 'l0_pos_y', name: 'L0 Pan Y' },
+      'b1_knob_2': { target: 'cue_clip_scale', name: 'Cue Clip Zoom' },
+      'b1_knob_3': { target: 'cue_clip_rot', name: 'Cue Clip Rot' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: LAYER GEOMETRY & SCULPTOR');
+  } else if (presetId === 'preset_conductor_flow') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Base' },
+      'b1_fader_1': { target: 'l3_opacity', name: 'L3 Cue' },
+      'b1_fader_2': { target: 'l5_opacity', name: 'L5 Overlay' },
+      'b1_knob_0': { target: 'gamma', name: 'Curva Gamma' },
+      'b1_knob_1': { target: 'contrast', name: 'Contraste Penumbra' },
+      'b1_knob_2': { target: 'edge_mix', name: 'Sobel Mix' },
+      'b1_mute_0': { target: 'macro_state_intro', name: 'Trigger Intro' },
+      'b1_mute_1': { target: 'macro_state_groove', name: 'Trigger Groove' },
+      'b1_mute_2': { target: 'macro_state_build', name: 'Trigger Build' },
+      'b1_mute_3': { target: 'macro_state_drop', name: 'Trigger Drop' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: AMBIENT CONDUCTOR & MATTE FLOW');
+  } else if (presetId === 'preset_climax_battle') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Base' },
+      'b1_fader_1': { target: 'l3_opacity', name: 'L3 Cue' },
+      'b1_fader_2': { target: 'l4_opacity', name: 'L4 Climax Drop' },
+      'b1_fader_3': { target: 'l5_opacity', name: 'L5 Overlay' },
+      'b1_mute_0': { target: 'cut', name: 'Corte Instantâneo' },
+      'b1_mute_1': { target: 'auto_take', name: 'Auto Take' },
+      'b1_mute_2': { target: 'blackout', name: 'Blackout' },
+      'b1_mute_3': { target: 'master_locked_matte', name: 'Lock Master Matte' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: 4-DECK BATTLE & CLÍMAX');
+  }
+
+  pm.saveCustomMappings();
+  if (window.penumbraHwTwin) window.penumbraHwTwin.renderMappingsTable();
 };
 
 // ============================================================================

@@ -887,6 +887,19 @@ html, body.penumbra-app {
   border-left: 1px solid var(--border-subtle);
   border-right: 1px solid var(--border-subtle);
   padding: 0 12px;
+  flex: 0 0 215px;
+  min-width: 215px;
+  max-width: 215px;
+  overflow: hidden;
+}
+
+.state-strip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .state-badge-label {
@@ -899,8 +912,25 @@ html, body.penumbra-app {
   padding: 2px 7px;
   border-radius: 3px;
   letter-spacing: 0.8px;
-  min-width: 60px;
+  min-width: 62px;
   text-align: center;
+  flex-shrink: 0;
+}
+
+.state-forced-tag {
+  font-size: 8px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: #0b0f19;
+  background: #f59e0b;
+  border: 1px solid #d97706;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 
 .state-buttons-row {
@@ -8842,6 +8872,328 @@ body.resizing-workspace-active .top-zone {
   }
 }
 
+/* ============================================================================
+   PRO TIMELINE TRANSFORM INSPECTOR & LAYER 5 ARCHITECTURE
+   ============================================================================ */
+.tl-transform-inspector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(8, 12, 18, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  min-height: 28px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.tl-tf-layer-pills {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding-right: 8px;
+}
+
+.tl-tf-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-dim);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.tl-tf-pill:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: #fff;
+}
+
+.tl-tf-pill.active {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.tl-tf-control-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.tl-tf-lbl {
+  color: #718096;
+  font-weight: 700;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+
+.tl-tf-slider {
+  width: 58px;
+  height: 4px;
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+
+.tl-tf-num-input {
+  width: 44px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  text-align: right;
+}
+
+.tl-tf-num-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.tl-tf-val {
+  color: #00f0ff;
+  min-width: 32px;
+  font-weight: 700;
+}
+
+.tl-tf-btn-reset {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a0aec0;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.tl-tf-btn-reset:hover {
+  background: rgba(255, 42, 85, 0.2);
+  border-color: #ff2a55;
+  color: #ff2a55;
+}
+
+/* Track L5 Overlay Styling */
+.tl-track-header.track-l5 {
+  border-left: 3px solid #c084fc;
+}
+.tl-track-header.track-l5 .track-tag {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.15);
+}
+
+/* Master Output Locked Matte UI */
+.master-matte-lock-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 14, 22, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.btn-lock-master-matte {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-lock-master-matte.locked {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.master-locked-badge {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+}
+
+/* ============================================================================
+   CLICK-TO-MAP MIDI MODAL & INTERACTIVE TWIN SUITE
+   ============================================================================ */
+.hw-twin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+.hw-mode-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.hw-mode-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-dim);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.hw-mode-btn.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.hw-mode-btn.active-map {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.hw-control-clickable {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.12s ease;
+}
+
+.hw-control-clickable:hover {
+  outline: 1px solid rgba(0, 240, 255, 0.7);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.hw-mapping-mode .hw-control-clickable {
+  outline: 1px dashed rgba(245, 158, 11, 0.5);
+}
+
+.hw-mapping-mode .hw-control-clickable:hover {
+  outline: 2px solid #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+}
+
+/* Click-to-Map Inspector Modal */
+.modal-midi-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-midi-card {
+  width: 90%;
+  max-width: 580px;
+  background: #090d14;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+
+.modal-midi-header {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-midi-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-midi-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.modal-midi-prop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-midi-lbl {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: #a0aec0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-midi-select, .modal-midi-input {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.modal-midi-select:focus, .modal-midi-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.modal-midi-footer {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
 </style>
 </head>
 <body class="penumbra-app">
@@ -9178,6 +9530,7 @@ body.resizing-workspace-active .top-zone {
                 <button class="geom-pill" id="btn-prv-rot-cw" onclick="setLayerRotation('layer3', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
                 <button class="geom-pill" id="btn-prv-fit-wings" onclick="setLayerFitMode('layer3', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
                 <button class="geom-pill" id="btn-prv-fit-mode" onclick="toggleLayerFitMode('layer3')" title="Alternar FIT / FILL">FIT</button>
+                <button class="geom-pill" id="btn-prv-clip-tf" onclick="openPreviewClipTransform()" title="Transformação Geométrica Individual do Clipe em Cue (Rotação/Escala/Posição antes de ir pro Ar)" style="background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; color: #22d3ee; font-weight: 700;">📐 CLIPE</button>
               </div>
             </div>
             <div class="screen-actions-right">
@@ -9247,6 +9600,7 @@ body.resizing-workspace-active .top-zone {
       <div class="audio-strip-col col-state">
         <div class="state-strip-header">
           <span class="state-badge-label" id="badge-macro-state-strip">GROOVE</span>
+          <span class="state-forced-tag" id="badge-macro-forced-tag" style="display: none;">FORÇADO</span>
           <span class="macro-preset-tag clean" id="badge-macro-preset-name" title="Preset ativo (Clique no botão para alternar variações)">1/3 · PURE CLEAN CINEMA</span>
         </div>
         <div class="state-buttons-row">
@@ -9445,6 +9799,48 @@ body.resizing-workspace-active .top-zone {
             <span class="tl-metric-tag">TENSION: <strong id="tl-tension-pct" class="text-emerald">24%</strong></span>
             <span class="tl-metric-tag">BPM: <strong id="tl-current-bpm" class="text-white">128.0</strong></span>
           </div>
+
+          <!-- Individual Layer / Clip Transform Inspector -->
+          <div class="tl-transform-inspector" id="tl-transform-inspector">
+            <div class="tl-tf-title">INSPECTOR:</div>
+            <div class="tl-tf-layers">
+              <button class="tl-tf-pill active" data-layer="layer0" onclick="selectTimelineLayer('layer0')">L0</button>
+              <button class="tl-tf-pill" data-layer="layer1" onclick="selectTimelineLayer('layer1')">L1</button>
+              <button class="tl-tf-pill" data-layer="layer2" onclick="selectTimelineLayer('layer2')">L2</button>
+              <button class="tl-tf-pill" data-layer="layer3" onclick="selectTimelineLayer('layer3')">L3</button>
+              <button class="tl-tf-pill" data-layer="layer4" onclick="selectTimelineLayer('layer4')">L4</button>
+              <button class="tl-tf-pill" data-layer="layer5" onclick="selectTimelineLayer('layer5')">L5</button>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">ZOOM:</span>
+              <input type="range" min="20" max="300" value="100" class="tl-tf-slider" id="tl-tf-scale-slider" oninput="setLayerScale(activeTimelineSelectedLayer, this.value/100); document.getElementById('tl-tf-scale-val').textContent=this.value+'%'">
+              <span class="tl-tf-val" id="tl-tf-scale-val">100%</span>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">X:</span>
+              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posx-input" onchange="setLayerPosition(activeTimelineSelectedLayer, this.value, undefined)">
+              <span class="tl-tf-label">Y:</span>
+              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posy-input" onchange="setLayerPosition(activeTimelineSelectedLayer, undefined, this.value)">
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">BLEND:</span>
+              <select class="tl-tf-select" id="tl-tf-blend-select" onchange="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].blend = this.value; }">
+                <option value="Normal">Normal</option>
+                <option value="Multiply">Multiply</option>
+                <option value="Screen">Screen</option>
+                <option value="Overlay">Overlay</option>
+                <option value="Soft Light">Soft Light</option>
+                <option value="Difference">Difference</option>
+                <option value="Color Dodge">Color Dodge</option>
+              </select>
+            </div>
+            <div class="tl-tf-group">
+              <span class="tl-tf-label">OPAC:</span>
+              <input type="range" min="0" max="100" value="100" class="tl-tf-slider" id="tl-tf-opac-slider" oninput="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].opacity = this.value/100; document.getElementById('tl-tf-opac-val').textContent=this.value+'%'; }">
+              <span class="tl-tf-val" id="tl-tf-opac-val">100%</span>
+            </div>
+            <button class="btn btn-outline btn-xs" onclick="resetLayerTransform(activeTimelineSelectedLayer)" title="Resetar escala e posição da camada">↺ RESET</button>
+          </div>
         </div>
 
         <div class="pro-timeline-arrangement-body">
@@ -9468,6 +9864,11 @@ body.resizing-workspace-active .top-zone {
               <span class="track-tag">PRV</span>
               <span class="track-name">L3 CUE BUS B</span>
               <span class="track-vol" id="lbl-tl-track-l3">100%</span>
+            </div>
+            <div class="tl-track-header track-l5">
+              <span class="track-tag">L5</span>
+              <span class="track-name">OVERLAY DECK</span>
+              <span class="track-vol" id="lbl-tl-track-l5">100%</span>
             </div>
             <div class="tl-track-header track-fx">
               <span class="track-tag">FX</span>
@@ -9707,6 +10108,58 @@ body.resizing-workspace-active .top-zone {
             <div class="ch-fader-slot">
               <input type="range" class="pro-slider ch-slider" id="l4-opacity" min="0" max="100" value="0" oninput="onLayerOpacityChange('layer4', this.value)">
               <span class="ch-val" id="lbl-l4-opacity">0%</span>
+            </div>
+          </div>
+
+          <!-- L5: DEDICATED OVERLAY DECK (SOBREPOSIÇÃO PRINCIPAL) -->
+          <div class="pro-channel-strip" id="strip-layer5">
+            <div class="ch-header">
+              <button class="btn-solo" id="btn-toggle-l5" onclick="toggleLayerActive('layer5')">L5</button>
+              <div class="ch-meta">
+                <span class="ch-name">OVERLAY DECK (SOBREPOSIÇÃO)</span>
+                <span class="ch-clip-name" id="l5-sub-text">VAZIO (SELECIONE NO POOL)</span>
+              </div>
+            </div>
+            <div class="ch-geom">
+              <button class="ch-pill-rot active" id="l5-rot-0" onclick="setLayerRotation('layer5', 0)">0°</button>
+              <button class="ch-pill-rot" id="l5-rot-ccw" onclick="setLayerRotation('layer5', -90)">↺-90</button>
+              <button class="ch-pill-rot" id="l5-rot-cw" onclick="setLayerRotation('layer5', 90)">↻+90</button>
+              <button class="ch-pill-rot" id="l5-fit-wings" onclick="setLayerFitMode('layer5', 'wings')">WINGS</button>
+            </div>
+            <div class="ch-playback" style="display: flex; gap: 4px; margin-bottom: 4px; align-items: center;">
+              <button class="ch-pill-rot" id="l5-play-pause" onclick="toggleLayerPlayback('layer5')" title="Play/Pause">⏸</button>
+              <button class="ch-pill-rot" id="l5-pingpong" onclick="toggleLayerPingPong('layer5')" title="Ping-Pong Loop">⮂</button>
+              <input type="range" class="pro-slider" style="flex:1" id="l5-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer5', this.value)" title="Playback Speed (Time-Stretch)">
+              <span class="ch-val" id="lbl-l5-speed" style="width: 28px;">1.0x</span>
+            </div>
+            <div class="ch-matte-slot">
+              <span class="ch-slot-icon">M</span>
+              <select class="pro-select select-matte" id="l5-matte" onchange="onLayerMatteChange('layer5', this.value)" title="Máscara Própria de L5">
+                <option value="none" selected>NENHUMA (FULL FRAME)</option>
+                <option value="cat_a_solids/matte_a_half_left.png">Matte A: 50% Esquerda</option>
+                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
+                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Radial</option>
+                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas</option>
+                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
+                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
+              </select>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Matte">✕</button>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
+              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Máscara">INV</button>
+            </div>
+            <div class="ch-blend-slot">
+              <select class="pro-select" id="l5-blend" onchange="onLayerBlendChange('layer5', this.value)">
+                <option value="Screen" selected>SCREEN</option>
+                <option value="Soft Light">SOFT LIGHT</option>
+                <option value="Overlay">OVERLAY</option>
+                <option value="Multiply">MULTIPLY</option>
+                <option value="Normal">NORMAL</option>
+                <option value="Add">ADD</option>
+              </select>
+            </div>
+            <div class="ch-fader-slot">
+              <input type="range" class="pro-slider ch-slider" id="l5-opacity" min="0" max="100" value="0" oninput="onLayerOpacityChange('layer5', this.value)">
+              <span class="ch-val" id="lbl-l5-opacity">0%</span>
             </div>
           </div>
 
@@ -10972,12 +11425,20 @@ body.resizing-workspace-active .top-zone {
                 <button class="target-layer-pill" data-target="layer2" onclick="setMatteTargetLayer('layer2')"><span class="pill-dot"></span> L2 (SOBEL)</button>
                 <button class="target-layer-pill active" data-target="layer3" onclick="setMatteTargetLayer('layer3')"><span class="pill-dot"></span> L3 (CUE)</button>
                 <button class="target-layer-pill" data-target="layer4" onclick="setMatteTargetLayer('layer4')"><span class="pill-dot"></span> L4 (ACCENT)</button>
+                <button class="target-layer-pill" data-target="layer5" onclick="setMatteTargetLayer('layer5')"><span class="pill-dot"></span> L5 (OVERLAY)</button>
               </div>
             </div>
             <div class="target-ribbon-actions">
               <div class="target-active-info">
                 <span>MÁSCARA:</span>
                 <span class="target-active-matte-title" id="target-active-matte-title">CARREGANDO...</span>
+              </div>
+              <!-- MASTER LOCKED MATTE TOGGLE & STATUS -->
+              <div class="master-matte-lock-panel" style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                <button class="btn btn-outline btn-xs" id="btn-toggle-master-matte-lock" onclick="toggleMasterLockedMatte()" title="Travar máscara estática na saída Master que o Autopilot e Presets NUNCA alteram">
+                  🔒 TRAVAR MÁSCARA MASTER
+                </button>
+                <span class="badge" id="badge-master-locked-matte" style="display: none; font-size: 10px; background: rgba(34,211,238,0.15); color: #22d3ee; border: 1px solid #22d3ee;">TRAVADA</span>
               </div>
               <button class="btn btn-fx-autopilot" id="btn-toggle-mattes-autopilot" onclick="toggleMattesAutopilot()" title="Delegar evolução de máscaras ao Autopilot">
                 <span class="autopilot-pulse"></span> AUTOPILOT MATTES: <strong id="lbl-mattes-autopilot-status">OFF</strong>
@@ -11140,6 +11601,7 @@ body.resizing-workspace-active .top-zone {
       <video id="player-l0" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
       <video id="player-l3" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
       <video id="player-l4" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
+      <video id="player-l5" muted loop playsinline preload="auto" crossorigin="anonymous"></video>
     </div>
 
     <!-- THEATER / EXPANDED MONITOR MODAL (MODO CINEMA) -->
@@ -11912,7 +12374,18 @@ body.resizing-workspace-active .top-zone {
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
                   <span>GÊMEO VIRTUAL INTERATIVO · M-VAVE SMC-MIXER (HARDWARE TWIN)</span>
-                  <span class="cfg-badge text-cyan">OPERÁVEL VIA MIDI, TECLADO OU MOUSE</span>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="hw-mode-switch" style="display: inline-flex; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+                      <button class="btn btn-xs active" id="btn-hw-mode-live" onclick="setHwTwinMode('live')" style="padding: 2px 8px; background: rgba(34,211,238,0.2); color: #22d3ee; border: none;">LIVE CONTROL</button>
+                      <button class="btn btn-xs" id="btn-hw-mode-map" onclick="setHwTwinMode('map')" style="padding: 2px 8px; background: transparent; color: #94a3b8; border: none;" title="Clique em qualquer knob/fader para remapear">🎯 CLICK TO MAP</button>
+                    </div>
+                    <select class="pro-select" id="sel-hw-midi-preset" onchange="loadMidiPreset(this.value)" style="font-size: 10px; padding: 2px 6px;">
+                      <option value="preset_master_jam">PRESET 1: Master Jam 6-Decks & Crossfader</option>
+                      <option value="preset_layer_sculpt">PRESET 2: Layer Geometry & Overlay Sculptor</option>
+                      <option value="preset_conductor_flow">PRESET 3: Ambient Conductor & Matte Flow</option>
+                      <option value="preset_climax_battle">PRESET 4: 4-Deck Battle & Hard Strobe Clímax</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div class="hw-twin-container" id="hw-twin-container">
@@ -12821,7 +13294,7 @@ class PenumbraMidiHub {
     // Fader 8: Master Brightness / Fade to Black
     // -------------------------------------------------------------
     if (this.activeBank === 1) {
-      if (faderIdx >= 0 && faderIdx <= 4) {
+      if (faderIdx >= 0 && faderIdx <= 5) {
         const layerKey = `layer${faderIdx}`;
         const inputId = `l${faderIdx}-opacity`;
         const el = document.getElementById(inputId);
@@ -12831,19 +13304,15 @@ class PenumbraMidiHub {
         if (takeover.allowUpdate) {
           this.setLayerOpacityDirect(layerKey, takeover.finalValue * 100);
         }
-      } else if (faderIdx === 5) {
-        // Master FX Intensity
+      } else if (faderIdx === 6) {
+        // Crossfader Master Bus A/B
         const el = document.getElementById('crossfader');
         const currNorm = el ? (Number(el.value) / 100.0) : 0.5;
-        const takeover = this.applySoftTakeover(`b1_fader_5`, normValue, currNorm);
+        const takeover = this.applySoftTakeover(`b1_fader_6`, normValue, currNorm);
         if (takeover.allowUpdate && el) {
           el.value = (takeover.finalValue * 100).toFixed(1);
           el.dispatchEvent(new Event('input'));
         }
-      } else if (faderIdx === 6) {
-        // Master Video Playback Speed (0.25x a 3.0x)
-        const speed = 0.25 + (normValue * 2.75);
-        this.setPlaybackSpeedGlobal(speed);
       } else if (faderIdx === 7) {
         // Master Dimmer / Brightness
         this.setMasterBrightnessDimmer(normValue);
@@ -13506,7 +13975,70 @@ class PenumbraMidiHub {
     this.notifyUI();
   }
 
+  executeDirectTarget(target, normVal, rawVal, opts = {}) {
+    let val = normVal;
+    if (opts.invert) val = 1.0 - val;
+    if (opts.curve === 'exp') val = Math.pow(val, 2);
+    else if (opts.curve === 'log') val = Math.sqrt(val);
+    else if (opts.curve === 'scurve') val = val * val * (3 - 2 * val);
+
+    if (target.startsWith('l') && target.includes('_opacity')) {
+      const idx = target.split('_')[0].replace('l', '');
+      this.setLayerOpacityDirect(`layer${idx}`, val * 100);
+    } else if (target.startsWith('l') && target.includes('_scale')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerScale) window.setLayerScale(`layer${idx}`, 0.2 + val * 2.8);
+    } else if (target.startsWith('l') && target.includes('_pos_x')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerPosition) window.setLayerPosition(`layer${idx}`, Math.round((val - 0.5) * 400), undefined);
+    } else if (target.startsWith('l') && target.includes('_pos_y')) {
+      const idx = target.split('_')[0].replace('l', '');
+      if (window.setLayerPosition) window.setLayerPosition(`layer${idx}`, undefined, Math.round((val - 0.5) * 400));
+    } else if (target === 'cue_clip_scale') {
+      const cueClipId = window.appState?.preview_clip || window.appState?.layers?.layer3?.clipId;
+      if (cueClipId && window.setClipTransform) window.setClipTransform(cueClipId, { scale: 0.2 + val * 2.8 });
+    } else if (target === 'cue_clip_rot') {
+      const cueClipId = window.appState?.preview_clip || window.appState?.layers?.layer3?.clipId;
+      const rots = [0, 90, 180, 270];
+      const rot = rots[Math.min(3, Math.floor(val * 4))];
+      if (cueClipId && window.setClipTransform) window.setClipTransform(cueClipId, { rotation: rot });
+    } else if (target === 'crossfader') {
+      const el = document.getElementById('crossfader');
+      if (el) {
+        el.value = (val * 100).toFixed(1);
+        el.dispatchEvent(new Event('input'));
+      }
+    } else if (target === 'auto_take' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-auto-take');
+      if (btn) btn.click();
+    } else if (target === 'cut' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-cut-instant');
+      if (btn) btn.click();
+    } else if (target === 'blackout' && (rawVal === undefined || rawVal > 64)) {
+      const btn = document.getElementById('btn-blackout');
+      if (btn) btn.click();
+    } else if (target === 'master_locked_matte' && (rawVal === undefined || rawVal > 64)) {
+      if (window.toggleMasterLockedMatte) window.toggleMasterLockedMatte();
+    } else if (target === 'gamma') {
+      const el = document.getElementById('fader-gamma');
+      if (el) { el.value = Math.round(40 + val * 120); el.dispatchEvent(new Event('input')); }
+    } else if (target === 'contrast') {
+      const el = document.getElementById('fader-contrast');
+      if (el) { el.value = Math.round(80 + val * 80); el.dispatchEvent(new Event('input')); }
+    } else if (target === 'edge_mix') {
+      const el = document.getElementById('fader-edge-mix');
+      if (el) { el.value = Math.round(val * 40); el.dispatchEvent(new Event('input')); }
+    } else if (target.startsWith('macro_state_') && (rawVal === undefined || rawVal > 64)) {
+      const st = target.replace('macro_state_', '').toUpperCase();
+      if (window.setMacroState) window.setMacroState(st);
+    }
+  }
+
   executeMappedAction(mapping, normValue, rawValue) {
+    if (mapping.target) {
+      this.executeDirectTarget(mapping.target, normValue, rawValue, mapping);
+      return;
+    }
     if (mapping.action === 'fader') {
       this.handleFaderInput(mapping.index, normValue);
     } else if (mapping.action === 'knob') {
@@ -13745,7 +14277,7 @@ class HardwareTwinUI {
         4: ['GAMMA', 'BLACKS', 'MIDS', 'CONTRAST', 'EDGE MIX', 'THRESH', 'COLOR BAL', 'GRAIN']
       },
       faders: {
-        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CROSS', 'SPEED', 'DIMMER'],
+        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'L5 OVERLAY', 'CROSS', 'DIMMER'],
         2: ['CROP TOP', 'CROP BTM', 'CROP LFT', 'CROP RGT', 'DSP SUB', 'DSP BASS', 'DSP MIDS', 'DSP AIR'],
         3: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CHAOS FX', 'NUDGE', 'DIMMER'],
         4: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CONTRAST', 'EDGE MIX', 'DIMMER']
@@ -13985,6 +14517,10 @@ class HardwareTwinUI {
 // ============================================================================
 
 window.handleHwFaderDrag = function(chIdx, e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('fader', chIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   const track = document.getElementById(`hw-fader-track-${chIdx}`);
   if (!track || !window.penumbraMidi) return;
 
@@ -14007,6 +14543,10 @@ window.handleHwFaderDrag = function(chIdx, e) {
 };
 
 window.handleHwMasterFaderDrag = function(e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('master_fader', 0, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   const track = document.getElementById('hw-master-fader-track');
   if (!track || !window.penumbraMidi) return;
 
@@ -14029,6 +14569,10 @@ window.handleHwMasterFaderDrag = function(e) {
 };
 
 window.handleHwKnobDrag = function(knobIdx, e) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal('knob', knobIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   if (!window.penumbraMidi) return;
   const startY = e.clientY;
   const initialVal = window.penumbraMidi.twinState.knobs[knobIdx] || 0.5;
@@ -14050,6 +14594,7 @@ window.handleHwKnobDrag = function(knobIdx, e) {
 };
 
 window.handleHwKnobWheel = function(knobIdx, e) {
+  if (window.hwTwinMode === 'map') return;
   if (!window.penumbraMidi) return;
   e.preventDefault();
   const delta = e.deltaY < 0 ? 0.04 : -0.04;
@@ -14060,6 +14605,10 @@ window.handleHwKnobWheel = function(knobIdx, e) {
 };
 
 window.handleHwButtonClick = function(type, chIdx) {
+  if (window.hwTwinMode === 'map') {
+    openMidiMapModal(type, chIdx, window.penumbraMidi?.activeBank || 1);
+    return;
+  }
   if (!window.penumbraMidi) return;
   if (type === 'mute') window.penumbraMidi.handleButtonMute(chIdx);
   else if (type === 'solo') window.penumbraMidi.handleButtonSolo(chIdx);
@@ -14197,6 +14746,225 @@ window.setHardwareBank = function(bank) {
   if (window.penumbraMidi) {
     window.penumbraMidi.setHardwareBank(bank);
   }
+};
+
+// ============================================================================
+// 14. CLICK-TO-MAP SUITE & PRO FACTORY PRESETS
+// ============================================================================
+window.hwTwinMode = 'live';
+
+window.setHwTwinMode = function(mode) {
+  window.hwTwinMode = mode;
+  const btnLive = document.getElementById('btn-hw-mode-live');
+  const btnMap = document.getElementById('btn-hw-mode-map');
+  const container = document.getElementById('hw-twin-container');
+
+  if (btnLive) {
+    btnLive.classList.toggle('active', mode === 'live');
+    btnLive.style.background = (mode === 'live') ? 'rgba(34,211,238,0.2)' : 'transparent';
+    btnLive.style.color = (mode === 'live') ? '#22d3ee' : '#94a3b8';
+  }
+  if (btnMap) {
+    btnMap.classList.toggle('active', mode === 'map');
+    btnMap.style.background = (mode === 'map') ? 'rgba(236,72,153,0.2)' : 'transparent';
+    btnMap.style.color = (mode === 'map') ? '#ec4899' : '#94a3b8';
+  }
+  if (container) {
+    container.classList.toggle('hw-mapping-mode', mode === 'map');
+  }
+  if (window.penumbraMidi) {
+    window.penumbraMidi.flashToastHud(mode === 'map' ? 'MODO MAPEAMENTO ATIVO: CLIQUE EM QUALQUER CONTROLE' : 'MODO LIVE CONTROL RESTAURADO');
+  }
+};
+
+window.openMidiMapModal = function(type, index, bank) {
+  const b = bank || window.penumbraMidi?.activeBank || 1;
+  const mappingKey = `b${b}_${type}_${index}`;
+  const existing = window.penumbraMidi?.customMappings[mappingKey] || {};
+
+  const oldModal = document.getElementById('modal-midi-map');
+  if (oldModal) oldModal.remove();
+
+  const titleText = `${type.toUpperCase()} ${type === 'master_fader' ? 'MASTER' : (index + 1)} · BANCO ${b}`;
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-midi-map';
+  modal.className = 'modal-midi-overlay';
+  modal.innerHTML = `
+    <div class="modal-midi-card">
+      <div class="modal-midi-header">
+        <div class="modal-midi-title">
+          <span>🎯 MAPEAMENTO VISUAL: ${titleText}</span>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="document.getElementById('modal-midi-map').remove()">✕</button>
+      </div>
+      <div class="modal-midi-body">
+        <div style="font-size: 10px; color: #94a3b8; line-height: 1.4;">
+          Vincule este controle físico ou virtual a qualquer parâmetro do Penumbra, com resposta tátil e curva configurável.
+        </div>
+
+        <div class="modal-midi-prop">
+          <label class="modal-midi-lbl">PARÂMETRO DE DESTINO</label>
+          <select class="modal-midi-select" id="sel-map-target">
+            <optgroup label="OPACIDADE DE CAMADAS (LAYERS)">
+              <option value="l0_opacity" ${existing.target === 'l0_opacity' ? 'selected' : ''}>L0: Master Base (Opacidade)</option>
+              <option value="l1_opacity" ${existing.target === 'l1_opacity' ? 'selected' : ''}>L1: Pulse Mirror (Opacidade)</option>
+              <option value="l2_opacity" ${existing.target === 'l2_opacity' ? 'selected' : ''}>L2: Sobel Edges (Opacidade)</option>
+              <option value="l3_opacity" ${existing.target === 'l3_opacity' ? 'selected' : ''}>L3: Cue Bus B (Opacidade)</option>
+              <option value="l4_opacity" ${existing.target === 'l4_opacity' ? 'selected' : ''}>L4: Drop Climax Accent (Opacidade)</option>
+              <option value="l5_opacity" ${existing.target === 'l5_opacity' ? 'selected' : ''}>L5: Overlay Deck (Opacidade Sobreposição)</option>
+            </optgroup>
+            <optgroup label="ESCALA / ZOOM DE CAMADAS">
+              <option value="l0_scale" ${existing.target === 'l0_scale' ? 'selected' : ''}>L0: Master Base (Escala 20%..300%)</option>
+              <option value="l1_scale" ${existing.target === 'l1_scale' ? 'selected' : ''}>L1: Pulse Mirror (Escala 20%..300%)</option>
+              <option value="l2_scale" ${existing.target === 'l2_scale' ? 'selected' : ''}>L2: Sobel Edges (Escala 20%..300%)</option>
+              <option value="l3_scale" ${existing.target === 'l3_scale' ? 'selected' : ''}>L3: Cue Bus B (Escala 20%..300%)</option>
+              <option value="l4_scale" ${existing.target === 'l4_scale' ? 'selected' : ''}>L4: Drop Climax Accent (Escala)</option>
+              <option value="l5_scale" ${existing.target === 'l5_scale' ? 'selected' : ''}>L5: Overlay Deck (Escala 20%..300%)</option>
+            </optgroup>
+            <optgroup label="POSIÇÃO X / Y DE CAMADAS">
+              <option value="l0_pos_x" ${existing.target === 'l0_pos_x' ? 'selected' : ''}>L0: Master Base (Posição X)</option>
+              <option value="l0_pos_y" ${existing.target === 'l0_pos_y' ? 'selected' : ''}>L0: Master Base (Posição Y)</option>
+              <option value="l3_pos_x" ${existing.target === 'l3_pos_x' ? 'selected' : ''}>L3: Cue Bus B (Posição X)</option>
+              <option value="l3_pos_y" ${existing.target === 'l3_pos_y' ? 'selected' : ''}>L3: Cue Bus B (Posição Y)</option>
+              <option value="l5_pos_x" ${existing.target === 'l5_pos_x' ? 'selected' : ''}>L5: Overlay Deck (Posição X)</option>
+              <option value="l5_pos_y" ${existing.target === 'l5_pos_y' ? 'selected' : ''}>L5: Overlay Deck (Posição Y)</option>
+            </optgroup>
+            <optgroup label="CLIPE INDIVIDUAL EM CUE (DECK B)">
+              <option value="cue_clip_scale" ${existing.target === 'cue_clip_scale' ? 'selected' : ''}>Clipe em Cue: Escala Intrínseca</option>
+              <option value="cue_clip_rot" ${existing.target === 'cue_clip_rot' ? 'selected' : ''}>Clipe em Cue: Rotação (0° / 90° / 180° / 270°)</option>
+            </optgroup>
+            <optgroup label="MASTER & TRANSIÇÃO">
+              <option value="crossfader" ${existing.target === 'crossfader' ? 'selected' : ''}>Crossfader (Bus A ↔ Bus B)</option>
+              <option value="auto_take" ${existing.target === 'auto_take' ? 'selected' : ''}>Auto Take (Transição Suave)</option>
+              <option value="cut" ${existing.target === 'cut' ? 'selected' : ''}>Cut (Corte Seco Instantâneo)</option>
+              <option value="blackout" ${existing.target === 'blackout' ? 'selected' : ''}>Master Blackout (Escurecer)</option>
+              <option value="master_locked_matte" ${existing.target === 'master_locked_matte' ? 'selected' : ''}>Trava de Máscara Master (Locked Matte)</option>
+            </optgroup>
+            <optgroup label="GRADING TONAL & SOBEL">
+              <option value="gamma" ${existing.target === 'gamma' ? 'selected' : ''}>Curva Gamma</option>
+              <option value="contrast" ${existing.target === 'contrast' ? 'selected' : ''}>Contraste Penumbra</option>
+              <option value="edge_mix" ${existing.target === 'edge_mix' ? 'selected' : ''}>Sobel Find Edges Mix</option>
+            </optgroup>
+            <optgroup label="MACRO PRESETS (AUTOPILOT)">
+              <option value="macro_state_intro" ${existing.target === 'macro_state_intro' ? 'selected' : ''}>Disparar INTRO</option>
+              <option value="macro_state_groove" ${existing.target === 'macro_state_groove' ? 'selected' : ''}>Disparar GROOVE</option>
+              <option value="macro_state_build" ${existing.target === 'macro_state_build' ? 'selected' : ''}>Disparar BUILD</option>
+              <option value="macro_state_drop" ${existing.target === 'macro_state_drop' ? 'selected' : ''}>Disparar DROP</option>
+              <option value="macro_state_break" ${existing.target === 'macro_state_break' ? 'selected' : ''}>Disparar BREAK</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">CURVA DE RESPOSTA</label>
+            <select class="modal-midi-select" id="sel-map-curve">
+              <option value="linear" ${(!existing.curve || existing.curve === 'linear') ? 'selected' : ''}>Linear (1:1)</option>
+              <option value="exp" ${existing.curve === 'exp' ? 'selected' : ''}>Exponencial (Fino no início)</option>
+              <option value="log" ${existing.curve === 'log' ? 'selected' : ''}>Logarítmico (Rápido no início)</option>
+              <option value="scurve" ${existing.curve === 'scurve' ? 'selected' : ''}>S-Curve (Sigmoidal suave)</option>
+            </select>
+          </div>
+          <div class="modal-midi-prop" style="display:flex; flex-direction:column; justify-content:center;">
+            <label class="modal-midi-lbl">DIREÇÃO</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:#f8fafc; cursor:pointer;">
+              <input type="checkbox" id="chk-map-invert" ${existing.invert ? 'checked' : ''}>
+              Inverter Sentido (127 ↔ 0)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-midi-footer">
+        <button class="btn btn-outline btn-xs" onclick="window.removeMidiMapping('${mappingKey}'); document.getElementById('modal-midi-map').remove()">DESVINCULAR</button>
+        <button class="btn btn-studio-primary btn-xs" onclick="window.saveMidiMapBindingFromModal('${mappingKey}', '${type}', ${index}, ${b})">SALVAR MAPEAMENTO</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.saveMidiMapBindingFromModal = function(mappingKey, type, index, bank) {
+  const target = document.getElementById('sel-map-target')?.value;
+  const curve = document.getElementById('sel-map-curve')?.value || 'linear';
+  const invert = Boolean(document.getElementById('chk-map-invert')?.checked);
+
+  if (!window.penumbraMidi) return;
+  window.penumbraMidi.customMappings[mappingKey] = {
+    target,
+    curve,
+    invert,
+    type,
+    index,
+    bank,
+    name: `${type.toUpperCase()} ${index + 1} → ${target}`
+  };
+  window.penumbraMidi.saveCustomMappings();
+  if (window.penumbraHwTwin) window.penumbraHwTwin.renderMappingsTable();
+  window.penumbraMidi.flashToastHud(`MAPEAMENTO SALVO: ${target}`);
+  document.getElementById('modal-midi-map')?.remove();
+};
+
+window.loadMidiPreset = function(presetId) {
+  if (!window.penumbraMidi) return;
+  const pm = window.penumbraMidi;
+
+  if (presetId === 'preset_master_jam') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Master Base' },
+      'b1_fader_1': { target: 'l1_opacity', name: 'L1 Pulse Mirror' },
+      'b1_fader_2': { target: 'l2_opacity', name: 'L2 Sobel Edge' },
+      'b1_fader_3': { target: 'l3_opacity', name: 'L3 Cue Bus B' },
+      'b1_fader_4': { target: 'l4_opacity', name: 'L4 Climax Accent' },
+      'b1_fader_5': { target: 'l5_opacity', name: 'L5 Overlay Deck' },
+      'b1_fader_6': { target: 'crossfader', name: 'Crossfader' },
+      'b1_master_fader_0': { target: 'crossfader', name: 'Master Crossfader' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: MASTER JAM 6-DECKS');
+  } else if (presetId === 'preset_layer_sculpt') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_scale', name: 'L0 Zoom' },
+      'b1_fader_1': { target: 'l1_scale', name: 'L1 Zoom' },
+      'b1_fader_2': { target: 'l2_scale', name: 'L2 Zoom' },
+      'b1_fader_3': { target: 'l3_scale', name: 'L3 Zoom' },
+      'b1_fader_4': { target: 'l4_scale', name: 'L4 Zoom' },
+      'b1_fader_5': { target: 'l5_scale', name: 'L5 Zoom' },
+      'b1_knob_0': { target: 'l0_pos_x', name: 'L0 Pan X' },
+      'b1_knob_1': { target: 'l0_pos_y', name: 'L0 Pan Y' },
+      'b1_knob_2': { target: 'cue_clip_scale', name: 'Cue Clip Zoom' },
+      'b1_knob_3': { target: 'cue_clip_rot', name: 'Cue Clip Rot' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: LAYER GEOMETRY & SCULPTOR');
+  } else if (presetId === 'preset_conductor_flow') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Base' },
+      'b1_fader_1': { target: 'l3_opacity', name: 'L3 Cue' },
+      'b1_fader_2': { target: 'l5_opacity', name: 'L5 Overlay' },
+      'b1_knob_0': { target: 'gamma', name: 'Curva Gamma' },
+      'b1_knob_1': { target: 'contrast', name: 'Contraste Penumbra' },
+      'b1_knob_2': { target: 'edge_mix', name: 'Sobel Mix' },
+      'b1_mute_0': { target: 'macro_state_intro', name: 'Trigger Intro' },
+      'b1_mute_1': { target: 'macro_state_groove', name: 'Trigger Groove' },
+      'b1_mute_2': { target: 'macro_state_build', name: 'Trigger Build' },
+      'b1_mute_3': { target: 'macro_state_drop', name: 'Trigger Drop' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: AMBIENT CONDUCTOR & MATTE FLOW');
+  } else if (presetId === 'preset_climax_battle') {
+    pm.customMappings = {
+      'b1_fader_0': { target: 'l0_opacity', name: 'L0 Base' },
+      'b1_fader_1': { target: 'l3_opacity', name: 'L3 Cue' },
+      'b1_fader_2': { target: 'l4_opacity', name: 'L4 Climax Drop' },
+      'b1_fader_3': { target: 'l5_opacity', name: 'L5 Overlay' },
+      'b1_mute_0': { target: 'cut', name: 'Corte Instantâneo' },
+      'b1_mute_1': { target: 'auto_take', name: 'Auto Take' },
+      'b1_mute_2': { target: 'blackout', name: 'Blackout' },
+      'b1_mute_3': { target: 'master_locked_matte', name: 'Lock Master Matte' }
+    };
+    pm.flashToastHud('PRESET CARREGADO: 4-DECK BATTLE & CLÍMAX');
+  }
+
+  pm.saveCustomMappings();
+  if (window.penumbraHwTwin) window.penumbraHwTwin.renderMappingsTable();
 };
 
 // ============================================================================
@@ -15013,11 +15781,12 @@ let appState = {
   stems: { drums: 0.65, bass: 0.70, other: 0.45, vocals: 0.30 },
   bands: { sub: 0.65, bass: 0.70, lo_mid: 0.45, hi_mid: 0.35, presence: 0.28, air: 0.20 },
   layers: {
-    layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' },
-    layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, fit_mode: 'fill' }
+    layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer5: { active: true, opacity: 0.0, blend: 'Screen', clipId: 'clip_002', name: 'Installation_documentation_breat…_202603282136.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' }
   },
   phrase: {
     length_bars: 16,
@@ -15029,6 +15798,9 @@ let appState = {
   },
   matte_target_layer: 'master',
   master_matte: 'none',
+  master_locked_matte: 'none',
+  master_locked_matte_active: false,
+  master_locked_matte_invert: false,
   tonal: {
     gamma: 0.85,
     brightness: -0.05,
@@ -15292,20 +16064,25 @@ const btnRescan = document.getElementById('btn-rescan-media');
 let playerL0 = document.getElementById('player-l0');
 let playerL3 = document.getElementById('player-l3');
 const playerL4 = document.getElementById('player-l4');
+let playerL5 = document.getElementById('player-l5');
 
 // Active Project & Audio Source States
 let activeProjectFilter = 'ALL';
 let currentAudioSource = { mode: 'test', device_name: 'MP3 Interno (01 REC-2024-04-28.mp3)', devices: [] };
 
-// Offscreen Canvases for Tonal & Edge Processing
+// Offscreen Canvases for Tonal, Edge & Overlay Processing
 const offscreenA = document.createElement('canvas');
 const offscreenB = document.createElement('canvas');
+const offscreenOverlay = document.createElement('canvas');
 const offCtxA = offscreenA.getContext('2d');
 const offCtxB = offscreenB.getContext('2d');
+const offCtxOverlay = offscreenOverlay.getContext('2d');
 offscreenA.width = 640;
 offscreenA.height = 360;
 offscreenB.width = 640;
 offscreenB.height = 360;
+offscreenOverlay.width = 640;
+offscreenOverlay.height = 360;
 
 // Dual Persistent Broadcast Buses (Bus A = Program Master, Bus B = Preview Cue)
 const busCanvasA = document.createElement('canvas');
@@ -15621,6 +16398,30 @@ function syncVideoSources() {
     }
   }
 
+  // Layer 5 Dedicated Overlay Video (Loop / Foreground Channel)
+  if (!playerL5) playerL5 = document.getElementById('player-l5');
+  if (playerL5 && appState.layers.layer5 && appState.layers.layer5.clipId) {
+    attachPlayerErrorHandler(playerL5, 'L5');
+    playerL5.crossOrigin = 'anonymous';
+    playerL5.muted = true;
+    playerL5.playsInline = true;
+    playerL5.loop = true;
+    if (appState.layers.layer5.clipId === 'clip_gen_plexus_spine') {
+      if (!playerL5.paused) playerL5.pause();
+    } else {
+      const clip = allClips.find(c => c.id === appState.layers.layer5.clipId);
+      const targetSrc = clip ? MediaProvider.getMediaUrl(clip) : '';
+      if (targetSrc && (!playerL5.src.includes(targetSrc) || playerL5.dataset.activeSrc !== targetSrc)) {
+        playerL5.dataset.activeSrc = targetSrc;
+        playerL5.src = targetSrc;
+        playerL5.load();
+        playerL5.play().catch(() => {});
+      } else if (playerL5.paused && playerL5.readyState >= 2) {
+        playerL5.play().catch(() => {});
+      }
+    }
+  }
+
   // Sync Bus Labels on Central Transition Strip
   const stripA = document.getElementById('me-bus-a-title');
   if (stripA) stripA.textContent = `BASE: ${appState.layers.layer0.name || appState.layers.layer0.clipId}`;
@@ -15678,7 +16479,7 @@ function getClipImage(clip) {
 // ============================================================================
 // 5. ASPECT RATIO PRESERVING FIT ENGINE (ZERO DISTORTION GUARANTEE)
 // ============================================================================
-function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0) {
+function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0, scale = 1.0, posX = 0, posY = 0) {
   if (!source) return null;
   
   const srcW = source.videoWidth || source.naturalWidth || targetW;
@@ -15696,24 +16497,29 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.drawImage(source, (targetW - bgW) / 2, (targetH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: crisp centered 9:16 with soft drop shadow
+    // Foreground: crisp centered 9:16 with soft drop shadow & transform
     const fgRatio = srcW / srcH;
     const fgH = targetH;
     const fgW = targetH * fgRatio;
     const fgX = (targetW - fgW) / 2;
     ctx.save();
+    ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
+    if (scale && scale !== 1.0) ctx.scale(scale, scale);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
     ctx.shadowBlur = 20;
-    ctx.drawImage(source, fgX, 0, fgW, fgH);
+    ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
     ctx.restore();
     return { x: fgX, y: 0, w: fgW, h: fgH };
   }
 
-  // 2. ROTATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
+  // 2. ROTATION, SCALE, TRANSLATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
   ctx.save();
-  ctx.translate(targetW / 2, targetH / 2);
+  ctx.translate((targetW / 2) + (posX || 0), (targetH / 2) + (posY || 0));
   if (rotation && rotation !== 0) {
     ctx.rotate((rotation * Math.PI) / 180);
+  }
+  if (scale && scale !== 1.0) {
+    ctx.scale(scale, scale);
   }
 
   const isQuarterTurn = Math.abs(rotation % 180) === 90;
@@ -15751,6 +16557,286 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   ctx.restore();
   return { x: 0, y: 0, w: targetW, h: targetH };
 }
+
+// ============================================================================
+// 5.1 COMPOSITING BLEND OPS & DUAL-TIER TRANSFORM HIERARCHY (CLIP & LAYER)
+// ============================================================================
+function getCanvasCompositeOp(blendName) {
+  const b = String(blendName || '').toLowerCase().trim();
+  switch (b) {
+    case 'screen': return 'screen';
+    case 'multiply': return 'multiply';
+    case 'add':
+    case 'lighter': return 'lighter';
+    case 'soft light':
+    case 'soft-light':
+    case 'softlight': return 'soft-light';
+    case 'difference': return 'difference';
+    case 'exclusion': return 'exclusion';
+    case 'overlay': return 'overlay';
+    case 'normal':
+    default: return 'source-over';
+  }
+}
+window.getCanvasCompositeOp = getCanvasCompositeOp;
+
+function getClipTransform(clipId) {
+  if (!clipId) return { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 };
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  if (clip && clip.transform) return clip.transform;
+  const saved = (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile?.custom_clip_transforms)
+    ? UserProfileManager.profile.custom_clip_transforms[clipId] : null;
+  const tf = saved ? { ...saved } : { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 };
+  if (clip) clip.transform = tf;
+  return tf;
+}
+window.getClipTransform = getClipTransform;
+
+function setClipTransform(clipId, partial) {
+  if (!clipId) return;
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  const cur = getClipTransform(clipId);
+  const updated = { ...cur, ...partial };
+  if (clip) clip.transform = updated;
+  if (typeof UserProfileManager !== 'undefined') {
+    if (!UserProfileManager.profile.custom_clip_transforms) {
+      UserProfileManager.profile.custom_clip_transforms = {};
+    }
+    UserProfileManager.profile.custom_clip_transforms[clipId] = updated;
+    UserProfileManager.saveProfile();
+  }
+}
+window.setClipTransform = setClipTransform;
+
+function resetClipTransform(clipId) {
+  setClipTransform(clipId, { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 });
+}
+window.resetClipTransform = resetClipTransform;
+
+function setLayerScale(layerId, scale) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].scale = Math.max(0.1, Math.min(4.0, Number(scale) || 1.0));
+  updateTimelineTransformInspector();
+}
+window.setLayerScale = setLayerScale;
+
+function setLayerPosition(layerId, posX, posY) {
+  if (!appState.layers[layerId]) return;
+  if (posX !== undefined) appState.layers[layerId].pos_x = Math.round(Number(posX) || 0);
+  if (posY !== undefined) appState.layers[layerId].pos_y = Math.round(Number(posY) || 0);
+  updateTimelineTransformInspector();
+}
+window.setLayerPosition = setLayerPosition;
+
+function setLayerRotation(layerId, rot) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].rotation = Number(rot) || 0;
+  updateTimelineTransformInspector();
+}
+window.setLayerRotation = setLayerRotation;
+
+function resetLayerTransform(layerId) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].scale = 1.0;
+  appState.layers[layerId].pos_x = 0;
+  appState.layers[layerId].pos_y = 0;
+  appState.layers[layerId].rotation = 0;
+  updateTimelineTransformInspector();
+  showMacroToast(`Resetado Transform: ${layerId.toUpperCase()}`);
+}
+window.resetLayerTransform = resetLayerTransform;
+
+// Master Output Locked Matte
+function setMasterLockedMatte(mattePath) {
+  appState.master_locked_matte = mattePath || 'none';
+  appState.master_locked_matte_active = (mattePath && mattePath !== 'none');
+  updateMasterLockedMatteUI();
+  showMacroToast(appState.master_locked_matte_active ? `🔒 Master Matte Travado: ${(mattePath || '').split('/').pop()}` : '🔓 Master Matte Destravado');
+}
+window.setMasterLockedMatte = setMasterLockedMatte;
+
+function toggleMasterLockedMatte(forceState) {
+  if (forceState !== undefined) {
+    appState.master_locked_matte_active = Boolean(forceState);
+  } else {
+    appState.master_locked_matte_active = !appState.master_locked_matte_active;
+  }
+  updateMasterLockedMatteUI();
+  showMacroToast(appState.master_locked_matte_active ? '🔒 Master Matte Travado' : '🔓 Master Matte Destravado');
+}
+window.toggleMasterLockedMatte = toggleMasterLockedMatte;
+
+function updateMasterLockedMatteUI() {
+  const btnLock = document.getElementById('btn-lock-master-matte');
+  const badge = document.getElementById('badge-master-locked-status');
+  const isLocked = Boolean(appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none');
+  if (btnLock) {
+    btnLock.classList.toggle('locked', isLocked);
+    btnLock.innerHTML = isLocked ? '🔒 TRAVADO NO MASTER' : '🔓 DESTRAVADO (LIVRE)';
+  }
+  if (badge) {
+    badge.style.display = isLocked ? 'inline-block' : 'none';
+    badge.textContent = `🔒 MASTER LOCKED: ${(appState.master_locked_matte || '').split('/').pop()}`;
+  }
+}
+window.updateMasterLockedMatteUI = updateMasterLockedMatteUI;
+
+// Unificação de Rótulos do Macro State (Evita Oscilação e Flicker)
+function refreshMacroStateBadges() {
+  const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
+  const st = appState.manual_forced_state || appState.macro_state || 'GROOVE';
+
+  const badgeState = document.getElementById('badge-macro-state');
+  if (badgeState) {
+    badgeState.textContent = st;
+    badgeState.style.color = getStateColor(st);
+  }
+
+  const badgeStrip = document.getElementById('badge-macro-state-strip');
+  if (badgeStrip) {
+    badgeStrip.textContent = st;
+    badgeStrip.style.color = getStateColor(st);
+    badgeStrip.classList.toggle('state-forced-glow', isForced);
+  }
+
+  const forcedTag = document.getElementById('badge-macro-forced-tag');
+  if (forcedTag) {
+    forcedTag.style.display = isForced ? 'inline-block' : 'none';
+  }
+
+  document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.state === st);
+  });
+}
+window.refreshMacroStateBadges = refreshMacroStateBadges;
+
+// Active selected layer in Timeline Transform Inspector ('layer0'..'layer5')
+let activeTimelineSelectedLayer = 'layer0';
+
+function selectTimelineLayer(layerId) {
+  activeTimelineSelectedLayer = layerId;
+  document.querySelectorAll('.tl-tf-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.layer === layerId);
+  });
+  updateTimelineTransformInspector();
+}
+window.selectTimelineLayer = selectTimelineLayer;
+
+function updateTimelineTransformInspector() {
+  const l = appState.layers[activeTimelineSelectedLayer];
+  if (!l) return;
+  const sliderScale = document.getElementById('tl-tf-scale-slider');
+  const valScale = document.getElementById('tl-tf-scale-val');
+  const inputPosX = document.getElementById('tl-tf-posx-input');
+  const inputPosY = document.getElementById('tl-tf-posy-input');
+  const selBlend = document.getElementById('tl-tf-blend-select');
+  const sliderOpac = document.getElementById('tl-tf-opac-slider');
+  const valOpac = document.getElementById('tl-tf-opac-val');
+
+  if (sliderScale) sliderScale.value = Math.round((l.scale || 1.0) * 100);
+  if (valScale) valScale.textContent = `${Math.round((l.scale || 1.0) * 100)}%`;
+  if (inputPosX && document.activeElement !== inputPosX) inputPosX.value = l.pos_x || 0;
+  if (inputPosY && document.activeElement !== inputPosY) inputPosY.value = l.pos_y || 0;
+  if (selBlend) selBlend.value = l.blend || 'Normal';
+  if (sliderOpac) sliderOpac.value = Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100);
+  if (valOpac) valOpac.textContent = `${Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100)}%`;
+}
+window.updateTimelineTransformInspector = updateTimelineTransformInspector;
+
+// Modal para Transformação Geométrica Individual do Clipe
+function openClipTransformModal(clipId) {
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  if (!clip) return;
+  const tf = getClipTransform(clipId);
+
+  const existing = document.getElementById('modal-clip-transform');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-clip-transform';
+  modal.className = 'modal-midi-overlay';
+  modal.innerHTML = `
+    <div class="modal-midi-card" style="max-width: 480px;">
+      <div class="modal-midi-header">
+        <div class="modal-midi-title">
+          <span>📐 TRANSFORMAÇÃO DO CLIPE: ${(clip.filename || clip.id).slice(0, 26)}</span>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">✕</button>
+      </div>
+      <div class="modal-midi-body">
+        <div style="font-size: 10px; color: #94a3b8; line-height: 1.4;">
+          Ajuste fino de rotação, escala e posição individual antes de enviar ao ar. Esses valores compõem com a transformação da camada no telão.
+        </div>
+
+        <div class="modal-midi-prop">
+          <label class="modal-midi-lbl">ROTAÇÃO DO CLIPE</label>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline btn-xs ${tf.rotation === 0 ? 'active' : ''}" id="btn-clip-rot-0" onclick="updateClipRot('${clip.id}', 0)">0° NORMAL</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 90 ? 'active' : ''}" id="btn-clip-rot-90" onclick="updateClipRot('${clip.id}', 90)">+90° CW</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 180 ? 'active' : ''}" id="btn-clip-rot-180" onclick="updateClipRot('${clip.id}', 180)">180° FLIP</button>
+            <button class="btn btn-outline btn-xs ${tf.rotation === 270 || tf.rotation === -90 ? 'active' : ''}" id="btn-clip-rot-270" onclick="updateClipRot('${clip.id}', 270)">-90° CCW</button>
+          </div>
+        </div>
+
+        <div class="modal-midi-prop">
+          <div style="display:flex; justify-content:space-between;">
+            <label class="modal-midi-lbl">ESCALA / ZOOM (INTRÍNSECO)</label>
+            <span class="text-cyan font-mono" id="lbl-clip-scale">${Math.round((tf.scale || 1.0) * 100)}%</span>
+          </div>
+          <input type="range" min="20" max="300" value="${Math.round((tf.scale || 1.0) * 100)}" class="cfg-slider" id="rng-clip-scale" oninput="onClipScaleInput('${clip.id}', this.value)">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">POSIÇÃO X (OFFSET PX)</label>
+            <input type="number" value="${tf.pos_x || 0}" step="5" class="modal-midi-input" id="inp-clip-posx" onchange="onClipPosInput('${clip.id}')">
+          </div>
+          <div class="modal-midi-prop">
+            <label class="modal-midi-lbl">POSIÇÃO Y (OFFSET PX)</label>
+            <input type="number" value="${tf.pos_y || 0}" step="5" class="modal-midi-input" id="inp-clip-posy" onchange="onClipPosInput('${clip.id}')">
+          </div>
+        </div>
+      </div>
+      <div class="modal-midi-footer">
+        <button class="btn btn-outline btn-xs" onclick="resetClipTransform('${clip.id}'); document.getElementById('modal-clip-transform').remove(); openClipTransformModal('${clip.id}')">↺ RESETAR TRANSFORM</button>
+        <button class="btn btn-studio-primary btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">CONCLUÍDO</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+window.openClipTransformModal = openClipTransformModal;
+
+function openPreviewClipTransform() {
+  const cueClipId = appState.preview_clip || (appState.layers.layer3 && appState.layers.layer3.clipId) || (appState.layers.layer3 && appState.layers.layer3.clip && appState.layers.layer3.clip.id);
+  if (!cueClipId) {
+    if (typeof showHudToast === 'function') showHudToast('Nenhum clipe carregado no Preview (Deck B)', 'warn');
+    return;
+  }
+  openClipTransformModal(cueClipId);
+}
+window.openPreviewClipTransform = openPreviewClipTransform;
+
+window.updateClipRot = function(clipId, rot) {
+  setClipTransform(clipId, { rotation: rot });
+  ['0', '90', '180', '270'].forEach(r => {
+    const b = document.getElementById(`btn-clip-rot-${r}`);
+    if (b) b.classList.toggle('active', Number(r) === rot);
+  });
+};
+
+window.onClipScaleInput = function(clipId, val) {
+  const sc = Number(val) / 100.0;
+  setClipTransform(clipId, { scale: sc });
+  const lbl = document.getElementById('lbl-clip-scale');
+  if (lbl) lbl.textContent = `${val}%`;
+};
+
+window.onClipPosInput = function(clipId) {
+  const px = Number(document.getElementById('inp-clip-posx')?.value) || 0;
+  const py = Number(document.getElementById('inp-clip-posy')?.value) || 0;
+  setClipTransform(clipId, { pos_x: px, pos_y: py });
+};
 
 // ============================================================================
 // 5.5 TONAL GRADING & MATTE KINEMATICS ENGINE
@@ -16338,20 +17424,7 @@ function applyMacroPreset(state, presetIndex = null, isUserAction = false) {
 window.applyMacroPreset = applyMacroPreset;
 
 function updateMacroStateUI(state, preset, isUserAction = false) {
-  // Update header badges
-  const badgeState = document.getElementById('badge-macro-state');
-  if (badgeState) {
-    badgeState.textContent = state;
-    badgeState.style.color = getStateColor(state);
-  }
-
-  const badgeStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeStrip) {
-    const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
-    badgeStrip.textContent = isForced ? state + ' [FORÇADO]' : state;
-    badgeStrip.style.color = getStateColor(state);
-    badgeStrip.classList.toggle('state-forced-glow', isForced);
-  }
+  refreshMacroStateBadges();
 
   // Preset tag in strip
   const badgePreset = document.getElementById('badge-macro-preset-name');
@@ -16361,11 +17434,6 @@ function updateMacroStateUI(state, preset, isUserAction = false) {
     badgePreset.textContent = curIdx + '/' + list.length + ' · ' + preset.name.toUpperCase();
     badgePreset.className = 'macro-preset-tag ' + (state === 'DROP' ? 'drop' : (state === 'BUILD' ? 'build' : (state === 'GROOVE' ? 'clean' : '')));
   }
-
-  // State buttons active class
-  document.querySelectorAll('.state-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.state === state);
-  });
 
   // Tab 5 panel status label
   const lblStatus = document.getElementById('lbl-macro-mode-status');
@@ -17114,8 +18182,14 @@ function renderVisuals(time) {
       offCtxA.fillStyle = '#050608';
       offCtxA.fillRect(0, 0, w, h);
 
-      // Render base with rotation & fit
-      drawFittedImage(offCtxA, baseSource, w, h, appState.layers.layer0.fit_mode || 'fit', appState.layers.layer0.rotation || 0);
+      // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
+      const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+      const l0 = appState.layers.layer0;
+      const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
+      const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
+      const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
+      const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
+      drawFittedImage(offCtxA, baseSource, w, h, l0.fit_mode || 'fit', totalRot0, totalScale0, totalPosX0, totalPosY0);
 
       // Program Rotation Dissolve: blend smoothly from old rotation so there is zero abrupt cut
       if (programRotDissolve.active) {
@@ -17206,8 +18280,14 @@ function renderVisuals(time) {
       offCtxB.fillStyle = '#050608';
       offCtxB.fillRect(0, 0, w, h);
 
-      // Render secondary with rotation & fit
-      drawFittedImage(offCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+      // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
+      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+      const l3 = appState.layers.layer3;
+      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+      drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
 
       // Apply Layer 3 Matte with invert support
       const matteL3 = getMatteImage(appState.layers.layer3.matte);
@@ -17360,7 +18440,13 @@ function renderVisuals(time) {
 
         if (accentSource) {
           offCtxB.clearRect(0, 0, w, h);
-          drawFittedImage(offCtxB, accentSource, w, h, appState.layers.layer4.fit_mode || 'fit', appState.layers.layer4.rotation || 0);
+          const clipTf4 = getClipTransform(appState.layers.layer4.clipId);
+          const l4 = appState.layers.layer4;
+          const totalRot4 = (l4.rotation || 0) + (clipTf4.rotation || 0);
+          const totalScale4 = (l4.scale || 1.0) * (clipTf4.scale || 1.0);
+          const totalPosX4 = (l4.pos_x || 0) + (clipTf4.pos_x || 0);
+          const totalPosY4 = (l4.pos_y || 0) + (clipTf4.pos_y || 0);
+          drawFittedImage(offCtxB, accentSource, w, h, l4.fit_mode || 'fit', totalRot4, totalScale4, totalPosX4, totalPosY4);
 
           const matteL4 = getMatteImage(appState.layers.layer4.matte);
           if (matteL4 && appState.layers.layer4.matte !== 'none') {
@@ -17377,10 +18463,52 @@ function renderVisuals(time) {
           prgCtx.restore();
         }
       }
+
+      // 4.4. LAYER 5: DEDICATED OVERLAY DECK (PRIMARY FOREGROUND & INDEPENDENT LOOP COMPOSITING)
+      if (appState.layers.layer5 && appState.layers.layer5.active && (appState.layers.layer5.opacity || 0) > 0.005) {
+        const overlayClip = allClips.find(c => c.id === appState.layers.layer5.clipId) || allClips[1] || allClips[0];
+        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine');
+        const videoL5Ready = playerL5 && playerL5.readyState >= 2;
+        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
+
+        if (overlaySource) {
+          offCtxOverlay.clearRect(0, 0, w, h);
+          const clipTf5 = getClipTransform(appState.layers.layer5.clipId);
+          const l5 = appState.layers.layer5;
+          const totalRot5 = (l5.rotation || 0) + (clipTf5.rotation || 0);
+          const totalScale5 = (l5.scale || 1.0) * (clipTf5.scale || 1.0);
+          const totalPosX5 = (l5.pos_x || 0) + (clipTf5.pos_x || 0);
+          const totalPosY5 = (l5.pos_y || 0) + (clipTf5.pos_y || 0);
+          drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5);
+
+          const matteL5 = getMatteImage(l5.matte);
+          if (matteL5 && l5.matte !== 'none') {
+            offCtxOverlay.save();
+            offCtxOverlay.globalCompositeOperation = 'destination-in';
+            drawDeformedMatte(offCtxOverlay, matteL5, w, h, simTime, appState.matte?.deform, l5.matte_invert);
+            offCtxOverlay.restore();
+          }
+
+          prgCtx.save();
+          prgCtx.globalAlpha = Math.min(1.0, Math.max(0.0, l5.opacity || 0));
+          prgCtx.globalCompositeOperation = getCanvasCompositeOp(l5.blend || 'Screen');
+          drawBusToProgram(prgCtx, offscreenOverlay, pw, ph, isVert);
+          prgCtx.restore();
+        }
+      }
     }
 
-    // 4.5. MASTER MATTE APPLICATION
-    if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
+    // 4.5. MASTER LOCKED MATTE (STATIC FRAMING OVERLAY) vs DYNAMIC MASTER MATTE
+    if (!isBlackout && appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none') {
+      const lockedMatteImg = getMatteImage(appState.master_locked_matte);
+      if (lockedMatteImg) {
+        prgCtx.save();
+        prgCtx.globalCompositeOperation = 'destination-in';
+        // Renderizado 100% estático sem deformações procedurais ou oscilação
+        prgCtx.drawImage(lockedMatteImg, 0, 0, pw, ph);
+        prgCtx.restore();
+      }
+    } else if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
       const masterMatteImg = getMatteImage(appState.master_matte);
       if (masterMatteImg) {
         prgCtx.save();
@@ -19365,7 +20493,7 @@ function renderQueueCards() {
     const h = canvas.height;
     const rulerH = 22;
     const tracksH = h - rulerH;
-    const numTracks = 5;
+    const numTracks = 6;
     const trackH = tracksH / numTracks;
 
     // 1. Draw Top Time Ruler
@@ -19402,6 +20530,7 @@ function renderQueueCards() {
       'rgba(255, 255, 255, 0.02)',
       'rgba(255, 255, 255, 0.02)',
       'rgba(0, 240, 255, 0.04)',
+      'rgba(192, 132, 252, 0.05)',
       'rgba(255, 42, 133, 0.04)'
     ];
 
@@ -19489,8 +20618,28 @@ function renderQueueCards() {
       });
     }
 
-    // 6. Tension Waveform Indicator along bottom track
-    const fxY = rulerH + (4 * trackH);
+    // 5. Render Layer 5 (Dedicated Overlay Deck) on Track 4
+    const l5Clip = appState.layers?.layer5;
+    const l5Y = rulerH + (4 * trackH) + 2;
+    const l5Opacity = l5Clip?.opacity || 0;
+    ctx.fillStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.22)' : 'rgba(255, 255, 255, 0.04)';
+    ctx.strokeStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.85)' : 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(10, l5Y, barWidth * 12, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#c084fc';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◪ L5 OVERLAY: ' + ((l5Clip?.name || 'OVERLAY DECK').substring(0, 22)) + ` · ${Math.round(l5Opacity * 100)}% (${l5Clip?.blend || 'Screen'})`, 18, l5Y + 12);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText(`ZOOM: ${Math.round((l5Clip?.scale || 1.0) * 100)}% · POS: (${l5Clip?.pos_x || 0}, ${l5Clip?.pos_y || 0}) · MATTE: ${l5Clip?.matte || 'NONE'}`, 18, l5Y + trackH - 8);
+
+    // 6. Tension Waveform Indicator along bottom track (Track 5)
+    const fxY = rulerH + (5 * trackH);
     ctx.fillStyle = 'rgba(255, 42, 133, 0.1)';
     ctx.fillRect(0, fxY, w, trackH);
     ctx.fillStyle = 'rgba(255, 42, 133, 0.8)';
@@ -19796,17 +20945,9 @@ function renderMattesCards() {
 // 8. TELEMETRY & UI UPDATERS
 // ============================================================================
 function updateUI() {
-  if (badgeState) {
-    badgeState.textContent = appState.macro_state;
-    badgeState.style.color = getStateColor(appState.macro_state);
-  }
-  const badgeStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeStrip && appState.macro_state) {
-    const isForced = Boolean(appState.auto_mode && appState.manual_forced_state);
-    badgeStrip.textContent = isForced ? appState.macro_state + ' [FORÇADO]' : appState.macro_state;
-    badgeStrip.style.color = getStateColor(appState.macro_state);
-    badgeStrip.classList.toggle('state-forced-glow', isForced);
-  }
+  refreshMacroStateBadges();
+  updateMasterLockedMatteUI();
+  updateTimelineTransformInspector();
   const badgePreset = document.getElementById('badge-macro-preset-name');
   if (badgePreset && appState.macro_state) {
     const p = appState.active_macro_preset || getActiveMacroPreset(appState.macro_state);
@@ -20023,19 +21164,7 @@ function updateMeters() {
   if (bpmDisplayEl && appState.bpm) {
     bpmDisplayEl.textContent = `${Number(appState.bpm).toFixed(1)} BPM`;
   }
-  const badgeMacroState = document.getElementById('badge-macro-state');
-  if (badgeMacroState && appState.macro_state) {
-    badgeMacroState.textContent = appState.macro_state;
-    badgeMacroState.style.color = getStateColor(appState.macro_state);
-  }
-  const badgeMacroStateStrip = document.getElementById('badge-macro-state-strip');
-  if (badgeMacroStateStrip && appState.macro_state) {
-    badgeMacroStateStrip.textContent = appState.macro_state;
-    badgeMacroStateStrip.style.color = getStateColor(appState.macro_state);
-  }
-  document.querySelectorAll('.state-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.state === appState.macro_state);
-  });
+  refreshMacroStateBadges();
 
   const buildPct = Math.min(100, Math.round((appState.buildup_score || 0) * 100));
   if (valBuildup) valBuildup.textContent = `${buildPct}%`;
@@ -21211,8 +22340,10 @@ function createMediaCardElement(clip) {
       <div class="card-actions-row">
         <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
         <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
+        <button class="btn-route btn-edit-clip-transform" onclick="event.stopPropagation(); openClipTransformModal('${clip.id}')" title="Transformação Geométrica Individual (Rotação, Escala, Posição)">📐 POS</button>
         <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">LOOK</button>
         <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
+        <button class="btn-route" data-layer="layer5" data-tooltip-title="CAMADA 5 (OVERLAY DECK)" data-tooltip-desc="Arma clipe na camada dedicada de sobreposição (Loop ou Foreground).">L5</button>
         ${actionBtnHtml}
       </div>
     </div>
@@ -21306,6 +22437,19 @@ function createMediaCardElement(clip) {
       sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
+    });
+  }
+
+  const btnL5 = card.querySelector('[data-layer="layer5"]');
+  if (btnL5) {
+    btnL5.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appState.layers.layer5.clipId = clip.id;
+      appState.layers.layer5.name = clip.filename;
+      sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
+      updateUI();
+      syncVideoSources();
+      showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
     });
   }
 
@@ -21941,6 +23085,9 @@ const PenumbraWebAudio = {
     if (deviceId) this.selectedDeviceId = deviceId;
     this.initContext();
     if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch (e) {}
+    }
 
     // Se estiver tocando áudio de teste de arquivo, pausa para não sobrepor
     if (audioCuePlayer && !audioCuePlayer.paused) {
@@ -22182,19 +23329,31 @@ function setAudioSource(mode, deviceId = null) {
     cfgLbl.textContent = names[mode] || mode.toUpperCase();
   }
 
+  currentAudioSource.mode = mode;
+  if (deviceId) currentAudioSource.device_id = deviceId;
+
   if (mode === 'test') {
     PenumbraWebAudio.stopMicrophone();
     playOnlineTestTrack();
   } else {
+    // Para e silencia o MP3 interno imediatamente
+    if (audioCuePlayer) {
+      audioCuePlayer.pause();
+      audioCuePlayer.currentTime = 0;
+    }
     PenumbraWebAudio.startMicrophone(mode, deviceId);
   }
 
-  sendAction('set_audio_source', { mode, device_id: deviceId });
+  sendAction('set_audio_source', { mode, device_id: deviceId, device_name: names[mode] || mode });
 }
 window.setAudioSource = setAudioSource;
 
 function updateAudioSourceUI(srcInfo) {
   if (!srcInfo) return;
+  // Se o WebAudio estiver ativo no microfone ou linha, NÃO deixe telemetria 'test' sobrescrever a preferência do usuário!
+  if (PenumbraWebAudio.isActive && srcInfo.mode === 'test') {
+    return;
+  }
   currentAudioSource = { ...currentAudioSource, ...srcInfo };
   const mode = srcInfo.mode || srcInfo.current_mode;
   if (mode) {
