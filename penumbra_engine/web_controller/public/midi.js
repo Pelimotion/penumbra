@@ -55,6 +55,10 @@ class PenumbraMidiHub {
     this.learnTarget = null; // { bank, type, index, name }
     this.customMappings = this.loadCustomMappings();
 
+    // Perfil Ativo e Detecção de Protocolo
+    this.activeProfile = (typeof localStorage !== 'undefined' && localStorage.getItem('penumbra_midi_profile')) || 'mvave_smc';
+    this.detectedProtocol = 'Aguardando controlador...';
+
     // Telemetria & Monitor
     this.messageCount = 0;
     this.messageRateHz = 0;
@@ -65,6 +69,7 @@ class PenumbraMidiHub {
       connected: false,
       channel: 1,
       lastAction: 'Iniciando sistema',
+      detectedProtocol: 'Aguardando controlador...',
       msgRate: 0
     };
 
@@ -139,7 +144,7 @@ class PenumbraMidiHub {
     inputs.forEach(input => {
       this.devicesList.push({ type: 'input', id: input.id, name: input.name, manufacturer: input.manufacturer || 'Generic' });
       const lower = (input.name || '').toLowerCase();
-      if (lower.includes('smc') || lower.includes('m-vave') || lower.includes('cuvave') || lower.includes('mixer')) {
+      if (lower.includes('smc') || lower.includes('vave') || lower.includes('m-vave') || lower.includes('cuvave') || lower.includes('mixer')) {
         candidateInput = input;
       } else if (!candidateInput && (lower.includes('midi') || lower.includes('controller') || lower.includes('usb'))) {
         candidateInput = input;
@@ -149,7 +154,7 @@ class PenumbraMidiHub {
     outputs.forEach(output => {
       this.devicesList.push({ type: 'output', id: output.id, name: output.name, manufacturer: output.manufacturer || 'Generic' });
       const lower = (output.name || '').toLowerCase();
-      if (lower.includes('smc') || lower.includes('m-vave') || lower.includes('cuvave') || lower.includes('mixer')) {
+      if (lower.includes('smc') || lower.includes('vave') || lower.includes('m-vave') || lower.includes('cuvave') || lower.includes('mixer')) {
         candidateOutput = output;
       } else if (!candidateOutput && (lower.includes('midi') || lower.includes('controller') || lower.includes('usb'))) {
         candidateOutput = output;
@@ -273,55 +278,81 @@ class PenumbraMidiHub {
       return;
     }
 
-    // 2. Mapeamento Nativo Padrão Penumbra para M-Vave SMC-MIXER
-    // M-Vave SMC-Mixer opera tipicamente com:
-    // Knobs 1..8: CC 1 a 8 (ou CC 16 a 23 dependendo do modo)
-    // Faders 1..8: CC 9 a 16 (ou CC 0 a 7)
-    // Botões M (Mute): CC 32 a 39 ou Notes
-    // Botões S (Solo): CC 40 a 47 ou Notes
-    // Botões R (Rec): CC 48 a 55 ou Notes
-    // Botões Sel: CC 56 a 63 ou Notes
-    // Transporte & Bancos: CC 64 a 71
+    this.detectedProtocol = 'Modo CC (Control Change)';
+    this.activeTelemetry.detectedProtocol = 'Modo CC';
 
-    // Knobs (1 a 8)
-    if ((cc >= 1 && cc <= 8) || (cc >= 16 && cc <= 23)) {
-      const knobIdx = (cc >= 16) ? (cc - 16) : (cc - 1);
+    // 2. M-Vave SMC-MIXER / VAVE6412 & Controladores Universais:
+
+    // A) M-Vave Encoders (Knobs 1 a 8 na Channel 1 via CC 16 a 23):
+    if (channel === 1 && cc >= 16 && cc <= 23) {
+      const knobIdx = cc - 16;
       this.handleKnobInput(knobIdx, value, norm);
       return;
     }
 
-    // Faders (1 a 8)
-    if ((cc >= 9 && cc <= 16) || (cc >= 0 && cc <= 7)) {
-      const faderIdx = (cc >= 9) ? (cc - 9) : cc;
+    // B) M-Vave CC Mode - Volume por Canal (CC 7 em Canais 1 a 8):
+    if (cc === 7 && channel >= 1 && channel <= 8) {
+      const faderIdx = channel - 1;
       this.handleFaderInput(faderIdx, norm);
       return;
     }
 
-    // Master / Crossfader adicional (ex: CC 17 ou CC 28)
-    if (cc === 17 || cc === 28) {
+    // C) M-Vave CC Mode - Pan por Canal (CC 10 em Canais 1 a 8):
+    if (cc === 10 && channel >= 1 && channel <= 8) {
+      const knobIdx = channel - 1;
+      this.handleKnobInput(knobIdx, value, norm);
+      return;
+    }
+
+    // D) Faders Lineares Contínuos (CC 9 a 16 no Canal 1):
+    if (channel === 1 && cc >= 9 && cc <= 16) {
+      const faderIdx = cc - 9;
+      this.handleFaderInput(faderIdx, norm);
+      return;
+    }
+
+    // E) Knobs Lineares Contínuos (CC 1 a 8 no Canal 1):
+    if (channel === 1 && cc >= 1 && cc <= 8) {
+      const knobIdx = cc - 1;
+      this.handleKnobInput(knobIdx, value, norm);
+      return;
+    }
+
+    // F) Master / Crossfader adicional (CC 17, CC 28, CC 11 ou CC 7 no Canal 9):
+    if (cc === 17 || cc === 28 || cc === 11 || (cc === 7 && channel === 9)) {
       this.handleMasterFaderInput(norm);
       return;
     }
 
-    // Botões de Canal via CC
+    // G) Faders CC 0 no Canal 1 (ex: nanoKONTROL2 Fader 1):
+    if (channel === 1 && cc === 0) {
+      this.handleFaderInput(0, norm);
+      return;
+    }
+
+    // H) Botões de Canal via CC (Padrão CC Mode M-Vave / Generic):
+    // Linha 1: Mute (CC 32 a 39)
     if (cc >= 32 && cc <= 39 && value > 0) {
       this.handleButtonMute(cc - 32);
       return;
     }
+    // Linha 2: Solo (CC 40 a 47)
     if (cc >= 40 && cc <= 47 && value > 0) {
       this.handleButtonSolo(cc - 40);
       return;
     }
+    // Linha 3: Rec (CC 48 a 55)
     if (cc >= 48 && cc <= 55 && value > 0) {
       this.handleButtonRec(cc - 48);
       return;
     }
+    // Linha 4: Select (CC 56 a 63)
     if (cc >= 56 && cc <= 63 && value > 0) {
       this.handleButtonSelect(cc - 56);
       return;
     }
 
-    // Botões de Transporte & Navegação
+    // I) Botões de Transporte & Navegação via CC:
     if (value > 0) {
       switch (cc) {
         case 64: this.actionRewind(); break;
@@ -330,8 +361,8 @@ class PenumbraMidiHub {
         case 67: this.actionPlay(); break;
         case 68: this.actionLoop(); break;
         case 69: this.actionTapTempo(); break;
-        case 70: this.prevBank(); break; // Bank / Channel Left
-        case 71: this.nextBank(); break; // Bank / Channel Right
+        case 70: this.prevBank(); break;
+        case 71: this.nextBank(); break;
         case 72: this.actionBlackout(); break;
       }
     }
@@ -346,45 +377,84 @@ class PenumbraMidiHub {
       return;
     }
 
-    // Mapeamento padrão de Notes em modo Mackie / Pad
-    // Botões Mute: Notes 16 a 23
-    if (note >= 16 && note <= 23) {
-      this.handleButtonMute(note - 16);
-      return;
-    }
-    // Botões Solo: Notes 8 a 15
-    if (note >= 8 && note <= 15) {
-      this.handleButtonSolo(note - 8);
-      return;
-    }
-    // Botões Rec: Notes 0 a 7
+    this.detectedProtocol = 'Mackie MCU (Notas MIDI)';
+    this.activeTelemetry.detectedProtocol = 'Mackie MCU';
+
+    // M-Vave SMC-MIXER / VAVE6412 - Mapeamento Fiel aos Botões Físicos em Modo MCU:
+    // Faixa de canal tem 4 botões de cima para baixo: M (Mute), S (Solo), R (Rec), Select (□)
+    
+    // 1. Linha R (Rec): Notes 0 a 7
     if (note >= 0 && note <= 7) {
       this.handleButtonRec(note);
       return;
     }
-    // Botões Select: Notes 24 a 31
+
+    // 2. Linha S (Solo): Notes 8 a 15
+    if (note >= 8 && note <= 15) {
+      this.handleButtonSolo(note - 8);
+      return;
+    }
+
+    // 3. Linha M (Mute): Notes 16 a 23
+    if (note >= 16 && note <= 23) {
+      this.handleButtonMute(note - 16);
+      return;
+    }
+
+    // 4. Linha Select (□): Notes 24 a 31
     if (note >= 24 && note <= 31) {
       this.handleButtonSelect(note - 24);
       return;
     }
 
-    // Transporte Mackie:
-    if (note === 91) this.actionRewind();
-    else if (note === 92) this.actionFastForward();
-    else if (note === 93) this.actionStop();
-    else if (note === 94) this.actionPlay();
-    else if (note === 86) this.actionLoop();
-    else if (note === 46) this.prevBank();
-    else if (note === 47) this.nextBank();
+    // 5. Transporte & Navegação Mackie (M-Vave hardware buttons):
+    switch (note) {
+      case 91: this.actionRewind(); return;          // Rewind (<<)
+      case 92: this.actionFastForward(); return;     // FastForward (>>)
+      case 93: this.actionStop(); return;            // Stop (||)
+      case 94: this.actionPlay(); return;            // Play (>)
+      case 95: this.actionBlackout(); return;        // Record (O) -> Master Blackout Panic
+      case 86: this.actionLoop(); return;            // Cycle / Loop (🔁)
+      case 46: this.prevBank(); return;              // Channel / Bank Left («)
+      case 47: this.nextBank(); return;              // Channel / Bank Right (»)
+      case 96: this.navigateUp(); return;            // Seta Acima (▲)
+      case 97: this.navigateDown(); return;          // Seta Abaixo (▼)
+      case 98: this.stepCrossfader(-5); return;      // Seta Esquerda (◀)
+      case 99: this.stepCrossfader(+5); return;      // Seta Direita (▶)
+    }
+
+    // 6. Modo Pad / Oitava C1 (36 a 67) caso configurado via MidiSuite:
+    if (note >= 36 && note <= 43) {
+      this.handleButtonRec(note - 36);
+      return;
+    }
+    if (note >= 44 && note <= 51) {
+      this.handleButtonSolo(note - 44);
+      return;
+    }
+    if (note >= 52 && note <= 59) {
+      this.handleButtonMute(note - 52);
+      return;
+    }
+    if (note >= 60 && note <= 67) {
+      this.handleButtonSelect(note - 60);
+      return;
+    }
   }
 
   processPitchBend(lsb, msb, channel) {
-    // Fader pitch bend em Mackie Control (14-bit)
+    this.detectedProtocol = 'Mackie MCU (Pitch Bend Faders)';
+    this.activeTelemetry.detectedProtocol = 'Mackie MCU';
+
+    // Fader pitch bend em Mackie Control (14-bit: LSB + MSB)
     const raw = (msb << 7) | lsb;
     const norm = raw / 16383.0;
     const chIdx = channel - 1;
     if (chIdx >= 0 && chIdx < 8) {
       this.handleFaderInput(chIdx, norm);
+    } else if (chIdx === 8) {
+      // Canal 9: Master Fader em Mackie MCU
+      this.handleMasterFaderInput(norm);
     }
   }
 
@@ -571,13 +641,25 @@ class PenumbraMidiHub {
     const acceleration = dt < 30 ? 3.5 : (dt < 70 ? 2.0 : 1.0);
     const baseStep = this.encoderSensitivities[this.activeSensitivity] * acceleration;
 
-    // Detecta se é modo relativo (Relative 2 / 2's complement: 1=up, 127=down)
+    // Detecta se é modo relativo (Relative 1 / Sign-Magnitude / 2's complement) ou absoluto
     let delta = 0;
-    if (rawValue === 1) delta = baseStep;
-    else if (rawValue === 127) delta = -baseStep;
-    else if (rawValue > 64) delta = -(128 - rawValue) * baseStep;
-    else if (rawValue < 64 && rawValue > 0) delta = rawValue * baseStep;
-    else delta = (normValue - (this.twinState.knobs[knobIdx] || 0.5));
+    if (rawValue === 127) {
+      delta = -baseStep;
+    } else if (rawValue >= 64 && rawValue <= 75) {
+      // Relative 1 / Sign-Magnitude (Mackie MCU / M-Vave): 65 = -1, 66 = -2, etc.
+      const steps = rawValue - 64;
+      delta = -(steps > 0 ? steps : 1) * baseStep;
+    } else if (rawValue >= 1 && rawValue <= 15) {
+      // Relative 1 / Sign-Magnitude: 1 = +1, 2 = +2, etc.
+      delta = rawValue * baseStep;
+    } else if (rawValue > 64 && rawValue < 127) {
+      // 2's complement: e.g. 126 = -2
+      delta = -(128 - rawValue) * baseStep;
+    } else {
+      // Absolute Mode (0..127): LERP suave
+      const targetVal = normValue;
+      delta = (targetVal - (this.twinState.knobs[knobIdx] || 0.5)) * 0.15;
+    }
 
     const currentKnobVal = this.twinState.knobs[knobIdx] || 0;
     const newKnobVal = Math.max(0, Math.min(1, currentKnobVal + delta));
@@ -695,7 +777,7 @@ class PenumbraMidiHub {
       return;
     }
 
-    // Comportamento Geral: Mute / Unmute da Camada
+    // Comportamento Geral (Bancos 1, 2, 4):
     if (channelIdx <= 4) {
       const layerKey = `layer${channelIdx}`;
       if (typeof window.toggleLayerActive === 'function') {
@@ -703,8 +785,22 @@ class PenumbraMidiHub {
       }
       this.twinState.buttons.mute[channelIdx] = !this.twinState.buttons.mute[channelIdx];
       this.sendLedFeedback('mute', channelIdx, this.twinState.buttons.mute[channelIdx]);
-      this.activeTelemetry.lastAction = `Mute Camada ${channelIdx}`;
+      this.activeTelemetry.lastAction = `Mute Camada L${channelIdx}`;
+    } else if (channelIdx === 5) {
+      // Canal 6: Toggle FX Sobel Edge
+      if (typeof window.toggleFxModuleEnabled === 'function') {
+        const isCur = window.appState && window.appState.fx && window.appState.fx.sobel_edge && window.appState.fx.sobel_edge.enabled;
+        window.toggleFxModuleEnabled('sobel_edge', !isCur);
+        this.flashToastHud(`SOBEL EDGE: ${!isCur ? 'LIGADO' : 'DESLIGADO'}`);
+      }
+    } else if (channelIdx === 6) {
+      // Canal 7: Freeze / Normal
+      this.actionStop();
+    } else if (channelIdx === 7) {
+      // Canal 8: Master Blackout Panic
+      this.actionBlackout();
     }
+    this.notifyUI();
   }
 
   handleButtonSolo(channelIdx) {
@@ -725,11 +821,30 @@ class PenumbraMidiHub {
       return;
     }
 
-    // Comportamento Geral: Solo da Camada
     if (channelIdx <= 4) {
       this.soloLayer(channelIdx);
-      this.activeTelemetry.lastAction = `Solo Camada ${channelIdx}`;
+      this.activeTelemetry.lastAction = `Solo Camada L${channelIdx}`;
+    } else if (channelIdx === 5) {
+      // Canal 6: Invert Matte da Camada Ativa
+      const layerKey = `layer${this.activeFocusLayer}`;
+      if (window.appState && window.appState[layerKey]) {
+        window.appState[layerKey].invert = !window.appState[layerKey].invert;
+        this.flashToastHud(`MÁSCARA L${this.activeFocusLayer}: ${window.appState[layerKey].invert ? 'INVERTIDA' : 'NORMAL'}`);
+      }
+    } else if (channelIdx === 6) {
+      // Canal 7: Reset Playback Speed
+      this.setPlaybackSpeedGlobal(1.0);
+      this.flashToastHud('VELOCIDADE MASTER: 1.0x (RESET)');
+    } else if (channelIdx === 7) {
+      // Canal 8: Reset Crossfader ao Centro (50%)
+      const el = document.getElementById('crossfader');
+      if (el) {
+        el.value = '50';
+        el.dispatchEvent(new Event('input'));
+        this.flashToastHud('CROSSFADER: CENTRO 50%');
+      }
     }
+    this.notifyUI();
   }
 
   handleButtonRec(channelIdx) {
@@ -752,7 +867,16 @@ class PenumbraMidiHub {
     }
 
     // Comportamento Geral: Pulso Momentâneo / Strobe Suave na Camada
-    this.triggerSoftPulseLayer(channelIdx);
+    if (channelIdx <= 4) {
+      this.triggerSoftPulseLayer(channelIdx);
+    } else if (channelIdx === 5) {
+      this.actionFastForward(); // Take / Advance
+    } else if (channelIdx === 6) {
+      this.actionRewind();      // Downbeat
+    } else if (channelIdx === 7) {
+      this.actionPlay();        // Auto Take
+    }
+
     this.twinState.buttons.rec[channelIdx] = true;
     setTimeout(() => {
       this.twinState.buttons.rec[channelIdx] = false;
@@ -763,19 +887,21 @@ class PenumbraMidiHub {
   handleButtonSelect(channelIdx) {
     if (channelIdx < 0 || channelIdx > 7) return;
 
-    // Seleciona o canal e pula para o Banco 2 (Layer Focus) focado nessa camada!
+    // Seleciona o foco da camada sem forçar troca indesejada de banco
     if (channelIdx <= 4) {
       this.activeFocusLayer = channelIdx;
       this.twinState.buttons.sel.fill(false);
       this.twinState.buttons.sel[channelIdx] = true;
-
-      // Se estava no Banco 1, entra no Banco 2 para edição profunda
-      if (this.activeBank === 1) {
-        this.setBank(2);
-      }
-      this.flashToastHud(`FOCO EM CAMADA L${channelIdx} · PARÂMETROS PROFUNDOS`);
-      this.activeTelemetry.lastAction = `Selecionada Camada L${channelIdx}`;
+      this.flashToastHud(`FOCO EM CAMADA L${channelIdx}`);
+      this.activeTelemetry.lastAction = `Foco Camada L${channelIdx}`;
       this.sendLedFeedbackAll();
+      this.notifyUI();
+    } else if (channelIdx === 5) {
+      this.setBank(1);
+    } else if (channelIdx === 6) {
+      this.setBank(2);
+    } else if (channelIdx === 7) {
+      this.setBank(3);
     }
   }
 
@@ -863,19 +989,28 @@ class PenumbraMidiHub {
   sendLedFeedback(type, index, isActive) {
     if (!this.activeOutput) return;
 
-    // Converte para mensagem MIDI Out típica (Note On / CC)
     try {
       const velocity = isActive ? 127 : 0;
-      let noteOrCc = 0;
+      let noteNum = 0;
+      let ccNum = 0;
 
-      if (type === 'mute') noteOrCc = 32 + index;
-      else if (type === 'solo') noteOrCc = 40 + index;
-      else if (type === 'rec') noteOrCc = 48 + index;
-      else if (type === 'sel') noteOrCc = 56 + index;
+      if (type === 'rec') {
+        noteNum = 0 + index;
+        ccNum = 48 + index;
+      } else if (type === 'solo') {
+        noteNum = 8 + index;
+        ccNum = 40 + index;
+      } else if (type === 'mute') {
+        noteNum = 16 + index;
+        ccNum = 32 + index;
+      } else if (type === 'sel') {
+        noteNum = 24 + index;
+        ccNum = 56 + index;
+      }
 
-      // Tenta enviar via CC 176 (Canal 1) e Note On 144
-      this.activeOutput.send([176, noteOrCc, velocity]);
-      this.activeOutput.send([144, 16 + index, velocity]);
+      // Envia via Note On (Mackie MCU: 0x90) e via CC (CC Mode: 0xB0)
+      this.activeOutput.send([0x90, noteNum, velocity]);
+      this.activeOutput.send([0xB0, ccNum, velocity]);
     } catch (e) {
       // Silencioso se dispositivo não aceitar
     }
@@ -1122,6 +1257,35 @@ class PenumbraMidiHub {
     this.notifyUI();
   }
 
+  setProfile(profileKey) {
+    this.activeProfile = profileKey;
+    try {
+      localStorage.setItem('penumbra_midi_profile', profileKey);
+    } catch (e) {}
+    const sel = document.getElementById('sel-midi-profile');
+    if (sel && sel.value !== profileKey) {
+      sel.value = profileKey;
+    }
+    this.flashToastHud(`PERFIL MIDI: ${profileKey.toUpperCase()}`);
+    console.log(`[PENUMBRA MIDI] Perfil alterado para: ${profileKey}`);
+    this.notifyUI();
+  }
+
+  autoCalibrateMvave() {
+    this.customMappings = {};
+    try {
+      localStorage.removeItem('penumbra_midi_custom_map');
+      localStorage.setItem('penumbra_midi_profile', 'mvave_smc');
+    } catch (e) {}
+    this.setProfile('mvave_smc');
+    this.takeoverMode = 'scaling';
+    const selTakeover = document.getElementById('sel-soft-takeover');
+    if (selTakeover) selTakeover.value = 'scaling';
+    this.flashToastHud('M-VAVE SMC-MIXER: AUTO-CALIBRAÇÃO APLICADA!');
+    console.log('[PENUMBRA MIDI] Auto-calibração M-Vave executada.');
+    this.notifyUI();
+  }
+
   // =========================================================================
   // 12. TELEMETRIA & MONITOR TICKER
   // =========================================================================
@@ -1353,12 +1517,17 @@ class HardwareTwinUI {
     // Atualiza Status do Header de Preferências
     const devBadge = document.getElementById('midi-prop-device-badge');
     const rateBadge = document.getElementById('midi-prop-rate-badge');
+    const protoBadge = document.getElementById('midi-prop-protocol-badge');
     if (devBadge) {
       devBadge.textContent = this.hub.activeTelemetry.connected ? this.hub.activeTelemetry.deviceName : 'DESCONECTADO';
       devBadge.className = this.hub.activeTelemetry.connected ? 'cfg-badge text-emerald' : 'cfg-badge text-dim';
     }
     if (rateBadge) {
       rateBadge.textContent = `${this.hub.activeTelemetry.msgRate} HZ`;
+    }
+    if (protoBadge) {
+      protoBadge.textContent = this.hub.detectedProtocol || 'AGUARDANDO SINAL...';
+      protoBadge.className = this.hub.detectedProtocol ? 'cfg-badge text-cyan' : 'cfg-badge text-dim';
     }
 
     // Atualiza os 8 Canais
@@ -1568,8 +1737,12 @@ window.handleHwButtonClick = function(type, chIdx) {
 
 window.onMidiProfileChanged = function(profileKey) {
   if (!window.penumbraMidi) return;
-  window.penumbraMidi.flashToastHud(`PERFIL MIDI: ${profileKey.toUpperCase()}`);
-  console.log(`[PENUMBRA MIDI] Perfil alterado para: ${profileKey}`);
+  window.penumbraMidi.setProfile(profileKey);
+};
+
+window.autoCalibrateMvave = function() {
+  if (!window.penumbraMidi) return;
+  window.penumbraMidi.autoCalibrateMvave();
 };
 
 window.setMidiTakeoverMode = function(mode) {
