@@ -1,12 +1,10 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 20:05:00 BRT
-- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA EDGE CDN (`https://gigantera-penumbra.b-cdn.net`), VERCEL (`https://penumbra-xi.vercel.app/penumbra/`) e DOMÍNIO OFICIAL (`https://gigantera.xyz/penumbra`)
-- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000), [https://gigantera.xyz/penumbra](https://gigantera.xyz/penumbra), [https://penumbra-xi.vercel.app/penumbra/](https://penumbra-xi.vercel.app/penumbra/) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
-- **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps, Git Colaborativo PR-First e Skills)
-- **Master Control Bridge:** 🟢 REDESENHADO (Cápsula de precisão horizontal, zero clipping, M/E broadcast grade)
-- **Media Pool Bins:** 🟢 PASTAS DE PROJETO NATIVAS (`Espinhaço/1. In`, `Tetropode/1. In`, etc. Categorias arbitrárias removidas)
-- **Zero-Waste Web Cache & Smart Dedup:** 🟢 ATIVO (Web Cache API + IndexedDB + Roteamento Local Instantâneo `⚡ LOCAL NATIVO`)
+- **Última Atualização:** 09/10/2026, 23:05:08 BRT
+- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
+- **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -17,11 +15,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 9,450 | 372.1 KB |
-| `styles.css` | 8,600 | 164.9 KB |
-| `index.html` | 3,425 | 216.3 KB |
-| `midi.js` | 1,580 | 61.5 KB |
-| `Penumbra_Portable.html` | — | 817.2 KB |
+| `app.js` | 9,736 | 382.4 KB |
+| `styles.css` | 8,759 | 169.6 KB |
+| `index.html` | 3,336 | 212.7 KB |
+| `Penumbra_Portable.html` | — | 841.3 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
@@ -31,17 +28,21 @@
 - **Branch Ativa:** `feat/penumbra-collaborative-dev`
 - **Protocolo:** PR-First (Desenvolvimento na branch dedicada → Push → Pull Request para `main` sem conflitos)
 - **Repositório Principal:** [Pelimotion/penumbra](https://github.com/Pelimotion/penumbra)
-- **Ambiente de Produção gigantera.xyz:** Totalmente blindado com rewrites para cleanUrls e MIME types 200 OK.
+- **Pull Request Aberto:** PR #2 (`feat/penumbra-collaborative-dev` -> `main`)
 
-## 🤝 Handover para o Próximo Chat / Próxima Sessão
+## 🤝 Handover & Recursos Ativos
 1. **Branch de Trabalho:** Continuar exclusivamente na branch `feat/penumbra-collaborative-dev`.
-2. **Ambiente de Testes / Preview:** Utilizar `http://localhost:3000` ou o link de Preview gerado pela Vercel após cada push.
+2. **Ambiente de Testes / Preview:**
+   - **Local Dev Server:** `http://localhost:3000/`
+   - **Popout Clean Feed:** `http://localhost:3000/popout.html?view=program`
+   - **Bunny Edge CDN Online:** `https://gigantera-penumbra.b-cdn.net/index.html`
+   - **Executável Portátil CDN:** `https://gigantera-penumbra.b-cdn.net/Penumbra_Portable.html`
+   - **Vercel Preview (PR #2):** `https://penumbra-git-feat-penumbra-3eb824-pelimotionart-6049s-projects.vercel.app/penumbra/`
 3. **Hardware Twin & MIDI:**
    - **M-Vave SMC-MIXER Dual Preset Engine:** Detecção automática e comutação instantânea entre **Banco 1 (Seta Esquerda ◄ - Faders & Encoders 1:1)** e **Banco 2 (Seta Direita ► - Matriz de 32 Botões Mute/Solo/Rec/Select + Transporte)**.
    - **Navegação B1–B4 (4 Modos de Software):** B1 Master Live Mixer, B2 Layer Focus & Params, B3 Conductor Macros, B4 Color Lab.
    - **Métodos de Seleção B1–B4:** Botão `[CYCLE]` do hardware, botões `SEL 6`/`SEL 7`/`SEL 8`, atalhos de teclado (`B`, `[`, `]`, `F1`–`F4`, `H`), e cliques diretos nos badges interativos do Header (`B1: MIXER` e `◄ HW1: FADERS`).
    - **Soft Takeover:** Modos `pickup`, `scaling` e `direct` com indicadores visuais no twin.
-4. **Finalização de Tarefa:** Ao concluir novas features, disparar `gh pr create` para abrir PR limpa contra a `main`.
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
@@ -74,18 +75,3 @@
 - **Painel de Controle:** `http://localhost:3000` (MacBook / iPad)
 - **Decodificação de Vídeo:** HTML5 Hardware Accelerated MP4/MOV Streaming (30 FPS padrão)
 - **Grading Tonal & Sobel:** Ativo (Gamma 0.85, Pretos -5%, Médios 1.0, Sobel Mix 22%)
-
-## Atualizações de Vanguarda · Resolução de Telão HDMI & Splitters
-- **Saída de Projeção HDMI / Popout Clean Feed (macOS Friendly):**
-  - Implementado `openPopoutWindow` com resolução relativa dinâmica, eliminando o erro 404 em produção (`gigantera.xyz/penumbra`).
-  - Adicionado rewrite reverso no `vercel.json` de produção para `/popout.html`.
-  - Modo `🖥️ MODO PROJETOR (BORDERLESS)` em `popout.html`: Dimensiona e posiciona a janela para preencher 100% do projetor sem invocar os Spaces nativos do macOS, impedindo que a tela do MacBook fique preta!
-  - Suporte à Window Management API (`getScreenDetails()`) e modal de instruções para gerenciamento de Spaces no macOS.
-- **Central de Ingestão Desobstruída & Retorno Imediato:**
-  - Drawer overlay flutuante com z-index elevado, evitando esmagamento do grid de cartões de vídeo.
-  - Botão de alto contraste `VOLTAR AO MEDIA POOL [ESC]` e atalho `ESC` global.
-  - Botão da barra de ferramentas atualiza dinamicamente entre `+ INGESTÃO` e `✕ FECHAR INGESTÃO`.
-- **Redimensionamento Fluido de Módulos e Sessões:**
-  - Splitter Vertical (`#workspace-splitter`): Ajustado `flex: 0 0 auto` na `.top-zone`, eliminando compressão por flexbox shrink e garantindo arraste suave com Pointer Capture.
-  - Splitter Lateral de Bins (`#library-sidebar-splitter`): Novo divisor vertical permitindo redimensionar a barra de pastas/bins de 150px a 480px, com duplo-clique para redefinir e persistência em `UserProfileManager`.
-
