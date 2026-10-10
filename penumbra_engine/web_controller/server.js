@@ -1038,6 +1038,8 @@ let currentState = {
   master_intensity: 1.0,
   blackout: false,
   auto_mode: true,
+  master_matte: 'none',
+  master_matte_invert: false,
   buildup_score: 0.12,
   drop_likelihood: 0.05,
   bpm: 124.0,
@@ -1297,6 +1299,14 @@ wss.on('connection', (ws) => {
           currentState.layers[layer].matte = matte;
           sendOsc(`/penumbra/${layer}/matte`, matte);
         }
+      } else if (msg.action === 'set_master_matte') {
+        currentState.master_matte = msg.matte;
+        sendOsc('/penumbra/master/matte', msg.matte);
+        broadcast({ type: 'state_updated', state: { master_matte: currentState.master_matte } });
+      } else if (msg.action === 'set_master_matte_invert') {
+        currentState.master_matte_invert = Boolean(msg.value);
+        sendOsc('/penumbra/master/matte_invert', currentState.master_matte_invert ? 1 : 0);
+        broadcast({ type: 'state_updated', state: { master_matte_invert: currentState.master_matte_invert } });
       } else if (msg.action === 'trigger_take') {
         // Swap Preview cue (L3) to Program Base (L0)
         const targetClipId = msg.clipId || currentState.layers.layer3.clipId;
