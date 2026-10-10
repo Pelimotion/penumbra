@@ -2931,6 +2931,48 @@ function updatePhraseUI() {
     tlNode3.className = `phrase-node ${s === 'BUILD' ? 'current' : (s === 'DROP' ? 'active' : '')}`;
     tlNode4.className = `phrase-node ${s === 'DROP' ? 'current' : ''}`;
   }
+
+  // Update Pro Timeline Toolbar Metrics & Real-Time Countdown Tag
+  const tlPhraseStep = document.getElementById('tl-phrase-step');
+  if (tlPhraseStep) tlPhraseStep.textContent = `${p.current_bar} / ${p.length_bars}`;
+  const tlTensionPct = document.getElementById('tl-tension-pct');
+  if (tlTensionPct) tlTensionPct.textContent = `${Math.round(appState.buildup_likelihood * 100)}%`;
+  const tlBpm = document.getElementById('tl-current-bpm');
+  if (tlBpm) tlBpm.textContent = (appState.bpm || 124.0).toFixed(1);
+
+  const curBpm = appState.bpm || 124.0;
+  const remSecs = (remainingBeats * (60.0 / curBpm)).toFixed(1);
+  const tlCdVal = document.getElementById('tl-countdown-val');
+  if (tlCdVal) {
+    if (remainingBars === 0 && p.current_beat === 4) {
+      tlCdVal.textContent = '⚡ TAKE DISPARANDO!';
+      tlCdVal.style.color = '#00f0ff';
+    } else {
+      tlCdVal.textContent = `${remainingBars} BARS (~${remSecs}s)`;
+      tlCdVal.style.color = '';
+    }
+  }
+
+  // Update Take Duration Active Pill
+  document.querySelectorAll('.tl-dur-pill').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.bars) === p.length_bars);
+  });
+
+  // Update Pro Timeline Sidebar Track Status Labels
+  const lblL0 = document.getElementById('lbl-tl-track-l0');
+  if (lblL0) lblL0.textContent = `${Math.round((appState.layers?.layer0?.opacity ?? 1.0) * 100)}%`;
+  const lblL1 = document.getElementById('lbl-tl-track-l1');
+  if (lblL1) lblL1.textContent = `${Math.round((appState.layers?.layer1?.opacity ?? 0.8) * 100)}%`;
+  const lblL2 = document.getElementById('lbl-tl-track-l2');
+  if (lblL2) lblL2.textContent = `${Math.round((appState.layers?.layer2?.opacity ?? 0.6) * 100)}%`;
+  const lblL3 = document.getElementById('lbl-tl-track-l3');
+  if (lblL3) lblL3.textContent = `${Math.round((appState.layers?.layer3?.opacity ?? 1.0) * 100)}%`;
+  const lblL4 = document.getElementById('lbl-tl-track-l4');
+  if (lblL4) lblL4.textContent = `${Math.round((appState.layers?.layer4?.opacity ?? 0.0) * 100)}%`;
+  const lblL5 = document.getElementById('lbl-tl-track-l5');
+  if (lblL5) lblL5.textContent = `${Math.round((appState.layers?.layer5?.opacity ?? 1.0) * 100)}%`;
+  const lblFx = document.getElementById('lbl-tl-track-fx');
+  if (lblFx) lblFx.textContent = appState.fx?.enabled ? 'ACT' : 'BYP';
 }
 
 
@@ -3843,6 +3885,11 @@ function renderVisuals(time) {
       const matteName = appState.layers.layer3?.matte ? appState.layers.layer3.matte.split('/').pop() : 'NO MATTE';
       if (theaterTagMatte) theaterTagMatte.textContent = matteName;
     }
+  }
+
+  // 60 FPS Pro Timeline Arranger Render Pass (when Pro Timeline view is active)
+  if (currentDockViewMode === 'timeline' && typeof renderProTimeline === 'function') {
+    renderProTimeline();
   }
 
   requestAnimationFrame(renderVisuals);
@@ -5912,17 +5959,39 @@ function evolveMatteHarmoniously() {
 }
 
 function setAutopilotBars(bars) {
-  const num = Math.max(8, Number(bars));
+  const num = Math.max(4, Number(bars));
   appState.autopilot_bars = num;
   appState.autopilot_min_bars = num;
   setPhraseLength(num);
   document.querySelectorAll('#group-conductor-bars .conductor-btn, #group-cfg-min-bars .conductor-btn, .cfg-bars-btn').forEach(btn => {
     btn.classList.toggle('active', Number(btn.dataset.bars) === num);
   });
+  document.querySelectorAll('.tl-dur-pill').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.bars) === num);
+  });
   const lblCfg = document.getElementById('lbl-cfg-min-bars');
   if (lblCfg) lblCfg.textContent = `${num} BARS (${num === 16 ? 'PADRÃO' : '~' + Math.round(num * 1.93) + 's'})`;
+  const selBars = document.getElementById('sel-bars-transition');
+  if (selBars) selBars.value = String(num);
+
+  // Dynamically update future queue slots based on take bars
+  if (queueList && queueList.length > 0) {
+    if (queueList[1]) { queueList[1].slot = `+${num} BARS`; queueList[1].status = `EM ${num * 4} BEATS`; }
+    if (queueList[2]) { queueList[2].slot = `+${num * 2} BARS`; queueList[2].status = `EM ${num * 8} BEATS`; }
+    if (queueList[3]) { queueList[3].slot = `+${num * 3} BARS`; queueList[3].status = `EM ${num * 12} BEATS`; }
+  }
+
+  // Trigger Pro Timeline re-render immediately
+  if (typeof renderProTimeline === 'function') {
+    renderProTimeline();
+  }
 }
 window.setAutopilotBars = setAutopilotBars;
+
+function setTimelineTakeBars(bars) {
+  setAutopilotBars(bars);
+}
+window.setTimelineTakeBars = setTimelineTakeBars;
 
 function setAutopilotTransMode(mode) {
   selectedTransitionMode = mode;
@@ -6176,23 +6245,25 @@ function advanceSmartQueue(targetState = null) {
   playedClipsHistory.push(nextClip.id);
   if (playedClipsHistory.length > 15) playedClipsHistory.shift();
 
+  const takeBars = appState.phrase?.length_bars || appState.autopilot_bars || 16;
+
   // Shift queue
   queueList.shift();
   queueList.push({
-    slot: '+24 BARS',
+    slot: `+${takeBars * 3} BARS`,
     clipId: nextClip.id,
     name: nextClip.filename,
     layer: 'L3',
     matte: 'none',
-    beatsRemaining: 96,
-    status: 'EM 96 BEATS'
+    beatsRemaining: takeBars * 12,
+    status: `EM ${takeBars * 12} BEATS`
   });
 
-  // Re-label slots
+  // Re-label slots dynamically based on active take duration
   queueList[0].slot = 'CUE ATUAL';
   queueList[0].status = 'ARMADO';
-  if (queueList[1]) { queueList[1].slot = '+8 BARS'; queueList[1].status = 'EM 32 BEATS'; }
-  if (queueList[2]) { queueList[2].slot = '+16 BARS'; queueList[2].status = 'EM 64 BEATS'; }
+  if (queueList[1]) { queueList[1].slot = `+${takeBars} BARS`; queueList[1].status = `EM ${takeBars * 4} BEATS`; }
+  if (queueList[2]) { queueList[2].slot = `+${takeBars * 2} BARS`; queueList[2].status = `EM ${takeBars * 8} BEATS`; }
 
   // Assign cue to Layer 3 (Preview Cue)
   appState.layers.layer3.clipId = queueList[0].clipId;
@@ -6305,227 +6376,563 @@ function updateAntiRepeatBadge() {
   }
 }
 
+// ============================================================================
+// PRO TIMELINE ARRANGER ENGINE (World-Class Broadcast VJ Multi-Layer Sequencer)
+// Industry benchmark: Resolume Arena 7, DaVinci Resolve Studio 19, TouchDesigner, Disguise d3
+// ============================================================================
+let timelineHitTargets = [];
+window.timelineHitTargets = timelineHitTargets;
+
 function renderQueueCards() {
+  renderProTimeline();
+}
+
+function renderProTimeline() {
   const canvas = document.getElementById('timeline-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   
-  // Set real canvas resolution based on display size to avoid blur
+  // Set real canvas resolution based on device pixel ratio to ensure razor-sharp rendering
   const rect = canvas.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  const dpr = window.devicePixelRatio || 1;
+  const targetW = Math.floor(rect.width * dpr);
+  const targetH = Math.floor(rect.height * dpr);
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
   
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  timelineHitTargets = [];
+  window.timelineHitTargets = timelineHitTargets;
 
-  // If in Pro Timeline Arrangement View (Expanded Height >= 120px)
-  if (rect.height >= 120) {
-    const w = canvas.width;
-    const h = canvas.height;
-    const rulerH = 22;
-    const tracksH = h - rulerH;
-    const numTracks = 6;
-    const trackH = tracksH / numTracks;
+  // Timing & Rhythm Math
+  const bpm = appState.bpm || 124.0;
+  const phraseBars = appState.phrase?.length_bars || appState.autopilot_bars || 16;
+  const currentBar = appState.phrase?.current_bar || 1;
+  const currentBeat = appState.phrase?.current_beat || 1;
+  const beatFraction = (phraseBeatAccumulator % 1.0);
+  const exactBeatsElapsed = (currentBar - 1) * 4 + (currentBeat - 1) + beatFraction;
+  const currentBarPos = exactBeatsElapsed / 4.0; // float bar position (e.g. 5.25)
 
-    // 1. Draw Top Time Ruler
-    ctx.fillStyle = '#06090e';
-    ctx.fillRect(0, 0, w, rulerH);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  const remainingBars = Math.max(0, phraseBars - currentBar);
+  const remainingBeats = remainingBars * 4 + (4 - currentBeat);
+  const secsPerBeat = 60.0 / bpm;
+  const remainingSecs = Math.max(0, (remainingBeats * secsPerBeat)).toFixed(1);
+
+  // Visible arrangement horizon: exactly 2 Take cycles horizontally (Active Take + Future Scheduled Horizon)
+  const totalVisibleBars = phraseBars * 2;
+  const rulerH = 26;
+  const tracksH = h - rulerH;
+  const numTracks = 7;
+  const trackH = tracksH / numTracks;
+  const pxPerBar = w / totalVisibleBars;
+  const activeTakeW = phraseBars * pxPerBar;
+  const futureTakeW = phraseBars * pxPerBar;
+
+  // 1. TOP TIME RULER & NARRATIVE STATE BANNERS
+  ctx.fillStyle = '#06090e';
+  ctx.fillRect(0, 0, w, rulerH);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, rulerH);
+  ctx.lineTo(w, rulerH);
+  ctx.stroke();
+
+  // Narrative State Segments on Ruler (INTRO -> GROOVE -> BUILD -> DROP)
+  const segIntroW = activeTakeW * 0.25;
+  const segGrooveW = activeTakeW * 0.25;
+  const segBuildW = activeTakeW * 0.375;
+  const segDropW = activeTakeW * 0.125;
+
+  // Intro Zone
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+  ctx.fillRect(0, 0, segIntroW, rulerH - 1);
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.6)';
+  ctx.font = 'bold 8px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('INTRO', 6, 10);
+
+  // Groove Zone
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.10)';
+  ctx.fillRect(segIntroW, 0, segGrooveW, rulerH - 1);
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.7)';
+  ctx.fillText('GROOVE', segIntroW + 6, 10);
+
+  // Build Zone
+  const buildX = segIntroW + segGrooveW;
+  ctx.fillStyle = 'rgba(255, 184, 0, 0.12)';
+  ctx.fillRect(buildX, 0, segBuildW, rulerH - 1);
+  ctx.fillStyle = 'rgba(255, 184, 0, 0.8)';
+  ctx.fillText('BUILD-UP', buildX + 6, 10);
+
+  // Drop Impact Zone
+  const dropX = buildX + segBuildW;
+  ctx.fillStyle = 'rgba(255, 42, 133, 0.16)';
+  ctx.fillRect(dropX, 0, segDropW, rulerH - 1);
+  ctx.fillStyle = 'rgba(255, 42, 133, 0.9)';
+  ctx.fillText('DROP CLIMAX', dropX + 4, 10);
+
+  // Future Horizon Banner on Ruler
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+  ctx.fillRect(activeTakeW, 0, futureTakeW, rulerH - 1);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.fillText(`+1 TAKE HORIZON (PRÓXIMO CICLO · +${phraseBars} BARS)`, activeTakeW + 10, 10);
+
+  // Transition Dissolve Window Marker (Last 2 bars before activeTakeW)
+  const transWinW = Math.min(activeTakeW * 0.25, 2 * pxPerBar);
+  const transWinX = activeTakeW - transWinW;
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.12)';
+  ctx.fillRect(transWinX, 0, transWinW, rulerH - 1);
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.strokeRect(transWinX, 0, transWinW, rulerH - 1);
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 7.5px monospace';
+  ctx.fillText('DISSOLVE', transWinX + 4, rulerH - 4);
+
+  // Bar ticks and measure numbers
+  const barStep = phraseBars <= 8 ? 2 : (phraseBars <= 16 ? 4 : 8);
+  for (let b = 0; b <= totalVisibleBars; b++) {
+    const bx = b * pxPerBar;
+    const isMajor = b % barStep === 0;
+    ctx.strokeStyle = isMajor ? 'rgba(0, 240, 255, 0.4)' : 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = isMajor ? 1.5 : 1;
+    ctx.beginPath();
+    ctx.moveTo(bx, rulerH - (isMajor ? 10 : 5));
+    ctx.lineTo(bx, rulerH);
+    ctx.stroke();
+
+    if (isMajor && b < totalVisibleBars) {
+      ctx.fillStyle = b < phraseBars ? 'rgba(0, 240, 255, 0.85)' : 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'left';
+      const bLabel = b < phraseBars ? `BAR ${b + 1}` : `+${b - phraseBars}B`;
+      ctx.fillText(bLabel, bx + 3, rulerH - 3);
+      
+      // Secondary time label
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.font = '7px monospace';
+      ctx.fillText(`${Math.round(b * 4 * secsPerBeat)}s`, bx + 3, 10);
+    }
+  }
+
+  // 2. TRACK LANES BACKGROUND & DIVIDERS
+  const trackBgColors = [
+    'rgba(0, 255, 136, 0.03)',  // L0 Master PGM
+    'rgba(0, 240, 255, 0.02)',  // L1 Pulse Reflex
+    'rgba(168, 85, 247, 0.03)', // L2 Sobel Edge
+    'rgba(0, 240, 255, 0.04)',  // L3 Cue Bus B
+    'rgba(255, 42, 133, 0.03)', // L4 Accent Climax
+    'rgba(192, 132, 252, 0.03)',// L5 Overlay Deck
+    'rgba(255, 184, 0, 0.02)'   // FX After Effects
+  ];
+
+  for (let t = 0; t < numTracks; t++) {
+    const ty = rulerH + (t * trackH);
+    ctx.fillStyle = trackBgColors[t] || '#040609';
+    ctx.fillRect(0, ty, w, trackH);
+
+    // Track divider line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, rulerH);
-    ctx.lineTo(w, rulerH);
+    ctx.moveTo(0, ty + trackH);
+    ctx.lineTo(w, ty + trackH);
     ctx.stroke();
 
-    // Bar ticks (every 4 bars / 16 bars)
-    const barWidth = w / 16;
-    for (let b = 0; b <= 16; b++) {
-      const bx = b * barWidth;
-      ctx.strokeStyle = b % 4 === 0 ? 'rgba(0, 240, 255, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+    // Vertical bar lines down tracks
+    for (let b = 1; b < totalVisibleBars; b++) {
+      const bx = b * pxPerBar;
+      ctx.strokeStyle = b % barStep === 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.012)';
       ctx.beginPath();
-      ctx.moveTo(bx, rulerH - (b % 4 === 0 ? 10 : 5));
-      ctx.lineTo(bx, rulerH);
+      ctx.moveTo(bx, ty);
+      ctx.lineTo(bx, ty + trackH);
       ctx.stroke();
-
-      if (b % 4 === 0 && b < 16) {
-        ctx.fillStyle = 'rgba(0, 240, 255, 0.7)';
-        ctx.font = '8px monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText(`BAR ${b+1}`, bx + 4, rulerH - 4);
-      }
     }
+  }
 
-    // 2. Track Lanes Background & Dividing Lines
-    const trackColors = [
-      'rgba(0, 255, 136, 0.04)',
-      'rgba(255, 255, 255, 0.02)',
-      'rgba(255, 255, 255, 0.02)',
-      'rgba(0, 240, 255, 0.04)',
-      'rgba(192, 132, 252, 0.05)',
-      'rgba(255, 42, 133, 0.04)'
-    ];
+  // 3. TRACK 0: L0 PROGRAM MASTER DECK A (ACTIVE ON AIR TAKE)
+  const l0Clip = appState.layers?.layer0;
+  const baseClip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === l0Clip?.clipId) || ((typeof allClips !== 'undefined' && allClips[0]) ? allClips[0] : null);
+  const l0Y = rulerH + 2;
+  const l0W = activeTakeW - 4;
+  const isL0Selected = activeTimelineSelectedLayer === 'layer0';
 
-    for (let t = 0; t < numTracks; t++) {
-      const ty = rulerH + (t * trackH);
-      ctx.fillStyle = trackColors[t] || '#05070a';
-      ctx.fillRect(0, ty, w, trackH);
+  // L0 Main Block
+  ctx.fillStyle = isL0Selected ? 'rgba(0, 255, 136, 0.22)' : 'rgba(0, 255, 136, 0.13)';
+  ctx.strokeStyle = isL0Selected ? '#00ff88' : 'rgba(0, 255, 136, 0.7)';
+  ctx.lineWidth = isL0Selected ? 2 : 1.5;
+  ctx.beginPath();
+  ctx.roundRect(2, l0Y, l0W, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: 2, y: l0Y, w: l0W, h: trackH - 4, type: 'layer', id: 0, action: 'inspect' });
 
-      // Grid line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.beginPath();
-      ctx.moveTo(0, ty + trackH);
-      ctx.lineTo(w, ty + trackH);
-      ctx.stroke();
+  // L0 Video Thumbnail Preview
+  const thumbW = Math.min(84, Math.max(46, l0W * 0.22));
+  const thumbH = trackH - 6;
+  const thumbX = 4;
+  const thumbY = l0Y + 1;
+  const thumbImg = getClipImage(baseClip);
 
-      // Vertical measure lines across tracks
-      for (let b = 1; b < 16; b++) {
-        const bx = b * barWidth;
-        ctx.strokeStyle = b % 4 === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.015)';
-        ctx.beginPath();
-        ctx.moveTo(bx, ty);
-        ctx.lineTo(bx, ty + trackH);
-        ctx.stroke();
-      }
-    }
-
-    // 3. Render Active Program Clip on Track 0 (L0 Master)
-    const l0Clip = appState.layers?.layer0;
-    const l0Y = rulerH + 2;
-    const block0W = barWidth * 8;
-    ctx.fillStyle = 'rgba(0, 255, 136, 0.18)';
-    ctx.strokeStyle = 'rgba(0, 255, 136, 0.75)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(10, l0Y, block0W - 10, trackH - 4, 4);
-    ctx.fill();
-    ctx.stroke();
-
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(thumbX, thumbY, thumbW, thumbH, 3);
+  ctx.clip();
+  if (thumbImg) {
+    ctx.drawImage(thumbImg, thumbX, thumbY, thumbW, thumbH);
+  } else {
+    // Elegant high-tech fallback gradient
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(thumbX, thumbY, thumbW, thumbH);
     ctx.fillStyle = '#00ff88';
-    ctx.font = 'bold 9px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('▶ L0 PROGRAM: ' + ((l0Clip?.name || 'MASTER').substring(0, 24)), 18, l0Y + 12);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '8px monospace';
-    ctx.fillText('MATTE: ' + (l0Clip?.matte || 'FULL'), 18, l0Y + trackH - 8);
+    ctx.font = '7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('VIDEO STREAM', thumbX + thumbW/2, thumbY + thumbH/2 + 2);
+  }
+  // PGM Badge on thumbnail
+  ctx.fillStyle = 'rgba(0, 255, 136, 0.9)';
+  ctx.fillRect(thumbX, thumbY, 26, 10);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 7px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('PGM', thumbX + 3, thumbY + 8);
+  ctx.restore();
+  timelineHitTargets.push({ x: thumbX, y: thumbY, w: thumbW, h: thumbH, type: 'clip', id: baseClip?.id, action: 'inspect' });
 
-    // 4. Render Active Cue Clip on Track 3 (L3 Cue Bus B)
-    const l3Clip = appState.layers?.layer3;
-    const l3Y = rulerH + (3 * trackH) + 2;
-    const block3X = 10 + (barWidth * 4);
-    const block3W = barWidth * 8;
-    ctx.fillStyle = 'rgba(0, 240, 255, 0.18)';
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(block3X, l3Y, block3W, trackH - 4, 4);
-    ctx.fill();
-    ctx.stroke();
+  // L0 Matte Silhouette Badge
+  const matteName0 = getMatteName(l0Clip?.matte);
+  const matteBadgeX = thumbX + thumbW + 6;
+  const matteBadgeW = Math.min(100, Math.max(60, l0W * 0.28));
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(matteBadgeX, l0Y + 2, matteBadgeW, 13, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 7.5px monospace';
+  ctx.fillText('◫ ' + (matteName0.length > 14 ? matteName0.substring(0, 12) + '..' : matteName0), matteBadgeX + 4, l0Y + 11);
+  timelineHitTargets.push({ x: matteBadgeX, y: l0Y + 2, w: matteBadgeW, h: 13, type: 'matte', id: l0Clip?.matte, action: 'inspect' });
 
+  // L0 Clip Title & Status
+  ctx.fillStyle = '#00ff88';
+  ctx.font = 'bold 8.5px monospace';
+  const l0TitleStr = '▶ L0: ' + ((l0Clip?.name || baseClip?.filename || 'MASTER').substring(0, 24));
+  ctx.fillText(l0TitleStr, matteBadgeX + matteBadgeW + 8, l0Y + 11);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.font = '7.5px monospace';
+  ctx.fillText(`100% · ${l0Clip?.blend || 'NORMAL'} · ${l0Clip?.rotation || 0}° · ZOOM ${Math.round((l0Clip?.scale || 1.0) * 100)}%`, matteBadgeX, l0Y + trackH - 7);
+
+  // Video Loop Progress Bar at bottom of L0 block
+  const vidProg0 = (typeof playerL0 !== 'undefined' && playerL0 && playerL0.duration) ? (playerL0.currentTime / playerL0.duration) : ((simTime * 0.15) % 1.0);
+  ctx.fillStyle = 'rgba(0, 255, 136, 0.8)';
+  ctx.fillRect(thumbX + thumbW + 6, l0Y + trackH - 6, (l0W - thumbW - 12) * Math.min(1, Math.max(0, vidProg0)), 2);
+
+  // 4. TRACK 1: L1 PULSE REFLEX (AUDIO-REACTIVE ECHO)
+  const l1Clip = appState.layers?.layer1;
+  const l1Y = rulerH + trackH + 2;
+  const l1Opacity = l1Clip?.opacity ?? 0.8;
+  const isL1Selected = activeTimelineSelectedLayer === 'layer1';
+  ctx.fillStyle = isL1Selected ? 'rgba(0, 240, 255, 0.18)' : 'rgba(0, 240, 255, 0.08)';
+  ctx.strokeStyle = isL1Selected ? '#00f0ff' : 'rgba(0, 240, 255, 0.5)';
+  ctx.lineWidth = isL1Selected ? 2 : 1;
+  ctx.beginPath();
+  ctx.roundRect(2, l1Y, l0W, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: 2, y: l1Y, w: l0W, h: trackH - 4, type: 'layer', id: 1, action: 'inspect' });
+
+  // Audio reactive wave indicator
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  const rmsAmp = (appState.audio?.rms || 0.4) * (trackH * 0.25);
+  for (let wx = 10; wx < l0W - 10; wx += 8) {
+    const wy = l1Y + (trackH/2) + Math.sin(wx * 0.08 + simTime * 4) * rmsAmp;
+    if (wx === 10) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 8.5px monospace';
+  ctx.fillText(`◈ L1 PULSE REFLEX: ${Math.round(l1Opacity * 100)}% · AUDIO SYNC DOWNSCALE`, 12, l1Y + 11);
+
+  // 5. TRACK 2: L2 SOBEL CONTOURS (FIND EDGES FILTER)
+  const l2Clip = appState.layers?.layer2;
+  const l2Y = rulerH + (2 * trackH) + 2;
+  const l2Opacity = l2Clip?.opacity ?? 0.6;
+  const isL2Selected = activeTimelineSelectedLayer === 'layer2';
+  ctx.fillStyle = isL2Selected ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.08)';
+  ctx.strokeStyle = isL2Selected ? '#c084fc' : 'rgba(168, 85, 247, 0.5)';
+  ctx.lineWidth = isL2Selected ? 2 : 1;
+  ctx.beginPath();
+  ctx.roundRect(2, l2Y, l0W, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: 2, y: l2Y, w: l0W, h: trackH - 4, type: 'layer', id: 2, action: 'inspect' });
+
+  ctx.fillStyle = '#c084fc';
+  ctx.font = 'bold 8.5px monospace';
+  ctx.fillText(`◪ L2 SOBEL CONTOURS: ${Math.round(l2Opacity * 100)}% · THRESHOLD ${appState.sobel?.threshold || 32}`, 12, l2Y + 11);
+
+  // 6. TRACK 3: L3 CUE BUS B (NEXT ARMED TAKE & PREDICTABILITY HUB)
+  const l3Clip = appState.layers?.layer3;
+  const cueClip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === l3Clip?.clipId) || ((typeof allClips !== 'undefined' && allClips[1]) ? allClips[1] : null);
+  const l3Y = rulerH + (3 * trackH) + 2;
+  const isL3Selected = activeTimelineSelectedLayer === 'layer3';
+
+  // Overlap Dissolve Crossfade Ramp starts before activeTakeW and extends into upcoming cycle
+  const l3StartX = Math.max(2, transWinX);
+  const l3W = (activeTakeW - l3StartX) + futureTakeW;
+
+  ctx.fillStyle = isL3Selected ? 'rgba(0, 240, 255, 0.22)' : 'rgba(0, 240, 255, 0.14)';
+  ctx.strokeStyle = isL3Selected ? '#00f0ff' : 'rgba(0, 240, 255, 0.75)';
+  ctx.lineWidth = isL3Selected ? 2 : 1.5;
+  ctx.beginPath();
+  ctx.roundRect(l3StartX, l3Y, l3W - 4, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: l3StartX, y: l3Y, w: l3W - 4, h: trackH - 4, type: 'layer', id: 3, action: 'inspect' });
+
+  // Crossfade Visual Ramp Gradient in transition window
+  const rampGrad = ctx.createLinearGradient(l3StartX, l3Y, activeTakeW, l3Y);
+  rampGrad.addColorStop(0, 'rgba(0, 240, 255, 0.0)');
+  rampGrad.addColorStop(1, 'rgba(0, 240, 255, 0.35)');
+  ctx.fillStyle = rampGrad;
+  ctx.fillRect(l3StartX, l3Y, transWinW, trackH - 4);
+
+  // Cue Video Thumbnail
+  const thumbX3 = l3StartX + 4;
+  const thumbY3 = l3Y + 1;
+  const thumbImg3 = getClipImage(cueClip);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(thumbX3, thumbY3, thumbW, thumbH, 3);
+  ctx.clip();
+  if (thumbImg3) {
+    ctx.drawImage(thumbImg3, thumbX3, thumbY3, thumbW, thumbH);
+  } else {
+    ctx.fillStyle = '#082f49';
+    ctx.fillRect(thumbX3, thumbY3, thumbW, thumbH);
     ctx.fillStyle = '#00f0ff';
-    ctx.font = 'bold 9px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('◱ CUE BUS B: ' + ((l3Clip?.name || 'PREVIEW').substring(0, 22)), block3X + 8, l3Y + 12);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '8px monospace';
-    ctx.fillText('NEXT IN QUEUE', block3X + 8, l3Y + trackH - 8);
+    ctx.font = '7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CUE STREAM', thumbX3 + thumbW/2, thumbY3 + thumbH/2 + 2);
+  }
+  // CUE B Badge on thumbnail
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+  ctx.fillRect(thumbX3, thumbY3, 30, 10);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 7px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('CUE B', thumbX3 + 3, thumbY3 + 8);
+  ctx.restore();
+  timelineHitTargets.push({ x: thumbX3, y: thumbY3, w: thumbW, h: thumbH, type: 'clip', id: cueClip?.id, action: 'inspect' });
 
-    // 5. Render Queue Future Sequence Blocks
-    if (queueList && queueList.length > 0) {
-      queueList.slice(0, 4).forEach((qItem, qIdx) => {
-        const qX = 10 + ((qIdx + 2) * barWidth * 3);
-        if (qX < w - 80) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.roundRect(qX, l0Y, barWidth * 2.8, trackH - 4, 3);
-          ctx.fill();
-          ctx.stroke();
+  // Cue Matte Badge
+  const matteName3 = getMatteName(l3Clip?.matte);
+  const matteBadgeX3 = thumbX3 + thumbW + 6;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(matteBadgeX3, l3Y + 2, matteBadgeW, 13, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 7.5px monospace';
+  ctx.fillText('◫ ' + (matteName3.length > 14 ? matteName3.substring(0, 12) + '..' : matteName3), matteBadgeX3 + 4, l3Y + 11);
+  timelineHitTargets.push({ x: matteBadgeX3, y: l3Y + 2, w: matteBadgeW, h: 13, type: 'matte', id: l3Clip?.matte, action: 'inspect' });
 
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-          ctx.font = '8px monospace';
-          ctx.fillText(`+${qIdx+1} ` + (qItem.name || '').substring(0, 10), qX + 6, l0Y + 12);
-        }
-      });
+  // Cue Title & Countdown Status
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 8.5px monospace';
+  const l3TitleStr = '◱ CUE BUS B: ' + ((l3Clip?.name || cueClip?.filename || 'NEXT TAKE').substring(0, 24));
+  ctx.fillText(l3TitleStr, matteBadgeX3 + matteBadgeW + 8, l3Y + 11);
+
+  ctx.fillStyle = isAutoTransitioning ? '#ffb800' : 'rgba(255, 255, 255, 0.7)';
+  ctx.font = '7.5px monospace';
+  const l3StatusStr = isAutoTransitioning 
+    ? `⚡ DISSOLVE EM PROGRESSO (${Math.round(autoTransitionProgress * 100)}%)` 
+    : `DISPARO EM ${remainingBars} BARS (${remainingSecs}s) · CUE ARMADO NO DECK B`;
+  ctx.fillText(l3StatusStr, matteBadgeX3, l3Y + trackH - 7);
+
+  // 7. TRACK 4: L4 DIFFERENCE ACCENT (DROP & BUILD CLIMAX BURSTS)
+  const l4Clip = appState.layers?.layer4;
+  const l4Y = rulerH + (4 * trackH) + 2;
+  const l4Opacity = l4Clip?.opacity ?? 0.0;
+  const isL4Selected = activeTimelineSelectedLayer === 'layer4';
+
+  ctx.fillStyle = isL4Selected ? 'rgba(255, 42, 133, 0.22)' : 'rgba(255, 42, 133, 0.08)';
+  ctx.strokeStyle = isL4Selected ? '#ff2a85' : 'rgba(255, 42, 133, 0.5)';
+  ctx.lineWidth = isL4Selected ? 2 : 1;
+  ctx.beginPath();
+  ctx.roundRect(2, l4Y, l0W, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: 2, y: l4Y, w: l0W, h: trackH - 4, type: 'layer', id: 4, action: 'inspect' });
+
+  ctx.fillStyle = '#ff2a85';
+  ctx.font = 'bold 8.5px monospace';
+  ctx.fillText(`⚡ L4 ACCENT CLIMAX: ${Math.round(l4Opacity * 100)}% · ARMED FOR DROP & BUILD (DIFFERENCE / EXCLUSION)`, 12, l4Y + 11);
+
+  // 8. TRACK 5: L5 OVERLAY DECK
+  const l5Clip = appState.layers?.layer5;
+  const l5Y = rulerH + (5 * trackH) + 2;
+  const l5Opacity = l5Clip?.opacity ?? 1.0;
+  const isL5Selected = activeTimelineSelectedLayer === 'layer5';
+
+  ctx.fillStyle = isL5Selected ? 'rgba(192, 132, 252, 0.22)' : 'rgba(192, 132, 252, 0.1)';
+  ctx.strokeStyle = isL5Selected ? '#c084fc' : 'rgba(192, 132, 252, 0.6)';
+  ctx.lineWidth = isL5Selected ? 2 : 1;
+  ctx.beginPath();
+  ctx.roundRect(2, l5Y, l0W, trackH - 4, 4);
+  ctx.fill();
+  ctx.stroke();
+  timelineHitTargets.push({ x: 2, y: l5Y, w: l0W, h: trackH - 4, type: 'layer', id: 5, action: 'inspect' });
+
+  ctx.fillStyle = '#c084fc';
+  ctx.font = 'bold 8.5px monospace';
+  ctx.fillText(`◪ L5 OVERLAY: ${(l5Clip?.name || 'OVERLAY DECK').substring(0, 22)} · ${Math.round(l5Opacity * 100)}% (${l5Clip?.blend || 'Screen'})`, 12, l5Y + 11);
+
+  // 9. TRACK 6: FX MASTER & AFTER EFFECTS PIPELINE
+  const fxY = rulerH + (6 * trackH) + 2;
+  ctx.fillStyle = 'rgba(255, 184, 0, 0.06)';
+  ctx.fillRect(0, fxY, w, trackH - 2);
+  ctx.fillStyle = '#ffb800';
+  ctx.font = 'bold 8.5px monospace';
+  const fxStatusStr = `∿ FX ENGINE: ${appState.fx?.enabled ? 'ACTIVE (' + (appState.fx?.activeEffect || 'AUTO') + ')' : 'BYPASS'} · AUTOMATION ENVELOPE`;
+  ctx.fillText(fxStatusStr, 12, fxY + 11);
+  timelineHitTargets.push({ x: 0, y: fxY, w, h: trackH - 2, type: 'master', id: null, subtab: 'advanced', action: 'inspect' });
+
+  // 10. FUTURE SCHEDULED TAKES HORIZON (FORWARD PREDICTABILITY QUEUE)
+  if (queueList && queueList.length > 1) {
+    const nextQ1 = queueList[1];
+    const nextClip1 = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === nextQ1.clipId) || null;
+    const fX1 = activeTakeW + 4;
+    const fW1 = futureTakeW - 8;
+    const fY1 = l0Y;
+
+    // Scheduled Take 2 Block on Track 0
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.roundRect(fX1, fY1, fW1, trackH - 4, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    timelineHitTargets.push({ x: fX1, y: fY1, w: fW1, h: trackH - 4, type: 'clip', id: nextQ1.clipId, action: 'inspect' });
+
+    // Thumbnail for scheduled take
+    const fThumbW = Math.min(68, fW1 * 0.25);
+    const fThumbImg = getClipImage(nextClip1);
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(fX1 + 4, fY1 + 1, fThumbW, thumbH, 3);
+    ctx.clip();
+    if (fThumbImg) {
+      ctx.drawImage(fThumbImg, fX1 + 4, fY1 + 1, fThumbW, thumbH);
+    } else {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(fX1 + 4, fY1 + 1, fThumbW, thumbH);
     }
+    ctx.restore();
 
-    // 5. Render Layer 5 (Dedicated Overlay Deck) on Track 4
-    const l5Clip = appState.layers?.layer5;
-    const l5Y = rulerH + (4 * trackH) + 2;
-    const l5Opacity = l5Clip?.opacity || 0;
-    ctx.fillStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.22)' : 'rgba(255, 255, 255, 0.04)';
-    ctx.strokeStyle = (l5Clip?.active && l5Opacity > 0.05) ? 'rgba(192, 132, 252, 0.85)' : 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1.5;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = 'bold 8px monospace';
+    ctx.fillText(`+1 TAKE (+${phraseBars} BARS) · ` + ((nextQ1.name || '').substring(0, 16)), fX1 + fThumbW + 10, fY1 + 11);
+
+    // Quick Cue Button
+    const btnCueW = 60;
+    const btnCueX = fX1 + fW1 - btnCueW - 6;
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
     ctx.beginPath();
-    ctx.roundRect(10, l5Y, barWidth * 12, trackH - 4, 4);
+    ctx.roundRect(btnCueX, fY1 + 3, btnCueW, trackH - 10, 3);
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = '#c084fc';
-    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 7.5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ARMAR CUE', btnCueX + btnCueW/2, fY1 + (trackH/2) + 1);
     ctx.textAlign = 'left';
-    ctx.fillText('◪ L5 OVERLAY: ' + ((l5Clip?.name || 'OVERLAY DECK').substring(0, 22)) + ` · ${Math.round(l5Opacity * 100)}% (${l5Clip?.blend || 'Screen'})`, 18, l5Y + 12);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '8px monospace';
-    ctx.fillText(`ZOOM: ${Math.round((l5Clip?.scale || 1.0) * 100)}% · POS: (${l5Clip?.pos_x || 0}, ${l5Clip?.pos_y || 0}) · MATTE: ${l5Clip?.matte || 'NONE'}`, 18, l5Y + trackH - 8);
-
-    // 6. Tension Waveform Indicator along bottom track (Track 5)
-    const fxY = rulerH + (5 * trackH);
-    ctx.fillStyle = 'rgba(255, 42, 133, 0.1)';
-    ctx.fillRect(0, fxY, w, trackH);
-    ctx.fillStyle = 'rgba(255, 42, 133, 0.8)';
-    ctx.font = 'bold 8.5px monospace';
-    ctx.fillText('FX ENGINE: ' + (appState.fx?.enabled ? 'ACTIVE (' + (appState.fx?.activeEffect || 'AUTO') + ')' : 'BYPASS'), 10, fxY + 13);
-
-    return;
+    timelineHitTargets.push({ x: btnCueX, y: fY1 + 3, w: btnCueW, h: trackH - 10, action: 'cue', idx: 1 });
   }
+
+  // 11. REAL-TIME 60 FPS SUB-PIXEL PLAYHEAD (NOW INDICATOR)
+  const playheadX = currentBarPos * pxPerBar;
   
-  if (!queueList || queueList.length === 0) {
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('FILA VAZIA (QUEUE EMPTY)', canvas.width/2, canvas.height/2);
-    return;
+  // Vertical neon glowing playhead line
+  ctx.save();
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(playheadX, 0);
+  ctx.lineTo(playheadX, h);
+  ctx.stroke();
+  ctx.restore();
+
+  // Downbeat Strobe Flare Pulse on Bar 1.1
+  const isDownbeat = currentBeat === 1 && beatFraction < 0.25;
+  if (isDownbeat) {
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.2)';
+    ctx.fillRect(playheadX - 12, 0, 24, h);
   }
+
+  // Top Playhead Badge on Time Ruler
+  const badgeW = 64;
+  const badgeH = 19;
+  const badgeX = Math.max(2, Math.min(w - badgeW - 2, playheadX - (badgeW / 2)));
   
-  const clipW = 140;
-  const clipH = 78; // aprox 16:9
-  const gap = 12;
-  const startX = 20;
-  const startY = (canvas.height - clipH) / 2;
-  
-  queueList.slice(0, 6).forEach((item, idx) => {
-    const x = startX + (idx * (clipW + gap));
-    const y = startY;
-    
-    // Thumbnail Placeholder (Gradient/Color)
-    ctx.fillStyle = idx === 0 ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 0, 0, 0.6)';
-    ctx.strokeStyle = idx === 0 ? 'rgba(0, 240, 255, 0.8)' : 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = idx === 0 ? 2 : 1;
-    ctx.beginPath();
-    ctx.roundRect(x, y, clipW, clipH, 6);
-    ctx.fill();
-    ctx.stroke();
-    
-    // Label/Slot
-    ctx.fillStyle = idx === 0 ? '#00f0ff' : '#fff';
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(item.slot || `CUE ${idx+1}`, x + clipW/2, y + clipH/2 - 12);
-    
-    // Clip Name
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.font = '9px monospace';
-    const nameStr = item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name;
-    ctx.fillText(nameStr, x + clipW/2, y + clipH/2 + 2);
-    
-    // Matte Info
-    ctx.fillStyle = 'rgba(255,42,85,0.8)';
-    ctx.font = '8px monospace';
-    ctx.fillText(item.matte || 'DEFAULT MATTE', x + clipW/2, y + clipH/2 + 16);
-  });
-  if (typeof initTimelineCanvasInteraction === 'function') initTimelineCanvasInteraction();
+  ctx.fillStyle = isDownbeat ? '#00ff88' : '#00f0ff';
+  ctx.beginPath();
+  ctx.roundRect(badgeX, 3, badgeW, badgeH, 4);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 8.5px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`BAR ${currentBar}.${currentBeat}`, badgeX + badgeW/2, 15);
+
+  // Floating countdown tag beneath the badge
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 7.5px monospace';
+  ctx.fillText(`-${remainingSecs}s`, badgeX + badgeW/2, rulerH + 12);
+  ctx.textAlign = 'left';
+
+  ctx.restore();
 }
+window.renderProTimeline = renderProTimeline;
+
+function cueQueuedClipByIndex(idx) {
+  if (!queueList || !queueList[idx]) return;
+  const item = queueList[idx];
+  const clipId = item.clipId || item.id;
+  if (clipId) {
+    routeClipToBus(clipId, 'B');
+    if (item.matte && item.matte !== 'none') {
+      appState.layers.layer3.matte = item.matte;
+    }
+    updateUI();
+    syncVideoSources();
+    renderProTimeline();
+  }
+}
+window.cueQueuedClipByIndex = cueQueuedClipByIndex;
 
 function initTimelineCanvasInteraction() {
   const canvas = document.getElementById('timeline-canvas');
@@ -6537,47 +6944,42 @@ function initTimelineCanvasInteraction() {
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    if (rect.height >= 120) {
-      // Pro Arrangement View (6 tracks: L0, L1, L2, L3, L5, FX)
-      const rulerH = 22;
-      if (clickY < rulerH) return;
-      const tracksH = rect.height - rulerH;
-      const trackH = tracksH / 6;
-      const trackIdx = Math.floor((clickY - rulerH) / trackH);
-
-      const trackMap = [
-        { type: 'layer', id: 0 },
-        { type: 'layer', id: 1 },
-        { type: 'layer', id: 2 },
-        { type: 'layer', id: 3 },
-        { type: 'layer', id: 5 },
-        { type: 'master', id: null, subtab: 'advanced' }
-      ];
-
-      const tgt = trackMap[trackIdx];
-      if (tgt) {
-        openStudioInspector(tgt.type, tgt.id, tgt.subtab || 'transform');
-      }
-    } else {
-      // Queue cards view
-      if (!queueList || queueList.length === 0) return;
-      const clipW = 140;
-      const gap = 12;
-      const startX = 20;
-      const clipH = 78;
-      const startY = (canvas.height - clipH) / 2;
-
-      const idx = Math.floor((clickX - startX) / (clipW + gap));
-      if (idx >= 0 && idx < queueList.length) {
-        const item = queueList[idx];
-        if (item) {
-          if (clickY >= (startY + clipH - 24) && item.matte && item.matte !== 'none') {
-            openStudioInspector('matte', item.matte);
-          } else if (item.id) {
-            openStudioInspector('clip', item.id);
+    // Check hit targets in reverse order (topmost first)
+    if (timelineHitTargets && timelineHitTargets.length > 0) {
+      for (let i = timelineHitTargets.length - 1; i >= 0; i--) {
+        const t = timelineHitTargets[i];
+        if (clickX >= t.x && clickX <= t.x + t.w && clickY >= t.y && clickY <= t.y + t.h) {
+          if (t.action === 'cue') {
+            cueQueuedClipByIndex(t.idx);
+            return;
+          } else if (t.action === 'inspect') {
+            openStudioInspector(t.type, t.id, t.subtab || 'transform');
+            return;
           }
         }
       }
+    }
+
+    // Fallback: Pro Arrangement View 7 tracks
+    const rulerH = 26;
+    if (clickY < rulerH) return;
+    const tracksH = rect.height - rulerH;
+    const trackH = tracksH / 7;
+    const trackIdx = Math.floor((clickY - rulerH) / trackH);
+
+    const trackMap = [
+      { type: 'layer', id: 0 },
+      { type: 'layer', id: 1 },
+      { type: 'layer', id: 2 },
+      { type: 'layer', id: 3 },
+      { type: 'layer', id: 4 },
+      { type: 'layer', id: 5 },
+      { type: 'master', id: null, subtab: 'advanced' }
+    ];
+
+    const tgt = trackMap[trackIdx];
+    if (tgt) {
+      openStudioInspector(tgt.type, tgt.id, tgt.subtab || 'transform');
     }
   });
 }
@@ -11533,25 +11935,28 @@ function applyKinPreset(type) {
 window.applyKinPreset = applyKinPreset;
 
 function routeClipToBus(clipId, bus) {
-  const clip = allClips.find(c => c.id === clipId);
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId) ||
+               (typeof allMediaPoolClips !== 'undefined' ? allMediaPoolClips : []).find(c => c.id === clipId) ||
+               { id: clipId, filename: clipId };
   if (!clip) return;
+  const clipName = clip.filename || clip.name || clip.id;
   if (bus === 'A') {
     appState.layers.layer0.clipId = clip.id;
-    appState.layers.layer0.name = clip.filename;
+    appState.layers.layer0.name = clipName;
     appState.layers.layer0.fit_mode = 'fill';
     appState.layers.layer0.matte = 'none';
     updateUI();
     syncVideoSources();
-    sendAction('cue_clip', { layer: 'layer0', clipId: clip.id, name: clip.filename });
+    sendAction('cue_clip', { layer: 'layer0', clipId: clip.id, name: clipName });
     sendAction('set_layer_fit_mode', { layer: 'layer0', fit_mode: 'fill' });
   } else {
     appState.layers.layer3.clipId = clip.id;
-    appState.layers.layer3.name = clip.filename;
+    appState.layers.layer3.name = clipName;
     appState.layers.layer3.fit_mode = 'fill';
     appState.layers.layer3.matte = 'none';
     updateUI();
     syncVideoSources();
-    sendAction('cue_clip', { layer: 'layer3', clipId: clip.id, name: clip.filename });
+    sendAction('cue_clip', { layer: 'layer3', clipId: clip.id, name: clipName });
     sendAction('set_layer_fit_mode', { layer: 'layer3', fit_mode: 'fill' });
   }
 }
@@ -12241,8 +12646,15 @@ window.initDockViewModes = initDockViewModes;
 function cueNextFromQueue() {
   if (queueList && queueList.length > 0) {
     const nextItem = queueList[0];
-    if (nextItem && nextItem.id) {
-      routeClipToBus(nextItem.id, 'B');
+    const nextId = nextItem.clipId || nextItem.id;
+    if (nextId) {
+      routeClipToBus(nextId, 'B');
+      if (nextItem.matte && nextItem.matte !== 'none') {
+        appState.layers.layer3.matte = nextItem.matte;
+      }
+      updateUI();
+      syncVideoSources();
+      if (typeof renderProTimeline === 'function') renderProTimeline();
     }
   }
 }

@@ -643,6 +643,24 @@
             <span class="tl-badge-mode" id="tl-mode-badge">AUTOPILOT ARMED</span>
           </div>
 
+          <!-- Take Duration & Rhythm Controller (Scales Timeline Grid & Sequence Rhythm) -->
+          <div class="tl-duration-control" title="Duração do Take / Frase Musical (Altera a escala da timeline e o intervalo das transições)">
+            <span class="tl-dur-label">DURAÇÃO DO TAKE:</span>
+            <div class="tl-dur-pills" id="tl-dur-pills">
+              <button class="tl-dur-pill" data-bars="4" onclick="setTimelineTakeBars(4)" title="4 Bars (~7.5s - Fast Cuts)">4B</button>
+              <button class="tl-dur-pill" data-bars="8" onclick="setTimelineTakeBars(8)" title="8 Bars (~15s - Dynamic)">8B</button>
+              <button class="tl-dur-pill active" data-bars="16" onclick="setTimelineTakeBars(16)" title="16 Bars (~30s - Padrão Broadcast)">16B</button>
+              <button class="tl-dur-pill" data-bars="32" onclick="setTimelineTakeBars(32)" title="32 Bars (~60s - Progressivo)">32B</button>
+              <button class="tl-dur-pill" data-bars="64" onclick="setTimelineTakeBars(64)" title="64 Bars (~120s - Ambient Long-Form)">64B</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Live Countdown to Next Take -->
+          <div class="tl-take-countdown" id="tl-take-countdown" title="Contagem regressiva até o próximo take automático">
+            <span class="tl-cd-label">PRÓXIMO TAKE:</span>
+            <strong class="tl-cd-val" id="tl-countdown-val">15 BARS (~28s)</strong>
+          </div>
+
           <div class="tl-transport-controls">
             <button class="btn btn-primary btn-xs" id="btn-queue-take" title="Transição seca imediata (Take)">TAKE</button>
             <button class="btn btn-outline btn-xs" id="btn-queue-dissolve" title="Dissolve suave em 1 compasso">DISSOLVE</button>
@@ -698,6 +716,11 @@
               <span class="track-name">L3 CUE BUS B</span>
               <span class="track-vol" id="lbl-tl-track-l3">100%</span>
             </div>
+            <div class="tl-track-header track-l4" onclick="openStudioInspector('layer', 4)" title="Clique para Inspecionar L4 Difference Accent [I]">
+              <span class="track-tag" style="background: rgba(255, 42, 133, 0.25); color: #ff2a85;">L4</span>
+              <span class="track-name">ACCENT CLIMAX</span>
+              <span class="track-vol" id="lbl-tl-track-l4">0%</span>
+            </div>
             <div class="tl-track-header track-l5" onclick="openStudioInspector('layer', 5)" title="Clique para Inspecionar L5 Overlay Deck [I]">
               <span class="track-tag">L5</span>
               <span class="track-name">OVERLAY DECK</span>
@@ -712,9 +735,6 @@
 
           <div class="timeline-container" id="autopilot-timeline-container">
             <canvas id="timeline-canvas"></canvas>
-            <div class="timeline-playhead-overlay" id="timeline-playhead">
-              <div class="playhead-badge">NOW</div>
-            </div>
           </div>
         </div>
       </div>

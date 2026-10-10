@@ -1,12 +1,13 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 11:05:00 BRT
+- **Última Atualização:** 10/10/2026, 15:40:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Pro Timeline Arranger (Padrão Resolume Arena 7 / DaVinci Resolve 19):** 🟢 ATIVO (Escalonamento rítmico dinâmico 4B-64B, horizonte preditivo de fila com thumbnails reais, playhead sub-pixel 60 FPS com badge `BAR X.Y`, 7 tracks sincronizados, régua SMPTE com estados narrativos e integração bidirecional com Studio Inspector)
 - **Studio Inspector Unificado (Padrão DaVinci/Resolume):** 🟢 ATIVO (Eliminação da barra comprimida da timeline, nova `.tl-inspector-bridge`, controles de Pos X/Y, Nudge Pad, Escala e Reset integrados no drawer lateral)
 - **Motor Per-Matte & Inspeção Desacoplada:** 🟢 ATIVO (Inspeção imediata ao clicar em qualquer máscara ou clipe na biblioteca/Media Pool sem alterar camadas ao vivo, motor isolado `mattes_config`, modo Pin `[⚡ SEGUIR]`/`[📌 FIXADO]`)
-- **Eliminação de Flash em Transições:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
+- **Eliminação de Flash em Transições & Sobel Find Edges Redesign:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
 - **Pool Granular de Autopilot (Pastas e Takes):** 🟢 ATIVO (Controle duplo de inclusão por pastas em Configurações/Tab 5 e por clipe nos cards com toggles `[⚡ AUTO]`/`[✕ MANUAL]`, filtros rápidos e ações em lote)
 - **Entrada de Linha (P2) & Microfone:** 🟢 ATIVO (Smart auto-detection de dispositivos P2/Line-in, filtros Biquad HPF 24Hz e LPF 16kHz, VU meter hardware-grade RMS/Peak dB e spectral flux BPM)
 - **BPM Permanente & Tap Tempo HUD:** 🟢 ATIVO (Capsule no cabeçalho com LED downbeat, pill no Master Control Bridge, Tap Tempo com média móvel ponderada, contador de toques e animação neon)
@@ -24,10 +25,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 13,607 | 587.1 KB |
-| `styles.css` | 10,982 | 220.3 KB |
-| `index.html` | 3,550 | 236.2 KB |
-| `Penumbra_Portable.html` | — | 1,135.0 KB |
+| `app.js` | 14,020 | 606.3 KB |
+| `styles.css` | 11,085 | 223.1 KB |
+| `index.html` | 3,569 | 237.5 KB |
+| `Penumbra_Portable.html` | — | 1,142.0 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 81 entradas
