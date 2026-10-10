@@ -235,6 +235,23 @@ app.post('/api/user/profile/import', (req, res) => {
   res.json({ success: true, message: 'Perfil restaurado com sucesso!' });
 });
 
+// Real-time MIDI Event Diagnostic Stream
+let liveMidiEvents = [];
+app.post('/api/midi-log', (req, res) => {
+  if (req.body) {
+    liveMidiEvents.unshift(req.body);
+    if (liveMidiEvents.length > 300) liveMidiEvents.pop();
+  }
+  res.json({ ok: true });
+});
+app.get('/api/midi-log', (req, res) => {
+  res.json(liveMidiEvents);
+});
+app.delete('/api/midi-log', (req, res) => {
+  liveMidiEvents = [];
+  res.json({ ok: true });
+});
+
 // Cache status endpoint
 app.get('/api/cache/status', (req, res) => {
   const profile = getUserProfile();

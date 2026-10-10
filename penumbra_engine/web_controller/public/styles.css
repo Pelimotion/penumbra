@@ -8055,10 +8055,40 @@ body.resizing-workspace-active .top-zone {
   background: rgba(0, 240, 255, 0.18);
   color: #00f0ff;
   border: 1px solid rgba(0, 240, 255, 0.4);
-  padding: 1px 4px;
+  padding: 1px 5px;
   border-radius: 3px;
   font-size: 8.5px;
   letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.midi-bank-badge:hover {
+  background: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+.midi-hw-bank-badge {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.midi-hw-bank-badge.hw1 {
+  background: rgba(0, 255, 136, 0.16);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+}
+.midi-hw-bank-badge.hw2 {
+  background: rgba(255, 170, 0, 0.16);
+  color: #ffaa00;
+  border: 1px solid rgba(255, 170, 0, 0.4);
+}
+.midi-hw-bank-badge:hover {
+  filter: brightness(1.3);
 }
 
 /* Seletor de Bancos / Níveis no Modal */

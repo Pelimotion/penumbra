@@ -251,7 +251,8 @@
           <circle cx="15" cy="15" r="1.5" fill="currentColor"></circle>
         </svg>
         <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
-        <span class="midi-bank-badge" id="chip-midi-bank">B1: MIXER</span>
+        <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Hardware M-Vave (◄ Faders / ► Botões) · Clique para alternar [Atalho: H]" onclick="event.stopPropagation(); window.toggleHardwareBank && window.toggleHardwareBank()">◄ HW1: FADERS</span>
+        <span class="midi-bank-badge" id="chip-midi-bank" title="Banco de Software (B1-B4) · Clique para avançar banco [Atalho: B ou F1-F4]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.nextBank()">B1: MIXER</span>
       </div>
     </div>
 
@@ -2994,7 +2995,9 @@
                   </div>
                   <div class="prop-control">
                     <select class="cfg-select" id="sel-midi-profile" onchange="onMidiProfileChanged(this.value)">
-                      <option value="mvave_smc" selected>M-Vave SMC-MIXER (Auto MCU / CC · VAVE6412)</option>
+                      <option value="mvave_smc" selected>M-Vave SMC-MIXER (Auto-Adaptativo · Faders ◄ & Botões ►)</option>
+                      <option value="mvave_bank1">M-Vave SMC-MIXER: Banco 1 (◄ Faders & Knobs 1:1)</option>
+                      <option value="mvave_bank2">M-Vave SMC-MIXER: Banco 2 (► Matriz 32 Botões M/S/R/SEL)</option>
                       <option value="mackie_universal">Mackie Control Universal (MCU Protocol)</option>
                       <option value="mvave_cc">M-Vave SMC-MIXER (Forçar Modo CC / MidiSuite)</option>
                       <option value="launch_control_xl">Novation Launch Control XL</option>

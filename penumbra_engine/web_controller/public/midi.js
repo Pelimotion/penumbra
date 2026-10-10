@@ -57,6 +57,7 @@ class PenumbraMidiHub {
 
     // Perfil Ativo e Detecção de Protocolo
     this.activeProfile = (typeof localStorage !== 'undefined' && localStorage.getItem('penumbra_midi_profile')) || 'mvave_smc';
+    this.hardwareBank = (typeof localStorage !== 'undefined' && localStorage.getItem('penumbra_midi_hw_bank')) || 'bank1';
     this.detectedProtocol = 'Aguardando controlador...';
 
     // Telemetria & Monitor
@@ -260,9 +261,17 @@ class PenumbraMidiHub {
 
   recordMessageLog(item) {
     this.recentMessages.unshift(item);
-    if (this.recentMessages.length > 35) {
+    if (this.recentMessages.length > 200) {
       this.recentMessages.pop();
     }
+    // Envia telemetria para o servidor local para diagnóstico exato em tempo real
+    try {
+      fetch('/api/midi-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      }).catch(() => {});
+    } catch (e) {}
   }
 
   // =========================================================================
@@ -281,65 +290,146 @@ class PenumbraMidiHub {
     this.detectedProtocol = 'Modo CC (Control Change)';
     this.activeTelemetry.detectedProtocol = 'Modo CC';
 
-    // 2. M-VAVE SMC-MIXER / SINCO SMC-Mixer-Master / VAVE6412 (Mapeamento Nativo de Hardware):
+    // 2. DETECÇÃO INTELIGENTE DE MUDANÇA DE BANCO DE HARDWARE DO M-VAVE:
+    // O M-Vave possui 2 presets internos de fábrica:
+    //   - Banco 1 (Seta Esquerda ◄): Faders CC 20..27, Master CC 28, Encoders CC 30..37
+    //   - Banco 2 (Seta Direita ►): Matriz Completa de Botões (Mute CC 20..27, Solo CC 28..35, Rec CC 36..43, Sel CC 44..51, Setas/Transporte CC 56..63)
+    if (cc === 86 || (cc === 46 && value > 0)) {
+      this.setHardwareBank('bank1');
+      return;
+    }
+    if (cc === 87 || (cc === 47 && value > 0)) {
+      this.setHardwareBank('bank2');
+      return;
+    }
+
+    // Auto-identificação dinâmica por tráfego quando o perfil for Auto (mvave_smc):
+    if (this.activeProfile === 'mvave_smc') {
+      if ((cc >= 56 && cc <= 63) || (cc >= 36 && cc <= 43) || (cc >= 44 && cc <= 51)) {
+        if (this.hardwareBank !== 'bank2') {
+          this.setHardwareBank('bank2');
+        }
+      } else if (cc >= 20 && cc <= 27 && value > 2 && value < 125) {
+        // Movimento analógico intermediário em CC 20..27 confirma Fader físico em movimento (Banco 1 ◄)
+        if (this.hardwareBank !== 'bank1') {
+          this.setHardwareBank('bank1');
+        }
+      }
+    }
+
+    const isHwBank2 = (this.activeProfile === 'mvave_bank2' || (this.activeProfile === 'mvave_smc' && this.hardwareBank === 'bank2'));
+
     // ---------------------------------------------------------------------------------------
-
-    // A) Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1):
-    // Fader 1 = CC 20, Fader 2 = CC 21, Fader 3 = CC 22, ..., Fader 8 = CC 27
-    if (channel === 1 && cc >= 20 && cc <= 27) {
-      const faderIdx = cc - 20;
-      this.handleFaderInput(faderIdx, norm);
-      return;
+    // A) SE ESTIVER NO BANCO 2 DO HARDWARE (SETA DIREITA ► · MATRIZ COMPLETA DE BOTÕES):
+    // ---------------------------------------------------------------------------------------
+    if (isHwBank2) {
+      // 1. Linha Mute (CC 20 a 27):
+      if (channel === 1 && cc >= 20 && cc <= 27 && value > 0) {
+        this.handleButtonMute(cc - 20);
+        return;
+      }
+      // 2. Linha Solo (CC 28 a 35):
+      if (channel === 1 && cc >= 28 && cc <= 35 && value > 0) {
+        this.handleButtonSolo(cc - 28);
+        return;
+      }
+      // 3. Linha Rec / Trigger (CC 36 a 43):
+      if (channel === 1 && cc >= 36 && cc <= 43 && value > 0) {
+        this.handleButtonRec(cc - 36);
+        return;
+      }
+      // 4. Linha Select (CC 44 a 51):
+      if (channel === 1 && cc >= 44 && cc <= 51 && value > 0) {
+        this.handleButtonSelect(cc - 44);
+        return;
+      }
+      // 5. Linha Transporte & Setas de Navegação (CC 56 a 63):
+      if (channel === 1 && cc >= 56 && cc <= 63 && value > 0) {
+        switch (cc) {
+          case 56: this.actionRewind(); return;          // Rewind / Downbeat 1.1.1
+          case 57: this.actionFastForward(); return;     // FastForward / Advance Take
+          case 58: this.stepCrossfader(-5); return;      // Seta Esquerda (◄ Nudge A)
+          case 59: this.navigateUp(); return;            // Seta Acima (▲ Preset Anterior)
+          case 60: this.navigateDown(); return;          // Seta Abaixo (▼ Próximo Preset)
+          case 61: this.stepCrossfader(+5); return;      // Seta Direita (► Nudge B)
+          case 62: this.nextBank(); return;              // Cycle / Loop (Cicla B1..B4!)
+          case 63: this.actionBlackout(); return;        // Record / Panic Blackout
+        }
+      }
+      // Faders e Knobs secundários no Modo 2 (se configurados):
+      if (channel === 1 && cc >= 9 && cc <= 16) {
+        this.handleFaderInput(cc - 9, norm);
+        return;
+      }
+      if (channel === 1 && cc >= 1 && cc <= 8) {
+        this.handleKnobInput(cc - 1, value, norm);
+        return;
+      }
     }
 
-    // B) Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1):
-    if (channel === 1 && (cc === 28 || cc === 29)) {
-      this.handleMasterFaderInput(norm);
-      return;
-    }
+    // ---------------------------------------------------------------------------------------
+    // B) SE ESTIVER NO BANCO 1 DO HARDWARE (SETA ESQUERDA ◄ · FADERS & ENCODERS NATIVOS):
+    // ---------------------------------------------------------------------------------------
+    else {
+      // 1. Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1):
+      if (channel === 1 && cc >= 20 && cc <= 27) {
+        const faderIdx = cc - 20;
+        this.handleFaderInput(faderIdx, norm);
+        return;
+      }
 
-    // C) Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1):
-    // Knob 1 = CC 30, Knob 2 = CC 31, Knob 3 = CC 32, ..., Knob 8 = CC 37
-    if (channel === 1 && cc >= 30 && cc <= 37) {
-      const knobIdx = cc - 30;
-      this.handleKnobInput(knobIdx, value, norm);
-      return;
-    }
+      // 2. Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1):
+      if (channel === 1 && (cc === 28 || cc === 29)) {
+        this.handleMasterFaderInput(norm);
+        return;
+      }
 
-    // D) Botões de Canal via CC (Padrão CC Mode M-Vave / MidiSuite):
-    // Linha 1: Mute (CC 40 a 47)
-    if (cc >= 40 && cc <= 47 && value > 0) {
-      this.handleButtonMute(cc - 40);
-      return;
-    }
-    // Linha 2: Solo (CC 48 a 55)
-    if (cc >= 48 && cc <= 55 && value > 0) {
-      this.handleButtonSolo(cc - 48);
-      return;
-    }
-    // Linha 3: Rec (CC 56 a 63)
-    if (cc >= 56 && cc <= 63 && value > 0) {
-      this.handleButtonRec(cc - 56);
-      return;
-    }
-    // Linha 4: Select (CC 64 a 71)
-    if (cc >= 64 && cc <= 71 && value > 0) {
-      this.handleButtonSelect(cc - 64);
-      return;
-    }
+      // 3. Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1):
+      if (channel === 1 && cc >= 30 && cc <= 37) {
+        const knobIdx = cc - 30;
+        this.handleKnobInput(knobIdx, value, norm);
+        return;
+      }
 
-    // E) Botões de Transporte & Navegação via CC (CC 80 a 88 ou CC 114 a 119):
-    if (value > 0) {
-      switch (cc) {
-        case 80: case 114: this.actionRewind(); return;
-        case 81: case 115: this.actionFastForward(); return;
-        case 82: case 116: this.actionStop(); return;
-        case 83: case 117: this.actionPlay(); return;
-        case 84: case 118: this.actionLoop(); return;
-        case 85: case 119: this.actionBlackout(); return;
-        case 86: this.prevBank(); return;
-        case 87: this.nextBank(); return;
-        case 88: this.actionTapTempo(); return;
+      // 4. Botões Complementares via CC (Modo 1):
+      if (cc >= 40 && cc <= 47 && value > 0) {
+        this.handleButtonMute(cc - 40);
+        return;
+      }
+      if (cc >= 48 && cc <= 55 && value > 0) {
+        this.handleButtonSolo(cc - 48);
+        return;
+      }
+      if (cc >= 56 && cc <= 63 && value > 0) {
+        switch (cc) {
+          case 56: this.actionRewind(); return;
+          case 57: this.actionFastForward(); return;
+          case 58: this.stepCrossfader(-5); return;
+          case 59: this.navigateUp(); return;
+          case 60: this.navigateDown(); return;
+          case 61: this.stepCrossfader(+5); return;
+          case 62: this.nextBank(); return;              // Cycle cicla B1..B4!
+          case 63: this.actionBlackout(); return;
+        }
+      }
+      if (cc >= 64 && cc <= 71 && value > 0) {
+        this.handleButtonSelect(cc - 64);
+        return;
+      }
+
+      // 5. Botões de Transporte Mackie CC:
+      if (value > 0) {
+        switch (cc) {
+          case 80: case 114: this.actionRewind(); return;
+          case 81: case 115: this.actionFastForward(); return;
+          case 82: case 116: this.actionStop(); return;
+          case 83: case 117: this.actionPlay(); return;
+          case 84: case 118: this.nextBank(); return;   // Cycle cicla B1..B4!
+          case 85: case 119: this.actionBlackout(); return;
+          case 86: this.prevBank(); return;
+          case 87: this.nextBank(); return;
+          case 88: this.actionTapTempo(); return;
+        }
       }
     }
 
@@ -936,7 +1026,7 @@ class PenumbraMidiHub {
     } else if (channelIdx === 6) {
       this.setBank(2);
     } else if (channelIdx === 7) {
-      this.setBank(3);
+      this.setBank(this.activeBank === 3 ? 4 : 3);
     }
   }
 
@@ -1294,6 +1384,11 @@ class PenumbraMidiHub {
 
   setProfile(profileKey) {
     this.activeProfile = profileKey;
+    if (profileKey === 'mvave_bank1') {
+      this.hardwareBank = 'bank1';
+    } else if (profileKey === 'mvave_bank2') {
+      this.hardwareBank = 'bank2';
+    }
     try {
       localStorage.setItem('penumbra_midi_profile', profileKey);
     } catch (e) {}
@@ -1304,6 +1399,21 @@ class PenumbraMidiHub {
     this.flashToastHud(`PERFIL MIDI: ${profileKey.toUpperCase()}`);
     console.log(`[PENUMBRA MIDI] Perfil alterado para: ${profileKey}`);
     this.notifyUI();
+  }
+
+  setHardwareBank(bankKey) {
+    this.hardwareBank = (bankKey === 'bank2') ? 'bank2' : 'bank1';
+    try {
+      localStorage.setItem('penumbra_midi_hw_bank', this.hardwareBank);
+    } catch (e) {}
+    const label = this.hardwareBank === 'bank1' ? 'BANCO 1 (◄ FADERS & KNOBS)' : 'BANCO 2 (► MATRIZ DE BOTÕES)';
+    this.flashToastHud(`M-VAVE: ${label}`);
+    console.log(`[PENUMBRA MIDI] Hardware Bank comutado para: ${this.hardwareBank}`);
+    this.notifyUI();
+  }
+
+  toggleHardwareBank() {
+    this.setHardwareBank(this.hardwareBank === 'bank1' ? 'bank2' : 'bank1');
   }
 
   autoCalibrateMvave() {
@@ -1360,6 +1470,15 @@ class PenumbraMidiHub {
 
     if (bankBadge) {
       bankBadge.textContent = `B${this.activeBank}: ${this.bankNames[this.activeBank].split(' ')[0]}`;
+      bankBadge.title = `Banco de Software Ativo: B${this.activeBank} (${this.bankNames[this.activeBank]}) · Clique para avançar banco [Atalho: Tecla B ou F1-F4]`;
+    }
+
+    const hwBadge = document.getElementById('chip-midi-hw-bank');
+    if (hwBadge) {
+      const isBank1 = (this.hardwareBank === 'bank1');
+      hwBadge.textContent = isBank1 ? '◄ HW1: FADERS' : '► HW2: BOTÕES';
+      hwBadge.className = `midi-hw-bank-badge ${isBank1 ? 'hw1' : 'hw2'}`;
+      hwBadge.title = `Modo Hardware M-Vave: ${isBank1 ? 'Banco 1 (Seta Esquerda ◄ - Faders/Knobs Diretos)' : 'Banco 2 (Seta Direita ► - Matriz 32 Botões M/S/R/SEL)'} · Clique para alternar [Atalho: Tecla H]`;
     }
   }
 
@@ -1373,15 +1492,29 @@ class PenumbraMidiHub {
         return;
       }
 
-      // Alternar Bancos: [ e ]
-      if (e.key === '[') {
+      // Alternar Bancos de Software: [ e ] ou Tecla B
+      if (e.key === '[' || ((e.key === 'b' || e.key === 'B') && !e.ctrlKey && !e.metaKey && !e.altKey)) {
         e.preventDefault();
-        this.prevBank();
+        if (e.key === '[') this.prevBank();
+        else this.nextBank();
         return;
       }
       if (e.key === ']') {
         e.preventDefault();
         this.nextBank();
+        return;
+      }
+
+      // Teclas F1 a F4: Ir direto para B1, B2, B3, B4
+      if (e.key === 'F1') { e.preventDefault(); this.setBank(1); return; }
+      if (e.key === 'F2') { e.preventDefault(); this.setBank(2); return; }
+      if (e.key === 'F3') { e.preventDefault(); this.setBank(3); return; }
+      if (e.key === 'F4') { e.preventDefault(); this.setBank(4); return; }
+
+      // Tecla H: Alternar Preset de Hardware M-Vave (◄ Banco 1 Faders / ► Banco 2 Botões)
+      if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        this.toggleHardwareBank();
         return;
       }
 
@@ -1542,7 +1675,8 @@ class HardwareTwinUI {
     const oled1 = document.getElementById('oled-line-1');
     const oled2 = document.getElementById('oled-line-2');
     if (oled1) {
-      oled1.textContent = `PENUMBRA LIVE · B${bank}: ${this.hub.bankNames[bank]} · ${this.hub.activeTelemetry.deviceName.slice(0, 16)}`;
+      const hwTxt = (this.hub.hardwareBank === 'bank1') ? 'HW: ◄ B1 (FADERS)' : 'HW: ► B2 (BOTÕES)';
+      oled1.textContent = `${hwTxt} · SW B${bank}: ${this.hub.bankNames[bank]} · ${this.hub.activeTelemetry.deviceName.slice(0, 14)}`;
     }
     if (oled2) {
       const bpm = (window.appState && window.appState.bpm) ? Math.round(window.appState.bpm) : 120;
@@ -1886,6 +2020,18 @@ window.clearMidiMonitorLog = function() {
   if (window.penumbraMidi) {
     window.penumbraMidi.recentMessages = [];
     if (window.penumbraHwTwin) window.penumbraHwTwin.updateMonitorTerminal();
+  }
+};
+
+window.toggleHardwareBank = function() {
+  if (window.penumbraMidi) {
+    window.penumbraMidi.toggleHardwareBank();
+  }
+};
+
+window.setHardwareBank = function(bank) {
+  if (window.penumbraMidi) {
+    window.penumbraMidi.setHardwareBank(bank);
   }
 };
 
