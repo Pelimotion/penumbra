@@ -281,90 +281,119 @@ class PenumbraMidiHub {
     this.detectedProtocol = 'Modo CC (Control Change)';
     this.activeTelemetry.detectedProtocol = 'Modo CC';
 
-    // 2. M-Vave SMC-MIXER / VAVE6412 & Controladores Universais:
+    // 2. M-VAVE SMC-MIXER / SINCO SMC-Mixer-Master / VAVE6412 (Mapeamento Nativo de Hardware):
+    // ---------------------------------------------------------------------------------------
 
-    // A) M-Vave Encoders (Knobs 1 a 8 na Channel 1 via CC 16 a 23):
-    if (channel === 1 && cc >= 16 && cc <= 23) {
-      const knobIdx = cc - 16;
+    // A) Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1):
+    // Fader 1 = CC 20, Fader 2 = CC 21, Fader 3 = CC 22, ..., Fader 8 = CC 27
+    if (channel === 1 && cc >= 20 && cc <= 27) {
+      const faderIdx = cc - 20;
+      this.handleFaderInput(faderIdx, norm);
+      return;
+    }
+
+    // B) Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1):
+    if (channel === 1 && (cc === 28 || cc === 29)) {
+      this.handleMasterFaderInput(norm);
+      return;
+    }
+
+    // C) Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1):
+    // Knob 1 = CC 30, Knob 2 = CC 31, Knob 3 = CC 32, ..., Knob 8 = CC 37
+    if (channel === 1 && cc >= 30 && cc <= 37) {
+      const knobIdx = cc - 30;
       this.handleKnobInput(knobIdx, value, norm);
       return;
     }
 
-    // B) M-Vave CC Mode - Volume por Canal (CC 7 em Canais 1 a 8):
+    // D) Botões de Canal via CC (Padrão CC Mode M-Vave / MidiSuite):
+    // Linha 1: Mute (CC 40 a 47)
+    if (cc >= 40 && cc <= 47 && value > 0) {
+      this.handleButtonMute(cc - 40);
+      return;
+    }
+    // Linha 2: Solo (CC 48 a 55)
+    if (cc >= 48 && cc <= 55 && value > 0) {
+      this.handleButtonSolo(cc - 48);
+      return;
+    }
+    // Linha 3: Rec (CC 56 a 63)
+    if (cc >= 56 && cc <= 63 && value > 0) {
+      this.handleButtonRec(cc - 56);
+      return;
+    }
+    // Linha 4: Select (CC 64 a 71)
+    if (cc >= 64 && cc <= 71 && value > 0) {
+      this.handleButtonSelect(cc - 64);
+      return;
+    }
+
+    // E) Botões de Transporte & Navegação via CC (CC 80 a 88 ou CC 114 a 119):
+    if (value > 0) {
+      switch (cc) {
+        case 80: case 114: this.actionRewind(); return;
+        case 81: case 115: this.actionFastForward(); return;
+        case 82: case 116: this.actionStop(); return;
+        case 83: case 117: this.actionPlay(); return;
+        case 84: case 118: this.actionLoop(); return;
+        case 85: case 119: this.actionBlackout(); return;
+        case 86: this.prevBank(); return;
+        case 87: this.nextBank(); return;
+        case 88: this.actionTapTempo(); return;
+      }
+    }
+
+    // 3. CONTROLADORES GENÉRICOS & FALLBACKS (UNIVERSAL / MCU):
+    // ---------------------------------------------------------
+    // Volume por Canal (CC 7 em Canais 1 a 8):
     if (cc === 7 && channel >= 1 && channel <= 8) {
       const faderIdx = channel - 1;
       this.handleFaderInput(faderIdx, norm);
       return;
     }
+    if (cc === 7 && channel === 9) {
+      this.handleMasterFaderInput(norm);
+      return;
+    }
 
-    // C) M-Vave CC Mode - Pan por Canal (CC 10 em Canais 1 a 8):
+    // Pan por Canal (CC 10 em Canais 1 a 8):
     if (cc === 10 && channel >= 1 && channel <= 8) {
       const knobIdx = channel - 1;
       this.handleKnobInput(knobIdx, value, norm);
       return;
     }
 
-    // D) Faders Lineares Contínuos (CC 9 a 16 no Canal 1):
+    // Faders Lineares Genéricos (CC 9 a 16 no Canal 1):
     if (channel === 1 && cc >= 9 && cc <= 16) {
       const faderIdx = cc - 9;
       this.handleFaderInput(faderIdx, norm);
       return;
     }
 
-    // E) Knobs Lineares Contínuos (CC 1 a 8 no Canal 1):
+    // Knobs Lineares Genéricos (CC 1 a 8 no Canal 1):
     if (channel === 1 && cc >= 1 && cc <= 8) {
       const knobIdx = cc - 1;
       this.handleKnobInput(knobIdx, value, norm);
       return;
     }
 
-    // F) Master / Crossfader adicional (CC 17, CC 28, CC 11 ou CC 7 no Canal 9):
-    if (cc === 17 || cc === 28 || cc === 11 || (cc === 7 && channel === 9)) {
+    // Knobs MCU V-Pots (CC 16 a 23 apenas para perfil explícito 'mackie_universal'):
+    if (this.activeProfile === 'mackie_universal' && channel === 1 && cc >= 16 && cc <= 23) {
+      const knobIdx = cc - 16;
+      this.handleKnobInput(knobIdx, value, norm);
+      return;
+    }
+
+    // Master / Crossfader adicional genérico (CC 17, CC 11):
+    if (cc === 17 || cc === 11) {
       this.handleMasterFaderInput(norm);
       return;
     }
 
-    // G) Faders CC 0 no Canal 1 (ex: nanoKONTROL2 Fader 1):
+    // Fader CC 0 (ex: nanoKONTROL2 Fader 1):
     if (channel === 1 && cc === 0) {
       this.handleFaderInput(0, norm);
       return;
-    }
-
-    // H) Botões de Canal via CC (Padrão CC Mode M-Vave / Generic):
-    // Linha 1: Mute (CC 32 a 39)
-    if (cc >= 32 && cc <= 39 && value > 0) {
-      this.handleButtonMute(cc - 32);
-      return;
-    }
-    // Linha 2: Solo (CC 40 a 47)
-    if (cc >= 40 && cc <= 47 && value > 0) {
-      this.handleButtonSolo(cc - 40);
-      return;
-    }
-    // Linha 3: Rec (CC 48 a 55)
-    if (cc >= 48 && cc <= 55 && value > 0) {
-      this.handleButtonRec(cc - 48);
-      return;
-    }
-    // Linha 4: Select (CC 56 a 63)
-    if (cc >= 56 && cc <= 63 && value > 0) {
-      this.handleButtonSelect(cc - 56);
-      return;
-    }
-
-    // I) Botões de Transporte & Navegação via CC:
-    if (value > 0) {
-      switch (cc) {
-        case 64: this.actionRewind(); break;
-        case 65: this.actionFastForward(); break;
-        case 66: this.actionStop(); break;
-        case 67: this.actionPlay(); break;
-        case 68: this.actionLoop(); break;
-        case 69: this.actionTapTempo(); break;
-        case 70: this.prevBank(); break;
-        case 71: this.nextBank(); break;
-        case 72: this.actionBlackout(); break;
-      }
     }
   }
 
@@ -631,40 +660,46 @@ class PenumbraMidiHub {
   handleKnobInput(knobIdx, rawValue, normValue) {
     if (knobIdx < 0 || knobIdx > 7) return;
 
-    // Cálculo Balístico para Encoders Infinitos ou CCs
-    const now = performance.now();
-    const lastTime = this.encoderLastTime[knobIdx] || now;
-    const dt = Math.max(1, now - lastTime);
-    this.encoderLastTime[knobIdx] = now;
+    // Detecta se o controlador está operando em Modo Relativo (ex: Mackie MCU / Relative Sign-Magnitude)
+    // No modo relativo do M-Vave/MCU, os encoders enviam apenas 1 (+1) ou 65 (-1)
+    const isRelativeStep = (rawValue === 1 || rawValue === 65 || (rawValue >= 2 && rawValue <= 4) || (rawValue >= 66 && rawValue <= 68));
+    const isExplicitRelative = this.encoderMode === 'relative';
+    const isExplicitAbsolute = this.encoderMode === 'absolute';
 
-    // Aceleração: quanto menor o dt, maior o multiplicador de velocidade (até 4.5x)
-    const acceleration = dt < 30 ? 3.5 : (dt < 70 ? 2.0 : 1.0);
-    const baseStep = this.encoderSensitivities[this.activeSensitivity] * acceleration;
+    let newKnobVal;
+    if (isExplicitAbsolute || (!isExplicitRelative && !isRelativeStep && (rawValue > 4 && rawValue < 64 || rawValue > 68 && rawValue <= 127 || rawValue === 0))) {
+      // Modo Absoluto Direto Contínuo (0.0 a 1.0): segue a rotação do knob 1:1
+      newKnobVal = normValue;
+    } else if (isExplicitRelative || isRelativeStep) {
+      // Modo Relativo com aceleração balística
+      const now = performance.now();
+      const lastTime = this.encoderLastTime[knobIdx] || now;
+      const dt = Math.max(1, now - lastTime);
+      this.encoderLastTime[knobIdx] = now;
 
-    // Detecta se é modo relativo (Relative 1 / Sign-Magnitude / 2's complement) ou absoluto
-    let delta = 0;
-    if (rawValue === 127) {
-      delta = -baseStep;
-    } else if (rawValue >= 64 && rawValue <= 75) {
-      // Relative 1 / Sign-Magnitude (Mackie MCU / M-Vave): 65 = -1, 66 = -2, etc.
-      const steps = rawValue - 64;
-      delta = -(steps > 0 ? steps : 1) * baseStep;
-    } else if (rawValue >= 1 && rawValue <= 15) {
-      // Relative 1 / Sign-Magnitude: 1 = +1, 2 = +2, etc.
-      delta = rawValue * baseStep;
-    } else if (rawValue > 64 && rawValue < 127) {
-      // 2's complement: e.g. 126 = -2
-      delta = -(128 - rawValue) * baseStep;
+      // Aceleração balística por delta-t
+      const acceleration = dt < 30 ? 3.5 : (dt < 70 ? 2.0 : 1.0);
+      const baseStep = (this.encoderSensitivities[this.activeSensitivity] || 0.015) * acceleration;
+
+      let delta = 0;
+      if (rawValue === 1 || (rawValue >= 2 && rawValue <= 15)) {
+        delta = (rawValue > 0 ? rawValue : 1) * baseStep;
+      } else if (rawValue === 65 || (rawValue >= 66 && rawValue <= 75)) {
+        const steps = rawValue - 64;
+        delta = -(steps > 0 ? steps : 1) * baseStep;
+      } else if (rawValue === 127) {
+        delta = -baseStep;
+      } else {
+        delta = (normValue - (this.twinState.knobs[knobIdx] || 0.5)) * 0.15;
+      }
+
+      const currentKnobVal = this.twinState.knobs[knobIdx] || 0;
+      newKnobVal = Math.max(0, Math.min(1, currentKnobVal + delta));
     } else {
-      // Absolute Mode (0..127): LERP suave
-      const targetVal = normValue;
-      delta = (targetVal - (this.twinState.knobs[knobIdx] || 0.5)) * 0.15;
+      newKnobVal = normValue;
     }
 
-    const currentKnobVal = this.twinState.knobs[knobIdx] || 0;
-    const newKnobVal = Math.max(0, Math.min(1, currentKnobVal + delta));
     this.twinState.knobs[knobIdx] = newKnobVal;
-
     this.activeTelemetry.lastAction = `Knob ${knobIdx + 1} (${(newKnobVal * 100).toFixed(0)}%)`;
 
     // -------------------------------------------------------------
