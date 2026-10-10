@@ -1,21 +1,17 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 09/10/2026, 14:55:20 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 02:35:08 BRT
 
 ---
 
 ## Outubro de 2026
 
-### 📚 Documentação
-- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
-- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
-- `f1a6951` add ADR-0013 and update changelog for source orchestration
-- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
-
-### 🔄 Outros
-- `59149e4` **(vercel)** configure buildCommand and outputDirectory for automated static deployment
-
 ### ✨ Novos Recursos
+- `8903b66` **(transform-vj)** implement dual-tier clip pre-air transforms, Layer 5 overlay deck, locked master matte, and visual MIDI click-to-map
+- `f8026d4` **(media)** corrigir biblioteca de mattes e adicionar persistencia e relink de midias locais
+- `d1f2258` **(midi)** suporte dual-preset M-Vave (Banco 1 Faders ◄ & Banco 2 Botões ►) e navegação B1-B4
+- `6ded3cd` **(cockpit)** redesign master control bridge, folder bins media pool, web cache and smart dedup
+- `53dadb8` **(midi-pro)** advanced MIDI controller hub, hierarchical modal banks, interactive hardware twin and edge deployment
 - `3050f16` **(ingest)** unified broadcast Media Ingest Hub for Local SSD, Bunny CDN sync, and YouTube streams
 - `2f918ff` **(audio-ui)** hybrid web audio api dsp, local audio upload, emoji-free pro broadcast ui and instant storage switcher
 - `e0839ec` **(library)** studio two-column layout, sidebar bins and instant parameter edit navigation
@@ -26,13 +22,28 @@
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 
-### 🚀 Deploy & Infra
-- `6452e14` whitelist test_preview.mp3 for production at gigantera.xyz/penumbra
+### 📚 Documentação
+- `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
+- `a87bbba` **(state)** atualizar links de preview e handover
+- `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
+- `332f9d5` **(handover)** register ADR-38, update system state and establish feat/penumbra-collaborative-dev branch
+- `306937c` **(governance)** implement PR-first collaborative git flow and conflict prevention rule
+- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
+- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
+- `f1a6951` add ADR-0013 and update changelog for source orchestration
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
 
 ### 🐛 Correções
+- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
+- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
+- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
+- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
+- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
+- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
 - `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
 
 ### 🔧 Manutenção
+- `8acad70` Merge pull request #1 from Pelimotion/feat/collab-branch-pr-governance
 - `5c02002` auto-deploy + auto-docs on every commit (post-commit hook + update_docs.js)
 - `7095a42` Set default FPS to 30 and Network Outputs to OFF
 - `397dd4b` Enhance CDN Sync with Recursive IN/OUT Structure, Model Injection, and Secure PIN Unlock
@@ -46,4 +57,10 @@
 - `8b58c52` Implement HARS Architecture and CORS
 - `12cf409` Add tetrapod favicon
 - `fbcfa9d` Initial commit of Penumbra Engine
+
+### 🔄 Outros
+- `59149e4` **(vercel)** configure buildCommand and outputDirectory for automated static deployment
+
+### 🚀 Deploy & Infra
+- `6452e14` whitelist test_preview.mp3 for production at gigantera.xyz/penumbra
 

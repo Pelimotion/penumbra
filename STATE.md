@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 02:05:00 BRT
+- **Última Atualização:** 10/10/2026, 02:35:08 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -25,20 +25,20 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 10,567 | 422.4 KB |
-| `styles.css` | 8,759 | 171.0 KB |
-| `index.html` | 3,341 | 213.3 KB |
-| `Penumbra_Portable.html` | — | 883.4 KB |
+| `app.js` | 10,963 | 441.4 KB |
+| `styles.css` | 9,180 | 178.2 KB |
+| `index.html` | 3,462 | 223.4 KB |
+| `Penumbra_Portable.html` | — | 936.5 KB |
 
 ## 🎬 Media Pool
-- **Clipes no Manifesto:** 81 entradas (incluindo os 6 vídeos nativos da Bunny CDN)
+- **Clipes no Manifesto:** 81 entradas
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
 - **Branch:** `feat/penumbra-collaborative-dev`
-- **Último Commit:** `fd2f575` — fix(media-audio): fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
-- **Data:** 2026-10-10 01:11:14
-- **Total de Commits:** 43
+- **Último Commit:** `8903b66` — feat(transform-vj): implement dual-tier clip pre-air transforms, Layer 5 overlay deck, locked master matte, and visual MIDI click-to-map
+- **Data:** 2026-10-10 02:10:00
+- **Total de Commits:** 46
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
