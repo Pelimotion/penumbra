@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 17:37:57 BRT
+- **Última Atualização:** 10/10/2026, 17:40:48 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -36,9 +36,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `5e91eff` — feat(fx-engine): implement master fx bypass toggle, clean autopilot baseline and human-in-the-loop manual fx lock
-- **Data:** 2026-10-10 16:45:37
-- **Total de Commits:** 57
+- **Último Commit:** `f7cfaeb` — docs: sync architecture, state, and changelog for next session
+- **Data:** 2026-10-10 17:40:47
+- **Total de Commits:** 58
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
