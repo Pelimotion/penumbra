@@ -1489,11 +1489,12 @@ function syncVideoSources() {
   if (stripB) stripB.textContent = `CUE: ${appState.layers.layer3.name || appState.layers.layer3.clipId}`;
 }
 
-function getMatteImage(relPath) {
+function getMatteImage(relPath, invert = false) {
   if (!relPath || relPath === 'none') return null;
-  const src = `/mattes/${relPath}`;
-  if (lumaCanvasCache[src]) return lumaCanvasCache[src];
-  if (!matteCache[src]) {
+  const baseSrc = `/mattes/${relPath}`;
+  const cacheKey = invert ? `${baseSrc}_inv` : baseSrc;
+  if (lumaCanvasCache[cacheKey]) return lumaCanvasCache[cacheKey];
+  if (!matteCache[baseSrc]) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -1505,23 +1506,38 @@ function getMatteImage(relPath) {
         ctx.drawImage(img, 0, 0, 640, 360);
         const imgData = ctx.getImageData(0, 0, 640, 360);
         const d = imgData.data;
+
+        const cInv = document.createElement('canvas');
+        cInv.width = 640;
+        cInv.height = 360;
+        const ctxInv = cInv.getContext('2d', { willReadFrequently: true });
+        const imgDataInv = ctxInv.createImageData(640, 360);
+        const dInv = imgDataInv.data;
+
         for (let i = 0; i < d.length; i += 4) {
           const lum = Math.round(d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
           d[i] = 255;
           d[i+1] = 255;
           d[i+2] = 255;
           d[i+3] = lum;
+
+          dInv[i] = 255;
+          dInv[i+1] = 255;
+          dInv[i+2] = 255;
+          dInv[i+3] = 255 - lum;
         }
         ctx.putImageData(imgData, 0, 0);
-        lumaCanvasCache[src] = c;
+        ctxInv.putImageData(imgDataInv, 0, 0);
+        lumaCanvasCache[baseSrc] = c;
+        lumaCanvasCache[`${baseSrc}_inv`] = cInv;
       } catch (err) {
         console.warn('Luma matte conversion error:', err);
       }
     };
-    img.src = src;
-    matteCache[src] = img;
+    img.src = baseSrc;
+    matteCache[baseSrc] = img;
   }
-  return lumaCanvasCache[src] || (matteCache[src].complete && matteCache[src].naturalWidth > 0 ? matteCache[src] : null);
+  return lumaCanvasCache[cacheKey] || (matteCache[baseSrc].complete && matteCache[baseSrc].naturalWidth > 0 ? (lumaCanvasCache[cacheKey] || matteCache[baseSrc]) : null);
 }
 
 function getClipImage(clip) {
@@ -1958,7 +1974,7 @@ function getTonalFilterString(t) {
   return `contrast(${totalContrast}%) brightness(${totalBrightness}%) saturate(${totalSaturate}%)`;
 }
 
-function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
+function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0, invert = false) {
   const roundness = vig.roundness !== undefined ? Number(vig.roundness) : 0.65;
   const feather = Math.max(0.02, Number(vig.feather || 0.38));
   const innerR = Math.max(0.05, Number(vig.inner_radius || 0.42));
@@ -1975,9 +1991,15 @@ function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
     const rStart = maxDim * innerR * (1.0 - pulse);
     const rEnd = maxDim * outerR;
     const grad = ctx.createRadialGradient(cx, cy, Math.max(0, rStart), cx, cy, rEnd);
-    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    grad.addColorStop(Math.min(0.99, Math.max(0.01, 1.0 - feather)), 'rgba(0, 0, 0, 0.45)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    if (invert) {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      grad.addColorStop(Math.min(0.99, Math.max(0.01, feather)), 'rgba(0, 0, 0, 0.45)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    } else {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(Math.min(0.99, Math.max(0.01, 1.0 - feather)), 'rgba(0, 0, 0, 0.45)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    }
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
   } else {
@@ -1988,14 +2010,24 @@ function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
 
     ctx.filter = `blur(${featherPx}px)`;
     ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.rect(-featherPx * 2, -featherPx * 2, w + featherPx * 4, h + featherPx * 4);
-    if (ctx.roundRect) {
-      ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+    if (invert) {
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+      } else {
+        ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      }
+      ctx.fill();
     } else {
-      ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      ctx.beginPath();
+      ctx.rect(-featherPx * 2, -featherPx * 2, w + featherPx * 4, h + featherPx * 4);
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+      } else {
+        ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      }
+      ctx.fill('evenodd');
     }
-    ctx.fill('evenodd');
   }
   ctx.restore();
 }
@@ -2049,14 +2081,11 @@ function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false, matte
   ctx.translate(-w / 2, -h / 2);
   
   const isInv = invert || Boolean(cfg.invert) || Boolean(appState.matte?.invert);
-  if (isInv) {
-    ctx.filter = 'invert(100%)';
-  }
   
   const isVigMatte = (matteImg.src && (matteImg.src.includes('vignette') || matteImg.src.includes('vinheta'))) || vig.enabled;
   if (isVigMatte && vig.enabled) {
     const pulseBand = vig.audio_band === 'sub' ? (appState.bands?.sub || 0) : (appState.bands?.bass || 0);
-    drawProceduralVignette(ctx, w, h, vig, pulseBand);
+    drawProceduralVignette(ctx, w, h, vig, pulseBand, isInv);
   } else {
     drawFittedImage(ctx, matteImg, w, h, 'fill');
   }
@@ -3095,18 +3124,36 @@ function toggleLayerActive(layerId) {
 window.toggleLayerActive = toggleLayerActive;
 
 function onLayerMatteChange(layerId, val) {
-  if (appState.layers[layerId]) {
+  if (layerId === 'master') {
+    appState.master_matte = val;
+    sendAction('set_master_matte', { matte: val });
+    updateMatteRibbonActiveStatus();
+    renderMattesCards();
+  } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte = val;
     sendAction('set_layer_matte', { layer: layerId, matte: val });
+    if (appState.matte_target_layer === layerId) {
+      updateMatteRibbonActiveStatus();
+    }
   }
 }
 window.onLayerMatteChange = onLayerMatteChange;
 
 function toggleLayerMatteInvert(layerId) {
-  if (appState.layers[layerId]) {
+  if (layerId === 'master') {
+    appState.master_matte_invert = !appState.master_matte_invert;
+    sendAction('set_master_matte_invert', { value: appState.master_matte_invert });
+    if (appState.matte_target_layer === 'master') {
+      updateMatteRibbonActiveStatus();
+    }
+  } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte_invert = !appState.layers[layerId].matte_invert;
     const btn = document.getElementById(`${layerId.replace('layer', 'l')}-matte-inv`);
-    if (btn) btn.classList.toggle('active', appState.layers[layerId].matte_invert);
+    if (btn) btn.classList.toggle('active', !!appState.layers[layerId].matte_invert);
+    sendAction('set_layer_param', { layer: layerId, param: 'matte_invert', value: appState.layers[layerId].matte_invert });
+    if (appState.matte_target_layer === layerId) {
+      updateMatteRibbonActiveStatus();
+    }
   }
 }
 window.toggleLayerMatteInvert = toggleLayerMatteInvert;
@@ -3141,7 +3188,8 @@ window.setMatteTargetLayer = setMatteTargetLayer;
 
 function updateMatteRibbonActiveStatus() {
   const tgt = appState.matte_target_layer || 'layer3';
-  const currentMattePath = appState.layers[tgt]?.matte;
+  const currentMattePath = (tgt === 'master') ? appState.master_matte : appState.layers[tgt]?.matte;
+  const isInv = (tgt === 'master') ? !!appState.master_matte_invert : !!appState.layers[tgt]?.matte_invert;
   const titleEl = document.getElementById('target-active-matte-title');
   const btnClear = document.getElementById('btn-clear-target-matte');
   const btnInv = document.getElementById('btn-inv-target-matte');
@@ -3163,14 +3211,20 @@ function updateMatteRibbonActiveStatus() {
   }
 
   if (btnInv) {
-    btnInv.classList.toggle('active', !!appState.layers[tgt]?.matte_invert);
+    btnInv.classList.toggle('active', isInv);
   }
 }
 window.updateMatteRibbonActiveStatus = updateMatteRibbonActiveStatus;
 
 function clearCurrentTargetMatte() {
   const tgt = appState.matte_target_layer || 'layer3';
-  if (appState.layers[tgt]) {
+  if (tgt === 'master') {
+    appState.master_matte = 'none';
+    sendAction('set_master_matte', { matte: 'none' });
+    updateMatteRibbonActiveStatus();
+    renderMattesCards();
+    updateUI();
+  } else if (appState.layers[tgt]) {
     appState.layers[tgt].matte = 'none';
     const selId = tgt.replace('layer', 'l') + '-matte';
     const sel = document.getElementById(selId);
@@ -3185,7 +3239,13 @@ window.clearCurrentTargetMatte = clearCurrentTargetMatte;
 
 function toggleCurrentTargetMatteInvert() {
   const tgt = appState.matte_target_layer || 'layer3';
-  if (appState.layers[tgt]) {
+  if (tgt === 'master') {
+    appState.master_matte_invert = !appState.master_matte_invert;
+    const btnInv = document.getElementById('btn-inv-target-matte');
+    if (btnInv) btnInv.classList.toggle('active', !!appState.master_matte_invert);
+    sendAction('set_master_matte_invert', { value: appState.master_matte_invert });
+    updateMatteRibbonActiveStatus();
+  } else if (appState.layers[tgt]) {
     appState.layers[tgt].matte_invert = !appState.layers[tgt].matte_invert;
     const invBtnId = tgt.replace('layer', 'l') + '-matte-inv';
     const invBtn = document.getElementById(invBtnId);
@@ -3521,7 +3581,7 @@ function renderVisuals(time) {
       }
 
       // Apply Layer 0 Matte with invert support
-      const matteL0 = getMatteImage(appState.layers.layer0.matte);
+      const matteL0 = getMatteImage(appState.layers.layer0.matte, appState.layers.layer0.matte_invert);
       if (matteL0 && appState.layers.layer0.matte !== 'none') {
         offCtxA.save();
         offCtxA.globalCompositeOperation = 'destination-in';
@@ -3618,7 +3678,7 @@ function renderVisuals(time) {
         offCtxB.restore();
 
         // Apply Layer 3 Matte with invert support
-        const matteL3 = getMatteImage(appState.layers.layer3.matte);
+        const matteL3 = getMatteImage(appState.layers.layer3.matte, appState.layers.layer3.matte_invert);
         if (matteL3 && appState.layers.layer3.matte !== 'none') {
           offCtxB.save();
           offCtxB.globalCompositeOperation = 'destination-in';
@@ -3790,7 +3850,7 @@ function renderVisuals(time) {
           const totalPosY4 = (l4.pos_y || 0) + (clipTf4.pos_y || 0);
           drawFittedImage(offCtxB, accentSource, w, h, l4.fit_mode || 'fit', totalRot4, totalScale4, totalPosX4, totalPosY4);
 
-          const matteL4 = getMatteImage(appState.layers.layer4.matte);
+          const matteL4 = getMatteImage(appState.layers.layer4.matte, appState.layers.layer4.matte_invert);
           if (matteL4 && appState.layers.layer4.matte !== 'none') {
             offCtxB.save();
             offCtxB.globalCompositeOperation = 'destination-in';
@@ -3828,7 +3888,7 @@ function renderVisuals(time) {
           drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5, clipTf5.flip_h, clipTf5.flip_v);
           offCtxOverlay.restore();
 
-          const matteL5 = getMatteImage(l5.matte);
+          const matteL5 = getMatteImage(l5.matte, l5.matte_invert);
           if (matteL5 && l5.matte !== 'none') {
             offCtxOverlay.save();
             offCtxOverlay.globalCompositeOperation = 'destination-in';
@@ -3847,7 +3907,7 @@ function renderVisuals(time) {
 
     // 4.5. MASTER LOCKED MATTE (STATIC FRAMING OVERLAY) vs DYNAMIC MASTER MATTE
     if (!isBlackout && appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none') {
-      const lockedMatteImg = getMatteImage(appState.master_locked_matte);
+      const lockedMatteImg = getMatteImage(appState.master_locked_matte, appState.master_locked_matte_invert);
       if (lockedMatteImg) {
         prgCtx.save();
         prgCtx.globalCompositeOperation = 'destination-in';
@@ -3856,11 +3916,11 @@ function renderVisuals(time) {
         prgCtx.restore();
       }
     } else if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
-      const masterMatteImg = getMatteImage(appState.master_matte);
+      const masterMatteImg = getMatteImage(appState.master_matte, appState.master_matte_invert);
       if (masterMatteImg) {
         prgCtx.save();
         prgCtx.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, false, appState.master_matte);
+        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, Boolean(appState.master_matte_invert), appState.master_matte);
         prgCtx.restore();
       }
     }
@@ -7273,15 +7333,19 @@ window.syncActiveMatteToAppState = syncActiveMatteToAppState;
 function assignMatteToLayer(mattePath, layerId) {
   if (layerId === 'master') {
     appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
+    sendAction('set_master_matte', { matte: appState.master_matte });
   } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte = (appState.layers[layerId].matte === mattePath) ? 'none' : mattePath;
     const selId = layerId.replace('layer', 'l') + '-matte';
     const sel = document.getElementById(selId);
     if (sel) sel.value = appState.layers[layerId].matte;
+    sendAction('set_layer_matte', { layer: layerId, matte: appState.layers[layerId].matte });
   }
   syncActiveMatteToAppState(mattePath);
+  updateMatteRibbonActiveStatus();
   renderMattesCards();
   renderStudioInspector();
+  updateUI();
   if (typeof showMacroToast === 'function') {
     const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
     showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
@@ -7426,7 +7490,7 @@ function renderMattesCards() {
 
   const searchVal = (document.getElementById('input-matte-search')?.value || '').toLowerCase();
   const targetL = appState.matte_target_layer || 'layer3';
-  const targetMattePath = appState.layers[targetL]?.matte;
+  const targetMattePath = (targetL === 'master') ? appState.master_matte : appState.layers[targetL]?.matte;
   const isPassthrough = !targetMattePath || targetMattePath === 'none';
 
   // Always show Passthrough card when searching or viewing ALL
@@ -7463,7 +7527,7 @@ function renderMattesCards() {
 
   filtered.forEach(matte => {
     const card = document.createElement('div');
-    const isSelected = appState.layers[targetL]?.matte === matte.path;
+    const isSelected = (targetL === 'master') ? (appState.master_matte === matte.path) : (appState.layers[targetL]?.matte === matte.path);
     const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === matte.path);
     card.className = `matte-card ${isSelected ? 'selected' : ''} ${isInspecting ? 'is-inspect-selected' : ''}`;
     card.dataset.path = matte.path;
@@ -7525,14 +7589,7 @@ function renderMattesCards() {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const targetLayer = btn.dataset.layer;
-        appState.layers[targetLayer].matte = matte.path;
-        const selId = targetLayer.replace('layer', 'l') + '-matte';
-        const sel = document.getElementById(selId);
-        if (sel) sel.value = matte.path;
-        sendAction('set_layer_matte', { layer: targetLayer, matte: matte.path });
-        updateMatteRibbonActiveStatus();
-        renderMattesCards();
-        updateUI();
+        assignMatteToLayer(matte.path, targetLayer);
       });
     });
 
