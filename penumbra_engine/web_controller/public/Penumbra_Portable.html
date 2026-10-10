@@ -5710,6 +5710,75 @@ body.resizing-workspace-active .top-zone {
 .media-cat-badge.CHROMA { color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
 .media-cat-badge.STREAM { color: #ff334b; border: 1px solid rgba(255, 51, 75, 0.4); }
 
+.media-source-badge.badge-source-unlinked {
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  border: 1px solid #ef4444;
+}
+
+.badge-cache-status.is-unlinked {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  color: #ff6b6b !important;
+}
+
+.media-card.is-unlinked {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.media-card.is-unlinked .media-card-thumb img {
+  opacity: 0.65;
+  filter: grayscale(0.4);
+}
+
+.btn-card-relink {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid rgba(239, 68, 68, 0.6) !important;
+  color: #ff6b6b !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-card-relink:hover {
+  background: #ef4444 !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+/* RELINK BANNER AT TOP OF MEDIA POOL */
+.media-relink-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin: 0 0 10px 0;
+  font-size: 11px;
+  color: #e2e8f0;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.media-relink-banner .relink-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.media-relink-banner .relink-icon {
+  font-size: 14px;
+}
+
+.media-relink-banner .relink-banner-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .btn-card-download {
   background: rgba(0, 240, 255, 0.15) !important;
   color: #00f0ff !important;
@@ -14391,6 +14460,81 @@ const PenumbraMediaCache = {
 window.PenumbraMediaCache = PenumbraMediaCache;
 
 // ============================================================================
+// 0.45 INDEXEDDB DIRECTORY HANDLE PERSISTENCE ENGINE (CHROMIUM STRUCTURED CLONE)
+// ============================================================================
+const PenumbraIDB = {
+  DB_NAME: 'penumbra_local_storage_db',
+  STORE_HANDLES: 'folder_handles',
+  db: null,
+
+  init: async () => {
+    if (typeof indexedDB === 'undefined') return null;
+    if (PenumbraIDB.db) return PenumbraIDB.db;
+    return new Promise((resolve) => {
+      const req = indexedDB.open(PenumbraIDB.DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(PenumbraIDB.STORE_HANDLES)) {
+          db.createObjectStore(PenumbraIDB.STORE_HANDLES);
+        }
+      };
+      req.onsuccess = (e) => {
+        PenumbraIDB.db = e.target.result;
+        resolve(PenumbraIDB.db);
+      };
+      req.onerror = () => resolve(null);
+    });
+  },
+
+  setHandle: async (key, handle) => {
+    try {
+      const db = await PenumbraIDB.init();
+      if (!db) return false;
+      return new Promise((resolve) => {
+        const tx = db.transaction(PenumbraIDB.STORE_HANDLES, 'readwrite');
+        tx.objectStore(PenumbraIDB.STORE_HANDLES).put(handle, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    } catch (e) {
+      console.warn('[PenumbraIDB] Falha ao salvar DirectoryHandle:', e);
+      return false;
+    }
+  },
+
+  getHandle: async (key) => {
+    try {
+      const db = await PenumbraIDB.init();
+      if (!db) return null;
+      return new Promise((resolve) => {
+        const tx = db.transaction(PenumbraIDB.STORE_HANDLES, 'readonly');
+        const req = tx.objectStore(PenumbraIDB.STORE_HANDLES).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) {
+      return null;
+    }
+  },
+
+  clearHandle: async (key) => {
+    try {
+      const db = await PenumbraIDB.init();
+      if (!db) return false;
+      return new Promise((resolve) => {
+        const tx = db.transaction(PenumbraIDB.STORE_HANDLES, 'readwrite');
+        tx.objectStore(PenumbraIDB.STORE_HANDLES).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    } catch (e) {
+      return false;
+    }
+  }
+};
+window.PenumbraIDB = PenumbraIDB;
+
+// ============================================================================
 // 0.5 TRI-SOURCE MEDIA PROVIDER (STANDALONE VJ ARCHITECTURE)
 // ============================================================================
 const MediaProvider = {
@@ -14399,12 +14543,34 @@ const MediaProvider = {
   localFilesMap: new Map(), // relative_path -> File object
   localFilesByName: new Map(), // normalized_filename -> { file, path, isServer, size_mb }
 
+  isLocalFileConnected: (clip) => {
+    if (!clip) return false;
+    if (clip.is_stream || clip.is_generative) return true;
+    if (clip.has_local_match) return true;
+    if (clip.relative_path && MediaProvider.localFilesMap.has(clip.relative_path)) return true;
+    const norm = (clip.filename || '').toLowerCase().trim();
+    if (norm && MediaProvider.localFilesByName.has(norm)) return true;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      if (clip.is_downloaded || (clip.relative_path && !clip.relative_path.startsWith('LOCAL_') && !clip.relative_path.startsWith('EXTRA_'))) return true;
+    }
+    return false;
+  },
+
   initLocal: async (dirHandle) => {
     MediaProvider.mode = 'local';
     MediaProvider.localDirHandle = dirHandle;
     MediaProvider.localFilesMap.clear();
     MediaProvider.localFilesByName.clear();
     const clips = [];
+
+    // Persiste handle de diretório no IndexedDB para sessões futuras
+    if (dirHandle && typeof PenumbraIDB !== 'undefined') {
+      PenumbraIDB.setHandle('last_directory_handle', dirHandle);
+      if (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile) {
+        UserProfileManager.profile.last_local_folder_name = dirHandle.name;
+        UserProfileManager.save(false);
+      }
+    }
 
     // Auto-index local backend files if running on localhost
     await MediaProvider.initLocalFilesAutoIndex();
@@ -14533,6 +14699,13 @@ const MediaProvider = {
   },
 
   scanExtraDir: async (dirHandle) => {
+    if (dirHandle && typeof PenumbraIDB !== 'undefined') {
+      PenumbraIDB.setHandle('last_directory_handle', dirHandle);
+      if (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile) {
+        UserProfileManager.profile.last_local_folder_name = dirHandle.name;
+        UserProfileManager.save(false);
+      }
+    }
     const clips = [];
     async function scan(handle, currentPath = '') {
       for await (const entry of handle.values()) {
@@ -14725,21 +14898,32 @@ const MediaProvider = {
       return cleanDown;
     }
 
-    // 6. Standalone File System Access API
-    if (MediaProvider.mode === 'local') {
-      const file = MediaProvider.localFilesMap.get(relPath);
-      if (file) return URL.createObjectURL(file);
-      const baseName = relPath.split('/').pop();
-      for (const [k, v] of MediaProvider.localFilesMap.entries()) {
-        if (k.endsWith(baseName)) return URL.createObjectURL(v);
-      }
+    // 6. Standalone File System Access API & Local Ingested Files (Available in any mode)
+    if (MediaProvider.localFilesMap.has(relPath)) {
+      const f = MediaProvider.localFilesMap.get(relPath);
+      if (f instanceof File) return URL.createObjectURL(f);
+    }
+    const baseName = relPath.split('/').pop();
+    for (const [k, v] of MediaProvider.localFilesMap.entries()) {
+      if (k.endsWith(baseName) && (v instanceof File)) return URL.createObjectURL(v);
     }
 
     // 7. Local server streaming if on localhost and server running
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      if (relPath && !relPath.startsWith('http')) {
+      if (relPath && !relPath.startsWith('http') && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
         return `/api/raw-video?path=${encodeURIComponent(relPath)}`;
       }
+    }
+
+    // Se for arquivo explicitamente local do usuário que está desconectado, não redireciona para CDN
+    if (clip && (clip.is_local || clip.id.startsWith('local_') || relPath.startsWith('LOCAL_') || relPath.startsWith('EXTRA_'))) {
+      if (MediaProvider.localFilesByName.has(normName)) {
+        const item = MediaProvider.localFilesByName.get(normName);
+        if (item && item.file instanceof File) return URL.createObjectURL(item.file);
+      }
+      clip.is_disconnected = true;
+      clip.needs_relink = true;
+      return '';
     }
 
     // 8. Bunny Edge CDN (Universal reliable streaming fallback - GUARANTEES CLIPS NEVER BLACK)
@@ -14953,7 +15137,38 @@ let activeSourceFilter = 'ALL';
 let isGroupedByFolder = true;
 let isGroupedByCategory = false;
 let activeDownloadJobs = new Map();
-let allMattes = [];
+const DEFAULT_MATTES_CATALOG = [
+  { id: "matte_a_half_left", filename: "matte_a_half_left.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_half_left.png", name: "Metade Esquerda", description: "Split vertical 50% esquerdo", tags: ["split", "minimal"] },
+  { id: "matte_a_half_right", filename: "matte_a_half_right.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_half_right.png", name: "Metade Direita", description: "Split vertical 50% direito", tags: ["split", "minimal"] },
+  { id: "matte_a_half_top", filename: "matte_a_half_top.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_half_top.png", name: "Metade Superior", description: "Split horizontal 50% superior", tags: ["split", "horizontal"] },
+  { id: "matte_a_half_bottom", filename: "matte_a_half_bottom.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_half_bottom.png", name: "Metade Inferior", description: "Split horizontal 50% inferior", tags: ["split", "horizontal"] },
+  { id: "matte_a_third_center", filename: "matte_a_third_center.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_third_center.png", name: "Pilar Central (1/3)", description: "Coluna vertical centralizada de um terço", tags: ["pillar", "cinematic"] },
+  { id: "matte_a_golden_pillar", filename: "matte_a_golden_pillar.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_golden_pillar.png", name: "Monólito Áureo", description: "Proporção áurea vertical phi (0.382)", tags: ["sacred", "golden"] },
+  { id: "matte_a_center_circle", filename: "matte_a_center_circle.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_center_circle.png", name: "Abertura Circular", description: "Círculo concêntrico de foco central", tags: ["circle", "focus"] },
+  { id: "matte_a_anamorphic_slit", filename: "matte_a_anamorphic_slit.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_anamorphic_slit.png", name: "Fenda Anamórfica 2.39:1", description: "Letterbox cinemascope panorâmico", tags: ["anamorphic", "letterbox"] },
+  { id: "matte_a_dual_monolith", filename: "matte_a_dual_monolith.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_dual_monolith.png", name: "Monólitos Gêmeos", description: "Colunas laterais revelando centro negativo", tags: ["architectural", "brutalist"] },
+  { id: "matte_a_diagonal_slash", filename: "matte_a_diagonal_slash.png", category: "SOLIDS", category_folder: "cat_a_solids", path: "cat_a_solids/matte_a_diagonal_slash.png", name: "Corte Diagonal 45°", description: "Corte angular arquitetônico diagonal", tags: ["diagonal", "angular"] },
+  { id: "matte_b_penumbra_vignette", filename: "matte_b_penumbra_vignette.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_penumbra_vignette.png", name: "Penumbra Vignette Clássica", description: "Degradê suave protegendo o teto de escuridão", tags: ["vignette", "obsidian"] },
+  { id: "matte_b_feather_core", filename: "matte_b_feather_core.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_feather_core.png", name: "Núcleo Esfumado Oval", description: "Destaque orgânico central sem arestas duras", tags: ["feather", "core"] },
+  { id: "matte_b_soft_horizon", filename: "matte_b_soft_horizon.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_soft_horizon.png", name: "Horizonte Suave", description: "Degradê horizontal imitando neblina atmosférica", tags: ["horizon", "atmosphere"] },
+  { id: "matte_b_diagonal_wash", filename: "matte_b_diagonal_wash.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_diagonal_wash.png", name: "Lavagem Diagonal", description: "Luz oblíqua suave cinematográfica", tags: ["wash", "oblique"] },
+  { id: "matte_b_inverse_spotlight", filename: "matte_b_inverse_spotlight.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_inverse_spotlight.png", name: "Spotlight Invertido", description: "Núcleo ocluso em penumbra com periferia revelada", tags: ["inverse", "negative"] },
+  { id: "matte_b_smoke_density", filename: "matte_b_smoke_density.png", category: "SOFT", category_folder: "cat_b_soft", path: "cat_b_soft/matte_b_smoke_density.png", name: "Densidade de Névoa", description: "Micro-textura esfumada em suspensão", tags: ["smoke", "texture"] },
+  { id: "matte_c_staccato_blinds", filename: "matte_c_staccato_blinds.png", category: "TEMPO", category_folder: "cat_c_tempo", path: "cat_c_tempo/matte_c_staccato_blinds.png", name: "Persianas Verticais (16)", description: "Ripas arquitetônicas para sincronia rítmica", tags: ["staccato", "rhythm"] },
+  { id: "matte_c_horizontal_slits", filename: "matte_c_horizontal_slits.png", category: "TEMPO", category_folder: "cat_c_tempo", path: "cat_c_tempo/matte_c_horizontal_slits.png", name: "Fendas Horizontais (12)", description: "Ripas horizontais tipo persiana veneziana", tags: ["staccato", "raster"] },
+  { id: "matte_c_stepped_rings", filename: "matte_c_stepped_rings.png", category: "TEMPO", category_folder: "cat_c_tempo", path: "cat_c_tempo/matte_c_stepped_rings.png", name: "Anéis Concêntricos", description: "Ondas circulares quantizadas em tempo", tags: ["rings", "ripple"] },
+  { id: "matte_c_raster_checker", filename: "matte_c_raster_checker.png", category: "TEMPO", category_folder: "cat_c_tempo", path: "cat_c_tempo/matte_c_raster_checker.png", name: "Xadrez Raster Eletrônico", description: "Malha brutalista Berlin club", tags: ["raster", "checker"] },
+  { id: "matte_c_barcode_slits", filename: "matte_c_barcode_slits.png", category: "TEMPO", category_folder: "cat_c_tempo", path: "cat_c_tempo/matte_c_barcode_slits.png", name: "Código de Barras Modular", description: "Intervalos assíncronos inspirados em partituras gráficas", tags: ["barcode", "serial"] },
+  { id: "matte_d_organic_fluid", filename: "matte_d_organic_fluid.png", category: "PROCEDURAL", category_folder: "cat_d_procedural", path: "cat_d_procedural/matte_d_organic_fluid.png", name: "Fluido Mármore Líquido", description: "Morfologia orgânica de densidade líquida", tags: ["fluid", "organic"] },
+  { id: "matte_d_dark_nebula", filename: "matte_d_dark_nebula.png", category: "PROCEDURAL", category_folder: "cat_d_procedural", path: "cat_d_procedural/matte_d_dark_nebula.png", name: "Nebulosa Cavernosa", description: "Gradiente procedural escuro de alta granulação", tags: ["nebula", "dark"] },
+  { id: "matte_d_lissajous_aperture", filename: "matte_d_lissajous_aperture.png", category: "PROCEDURAL", category_folder: "cat_d_procedural", path: "cat_d_procedural/matte_d_lissajous_aperture.png", name: "Abertura Lissajous", description: "Harmônicos matemáticos com roll-off suave", tags: ["lissajous", "harmonic"] },
+  { id: "matte_d_cloud_caverns", filename: "matte_d_cloud_caverns.png", category: "PROCEDURAL", category_folder: "cat_d_procedural", path: "cat_d_procedural/matte_d_cloud_caverns.png", name: "Caverna de Nuvens", description: "Bolsões de escuridão profunda com fendas de luz", tags: ["clouds", "cavern"] },
+  { id: "matte_e_diamond_lattice", filename: "matte_e_diamond_lattice.png", category: "STRUCTURAL", category_folder: "cat_e_structural", path: "cat_e_structural/matte_e_diamond_lattice.png", name: "Treliça de Losangos", description: "Geometria estrutural em arame de diamante", tags: ["wireframe", "lattice"] },
+  { id: "matte_e_architectural_portal", filename: "matte_e_architectural_portal.png", category: "STRUCTURAL", category_folder: "cat_e_structural", path: "cat_e_structural/matte_e_architectural_portal.png", name: "Portal de Arco", description: "Arco monumental de galeria de arte contemporânea", tags: ["portal", "arch"] },
+  { id: "matte_e_blueprint_reticle", filename: "matte_e_blueprint_reticle.png", category: "STRUCTURAL", category_folder: "cat_e_structural", path: "cat_e_structural/matte_e_blueprint_reticle.png", name: "Retículo de Blueprint", description: "Marcadores de enquadramento técnico industrial", tags: ["blueprint", "viewfinder"] },
+  { id: "matte_e_concentric_hexagons", filename: "matte_e_concentric_hexagons.png", category: "STRUCTURAL", category_folder: "cat_e_structural", path: "cat_e_structural/matte_e_concentric_hexagons.png", name: "Hexágonos Concêntricos", description: "Estrutura isométrica com ritmo de expansão", tags: ["hexagon", "isometric"] }
+];
+let allMattes = [...DEFAULT_MATTES_CATALOG];
 let activeMatteCategoryFilter = 'ALL';
 let activeSelectedMatte = null;
 let ws = null;
@@ -19283,19 +19498,66 @@ function renderQueueCards() {
 // ============================================================================
 // 9.1 MATTE CATALOG & PROCEDURAL LIBRARY BROWSER
 // ============================================================================
+const MATTE_SVG_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='68' viewBox='0 0 120 68'><rect width='120' height='68' fill='%2310131a'/><rect x='28' y='12' width='64' height='44' rx='4' fill='%2300f0ff' fill-opacity='0.18' stroke='%2300f0ff' stroke-width='1.5'/><text x='60' y='38' fill='%2300f0ff' font-size='9' font-weight='bold' font-family='sans-serif' text-anchor='middle'>ALPHA MATTE</text></svg>";
+
+function getMatteThumbUrl(matte) {
+  if (!matte) return '';
+  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  if (!mPath) return '';
+  if (MediaProvider.mode === 'cdn' || window.location.hostname.includes('b-cdn.net') || window.location.hostname.includes('vercel.app')) {
+    return `https://gigantera-penumbra.b-cdn.net/mattes/${mPath}`;
+  }
+  return `./mattes/${mPath}`;
+}
+
 async function loadMattesCatalog() {
   try {
-    if (MediaProvider.mode === 'cdn' || MediaProvider.mode === 'lan') {
-      const res = await fetch(HARS.resolveUrl('/api/mattes'));
-      if (res.ok) allMattes = await res.json();
+    let loaded = false;
+    // 1. Tenta API do servidor local se estiver no localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      try {
+        const res = await fetch(HARS.resolveUrl('/api/mattes'));
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allMattes = data;
+            loaded = true;
+          }
+        }
+      } catch (e) {}
     }
     
-    // Standalone fallback: if no backend, provide default procedural mattes
+    // 2. Tenta carregar mattes_manifest.json estático (Vercel ou servidor estático)
+    if (!loaded) {
+      try {
+        const resM = await fetch(HARS.resolveUrl('mattes_manifest.json'));
+        if (resM.ok) {
+          const data = await resM.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allMattes = data;
+            loaded = true;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 3. Tenta carregar do CDN Bunny Edge
+    if (!loaded) {
+      try {
+        const resCdn = await fetch('https://gigantera-penumbra.b-cdn.net/mattes_manifest.json');
+        if (resCdn.ok) {
+          const data = await resCdn.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allMattes = data;
+            loaded = true;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 4. Se tudo falhar, utiliza catálogo embutido completo (29 mattes nativos)
     if (!allMattes || allMattes.length === 0) {
-      allMattes = [
-        { id: 'matte_procedural_circle', filename: 'Circulo Suave', category: 'PROCEDURAL', is_procedural: true, shape: 'circle' },
-        { id: 'matte_procedural_diamond', filename: 'Diamante', category: 'PROCEDURAL', is_procedural: true, shape: 'diamond' }
-      ];
+      allMattes = [...DEFAULT_MATTES_CATALOG];
     }
     
     const countLbl = document.getElementById('dock-matte-count');
@@ -19303,7 +19565,10 @@ async function loadMattesCatalog() {
     populateMatteDropdowns();
     renderMattesCards();
   } catch (e) {
-    console.error('[!] Failed to load mattes catalog:', e);
+    console.warn('[!] Usando catálogo de mattes embutido nativo:', e);
+    allMattes = [...DEFAULT_MATTES_CATALOG];
+    populateMatteDropdowns();
+    renderMattesCards();
   }
 }
 
@@ -19369,7 +19634,9 @@ function renderMattesCards() {
   }
 
   const filtered = allMattes.filter(m => {
-    const matchSearch = !searchVal || m.name.toLowerCase().includes(searchVal) || m.description.toLowerCase().includes(searchVal) || (m.tags && m.tags.some(t => t.toLowerCase().includes(searchVal)));
+    const mName = m.name || m.filename || '';
+    const mDesc = m.description || m.category || '';
+    const matchSearch = !searchVal || mName.toLowerCase().includes(searchVal) || mDesc.toLowerCase().includes(searchVal) || (m.tags && m.tags.some(t => t.toLowerCase().includes(searchVal)));
     if (!matchSearch) return false;
     if (activeMatteCategoryFilter === 'ALL') return true;
     return m.category === activeMatteCategoryFilter;
@@ -19390,16 +19657,19 @@ function renderMattesCards() {
     if (appState.layers.layer4?.matte?.includes(matte.filename)) activeLayers.push('L4');
 
     const pillsHtml = activeLayers.map(l => `<span class="matte-active-pill">${l}</span>`).join('');
+    const mName = matte.name || matte.filename?.replace('.png', '').replace(/_/g, ' ') || 'Máscara Recorte';
+    const mDesc = matte.description || matte.category || 'Recorte alpha de camada';
+    const thumbUrl = getMatteThumbUrl(matte);
 
     card.innerHTML = `
       <div class="matte-thumb-wrap">
-        <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}" class="matte-thumb-img">
-        <span class="matte-badge-cat">${matte.category}</span>
+        <img src="${thumbUrl}" loading="lazy" alt="${mName}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';" class="matte-thumb-img">
+        <span class="matte-badge-cat">${matte.category || 'MATTE'}</span>
         <div class="matte-active-layers">${pillsHtml}</div>
       </div>
       <div class="matte-info">
-        <div class="matte-name" title="${matte.name}">${matte.name} ${isSelected ? '<span style="color:var(--cyan);font-size:8px;">[ATIVA]</span>' : ''}</div>
-        <div class="matte-desc" title="${matte.description}">${matte.description}</div>
+        <div class="matte-name" title="${mName}">${mName} ${isSelected ? '<span style="color:var(--cyan);font-size:8px;">[ATIVA]</span>' : ''}</div>
+        <div class="matte-desc" title="${mDesc}">${mDesc}</div>
       </div>
       <div class="matte-quick-routes">
         ${isSelected ? `<button class="btn-route-clear" style="margin-bottom:3px;">✕ REMOVER DE ${targetL.replace('layer', 'L').toUpperCase()}</button>` : ''}
@@ -19862,6 +20132,9 @@ async function loadMediaPool(providedClips = null) {
     renderMediaCards();
     renderQueueCards();
     syncVideoSources();
+    if (typeof checkSavedDirectoryHandle === 'function') {
+      checkSavedDirectoryHandle().catch(() => {});
+    }
   } catch (e) {
     console.error('[!] Failed to load media pool:', e);
   }
@@ -19959,6 +20232,7 @@ const UserProfileManager = {
       ui: { group_by_category: true, active_source_filter: "ALL", active_category_filter: "ALL", hover_preview_enabled: true, hover_preview_delay_ms: 280 }
     },
     custom_clips: [],
+    last_local_folder_name: "",
     category_overrides: {},
     cached_media_registry: {}
   },
@@ -20056,6 +20330,11 @@ const UserProfileManager = {
     if (!Array.isArray(UserProfileManager.profile.custom_clips)) return;
     UserProfileManager.profile.custom_clips.forEach(c => {
       if (!allClips.some(existing => existing.id === c.id || existing.filename === c.filename)) {
+        if (c.is_local || c.id.startsWith('local_')) {
+          const isConnected = MediaProvider.isLocalFileConnected(c);
+          c.is_disconnected = !isConnected;
+          c.needs_relink = !isConnected;
+        }
         allClips.unshift(c);
       }
     });
@@ -20153,15 +20432,249 @@ window.UserProfileManager = UserProfileManager;
 
 function saveCustomClipsToStorage() {
   try {
-    const custom = allClips.filter(c => c.is_stream || c.is_downloaded || c.id.startsWith('stream_') || c.id.startsWith('clip_dl_'));
+    const custom = allClips.filter(c => 
+      c.is_stream || 
+      c.is_downloaded || 
+      c.is_local ||
+      c.id.startsWith('stream_') || 
+      c.id.startsWith('clip_dl_') ||
+      c.id.startsWith('local_')
+    ).map(c => {
+      const clone = { ...c };
+      if (clone.blob_url && clone.blob_url.startsWith('blob:')) delete clone.blob_url;
+      return clone;
+    });
     UserProfileManager.profile.custom_clips = custom;
     UserProfileManager.save(true);
     localStorage.setItem('penumbra_custom_clips', JSON.stringify(custom));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('[CustomClips] Erro ao persistir clipes:', e);
+  }
 }
 
 function loadCustomClipsFromStorage() {
   UserProfileManager.rehydrateCustomClips();
+}
+
+// ============================================================================
+// 0.46 SMART MEDIA RELINK & RESTORATION ENGINE (BEST-PRACTICES FOR LOCAL ASSETS)
+// ============================================================================
+async function relinkWithDirectoryHandle(dirHandle, options = {}) {
+  if (!dirHandle) return 0;
+  const { silent = false } = options;
+  try {
+    if (typeof PenumbraIDB !== 'undefined') {
+      await PenumbraIDB.setHandle('last_directory_handle', dirHandle);
+    }
+    if (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile) {
+      UserProfileManager.profile.last_local_folder_name = dirHandle.name;
+      UserProfileManager.save(false);
+    }
+
+    const VALID_EXTS = new Set(['mp4', 'mov', 'webm', 'm4v', 'mkv', 'avi', 'mp3', 'wav']);
+    const IGNORED = new Set(['.git', '.ds_store', 'node_modules', 'dist', 'build', '.agents']);
+
+    async function scan(handle, currentPath = '') {
+      for await (const entry of handle.values()) {
+        const lower = (entry.name || '').toLowerCase().trim();
+        if (!lower || IGNORED.has(lower) || lower.startsWith('.')) continue;
+        const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+        if (entry.kind === 'file') {
+          const ext = lower.split('.').pop();
+          if (VALID_EXTS.has(ext)) {
+            try {
+              const file = await entry.getFile();
+              MediaProvider.localFilesMap.set(entryPath, file);
+              MediaProvider.localFilesByName.set(lower, {
+                file,
+                path: entryPath,
+                filename: entry.name,
+                size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
+                isServer: false
+              });
+            } catch (fe) {}
+          }
+        } else if (entry.kind === 'directory') {
+          await scan(entry, entryPath);
+        }
+      }
+    }
+
+    await scan(dirHandle);
+
+    let relinkedCount = 0;
+    allClips.forEach(clip => {
+      if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
+        const norm = (clip.filename || '').toLowerCase().trim();
+        const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+        const match = MediaProvider.localFilesByName.get(norm) || (baseName ? MediaProvider.localFilesByName.get(baseName) : null);
+        if (match && match.file instanceof File) {
+          clip.is_disconnected = false;
+          clip.needs_relink = false;
+          clip.local_match_info = match;
+          if (match.path) clip.relative_path = match.path;
+          MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+          relinkedCount++;
+        }
+      }
+    });
+
+    MediaProvider.syncSmartDeduplication();
+    saveCustomClipsToStorage();
+    if (typeof renderFolderPills === 'function') renderFolderPills();
+    renderMediaCards();
+    updateCategoryAndSourceBadges();
+    if (typeof updateIngestStats === 'function') updateIngestStats();
+
+    if (!silent && typeof showHudMacroToast === 'function') {
+      showHudMacroToast(`[RELINK] ✓ ${relinkedCount} clipe(s) reconectado(s) em "${dirHandle.name}"`);
+    }
+    return relinkedCount;
+  } catch (err) {
+    console.warn('[Relink] Erro ao reconectar pasta:', err);
+    return 0;
+  }
+}
+window.relinkWithDirectoryHandle = relinkWithDirectoryHandle;
+
+window.relinkWithFiles = async function(fileList) {
+  if (!fileList || fileList.length === 0) return 0;
+  let relinkedCount = 0;
+  for (const file of Array.from(fileList)) {
+    const norm = file.name.toLowerCase().trim();
+    const relPath = file.webkitRelativePath || file.name;
+    MediaProvider.localFilesMap.set(relPath, file);
+    MediaProvider.localFilesByName.set(norm, {
+      file,
+      path: relPath,
+      filename: file.name,
+      size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
+      isServer: false
+    });
+  }
+
+  allClips.forEach(clip => {
+    if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
+      const norm = (clip.filename || '').toLowerCase().trim();
+      const match = MediaProvider.localFilesByName.get(norm);
+      if (match && match.file instanceof File) {
+        clip.is_disconnected = false;
+        clip.needs_relink = false;
+        relinkedCount++;
+      }
+    }
+  });
+
+  MediaProvider.syncSmartDeduplication();
+  saveCustomClipsToStorage();
+  if (typeof renderFolderPills === 'function') renderFolderPills();
+  renderMediaCards();
+  updateCategoryAndSourceBadges();
+  if (typeof updateIngestStats === 'function') updateIngestStats();
+
+  if (typeof showHudMacroToast === 'function') {
+    showHudMacroToast(`[RELINK] ✓ ${relinkedCount} clipe(s) reconectado(s) com sucesso`);
+  }
+  return relinkedCount;
+};
+
+window.relinkLocalMediaFolder = async function() {
+  try {
+    const savedHandle = typeof PenumbraIDB !== 'undefined' ? await PenumbraIDB.getHandle('last_directory_handle') : null;
+    if (savedHandle) {
+      try {
+        let perm = await savedHandle.queryPermission({ mode: 'read' });
+        if (perm === 'prompt') {
+          perm = await savedHandle.requestPermission({ mode: 'read' });
+        }
+        if (perm === 'granted') {
+          const count = await relinkWithDirectoryHandle(savedHandle);
+          if (count > 0) return;
+        }
+      } catch (e) {}
+    }
+
+    if (typeof window.showDirectoryPicker === 'function') {
+      const handle = await window.showDirectoryPicker({ mode: 'read' });
+      await relinkWithDirectoryHandle(handle);
+      return;
+    }
+
+    window.relinkWithFileInput();
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.warn('[Relink] Falha ao selecionar pasta:', err);
+    }
+  }
+};
+
+window.relinkWithFileInput = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
+  input.webkitdirectory = true;
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = async () => {
+    if (input.files && input.files.length > 0) {
+      await window.relinkWithFiles(input.files);
+    }
+    input.remove();
+  };
+  input.click();
+};
+
+window.relinkSpecificClip = function(clipId, event) {
+  if (event) event.stopPropagation();
+  const clip = allClips.find(c => c.id === clipId);
+  if (!clip) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'video/*,audio/*';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = async () => {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const norm = clip.filename.toLowerCase().trim();
+      MediaProvider.localFilesMap.set(clip.relative_path, file);
+      MediaProvider.localFilesByName.set(norm, {
+        file,
+        path: clip.relative_path,
+        filename: file.name,
+        size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
+        isServer: false
+      });
+      clip.is_disconnected = false;
+      clip.needs_relink = false;
+      saveCustomClipsToStorage();
+      renderMediaCards();
+      if (typeof showHudMacroToast === 'function') {
+        showHudMacroToast(`[RELINK] ✓ Clipe "${clip.filename}" reconectado!`);
+      }
+    }
+    input.remove();
+  };
+  input.click();
+};
+
+async function checkSavedDirectoryHandle() {
+  try {
+    if (typeof PenumbraIDB === 'undefined') return false;
+    const handle = await PenumbraIDB.getHandle('last_directory_handle');
+    if (!handle) return false;
+    const perm = await handle.queryPermission({ mode: 'read' });
+    if (perm === 'granted') {
+      console.log(`[Relink Auto] Permissão concedida para pasta "${handle.name}", reconectando silenciosamente...`);
+      await relinkWithDirectoryHandle(handle, { silent: true });
+      return true;
+    } else {
+      console.log(`[Relink Auto] Pasta anterior "${handle.name}" salva, aguardando clique de reconexão do usuário.`);
+    }
+  } catch (e) {
+    console.warn('[Relink Auto] Falha ao verificar handle salvo:', e);
+  }
+  return false;
 }
 
 function getClipSource(clip) {
@@ -20578,13 +21091,16 @@ function createMediaCardElement(clip) {
   const card = document.createElement('div');
   const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
   const clipSource = getClipSource(clip);
-  card.className = `media-card ${isGen ? 'is-generative' : ''} source-${clipSource}`;
+  const isUnlinked = Boolean((clip.is_local || clip.id.startsWith('local_')) && (clip.is_disconnected || !MediaProvider.isLocalFileConnected(clip)));
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} source-${clipSource}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
 
   let srcBadgeHtml = '';
-  if (clip.has_local_match) {
+  if (isUnlinked) {
+    srcBadgeHtml = '<span class="media-source-badge badge-source-unlinked" title="Arquivo local do seu computador desconectado nesta sessão">⚠️ DESVINCULADO</span>';
+  } else if (clip.has_local_match) {
     srcBadgeHtml = '<span class="media-source-badge badge-source-local-match" title="Arquivo idêntico encontrado no SSD local da máquina (0ms latência, 0 dados consumidos)">⚡ LOCAL NATIVO</span>';
   } else if (clipSource === 'cdn') {
     srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ NUVEM</span>';
@@ -20601,7 +21117,9 @@ function createMediaCardElement(clip) {
   // Cache Status Check
   const cacheInfo = UserProfileManager.getCacheDetails(clip);
   let cacheBadgeHtml = '';
-  if (clip.has_local_match) {
+  if (isUnlinked) {
+    cacheBadgeHtml = `<span class="badge-cache-status is-unlinked" title="Arquivo desconectado · Clique em RELINK para apontar a pasta">DESCONECTADO</span>`;
+  } else if (clip.has_local_match) {
     cacheBadgeHtml = `<span class="badge-cache-status is-local-match" title="Disponível no SSD local em ${clip.local_match_rel || '1. In'}">LOCAL 100%</span>`;
   } else if (cacheInfo.isCached) {
     cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">CACHED</span>`;
@@ -20617,7 +21135,9 @@ function createMediaCardElement(clip) {
     : `<span class="media-folder-badge" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}')" title="Filtrar por esta pasta: ${clipFolder}">📁 ${clipFolder}</span>`;
 
   let actionBtnHtml = '';
-  if (clip.has_local_match) {
+  if (isUnlinked) {
+    actionBtnHtml = `<button class="btn-route btn-card-relink" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe ou pasta no computador">🔗 RELINK</button>`;
+  } else if (clip.has_local_match) {
     actionBtnHtml = `<button class="btn-route btn-card-activate is-active-cached" title="Arquivo disponível no SSD local da sua máquina. 0 dados consumidos." onclick="event.stopPropagation();">✓ LOCAL</button>`;
   } else if (cacheInfo.isCached) {
     actionBtnHtml = `<button class="btn-route btn-card-activate is-active-cached" title="Clipe ativo em cache persistente local." onclick="event.stopPropagation();">✓ ATIVO</button>`;
@@ -20794,25 +21314,31 @@ function createMatteCardForLibrary(matte) {
   card.className = 'library-card-matte';
   const targetL = appState.matte_target_layer || 'layer3';
 
+  const mName = matte.name || matte.filename?.replace('.png', '').replace(/_/g, ' ') || 'Máscara Recorte';
+  const mDesc = matte.description || matte.category || 'Recorte alpha de camada';
+  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const mCat = matte.category || 'MATTE';
+  const thumbUrl = getMatteThumbUrl(matte);
+
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
-      <img src="/mattes/${matte.path}" loading="lazy" alt="${matte.name}">
-      <span class="lib-badge-type lib-badge-matte">MATTE</span>
+      <img src="${thumbUrl}" loading="lazy" alt="${mName}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';">
+      <span class="lib-badge-type lib-badge-matte">${mCat}</span>
     </div>
     <div class="library-card-info">
-      <div class="library-card-title">${matte.name}</div>
-      <div class="library-card-desc">${matte.description || matte.category}</div>
+      <div class="library-card-title" title="${mName}">${mName}</div>
+      <div class="library-card-desc" title="${mDesc}">${mDesc}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${matte.path}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${matte.path}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
-      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${matte.path}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${matte.path}', '${matte.name}')" title="Editar parâmetros e cinemática no Módulo 3">PARÂMETROS</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${mPath}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${mPath}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${mPath}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${mPath}', '${mName}')" title="Editar parâmetros e cinemática no Módulo 3">PARÂMETROS</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    editMatteParameters(matte.path, matte.name);
+    editMatteParameters(mPath, mName);
   });
 
   return card;
@@ -21176,6 +21702,27 @@ function renderMediaCards() {
   }
 
   // 4. CLIPS & ALL VIEW
+  const unlinkedClips = allClips.filter(c => (c.is_local || c.id.startsWith('local_')) && (c.is_disconnected || !MediaProvider.isLocalFileConnected(c)));
+  if (unlinkedClips.length > 0 && activeLibraryAssetType !== 'mattes' && activeLibraryAssetType !== 'fx' && activeLibraryAssetType !== 'presets' && activeSourceFilter !== 'cdn') {
+    const lastFolderName = (UserProfileManager.profile && UserProfileManager.profile.last_local_folder_name) ? UserProfileManager.profile.last_local_folder_name : 'Sua pasta de mídias';
+    const relinkBanner = document.createElement('div');
+    relinkBanner.className = 'media-relink-banner';
+    relinkBanner.innerHTML = `
+      <div class="relink-banner-info">
+        <span class="relink-icon">📁⚠️</span>
+        <div>
+          <strong>${unlinkedClips.length} CLIPE(S) LOCAL(IS) DESVINCULADO(S)</strong>
+          <div style="font-size:9.5px; opacity:0.8;">Pasta de origem: <em>${lastFolderName}</em>. Reconecte a pasta para restaurar a reprodução instantânea.</div>
+        </div>
+      </div>
+      <div class="relink-banner-actions">
+        <button class="btn btn-primary btn-xs" onclick="window.relinkLocalMediaFolder()" title="Reconectar pasta de mídias local via File System Access">⚡ RECONECTAR PASTA</button>
+        <button class="btn btn-outline btn-xs" onclick="window.relinkWithFileInput()" title="Selecionar arquivos ou pasta manualmente">📂 LOCALIZAR ARQUIVOS</button>
+      </div>
+    `;
+    container.appendChild(relinkBanner);
+  }
+
   const filtered = allClips.filter(c => {
     const projText = (c.project || '').toLowerCase();
     const folderText = (c.project_folder || '').toLowerCase();
@@ -22915,6 +23462,7 @@ function bootstrapApp() {
         const newClips = await MediaProvider.scanExtraDir(handle);
         if (newClips.length > 0) {
           allClips.push(...newClips);
+          saveCustomClipsToStorage();
           renderFolderPills();
           renderMediaCards();
           updateSourceUI('local');

@@ -1,9 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 09/10/2026, 23:05:08 BRT
+- **Última Atualização:** 10/10/2026, 00:30:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
+- **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
 ## Pipeline de Processos
@@ -24,25 +26,11 @@
 - **Clipes no Manifesto:** 75 entradas
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
-## 🔢 Git Status & Governança Colaborativa
-- **Branch Ativa:** `feat/penumbra-collaborative-dev`
-- **Protocolo:** PR-First (Desenvolvimento na branch dedicada → Push → Pull Request para `main` sem conflitos)
-- **Repositório Principal:** [Pelimotion/penumbra](https://github.com/Pelimotion/penumbra)
-- **Pull Request Aberto:** PR #2 (`feat/penumbra-collaborative-dev` -> `main`)
-
-## 🤝 Handover & Recursos Ativos
-1. **Branch de Trabalho:** Continuar exclusivamente na branch `feat/penumbra-collaborative-dev`.
-2. **Ambiente de Testes / Preview:**
-   - **Local Dev Server:** `http://localhost:3000/`
-   - **Popout Clean Feed:** `http://localhost:3000/popout.html?view=program`
-   - **Bunny Edge CDN Online:** `https://gigantera-penumbra.b-cdn.net/index.html`
-   - **Executável Portátil CDN:** `https://gigantera-penumbra.b-cdn.net/Penumbra_Portable.html`
-   - **Vercel Preview (PR #2):** `https://penumbra-git-feat-penumbra-3eb824-pelimotionart-6049s-projects.vercel.app/penumbra/`
-3. **Hardware Twin & MIDI:**
-   - **M-Vave SMC-MIXER Dual Preset Engine:** Detecção automática e comutação instantânea entre **Banco 1 (Seta Esquerda ◄ - Faders & Encoders 1:1)** e **Banco 2 (Seta Direita ► - Matriz de 32 Botões Mute/Solo/Rec/Select + Transporte)**.
-   - **Navegação B1–B4 (4 Modos de Software):** B1 Master Live Mixer, B2 Layer Focus & Params, B3 Conductor Macros, B4 Color Lab.
-   - **Métodos de Seleção B1–B4:** Botão `[CYCLE]` do hardware, botões `SEL 6`/`SEL 7`/`SEL 8`, atalhos de teclado (`B`, `[`, `]`, `F1`–`F4`, `H`), e cliques diretos nos badges interativos do Header (`B1: MIXER` e `◄ HW1: FADERS`).
-   - **Soft Takeover:** Modos `pickup`, `scaling` e `direct` com indicadores visuais no twin.
+## 🔢 Git Status
+- **Branch:** `feat/penumbra-collaborative-dev`
+- **Último Commit:** `a87bbba` — docs(state): atualizar links de preview e handover
+- **Data:** 2026-10-09 23:13:57
+- **Total de Commits:** 42
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.

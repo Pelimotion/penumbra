@@ -23,6 +23,22 @@
       "destination": "/penumbra_engine/media_pool/mattes/$1"
     },
     {
+      "source": "/penumbra/api/mattes",
+      "destination": "/penumbra_engine/media_pool/mattes_manifest.json"
+    },
+    {
+      "source": "/penumbra/mattes_manifest.json",
+      "destination": "/penumbra_engine/media_pool/mattes_manifest.json"
+    },
+    {
+      "source": "/api/mattes",
+      "destination": "/penumbra_engine/media_pool/mattes_manifest.json"
+    },
+    {
+      "source": "/mattes_manifest.json",
+      "destination": "/penumbra_engine/media_pool/mattes_manifest.json"
+    },
+    {
       "source": "/penumbra/media_manifest.json",
       "destination": "/penumbra_engine/web_controller/public/media_manifest.json"
     },
