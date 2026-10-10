@@ -7585,11 +7585,20 @@ body.resizing-workspace-active .top-zone {
 }
 
 .library-sidebar.is-collapsed {
+  display: none !important;
   width: 0 !important;
   min-width: 0 !important;
   max-width: 0 !important;
-  margin-left: -220px !important;
+  flex: 0 0 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
   border-right: none !important;
+}
+
+.library-sidebar.is-collapsed + .library-sidebar-splitter,
+.library-sidebar.is-collapsed ~ .library-sidebar-splitter {
+  display: none !important;
 }
 
 /* Vertical Splitter between Bins Sidebar and Media Cards */
@@ -7870,9 +7879,9 @@ body.resizing-workspace-active .top-zone {
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 180px;
-  max-width: 320px;
-  flex: 1;
+  min-width: 130px;
+  max-width: 300px;
+  flex: 1 1 180px;
 }
 
 .lib-search-icon {
@@ -7954,6 +7963,128 @@ body.resizing-workspace-active .top-zone {
   gap: 8px;
   overflow-y: auto;
   padding: 8px 10px 24px 10px;
+}
+
+/* BREADCRUMB & BIN TRAIL BAR */
+.library-breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #0b0c10;
+  border-bottom: 1px solid #181a22;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  min-height: 28px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.lib-breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-root-btn {
+  background: transparent;
+  border: none;
+  color: #798094;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.breadcrumb-root-btn:hover {
+  color: var(--cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+.breadcrumb-root-btn.active {
+  color: #fff;
+}
+
+.breadcrumb-sep {
+  color: #3e4454;
+  font-size: 10px;
+}
+
+.breadcrumb-current-bin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cyan);
+  font-weight: 800;
+  background: rgba(0, 240, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.breadcrumb-bin-count {
+  color: #798094;
+  font-size: 8.5px;
+}
+
+.btn-bin-return-all {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid var(--cyan);
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.btn-bin-return-all:hover {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.lib-breadcrumb-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  max-width: 65%;
+}
+.lib-breadcrumb-pills::-webkit-scrollbar { display: none; }
+
+.bin-quick-pill {
+  background: #13151b;
+  border: 1px solid #20232d;
+  color: #8c93a4;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+.bin-quick-pill:hover {
+  background: #1c1f28;
+  color: #fff;
+  border-color: #3b4052;
+}
+.bin-quick-pill.active {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--cyan);
+  color: var(--cyan);
 }
 
 .dock-media-grid.view-compact {
@@ -9237,13 +9368,21 @@ body.resizing-workspace-active .top-zone {
   position: relative;
 }
 
+.inspector-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-right: 24px;
+}
+
 .inspector-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 0.8px;
   color: #fff;
 }
@@ -9252,59 +9391,101 @@ body.resizing-workspace-active .top-zone {
   color: var(--cyan);
 }
 
-.inspector-badge {
-  background: rgba(0, 240, 255, 0.15);
-  border: 1px solid rgba(0, 240, 255, 0.4);
+.inspector-target-pill {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.35);
   color: var(--cyan);
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 3px;
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.inspector-tabs {
+/* TARGET SELECTOR (CLIPE vs CAMADA vs MASTER) */
+.inspector-target-selector {
   display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.4);
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.5);
   padding: 3px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.insp-tab-btn {
+.insp-target-btn {
   flex: 1;
   background: transparent;
   border: none;
-  color: var(--text-dim);
+  color: #94a3b8;
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
   padding: 5px 4px;
   border-radius: 3px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  text-align: center;
+  transition: all 0.12s ease;
 }
 
-.insp-tab-btn:hover {
+.insp-target-btn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.05);
 }
 
-.insp-tab-btn.active {
-  background: rgba(0, 240, 255, 0.2);
-  border: 1px solid rgba(0, 240, 255, 0.4);
+.insp-target-btn.active {
+  background: var(--cyan);
+  color: #000;
+  font-weight: 900;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+/* SUBTABS (TRANSFORMAÇÃO vs COR & LUZ vs FX) */
+.inspector-subtabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 2px;
+}
+
+.insp-subtab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 5px 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.insp-subtab-btn:hover {
+  color: #cbd5e1;
+}
+
+.insp-subtab-btn.active {
   color: var(--cyan);
+  border-bottom-color: var(--cyan);
 }
 
 .insp-close-btn {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 9px;
+  right: 10px;
   background: transparent;
   border: none;
-  color: var(--text-dim);
-  font-size: 12px;
+  color: #64748b;
+  font-size: 13px;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 3px;
@@ -9314,6 +9495,73 @@ body.resizing-workspace-active .top-zone {
 .insp-close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+/* NUDGE & ANCHOR CONTROLS */
+.insp-nudge-pad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.insp-btn-nudge {
+  background: #141720;
+  border: 1px solid #252a38;
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.insp-btn-nudge:hover {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+}
+
+/* QUICK LOOKS PRESETS GRID */
+.insp-looks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.insp-btn-look {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 5px 3px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.3px;
+  transition: all 0.12s ease;
+}
+
+.insp-btn-look:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan);
+  color: #fff;
+}
+
+.insp-btn-look.active {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: #000;
+  font-weight: 900;
 }
 
 .inspector-body {
@@ -9665,6 +9913,95 @@ body.resizing-workspace-active .top-zone {
 }
 
 .btn-studio-inspector:hover, .btn-studio-inspector.active {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.insp-num-input {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #282f42;
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 3px;
+  width: 58px;
+  text-align: right;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.insp-num-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+.insp-flex-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.folder-active-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.08) 0%, rgba(13, 16, 24, 0.8) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-left: 3px solid var(--cyan);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+
+.folder-active-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.folder-active-badge {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+
+.folder-active-title {
+  margin: 0;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.folder-active-meta {
+  color: #798094;
+  font-size: 9px;
+}
+
+.folder-active-return-btn {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid var(--cyan);
+  color: #00f0ff;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.folder-active-return-btn:hover {
   background: var(--cyan);
   color: #000;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
@@ -10238,8 +10575,8 @@ body.resizing-workspace-active .top-zone {
 
         <!-- Dock Actions -->
         <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
-          <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
-            <span id="lbl-quick-switch-text">TIMELINE PRO</span> <kbd>TAB</kbd>
+          <button class="dock-action-btn" id="btn-dock-toggle-inspector" onclick="toggleStudioInspector()" title="Abrir/Fechar Studio Inspector [I]">
+            <span>🔍 INSPETOR</span> <kbd>I</kbd>
           </button>
           <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
             MAXIMIZE <kbd>~</kbd>
@@ -11866,12 +12203,25 @@ body.resizing-workspace-active .top-zone {
                   </button>
                 </div>
 
-                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleQuickInspector()" title="Abrir/Fechar Inspetor de Parâmetros Rápidos">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                  <span>INSPETOR</span>
+                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleStudioInspector()" title="Abrir/Fechar Studio Inspector [I]">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                  <span>INSPETOR [I]</span>
                 </button>
               </div>
             </header>
+
+            <!-- BREADCRUMB & BIN NAVIGATION TRAIL -->
+            <nav class="library-breadcrumb-nav" id="library-breadcrumb-nav">
+              <div class="lib-breadcrumb-trail" id="lib-breadcrumb-trail">
+                <button class="breadcrumb-root-btn active" id="btn-breadcrumb-root" onclick="setFolderFilter('ALL')">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                  <span>TODAS AS PASTAS</span>
+                </button>
+              </div>
+              <div class="lib-breadcrumb-pills" id="lib-breadcrumb-quick-pills">
+                <!-- Dynamically populated with project bins -->
+              </div>
+            </nav>
 
             <!-- ASSET CONTENT CONTAINER (100% vertical space) -->
             <div class="dock-media-grid" id="media-cards-container">
@@ -13124,17 +13474,28 @@ body.resizing-workspace-active .top-zone {
     <!-- STUDIO INSPECTOR RETRACTABLE DRAWER (DAVINCI RESOLVE / AFTER EFFECTS STYLE) -->
     <aside id="studio-inspector-drawer" class="studio-inspector-drawer hidden">
       <div class="inspector-header">
-        <div class="inspector-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-          <span>STUDIO INSPECTOR</span>
-          <span class="inspector-badge" id="inspector-target-badge">L2 FIND EDGES</span>
+        <div class="inspector-title-row">
+          <div class="inspector-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            <span>STUDIO INSPECTOR</span>
+          </div>
+          <span class="inspector-target-pill" id="inspector-target-badge">CLIPE: CUE</span>
+          <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
         </div>
-        <div class="inspector-tabs">
-          <button class="insp-tab-btn active" id="insp-tab-layer" data-tab="layer" onclick="switchInspectorTab('layer')">CAMADA</button>
-          <button class="insp-tab-btn" id="insp-tab-clip" data-tab="clip" onclick="switchInspectorTab('clip')">CLIPE</button>
-          <button class="insp-tab-btn" id="insp-tab-fx" data-tab="fx" onclick="switchInspectorTab('fx')">FX & COLOR</button>
+
+        <!-- MASTER TARGET SELECTOR -->
+        <div class="inspector-target-selector">
+          <button class="insp-target-btn active" id="insp-target-clip" onclick="switchInspectorTarget('clip')">🎯 CLIPE</button>
+          <button class="insp-target-btn" id="insp-target-layer" onclick="switchInspectorTarget('layer')">📑 CAMADA</button>
+          <button class="insp-target-btn" id="insp-target-master" onclick="switchInspectorTarget('master')">🌐 MASTER & FX</button>
         </div>
-        <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
+
+        <!-- SUBTABS BAR -->
+        <div class="inspector-subtabs">
+          <button class="insp-subtab-btn active" id="insp-subtab-transform" onclick="switchInspectorSubtab('transform')">📐 TRANSFORMAÇÃO</button>
+          <button class="insp-subtab-btn" id="insp-subtab-color" onclick="switchInspectorSubtab('color')">🎨 COR & LUZ</button>
+          <button class="insp-subtab-btn" id="insp-subtab-advanced" onclick="switchInspectorSubtab('advanced')">⚡ FX & MATTES</button>
+        </div>
       </div>
       <div class="inspector-body" id="inspector-body-content">
         <!-- Rendered dynamically via renderStudioInspector() -->
@@ -16987,7 +17348,7 @@ function getClipImage(clip) {
 // ============================================================================
 // 5. ASPECT RATIO PRESERVING FIT ENGINE (ZERO DISTORTION GUARANTEE)
 // ============================================================================
-function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0, scale = 1.0, posX = 0, posY = 0) {
+function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation = 0, scale = 1.0, posX = 0, posY = 0, flipH = false, flipV = false) {
   if (!source) return null;
   
   const srcW = source.videoWidth || source.naturalWidth || targetW;
@@ -17013,6 +17374,8 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.save();
     ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
     if (scale && scale !== 1.0) ctx.scale(scale, scale);
+    if (flipH) ctx.scale(-1, 1);
+    if (flipV) ctx.scale(1, -1);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
     ctx.shadowBlur = 20;
     ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
@@ -17029,6 +17392,8 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   if (scale && scale !== 1.0) {
     ctx.scale(scale, scale);
   }
+  if (flipH) ctx.scale(-1, 1);
+  if (flipV) ctx.scale(1, -1);
 
   const isQuarterTurn = Math.abs(rotation % 180) === 90;
   const effW = isQuarterTurn ? srcH : srcW;
@@ -17117,9 +17482,63 @@ function setClipTransform(clipId, partial) {
 window.setClipTransform = setClipTransform;
 
 function resetClipTransform(clipId) {
-  setClipTransform(clipId, { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0 });
+  setClipTransform(clipId, { rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, flip_h: false, flip_v: false });
 }
 window.resetClipTransform = resetClipTransform;
+
+function getClipTonal(clipId) {
+  if (!clipId) return { brightness: 0, contrast: 1.0, gamma: 1.0, saturation: 1.0, hue: 0, exposure: 1.0, temperature: 0 };
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  if (clip && clip.tonal) return clip.tonal;
+  const saved = (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile?.custom_clip_tonals)
+    ? UserProfileManager.profile.custom_clip_tonals[clipId] : null;
+  const tn = saved ? { ...saved } : { brightness: 0, contrast: 1.0, gamma: 1.0, saturation: 1.0, hue: 0, exposure: 1.0, temperature: 0 };
+  if (clip) clip.tonal = tn;
+  return tn;
+}
+window.getClipTonal = getClipTonal;
+
+function setClipTonal(clipId, partial) {
+  if (!clipId) return;
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
+  const cur = getClipTonal(clipId);
+  const updated = { ...cur, ...partial };
+  if (clip) clip.tonal = updated;
+  if (typeof UserProfileManager !== 'undefined') {
+    if (!UserProfileManager.profile.custom_clip_tonals) {
+      UserProfileManager.profile.custom_clip_tonals = {};
+    }
+    UserProfileManager.profile.custom_clip_tonals[clipId] = updated;
+    UserProfileManager.saveProfile();
+  }
+}
+window.setClipTonal = setClipTonal;
+
+function resetClipTonal(clipId) {
+  setClipTonal(clipId, { brightness: 0, contrast: 1.0, gamma: 1.0, saturation: 1.0, hue: 0, exposure: 1.0, temperature: 0 });
+}
+window.resetClipTonal = resetClipTonal;
+
+function getClipTonalFilterString(t) {
+  if (!t) return 'none';
+  const b = Math.round((1.0 + (t.brightness || 0)) * (t.exposure !== undefined ? t.exposure : 1.0) * 100);
+  const c = Math.round((t.contrast !== undefined ? t.contrast : 1.0) * 100);
+  const s = Math.round((t.saturation !== undefined ? t.saturation : 1.0) * 100);
+  const h = Math.round(t.hue || 0);
+  let str = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  if (h !== 0) str += ` hue-rotate(${h}deg)`;
+  if (t.temperature) {
+    if (t.temperature > 0) {
+      const sep = Math.min(50, Math.round(t.temperature * 1.0));
+      str += ` sepia(${sep}%)`;
+    } else if (t.temperature < 0) {
+      const coolDeg = Math.round(t.temperature * 1.2);
+      str += ` hue-rotate(${coolDeg}deg)`;
+    }
+  }
+  return str;
+}
+window.getClipTonalFilterString = getClipTonalFilterString;
 
 function setLayerScale(layerId, scale) {
   if (!appState.layers[layerId]) return;
@@ -17251,77 +17670,19 @@ function updateTimelineTransformInspector() {
 }
 window.updateTimelineTransformInspector = updateTimelineTransformInspector;
 
-// Modal para Transformação Geométrica Individual do Clipe
+// Transformação Geométrica Individual do Clipe via Studio Inspector (Padrão DaVinci Resolve)
 function openClipTransformModal(clipId) {
-  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId);
-  if (!clip) return;
-  const tf = getClipTransform(clipId);
-
-  const existing = document.getElementById('modal-clip-transform');
-  if (existing) existing.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'modal-clip-transform';
-  modal.className = 'modal-midi-overlay';
-  modal.innerHTML = `
-    <div class="modal-midi-card" style="max-width: 480px;">
-      <div class="modal-midi-header">
-        <div class="modal-midi-title">
-          <span>📐 TRANSFORMAÇÃO DO CLIPE: ${(clip.filename || clip.id).slice(0, 26)}</span>
-        </div>
-        <button class="btn btn-outline btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">✕</button>
-      </div>
-      <div class="modal-midi-body">
-        <div style="font-size: 10px; color: #94a3b8; line-height: 1.4;">
-          Ajuste fino de rotação, escala e posição individual antes de enviar ao ar. Esses valores compõem com a transformação da camada no telão.
-        </div>
-
-        <div class="modal-midi-prop">
-          <label class="modal-midi-lbl">ROTAÇÃO DO CLIPE</label>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-outline btn-xs ${tf.rotation === 0 ? 'active' : ''}" id="btn-clip-rot-0" onclick="updateClipRot('${clip.id}', 0)">0° NORMAL</button>
-            <button class="btn btn-outline btn-xs ${tf.rotation === 90 ? 'active' : ''}" id="btn-clip-rot-90" onclick="updateClipRot('${clip.id}', 90)">+90° CW</button>
-            <button class="btn btn-outline btn-xs ${tf.rotation === 180 ? 'active' : ''}" id="btn-clip-rot-180" onclick="updateClipRot('${clip.id}', 180)">180° FLIP</button>
-            <button class="btn btn-outline btn-xs ${tf.rotation === 270 || tf.rotation === -90 ? 'active' : ''}" id="btn-clip-rot-270" onclick="updateClipRot('${clip.id}', 270)">-90° CCW</button>
-          </div>
-        </div>
-
-        <div class="modal-midi-prop">
-          <div style="display:flex; justify-content:space-between;">
-            <label class="modal-midi-lbl">ESCALA / ZOOM (INTRÍNSECO)</label>
-            <span class="text-cyan font-mono" id="lbl-clip-scale">${Math.round((tf.scale || 1.0) * 100)}%</span>
-          </div>
-          <input type="range" min="20" max="300" value="${Math.round((tf.scale || 1.0) * 100)}" class="cfg-slider" id="rng-clip-scale" oninput="onClipScaleInput('${clip.id}', this.value)">
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="modal-midi-prop">
-            <label class="modal-midi-lbl">POSIÇÃO X (OFFSET PX)</label>
-            <input type="number" value="${tf.pos_x || 0}" step="5" class="modal-midi-input" id="inp-clip-posx" onchange="onClipPosInput('${clip.id}')">
-          </div>
-          <div class="modal-midi-prop">
-            <label class="modal-midi-lbl">POSIÇÃO Y (OFFSET PX)</label>
-            <input type="number" value="${tf.pos_y || 0}" step="5" class="modal-midi-input" id="inp-clip-posy" onchange="onClipPosInput('${clip.id}')">
-          </div>
-        </div>
-      </div>
-      <div class="modal-midi-footer">
-        <button class="btn btn-outline btn-xs" onclick="resetClipTransform('${clip.id}'); document.getElementById('modal-clip-transform').remove(); openClipTransformModal('${clip.id}')">↺ RESETAR TRANSFORM</button>
-        <button class="btn btn-studio-primary btn-xs" onclick="document.getElementById('modal-clip-transform').remove()">CONCLUÍDO</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  openStudioInspector('clip', clipId, 'transform');
 }
 window.openClipTransformModal = openClipTransformModal;
 
 function openPreviewClipTransform() {
-  const cueClipId = appState.preview_clip || (appState.layers.layer3 && appState.layers.layer3.clipId) || (appState.layers.layer3 && appState.layers.layer3.clip && appState.layers.layer3.clip.id);
+  const cueClipId = appState.preview_clip || (appState.layers?.layer3?.clipId) || (appState.layers?.layer3?.clip?.id) || (appState.layers?.layer0?.clipId);
   if (!cueClipId) {
-    if (typeof showHudToast === 'function') showHudToast('Nenhum clipe carregado no Preview (Deck B)', 'warn');
+    if (typeof showMacroToast === 'function') showMacroToast('Nenhum clipe carregado no Preview (Deck B)', 'warn');
     return;
   }
-  openClipTransformModal(cueClipId);
+  openStudioInspector('clip', cueClipId, 'transform');
 }
 window.openPreviewClipTransform = openPreviewClipTransform;
 
@@ -18692,12 +19053,17 @@ function renderVisuals(time) {
 
       // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
       const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+      const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
       const l0 = appState.layers.layer0;
       const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
       const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
       const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
       const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
-      drawFittedImage(offCtxA, baseSource, w, h, l0.fit_mode || 'fit', totalRot0, totalScale0, totalPosX0, totalPosY0);
+      const tnFilter0 = getClipTonalFilterString(clipTn0);
+      offCtxA.save();
+      if (tnFilter0 !== 'none') offCtxA.filter = tnFilter0;
+      drawFittedImage(offCtxA, baseSource, w, h, l0.fit_mode || 'fit', totalRot0, totalScale0, totalPosX0, totalPosY0, clipTf0.flip_h, clipTf0.flip_v);
+      offCtxA.restore();
 
       // Program Rotation Dissolve: blend smoothly from old rotation so there is zero abrupt cut
       if (programRotDissolve.active) {
@@ -18798,12 +19164,17 @@ function renderVisuals(time) {
 
         // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
         const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+        const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
         const l3 = appState.layers.layer3;
         const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
         const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
         const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
         const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
-        drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
+        const tnFilter3 = getClipTonalFilterString(clipTn3);
+        offCtxB.save();
+        if (tnFilter3 !== 'none') offCtxB.filter = tnFilter3;
+        drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3, clipTf3.flip_h, clipTf3.flip_v);
+        offCtxB.restore();
 
         // Apply Layer 3 Matte with invert support
         const matteL3 = getMatteImage(appState.layers.layer3.matte);
@@ -18997,12 +19368,17 @@ function renderVisuals(time) {
         if (overlaySource) {
           offCtxOverlay.clearRect(0, 0, w, h);
           const clipTf5 = getClipTransform(appState.layers.layer5.clipId);
+          const clipTn5 = getClipTonal(appState.layers.layer5.clipId);
           const l5 = appState.layers.layer5;
           const totalRot5 = (l5.rotation || 0) + (clipTf5.rotation || 0);
           const totalScale5 = (l5.scale || 1.0) * (clipTf5.scale || 1.0);
           const totalPosX5 = (l5.pos_x || 0) + (clipTf5.pos_x || 0);
           const totalPosY5 = (l5.pos_y || 0) + (clipTf5.pos_y || 0);
-          drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5);
+          const tnFilter5 = getClipTonalFilterString(clipTn5);
+          offCtxOverlay.save();
+          if (tnFilter5 !== 'none') offCtxOverlay.filter = tnFilter5;
+          drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5, clipTf5.flip_h, clipTf5.flip_v);
+          offCtxOverlay.restore();
 
           const matteL5 = getMatteImage(l5.matte);
           if (matteL5 && l5.matte !== 'none') {
@@ -21926,10 +22302,7 @@ function renderFolderPills() {
 
   container.querySelectorAll('.pill-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFolderFilter = btn.dataset.folder;
-      renderMediaCards();
+      setFolderFilter(btn.dataset.folder);
     });
   });
 
@@ -21945,6 +22318,70 @@ function renderFolderPills() {
     `).join('');
   }
 }
+window.renderFolderPills = renderFolderPills;
+
+function renderLibraryBreadcrumbs() {
+  const nav = document.getElementById('library-breadcrumb-nav');
+  if (!nav) return;
+
+  const isFiltered = activeFolderFilter && activeFolderFilter !== 'ALL';
+  const folderCounts = {};
+  (allClips || []).forEach(c => {
+    const f = getClipFolder(c);
+    folderCounts[f] = (folderCounts[f] || 0) + 1;
+  });
+  const folders = Object.keys(folderCounts).sort();
+
+  if (!isFiltered) {
+    nav.innerHTML = `
+      <div class="lib-breadcrumb-trail">
+        <button class="breadcrumb-root-btn active" onclick="setFolderFilter('ALL')" title="Exibindo todas as pastas">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>TODAS AS PASTAS</span>
+          <span class="breadcrumb-bin-count">(${allClips ? allClips.length : 0})</span>
+        </button>
+      </div>
+      <div class="lib-breadcrumb-pills">
+        ${folders.map(f => `
+          <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Filtrar por esta pasta: ${f}">
+            <span>${f}</span>
+            <span class="bin-pill-num">${folderCounts[f]}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    const curCount = folderCounts[activeFolderFilter] || 0;
+    nav.innerHTML = `
+      <div class="lib-breadcrumb-trail">
+        <button class="breadcrumb-root-btn" onclick="setFolderFilter('ALL')" title="Voltar a todas as pastas">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>TODAS AS PASTAS</span>
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current-bin">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>${activeFolderFilter}</span>
+          <span class="breadcrumb-bin-count">(${curCount})</span>
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="btn-bin-return-all" onclick="setFolderFilter('ALL')" title="Sair desta pasta e exibir todo o acervo">
+          <span>◂ VER TODAS AS PASTAS [✕]</span>
+        </button>
+        <div class="lib-breadcrumb-pills">
+          ${folders.filter(f => f !== activeFolderFilter).slice(0, 5).map(f => `
+            <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Trocar para pasta: ${f}">
+              <span>${f}</span>
+              <span class="bin-pill-num">${folderCounts[f]}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+}
+window.renderLibraryBreadcrumbs = renderLibraryBreadcrumbs;
 
 window.toggleAutopilotFolder = function(folder, isActive) {
   let active = appState.autopilot_active_folders || [...Array.from(new Set(allClips.map(c => getClipFolder(c))))];
@@ -22749,6 +23186,7 @@ window.refreshCacheStatus = async function() {
 window.setFolderFilter = function(folder) {
   activeFolderFilter = folder;
   renderFolderPills();
+  renderLibraryBreadcrumbs();
   renderMediaCards();
 };
 
@@ -22836,22 +23274,24 @@ function createMediaCardElement(clip) {
   const isGen = Boolean(clip.is_generative || clip.id === 'clip_gen_plexus_spine');
   const clipSource = getClipSource(clip);
   const isUnlinked = Boolean((clip.is_local || clip.id.startsWith('local_')) && (clip.is_disconnected || !MediaProvider.isLocalFileConnected(clip)));
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} source-${clipSource}`;
+  const isOnAir = (appState.layers?.layer0?.clipId === clip.id);
+  const isInCue = (appState.layers?.layer3?.clipId === clip.id);
+  const isSelected = (studioInspectorState && studioInspectorState.targetClipId === clip.id);
+  
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isSelected ? 'is-selected' : ''} source-${clipSource}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
 
   let srcBadgeHtml = '';
   if (isUnlinked) {
-    srcBadgeHtml = '<span class="media-source-badge badge-source-unlinked" title="Arquivo local do seu computador desconectado nesta sessão">⚠️ DESVINCULADO</span>';
+    srcBadgeHtml = '<span class="media-source-badge badge-source-unlinked" title="Arquivo local desconectado">⚠️ DESVINCULADO</span>';
   } else if (clip.has_local_match) {
-    srcBadgeHtml = '<span class="media-source-badge badge-source-local-match" title="Arquivo idêntico encontrado no SSD local da máquina (0ms latência, 0 dados consumidos)">⚡ LOCAL NATIVO</span>';
+    srcBadgeHtml = '<span class="media-source-badge badge-source-local-match" title="Arquivo idêntico no SSD local">⚡ LOCAL</span>';
   } else if (clipSource === 'cdn') {
     srcBadgeHtml = '<span class="media-source-badge badge-source-cdn">☁️ NUVEM</span>';
   } else if (clipSource === 'local') {
-    srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD LOCAL</span>';
-  } else if (clipSource === 'downloaded') {
-    srcBadgeHtml = '<span class="media-source-badge badge-source-dl">💾 BAIXADO</span>';
+    srcBadgeHtml = '<span class="media-source-badge badge-source-local">📁 SSD</span>';
   } else if (clipSource === 'youtube') {
     srcBadgeHtml = '<span class="media-source-badge badge-source-yt">YOUTUBE</span>';
   } else if (clipSource === 'stream') {
@@ -22862,56 +23302,69 @@ function createMediaCardElement(clip) {
   const cacheInfo = UserProfileManager.getCacheDetails(clip);
   let cacheBadgeHtml = '';
   if (isUnlinked) {
-    cacheBadgeHtml = `<span class="badge-cache-status is-unlinked" title="Arquivo desconectado · Clique em RELINK para apontar a pasta">DESCONECTADO</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-unlinked">DESCONECTADO</span>`;
   } else if (clip.has_local_match) {
-    cacheBadgeHtml = `<span class="badge-cache-status is-local-match" title="Disponível no SSD local em ${clip.local_match_rel || '1. In'}">LOCAL 100%</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-local-match">LOCAL 100%</span>`;
   } else if (cacheInfo.isCached) {
-    cacheBadgeHtml = `<span class="badge-cache-status is-cached" title="Salvo em disco no cache local (${cacheInfo.size_mb || '0'} MB)">CACHED</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status is-cached">CACHED</span>`;
   } else if (clipSource === 'cdn') {
-    cacheBadgeHtml = `<span class="badge-cache-status not-cached" title="Disponível na Nuvem Bunny CDN (Preview inicial leve)">PREVIEW</span>`;
-  } else if (clipSource === 'youtube' || clipSource === 'stream') {
-    cacheBadgeHtml = `<span class="badge-cache-status is-stream" title="Disponível via Stream Remoto">LIVE</span>`;
+    cacheBadgeHtml = `<span class="badge-cache-status not-cached">PREVIEW</span>`;
   }
 
   const clipFolder = getClipFolder(clip);
-  const folderBadgeHtml = isGen 
-    ? `<span class="badge-generative">3D GENERATIVE</span>`
-    : `<span class="media-folder-badge" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}')" title="Filtrar por esta pasta: ${clipFolder}">📁 ${clipFolder}</span>`;
 
   let actionBtnHtml = '';
   if (isUnlinked) {
-    actionBtnHtml = `<button class="btn-route btn-card-relink" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe ou pasta no computador">🔗 RELINK</button>`;
-  } else if (clip.has_local_match) {
-    actionBtnHtml = `<button class="btn-route btn-card-activate is-active-cached" title="Arquivo disponível no SSD local da sua máquina. 0 dados consumidos." onclick="event.stopPropagation();">✓ LOCAL</button>`;
-  } else if (cacheInfo.isCached) {
-    actionBtnHtml = `<button class="btn-route btn-card-activate is-active-cached" title="Clipe ativo em cache persistente local." onclick="event.stopPropagation();">✓ ATIVO</button>`;
+    actionBtnHtml = `<button class="btn-card-action" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe">🔗 RELINK</button>`;
+  } else if (clip.has_local_match || cacheInfo.isCached) {
+    actionBtnHtml = `<button class="btn-card-action is-active-cached" title="Arquivo pronto no SSD local" onclick="event.stopPropagation();">✓ LOCAL</button>`;
   } else if (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream') {
-    actionBtnHtml = `<button class="btn-route btn-card-activate" onclick="window.activateMediaClip('${clip.id}', event)" title="Ativar clipe: Streaming em alta resolução & salva em cache persistente">⚡ ATIVAR</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-card-activate" onclick="window.activateMediaClip('${clip.id}', event)" title="Ativar clipe com streaming em alta">⚡ ATIVAR</button>`;
   }
 
   card.innerHTML = `
     <div class="media-card-thumb">
       ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
       ${srcBadgeHtml}
-      ${cacheBadgeHtml}
-      ${folderBadgeHtml}
+      ${isOnAir ? '<span class="thumb-air-indicator">● NO AR</span>' : ''}
+      ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
+      <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
+      <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
     </div>
     <div class="media-card-info">
-      <div class="media-card-title" title="${clip.filename}">
-        <span class="media-project-badge">${projName}</span>${clip.display_title || clip.filename}
+      <div class="media-card-title-row">
+        <span class="media-card-title" title="${clip.filename}">${clip.display_title || clip.filename}</span>
+        ${cacheBadgeHtml}
       </div>
-      <div class="media-card-meta">${isGen ? '2.545 VÉRTICES · HOUDINI GENERATIVE MARINE SPINE · 60 FPS' : `${clip.project_folder || projName} · ${clip.width || '1920'}×${clip.height || '1080'} · ${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}`}</div>
-      <div class="card-actions-row">
-        <button class="btn-route btn-bus-a" data-bus="A" data-tooltip-title="ENVIAR PARA PROGRAM (A)" data-tooltip-desc="Comuta para o telão/Program. Pressione [A]." data-shortcut="A">A PGM</button>
-        <button class="btn-route btn-bus-b" data-bus="B" data-tooltip-title="PREPARAR NO PREVIEW (B)" data-tooltip-desc="Arma no Preview Cue para o próximo take. Pressione [B]." data-shortcut="B">B PRV</button>
-        <button class="btn-route btn-edit-clip-transform" onclick="event.stopPropagation(); openClipTransformModal('${clip.id}')" title="Transformação Geométrica Individual (Rotação, Escala, Posição)">📐 POS</button>
-        <button class="btn-route btn-edit-clip-tonal" onclick="event.stopPropagation(); editClipTonalParameters('${clip.id}')" title="Ajustar Color Grading e Look Tonal no Módulo 4">LOOK</button>
-        <button class="btn-route" data-layer="layer4" data-tooltip-title="CAMADA 4 (DROP CLÍMAX)" data-tooltip-desc="Arma clipe para sobreposição na camada de impacto do drop.">L4</button>
-        <button class="btn-route" data-layer="layer5" data-tooltip-title="CAMADA 5 (OVERLAY DECK)" data-tooltip-desc="Arma clipe na camada dedicada de sobreposição (Loop ou Foreground).">L5</button>
+      <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}');" title="Filtrar por esta pasta: ${clipFolder}">
+        📁 ${clipFolder}
+      </div>
+      <div class="card-actions-grid">
+        <button class="btn-card-action btn-action-pgm btn-bus-a" data-bus="A" title="Enviar para Program Master [A]">▶ A (PGM)</button>
+        <button class="btn-card-action btn-action-cue btn-bus-b" data-bus="B" title="Preparar no Preview Cue [B]">● B (CUE)</button>
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">⚙ INSP</button>
+        <button class="btn-card-action" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
         ${actionBtnHtml}
       </div>
     </div>
   `;
+
+  // Click on card selects clip and opens Studio Inspector
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    document.querySelectorAll('.media-card').forEach(c => c.classList.remove('is-selected'));
+    card.classList.add('is-selected');
+    openStudioInspector('clip', clip.id);
+  });
+
+  // Double-click routes to Bus B (Preview Cue)
+  card.addEventListener('dblclick', (e) => {
+    if (e.target.closest('button')) return;
+    routeClipToBus(clip.id, 'B');
+    if (typeof showMacroToast === 'function') {
+      showMacroToast(`[CUE] "${clip.display_title || clip.filename}" preparado no Preview`);
+    }
+  });
 
   // ON-DEMAND HOVER VIDEO PREVIEW (Netflix / Steam / YouTube Standard)
   let hoverTimeout = null;
@@ -23228,21 +23681,7 @@ function editPresetParameters(presetId) {
 window.editPresetParameters = editPresetParameters;
 
 function editClipTonalParameters(clipId) {
-  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
-  routeClipToBus(clipId, 'B');
-  switchTab('tab-tonal');
-
-  const tonalGrid = document.querySelector('#tab-tonal .tonal-controls-grid') || document.querySelector('#tab-tonal');
-  if (tonalGrid) {
-    tonalGrid.classList.remove('highlight-focus-ring');
-    void tonalGrid.offsetWidth;
-    tonalGrid.classList.add('highlight-focus-ring');
-  }
-
-  const clip = allClips.find(c => c.id === clipId);
-  const title = clip?.display_title || clip?.filename || 'Clipe';
-  showMacroToast(`[TONAL] Grading aberto para "${title}" no Módulo 4`);
-  openQuickInspector('clip', { clipId, clip });
+  openStudioInspector('clip', clipId, 'color');
 }
 window.editClipTonalParameters = editClipTonalParameters;
 
@@ -23402,6 +23841,7 @@ function renderMediaCards() {
   if (!container) return;
   container.innerHTML = '';
 
+  renderLibraryBreadcrumbs();
   updateCategoryAndSourceBadges();
 
   const searchVal = (document.getElementById('input-media-search')?.value || '').toLowerCase();
@@ -23557,10 +23997,48 @@ function renderMediaCards() {
     });
   } else {
     container.classList.remove('is-grouped');
-    // Flat Grid View Mode
-    filtered.forEach(clip => {
-      container.appendChild(createMediaCardElement(clip));
-    });
+
+    // Prominent Folder Banner if inside a specific bin/folder
+    if (activeFolderFilter && activeFolderFilter !== 'ALL') {
+      const folderBanner = document.createElement('div');
+      folderBanner.className = 'folder-active-banner';
+      folderBanner.innerHTML = `
+        <div class="folder-active-info">
+          <span class="folder-active-badge">PASTA ATIVA</span>
+          <h3 class="folder-active-title">${activeFolderFilter}</h3>
+          <span class="folder-active-meta">${filtered.length} clipe(s) disponíveis</span>
+        </div>
+        <button class="folder-active-return-btn" onclick="setFolderFilter('ALL')" title="Voltar para todas as pastas">
+          ◂ VOLTAR A TODAS AS PASTAS [✕]
+        </button>
+      `;
+      container.appendChild(folderBanner);
+    }
+
+    if (filtered.length === 0) {
+      const emptyNotice = document.createElement('div');
+      emptyNotice.className = 'folder-active-banner';
+      emptyNotice.style.gridColumn = '1 / -1';
+      emptyNotice.style.display = 'flex';
+      emptyNotice.style.flexDirection = 'column';
+      emptyNotice.style.alignItems = 'center';
+      emptyNotice.style.justifyContent = 'center';
+      emptyNotice.style.padding = '36px 16px';
+      emptyNotice.style.gap = '10px';
+      emptyNotice.style.textAlign = 'center';
+      emptyNotice.innerHTML = `
+        <div style="font-size:28px;">📂</div>
+        <div style="font-weight:700; color:#fff; font-size:11px;">NENHUM CLIPE NESTA PASTA</div>
+        <div style="color:#798094; font-size:9.5px; max-width:320px;">Não foram encontrados arquivos de vídeo com os filtros atuais na pasta "${activeFolderFilter}".</div>
+        <button class="folder-active-return-btn" style="margin-top:6px;" onclick="setFolderFilter('ALL')">◂ VOLTAR A TODAS AS PASTAS</button>
+      `;
+      container.appendChild(emptyNotice);
+    } else {
+      // Flat Grid View Mode
+      filtered.forEach(clip => {
+        container.appendChild(createMediaCardElement(clip));
+      });
+    }
   }
 
   // If in 'all' mode and search query matches mattes or fx, also append quick sections
@@ -26018,18 +26496,19 @@ function initKeyboardShortcuts() {
       return;
     }
 
-    // I: Toggle Media Ingest Deck (Local / Bunny / YouTube)
+    // I: Toggle Studio Inspector (DaVinci / After Effects Style)
     if (key === 'i' || key === 'I') {
       e.preventDefault();
-      switchTab('tab-mediapool');
-      if (typeof window.toggleMediaIngestDeck === 'function') {
-        window.toggleMediaIngestDeck();
-      }
+      toggleStudioInspector();
       return;
     }
 
-    // Escape: Close modals
+    // Escape: Close modals and Studio Inspector drawer
     if (key === 'Escape') {
+      if (typeof studioInspectorState !== 'undefined' && studioInspectorState.isOpen) {
+        toggleStudioInspector();
+        return;
+      }
       closeShortcutsModal();
       closeTheater();
       if (typeof window.toggleMediaIngestDeck === 'function') {
@@ -26512,7 +26991,8 @@ window.clearPreferencesSearch = clearPreferencesSearch;
 // ============================================================================
 const studioInspectorState = {
   isOpen: false,
-  activeTab: 'layer', // 'layer', 'clip', 'fx'
+  targetType: 'clip', // 'clip', 'layer', 'master'
+  activeSubtab: 'transform', // 'transform', 'color', 'advanced'
   targetLayer: 2,     // 0, 1, 2, 3, 4, 5
   targetClipId: null
 };
@@ -26525,8 +27005,10 @@ function toggleStudioInspector() {
   drawer.classList.toggle('open', studioInspectorState.isOpen);
   drawer.classList.toggle('hidden', !studioInspectorState.isOpen);
 
-  const btn = document.getElementById('btn-toggle-studio-inspector');
+  const btn = document.getElementById('btn-toggle-inspector');
   if (btn) btn.classList.toggle('active', studioInspectorState.isOpen);
+  const btn2 = document.getElementById('btn-toggle-studio-inspector');
+  if (btn2) btn2.classList.toggle('active', studioInspectorState.isOpen);
 
   if (studioInspectorState.isOpen) {
     renderStudioInspector();
@@ -26534,48 +27016,138 @@ function toggleStudioInspector() {
 }
 window.toggleStudioInspector = toggleStudioInspector;
 
-function openStudioInspector(context, id) {
+function openStudioInspector(context = 'clip', id = null, subtab = null) {
   const drawer = document.getElementById('studio-inspector-drawer');
   if (!drawer) return;
 
   if (context === 'layer') {
-    studioInspectorState.activeTab = 'layer';
-    studioInspectorState.targetLayer = (id !== undefined && id !== null) ? Number(id) : 2;
+    studioInspectorState.targetType = 'layer';
+    studioInspectorState.targetLayer = (id !== undefined && id !== null) ? Number(id) : (studioInspectorState.targetLayer !== undefined ? studioInspectorState.targetLayer : 2);
+    if (subtab) studioInspectorState.activeSubtab = subtab;
   } else if (context === 'clip') {
-    studioInspectorState.activeTab = 'clip';
-    studioInspectorState.targetClipId = id || (appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId);
-  } else if (context === 'fx') {
-    studioInspectorState.activeTab = 'fx';
+    studioInspectorState.targetType = 'clip';
+    studioInspectorState.targetClipId = id || studioInspectorState.targetClipId || (appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId || (typeof allClips !== 'undefined' && allClips[0]?.id));
+    if (subtab) studioInspectorState.activeSubtab = subtab;
+  } else if (context === 'master' || context === 'fx') {
+    studioInspectorState.targetType = 'master';
+    if (subtab) {
+      studioInspectorState.activeSubtab = subtab;
+    } else if (context === 'fx') {
+      studioInspectorState.activeSubtab = 'advanced';
+    } else {
+      studioInspectorState.activeSubtab = 'color';
+    }
   }
 
   studioInspectorState.isOpen = true;
   drawer.classList.add('open');
   drawer.classList.remove('hidden');
 
-  const btn = document.getElementById('btn-toggle-studio-inspector');
+  const btn = document.getElementById('btn-toggle-inspector');
   if (btn) btn.classList.add('active');
+  const btn2 = document.getElementById('btn-toggle-studio-inspector');
+  if (btn2) btn2.classList.add('active');
 
   renderStudioInspector();
 }
 window.openStudioInspector = openStudioInspector;
 
+function switchInspectorTarget(type) {
+  studioInspectorState.targetType = type;
+  if (type === 'master' && studioInspectorState.activeSubtab === 'transform') {
+    studioInspectorState.activeSubtab = 'color';
+  }
+  renderStudioInspector();
+}
+window.switchInspectorTarget = switchInspectorTarget;
+
+function switchInspectorSubtab(subtab) {
+  studioInspectorState.activeSubtab = subtab;
+  renderStudioInspector();
+}
+window.switchInspectorSubtab = switchInspectorSubtab;
+
 function switchInspectorTab(tab) {
-  studioInspectorState.activeTab = tab;
+  if (tab === 'layer' || tab === 'clip') {
+    studioInspectorState.targetType = tab;
+  } else if (tab === 'fx') {
+    studioInspectorState.targetType = 'master';
+    studioInspectorState.activeSubtab = 'advanced';
+  }
   renderStudioInspector();
 }
 window.switchInspectorTab = switchInspectorTab;
 
 function setInspectorLayer(layerIdx) {
+  studioInspectorState.targetType = 'layer';
   studioInspectorState.targetLayer = Number(layerIdx);
   renderStudioInspector();
 }
 window.setInspectorLayer = setInspectorLayer;
 
 function setInspectorClip(clipId) {
+  studioInspectorState.targetType = 'clip';
   studioInspectorState.targetClipId = clipId;
   renderStudioInspector();
 }
 window.setInspectorClip = setInspectorClip;
+
+function nudgeClipPosition(clipId, dx, dy) {
+  if (!clipId) return;
+  const cur = getClipTransform(clipId);
+  const nx = (cur.pos_x || 0) + dx;
+  const ny = (cur.pos_y || 0) + dy;
+  setClipTransform(clipId, { pos_x: nx, pos_y: ny });
+  const inpX = document.getElementById('inp-clip-posx');
+  const inpY = document.getElementById('inp-clip-posy');
+  const rngX = document.getElementById('rng-clip-posx');
+  const rngY = document.getElementById('rng-clip-posy');
+  const dispX = document.getElementById('disp-clip-posx');
+  const dispY = document.getElementById('disp-clip-posy');
+  if (inpX) inpX.value = nx;
+  if (inpY) inpY.value = ny;
+  if (rngX) rngX.value = nx;
+  if (rngY) rngY.value = ny;
+  if (dispX) dispX.textContent = `${nx} px`;
+  if (dispY) dispY.textContent = `${ny} px`;
+}
+window.nudgeClipPosition = nudgeClipPosition;
+
+function centerClipPosition(clipId) {
+  if (!clipId) return;
+  setClipTransform(clipId, { pos_x: 0, pos_y: 0 });
+  renderStudioInspector();
+}
+window.centerClipPosition = centerClipPosition;
+
+function setClipLookPreset(clipId, presetName) {
+  if (!clipId) return;
+  switch (presetName) {
+    case 'neutral':
+      setClipTonal(clipId, { brightness: 0, contrast: 1.0, gamma: 1.0, saturation: 1.0, hue: 0, exposure: 1.0, temperature: 0 });
+      break;
+    case 'penumbra_dark':
+      setClipTonal(clipId, { brightness: -0.12, contrast: 1.35, gamma: 0.9, saturation: 0.75, hue: 0, exposure: 0.95, temperature: -8 });
+      break;
+    case 'bw_contrast':
+      setClipTonal(clipId, { brightness: -0.05, contrast: 1.6, gamma: 1.0, saturation: 0.0, hue: 0, exposure: 1.05, temperature: 0 });
+      break;
+    case 'cyber_cold':
+      setClipTonal(clipId, { brightness: 0.02, contrast: 1.2, gamma: 0.95, saturation: 1.15, hue: 15, exposure: 1.0, temperature: -35 });
+      break;
+    case 'amber_dusk':
+      setClipTonal(clipId, { brightness: -0.02, contrast: 1.15, gamma: 1.05, saturation: 1.1, hue: -5, exposure: 0.98, temperature: 38 });
+      break;
+    case 'bleach_bypass':
+      setClipTonal(clipId, { brightness: 0.05, contrast: 1.5, gamma: 0.85, saturation: 0.4, hue: 0, exposure: 1.1, temperature: -5 });
+      break;
+  }
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[LOOK] Look "${presetName.replace(/_/g, ' ').toUpperCase()}" aplicado ao clipe`);
+  }
+}
+window.setClipLookPreset = setClipLookPreset;
 
 function renderStudioInspector() {
   const drawer = document.getElementById('studio-inspector-drawer');
@@ -26583,21 +27155,310 @@ function renderStudioInspector() {
   const badge = document.getElementById('inspector-target-badge');
   if (!drawer || !container) return;
 
-  // Tabs status
-  document.querySelectorAll('.insp-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === studioInspectorState.activeTab);
-  });
+  const targetType = studioInspectorState.targetType || 'clip';
+  const subtab = studioInspectorState.activeSubtab || 'transform';
 
-  const tab = studioInspectorState.activeTab;
+  // Synchronize target buttons
+  const btnClip = document.getElementById('insp-target-clip');
+  const btnLayer = document.getElementById('insp-target-layer');
+  const btnMaster = document.getElementById('insp-target-master');
+  if (btnClip) btnClip.classList.toggle('active', targetType === 'clip');
+  if (btnLayer) btnLayer.classList.toggle('active', targetType === 'layer');
+  if (btnMaster) btnMaster.classList.toggle('active', targetType === 'master');
 
-  if (tab === 'layer') {
+  // Synchronize subtab buttons
+  const btnSubTrans = document.getElementById('insp-subtab-transform');
+  const btnSubColor = document.getElementById('insp-subtab-color');
+  const btnSubAdv = document.getElementById('insp-subtab-advanced');
+  if (btnSubTrans) btnSubTrans.classList.toggle('active', subtab === 'transform');
+  if (btnSubColor) btnSubColor.classList.toggle('active', subtab === 'color');
+  if (btnSubAdv) btnSubAdv.classList.toggle('active', subtab === 'advanced');
+
+  let html = '';
+
+  if (targetType === 'clip') {
+    const baseClipId = appState.layers?.layer0?.clipId || 'clip_001';
+    const cueClipId = appState.layers?.layer3?.clipId || 'clip_005';
+    const targetClipId = studioInspectorState.targetClipId || cueClipId;
+    const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === targetClipId) || { id: targetClipId, name: targetClipId };
+    const tf = getClipTransform(targetClipId);
+    const tn = getClipTonal(targetClipId);
+    const clipTitle = clip.display_title || clip.filename || clip.name || targetClipId;
+
+    if (badge) badge.textContent = `CLIPE: ${clipTitle.slice(0, 16)}`;
+
+    // Common header for Clip
+    html += `
+      <div class="insp-section">
+        <div class="insp-sec-title">CLIPE EM FOCO</div>
+        <div class="insp-pills-row">
+          <button class="insp-layer-pill ${targetClipId === baseClipId ? 'active' : ''}" onclick="setInspectorClip('${baseClipId}')">
+            PGM A (AO VIVO)
+          </button>
+          <button class="insp-layer-pill ${targetClipId === cueClipId ? 'active' : ''}" onclick="setInspectorClip('${cueClipId}')">
+            CUE B (PRÓXIMO)
+          </button>
+        </div>
+        <div class="insp-clip-name-box" title="${clipTitle}">${clipTitle}</div>
+      </div>
+    `;
+
+    if (subtab === 'transform') {
+      const rot = tf.rotation || 0;
+      const fit = tf.fit_mode || 'fill';
+      const sc = tf.scale !== undefined ? tf.scale : 1.0;
+      const px = tf.pos_x || 0;
+      const py = tf.pos_y || 0;
+      const op = tf.opacity !== undefined ? tf.opacity : 1.0;
+
+      html += `
+        <!-- GEOMETRIA E ENQUADRAMENTO -->
+        <div class="insp-section">
+          <div class="insp-sec-title">ROTAÇÃO & ESPELHAMENTO</div>
+          <div class="insp-control-row">
+            <span class="insp-label">ROTAÇÃO (ÂNGULO)</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${rot === 0 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 0 }); renderStudioInspector();">0°</button>
+              <button class="insp-btn-pill ${rot === -90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: -90 }); renderStudioInspector();">↺ -90°</button>
+              <button class="insp-btn-pill ${rot === 90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 90 }); renderStudioInspector();">↻ +90°</button>
+              <button class="insp-btn-pill ${rot === 180 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 180 }); renderStudioInspector();">180°</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ESPELHAMENTO (FLIP)</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${tf.flip_h ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { flip_h: !${Boolean(tf.flip_h)} }); renderStudioInspector();">
+                ⇄ FLIP H ${tf.flip_h ? '✓' : ''}
+              </button>
+              <button class="insp-btn-pill ${tf.flip_v ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { flip_v: !${Boolean(tf.flip_v)} }); renderStudioInspector();">
+                ⇅ FLIP V ${tf.flip_v ? '✓' : ''}
+              </button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ENQUADRAMENTO (FIT MODE)</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${fit === 'fill' ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { fit_mode: 'fill' }); renderStudioInspector();">FILL</button>
+              <button class="insp-btn-pill ${fit === 'fit' ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { fit_mode: 'fit' }); renderStudioInspector();">FIT</button>
+              <button class="insp-btn-pill ${fit === 'wings' ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { fit_mode: 'wings' }); renderStudioInspector();">WINGS</button>
+              <button class="insp-btn-pill ${fit === 'stretch' ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { fit_mode: 'stretch' }); renderStudioInspector();">STRETCH</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">ESCALA & ZOOM INTRÍNSECO</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESCALA</span>
+              <span class="insp-val-disp" id="disp-clip-scale">${Math.round(sc * 100)}% (${sc.toFixed(2)}x)</span>
+            </div>
+            <input type="range" min="20" max="300" value="${Math.round(sc * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTransform('${targetClipId}', { scale: v }); document.getElementById('disp-clip-scale').textContent = Math.round(v * 100) + '% (' + v.toFixed(2) + 'x)';">
+          </div>
+          <div class="insp-pills-row" style="margin-top: 4px;">
+            ${[0.5, 0.75, 1.0, 1.5, 2.0].map(sVal => `
+              <button class="insp-btn-pill ${Math.abs(sc - sVal) < 0.04 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { scale: ${sVal} }); renderStudioInspector();">
+                ${Math.round(sVal * 100)}%
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">POSICIONAMENTO (OFFSET X / Y)</div>
+          <div class="insp-desc">Ajuste individual de posição por deslocamento e botões de micro-nudge.</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO X (HORIZONTAL)</span>
+              <span class="insp-val-disp" id="disp-clip-posx">${px} px</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-500" max="500" value="${px}" class="insp-range" id="rng-clip-posx" oninput="const v = Number(this.value); setClipTransform('${targetClipId}', { pos_x: v }); document.getElementById('disp-clip-posx').textContent = v + ' px'; document.getElementById('inp-clip-posx').value = v;">
+              <input type="number" value="${px}" step="5" class="insp-num-input" id="inp-clip-posx" onchange="const v = Number(this.value); setClipTransform('${targetClipId}', { pos_x: v }); document.getElementById('disp-clip-posx').textContent = v + ' px'; document.getElementById('rng-clip-posx').value = v;">
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO Y (VERTICAL)</span>
+              <span class="insp-val-disp" id="disp-clip-posy">${py} px</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-500" max="500" value="${py}" class="insp-range" id="rng-clip-posy" oninput="const v = Number(this.value); setClipTransform('${targetClipId}', { pos_y: v }); document.getElementById('disp-clip-posy').textContent = v + ' px'; document.getElementById('inp-clip-posy').value = v;">
+              <input type="number" value="${py}" step="5" class="insp-num-input" id="inp-clip-posy" onchange="const v = Number(this.value); setClipTransform('${targetClipId}', { pos_y: v }); document.getElementById('disp-clip-posy').textContent = v + ' px'; document.getElementById('rng-clip-posy').value = v;">
+            </div>
+          </div>
+
+          <!-- NUDGE PAD -->
+          <div class="insp-nudge-pad" style="margin-top: 6px;">
+            <button class="insp-btn-nudge" onclick="nudgeClipPosition('${targetClipId}', -10, 0)" title="Mover 10px para esquerda">◄ -10px X</button>
+            <button class="insp-btn-nudge" onclick="nudgeClipPosition('${targetClipId}', 0, -10)" title="Mover 10px para cima">▲ -10px Y</button>
+            <button class="insp-btn-nudge" onclick="centerClipPosition('${targetClipId}')" title="Resetar centro para (0, 0)">[0, 0] CENTRO</button>
+            <button class="insp-btn-nudge" onclick="nudgeClipPosition('${targetClipId}', 0, 10)" title="Mover 10px para baixo">▼ +10px Y</button>
+            <button class="insp-btn-nudge" onclick="nudgeClipPosition('${targetClipId}', 10, 0)" title="Mover 10px para direita">► +10px X</button>
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>OPACIDADE DO CLIPE</span>
+              <span class="insp-val-disp" id="disp-clip-opac">${Math.round(op * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="100" value="${Math.round(op * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTransform('${targetClipId}', { opacity: v }); document.getElementById('disp-clip-opac').textContent = Math.round(v * 100) + '%';">
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button class="insp-btn-danger-outline" onclick="resetClipTransform('${targetClipId}'); renderStudioInspector();">
+              ↺ RESETAR GEOMETRIA DO CLIPE
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      const exp = tn.exposure !== undefined ? tn.exposure : 1.0;
+      const br = tn.brightness || 0;
+      const co = tn.contrast !== undefined ? tn.contrast : 1.0;
+      const ga = tn.gamma !== undefined ? tn.gamma : 1.0;
+      const sa = tn.saturation !== undefined ? tn.saturation : 1.0;
+      const tp = tn.temperature || 0;
+      const hu = tn.hue || 0;
+
+      html += `
+        <!-- PRESETS DE LOOK DE 1-CLIQUE -->
+        <div class="insp-section">
+          <div class="insp-sec-title">LOOKS RÁPIDOS (FILM & VJ GRADES)</div>
+          <div class="insp-looks-grid">
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'neutral')">NEUTRO</button>
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'penumbra_dark')">PENUMBRA DARK</button>
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'bw_contrast')">HIGH B&W</button>
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'cyber_cold')">CYBER COLD</button>
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'amber_dusk')">AMBER DUSK</button>
+            <button class="insp-btn-look" onclick="setClipLookPreset('${targetClipId}', 'bleach_bypass')">BLEACH BYPASS</button>
+          </div>
+        </div>
+
+        <!-- CONTROLES ESSENCIAIS DE COR E LUZ -->
+        <div class="insp-section">
+          <div class="insp-sec-title">LUMINÂNCIA & CURVA TONAL</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>EXPOSIÇÃO / GANHO GERAL</span>
+              <span class="insp-val-disp text-cyan" id="disp-tn-exp">${exp.toFixed(2)}x</span>
+            </div>
+            <input type="range" min="20" max="250" value="${Math.round(exp * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTonal('${targetClipId}', { exposure: v }); document.getElementById('disp-tn-exp').textContent = v.toFixed(2) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>BLACK PEDESTAL / LIFT (PRETOS)</span>
+              <span class="insp-val-disp" id="disp-tn-lift">${br.toFixed(2)}</span>
+            </div>
+            <input type="range" min="-40" max="40" value="${Math.round(br * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTonal('${targetClipId}', { brightness: v }); document.getElementById('disp-tn-lift').textContent = v.toFixed(2);">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>CONTRASTE</span>
+              <span class="insp-val-disp" id="disp-tn-cont">${co.toFixed(2)}x</span>
+            </div>
+            <input type="range" min="50" max="250" value="${Math.round(co * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTonal('${targetClipId}', { contrast: v }); document.getElementById('disp-tn-cont').textContent = v.toFixed(2) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>GAMMA (TONS MÉDIOS)</span>
+              <span class="insp-val-disp" id="disp-tn-gamma">${ga.toFixed(2)}</span>
+            </div>
+            <input type="range" min="50" max="200" value="${Math.round(ga * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTonal('${targetClipId}', { gamma: v }); document.getElementById('disp-tn-gamma').textContent = v.toFixed(2);">
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">CROMINÂNCIA & BALANÇO DE BRANCO</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>SATURAÇÃO</span>
+              <span class="insp-val-disp" id="disp-tn-sat">${Math.round(sa * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="200" value="${Math.round(sa * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTonal('${targetClipId}', { saturation: v }); document.getElementById('disp-tn-sat').textContent = Math.round(v * 100) + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>TEMPERATURA KELVIN</span>
+              <span class="insp-val-disp" id="disp-tn-temp">${tp > 0 ? '+' + tp + ' (QUENTE)' : tp < 0 ? tp + ' (FRIO)' : '0 (NEUTRO)'}</span>
+            </div>
+            <input type="range" min="-50" max="50" value="${tp}" class="insp-range" oninput="const v = Number(this.value); setClipTonal('${targetClipId}', { temperature: v }); document.getElementById('disp-tn-temp').textContent = (v > 0 ? '+' + v + ' (QUENTE)' : v < 0 ? v + ' (FRIO)' : '0 (NEUTRO)');">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>MATIZ / HUE ROTATION</span>
+              <span class="insp-val-disp" id="disp-tn-hue">${hu}°</span>
+            </div>
+            <input type="range" min="-180" max="180" value="${hu}" class="insp-range" oninput="const v = Number(this.value); setClipTonal('${targetClipId}', { hue: v }); document.getElementById('disp-tn-hue').textContent = v + '°';">
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button class="insp-btn-danger-outline" onclick="resetClipTonal('${targetClipId}'); renderStudioInspector();">
+              ↺ RESETAR COR & LUZ (PADRÃO NEUTRO)
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      html += `
+        <!-- CLIP MATTE SELECTION -->
+        <div class="insp-section">
+          <div class="insp-sec-title">MÁSCARA MATTE DO CLIPE</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>SELETOR DE MÁSCARA</span>
+              <button class="insp-btn-ghost-sm ${tf.matte_invert ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { matte_invert: !${Boolean(tf.matte_invert)} }); renderStudioInspector();">
+                ${tf.matte_invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
+              </button>
+            </div>
+            <select class="insp-select" onchange="setClipTransform('${targetClipId}', { matte: this.value }); renderStudioInspector();">
+              <option value="none" ${(!tf.matte || tf.matte === 'none') ? 'selected' : ''}>PASSTHROUGH (SEM MÁSCARA)</option>
+              ${(allMattes || []).map(m => `
+                <option value="${m.path || m.filename}" ${(tf.matte === m.path || tf.matte === m.filename) ? 'selected' : ''}>${m.name || m.filename}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+
+        <!-- FX TARGET ROUTING -->
+        <div class="insp-section">
+          <div class="insp-sec-title">ROTEAMENTO DE FX</div>
+          <div class="insp-control-row">
+            <span class="insp-label">BARRAMENTO DE DESTINO</span>
+            <div class="insp-pills-row">
+              ${['master', 'deck_a', 'deck_b'].map(tgt => `
+                <button class="insp-btn-pill ${(appState.fx?.target || 'master') === tgt ? 'active' : ''}" onclick="if(appState.fx) appState.fx.target = '${tgt}'; renderStudioInspector();">
+                  ${tgt.toUpperCase()}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } else if (targetType === 'layer') {
     const lIdx = studioInspectorState.targetLayer !== undefined ? studioInspectorState.targetLayer : 2;
     const lKey = `layer${lIdx}`;
     const layer = (appState.layers && appState.layers[lKey]) || {};
     const layerNames = ['L0 BASE', 'L1 DOUBLE', 'L2 FIND EDGES', 'L3 CUE QUEUE', 'L4 DIFFERENCE', 'L5 OVERLAY'];
-    if (badge) badge.textContent = `${layerNames[lIdx] || `L${lIdx}`}`;
+    if (badge) badge.textContent = `CAMADA: ${layerNames[lIdx] || `L${lIdx}`}`;
 
-    let html = `
+    html += `
       <!-- LAYER PICKER STRIP -->
       <div class="insp-section">
         <div class="insp-sec-title">CAMADA EM FOCO</div>
@@ -26610,7 +27471,7 @@ function renderStudioInspector() {
         </div>
       </div>
 
-      <!-- MAIN LAYER CONTROLS (ACTIVE, SOLO, MUTE) -->
+      <!-- MAIN LAYER STATE -->
       <div class="insp-section">
         <div class="insp-row-between">
           <span class="insp-label">ESTADO DA CAMADA</span>
@@ -26629,7 +27490,7 @@ function renderStudioInspector() {
 
         <div class="insp-control-row">
           <div class="insp-label-val">
-            <span>OPACIDADE</span>
+            <span>OPACIDADE DA CAMADA</span>
             <span class="insp-val-disp" id="insp-disp-opac">${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}%</span>
           </div>
           <input type="range" min="0" max="100" value="${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}" class="insp-range" oninput="onLayerOpacityChange('${lKey}', this.value); document.getElementById('insp-disp-opac').textContent = this.value + '%';">
@@ -26649,258 +27510,239 @@ function renderStudioInspector() {
       </div>
     `;
 
-    // SPECIAL DEDICATED PANEL FOR LAYER 2 (FIND EDGES CONTOURS)
-    if (lIdx === 2) {
-      const lumBoost = (layer.luminance !== undefined ? layer.luminance : (appState.tonal?.edge_luminance || 2.8));
-      const edgeWidth = (layer.edge_width !== undefined ? layer.edge_width : (appState.tonal?.edge_width || 2.2));
-      const edgeThresh = (layer.edge_threshold !== undefined ? layer.edge_threshold : (appState.tonal?.edge_threshold || 0.28));
-      const edgeMix = (layer.edge_mix !== undefined ? layer.edge_mix : (appState.tonal?.edge_mix || 0.85));
+    if (subtab === 'transform') {
+      const rot = layer.rotation || 0;
+      const fit = layer.fit_mode || 'fill';
+      const sc = layer.scale !== undefined ? layer.scale : 1.0;
 
       html += `
-        <div class="insp-section insp-highlight-card">
-          <div class="insp-sec-title insp-cyan-title">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
-            FIND EDGES · CONTORNO & LUMINÂNCIA (L2)
-          </div>
-          <div class="insp-desc">Contornos Sobel no topo do master. Luminância calibrada para projetor com brancos destacados.</div>
-
+        <div class="insp-section">
+          <div class="insp-sec-title">GEOMETRIA & ENQUADRAMENTO DA CAMADA</div>
           <div class="insp-control-row">
-            <div class="insp-label-val">
-              <span>LUMINÂNCIA DOS BRANCOS (WHITE GAIN)</span>
-              <span class="insp-val-disp text-cyan" id="disp-l2-lum">${lumBoost.toFixed(1)}x</span>
+            <span class="insp-label">ORIENTAÇÃO / ROTAÇÃO</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${rot === 0 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 0); renderStudioInspector();">0°</button>
+              <button class="insp-btn-pill ${rot === -90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', -90); renderStudioInspector();">↺ -90°</button>
+              <button class="insp-btn-pill ${rot === 90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 90); renderStudioInspector();">↻ +90°</button>
+              <button class="insp-btn-pill ${rot === 180 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 180); renderStudioInspector();">180°</button>
             </div>
-            <input type="range" min="10" max="50" value="${Math.round(lumBoost * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setLuminance(v); document.getElementById('disp-l2-lum').textContent = v.toFixed(1) + 'x';">
           </div>
 
           <div class="insp-control-row">
-            <div class="insp-label-val">
-              <span>LIMIAR DE BORDA (THRESHOLD)</span>
-              <span class="insp-val-disp" id="disp-l2-thresh">${Math.round(edgeThresh * 100)}%</span>
+            <span class="insp-label">MODO DE FIT</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${fit === 'fill' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fill'); renderStudioInspector();">FILL</button>
+              <button class="insp-btn-pill ${fit === 'fit' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fit'); renderStudioInspector();">FIT</button>
+              <button class="insp-btn-pill ${fit === 'wings' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'wings'); renderStudioInspector();">WINGS</button>
             </div>
-            <input type="range" min="5" max="85" value="${Math.round(edgeThresh * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setThreshold(v); document.getElementById('disp-l2-thresh').textContent = Math.round(v * 100) + '%';">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>ESPESSURA DO TRAÇADO (EDGE WIDTH)</span>
-              <span class="insp-val-disp" id="disp-l2-width">${edgeWidth.toFixed(1)} px</span>
+              <span>ESCALA DA CAMADA</span>
+              <span class="insp-val-disp" id="disp-layer-sc">${sc.toFixed(2)}x</span>
             </div>
-            <input type="range" min="10" max="45" value="${Math.round(edgeWidth * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setWidth(v); document.getElementById('disp-l2-width').textContent = v.toFixed(1) + ' px';">
+            <input type="range" min="50" max="250" value="${Math.round(sc * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setLayerScale('${lKey}', v); document.getElementById('disp-layer-sc').textContent = v.toFixed(2) + 'x';">
           </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      if (lIdx === 2) {
+        const lumBoost = (layer.luminance !== undefined ? layer.luminance : (appState.tonal?.edge_luminance || 2.8));
+        const edgeWidth = (layer.edge_width !== undefined ? layer.edge_width : (appState.tonal?.edge_width || 2.2));
+        const edgeThresh = (layer.edge_threshold !== undefined ? layer.edge_threshold : (appState.tonal?.edge_threshold || 0.28));
+        const edgeMix = (layer.edge_mix !== undefined ? layer.edge_mix : (appState.tonal?.edge_mix || 0.85));
 
+        html += `
+          <div class="insp-section insp-highlight-card">
+            <div class="insp-sec-title insp-cyan-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
+              FIND EDGES · CONTORNO & LUMINÂNCIA (L2)
+            </div>
+            <div class="insp-desc">Contornos Sobel acima da imagem principal. Luminância elevada garante brancos puros e destacados no projetor.</div>
+
+            <div class="insp-control-row">
+              <div class="insp-label-val">
+                <span>LUMINÂNCIA DOS BRANCOS (WHITE GAIN)</span>
+                <span class="insp-val-disp text-cyan" id="disp-l2-lum">${lumBoost.toFixed(1)}x</span>
+              </div>
+              <input type="range" min="10" max="50" value="${Math.round(lumBoost * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setLuminance(v); document.getElementById('disp-l2-lum').textContent = v.toFixed(1) + 'x';">
+            </div>
+
+            <div class="insp-control-row">
+              <div class="insp-label-val">
+                <span>LIMIAR DE BORDA (THRESHOLD)</span>
+                <span class="insp-val-disp" id="disp-l2-thresh">${Math.round(edgeThresh * 100)}%</span>
+              </div>
+              <input type="range" min="5" max="85" value="${Math.round(edgeThresh * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setThreshold(v); document.getElementById('disp-l2-thresh').textContent = Math.round(v * 100) + '%';">
+            </div>
+
+            <div class="insp-control-row">
+              <div class="insp-label-val">
+                <span>ESPESSURA DO TRAÇADO (EDGE WIDTH)</span>
+                <span class="insp-val-disp" id="disp-l2-width">${edgeWidth.toFixed(1)} px</span>
+              </div>
+              <input type="range" min="10" max="45" value="${Math.round(edgeWidth * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setWidth(v); document.getElementById('disp-l2-width').textContent = v.toFixed(1) + ' px';">
+            </div>
+
+            <div class="insp-control-row">
+              <div class="insp-label-val">
+                <span>MIX DIRETO DO FIND EDGES</span>
+                <span class="insp-val-disp" id="disp-l2-mix">${Math.round(edgeMix * 100)}%</span>
+              </div>
+              <input type="range" min="0" max="100" value="${Math.round(edgeMix * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setMix(v); document.getElementById('disp-l2-mix').textContent = Math.round(v * 100) + '%';">
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="insp-section">
+            <div class="insp-sec-title">AJUSTE TONAL DA CAMADA L${lIdx}</div>
+            <div class="insp-desc">Ajuste de transparência e composição com os demais barramentos.</div>
+            <div class="insp-control-row">
+              <div class="insp-label-val">
+                <span>OPACIDADE</span>
+                <span class="insp-val-disp">${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}%</span>
+              </div>
+              <input type="range" min="0" max="100" value="${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}" class="insp-range" oninput="onLayerOpacityChange('${lKey}', this.value);">
+            </div>
+          </div>
+        `;
+      }
+    } else if (subtab === 'advanced') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">MÁSCARA DA CAMADA</div>
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>MIX DIRETO DO FIND EDGES</span>
-              <span class="insp-val-disp" id="disp-l2-mix">${Math.round(edgeMix * 100)}%</span>
+              <span>SELETOR DE MÁSCARA</span>
+              <button class="insp-btn-ghost-sm ${layer.matte_invert ? 'active' : ''}" onclick="toggleLayerMatteInvert('${lKey}'); renderStudioInspector();">
+                ${layer.matte_invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
+              </button>
             </div>
-            <input type="range" min="0" max="100" value="${Math.round(edgeMix * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setMix(v); document.getElementById('disp-l2-mix').textContent = Math.round(v * 100) + '%';">
+            <select class="insp-select" onchange="onLayerMatteChange('${lKey}', this.value); renderStudioInspector();">
+              <option value="none" ${(!layer.matte || layer.matte === 'none') ? 'selected' : ''}>PASSTHROUGH (SEM MÁSCARA)</option>
+              ${(allMattes || []).map(m => `
+                <option value="${m.path || m.filename}" ${(layer.matte === m.path || layer.matte === m.filename) ? 'selected' : ''}>${m.name || m.filename}</option>
+              `).join('')}
+            </select>
           </div>
         </div>
       `;
     }
 
-    // GEOMETRIA E ENQUADRAMENTO DA CAMADA
-    const rot = layer.rotation || 0;
-    const fit = layer.fit_mode || 'fill';
-    html += `
-      <div class="insp-section">
-        <div class="insp-sec-title">GEOMETRIA & ENQUADRAMENTO</div>
-        <div class="insp-control-row">
-          <span class="insp-label">ORIENTAÇÃO / ROTAÇÃO</span>
-          <div class="insp-pills-row">
-            <button class="insp-btn-pill ${rot === 0 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 0); renderStudioInspector();">0°</button>
-            <button class="insp-btn-pill ${rot === -90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', -90); renderStudioInspector();">↺ -90°</button>
-            <button class="insp-btn-pill ${rot === 90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 90); renderStudioInspector();">↻ +90°</button>
-            <button class="insp-btn-pill ${rot === 180 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 180); renderStudioInspector();">180°</button>
-          </div>
-        </div>
-
-        <div class="insp-control-row">
-          <span class="insp-label">MODO DE FIT</span>
-          <div class="insp-pills-row">
-            <button class="insp-btn-pill ${fit === 'fill' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fill'); renderStudioInspector();">FILL</button>
-            <button class="insp-btn-pill ${fit === 'fit' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fit'); renderStudioInspector();">FIT</button>
-            <button class="insp-btn-pill ${fit === 'wings' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'wings'); renderStudioInspector();">WINGS</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- MÁSCARA (MATTE) DA CAMADA -->
-      <div class="insp-section">
-        <div class="insp-sec-title">MÁSCARA DA CAMADA</div>
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>SELETOR DE MÁSCARA</span>
-            <button class="insp-btn-ghost-sm ${layer.matte_invert ? 'active' : ''}" onclick="toggleLayerMatteInvert('${lKey}'); renderStudioInspector();">
-              ${layer.matte_invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
-            </button>
-          </div>
-          <select class="insp-select" onchange="onLayerMatteChange('${lKey}', this.value); renderStudioInspector();">
-            <option value="none" ${(!layer.matte || layer.matte === 'none') ? 'selected' : ''}>PASSTHROUGH (SEM MÁSCARA)</option>
-            ${(allMattes || []).map(m => `
-              <option value="${m.path || m.filename}" ${(layer.matte === m.path || layer.matte === m.filename) ? 'selected' : ''}>${m.name || m.filename}</option>
-            `).join('')}
-          </select>
-        </div>
-      </div>
-    `;
-
     container.innerHTML = html;
-  } else if (tab === 'clip') {
-    // CLIPE TAB (PRE-AIR TRANSFORMS & MEDIA)
-    const baseClipId = appState.layers?.layer0?.clipId || 'clip_001';
-    const cueClipId = appState.layers?.layer3?.clipId || 'clip_005';
-    const targetClipId = studioInspectorState.targetClipId || cueClipId;
-    const clip = (allClips || []).find(c => c.id === targetClipId) || { id: targetClipId, name: targetClipId };
-    const tf = getClipTransform(targetClipId);
-    if (badge) badge.textContent = `CLIPE: ${clip.name ? clip.name.slice(0, 16) : targetClipId}`;
-
-    let html = `
-      <div class="insp-section">
-        <div class="insp-sec-title">SELECIONAR CLIPE</div>
-        <div class="insp-pills-row">
-          <button class="insp-layer-pill ${targetClipId === baseClipId ? 'active' : ''}" onclick="setInspectorClip('${baseClipId}')">
-            PGM DECK A (L0)
-          </button>
-          <button class="insp-layer-pill ${targetClipId === cueClipId ? 'active' : ''}" onclick="setInspectorClip('${cueClipId}')">
-            CUE DECK B (L3)
-          </button>
-        </div>
-        <div class="insp-clip-name-box">${clip.name || targetClipId}</div>
-      </div>
-
-      <div class="insp-section">
-        <div class="insp-sec-title">TRANSFORMAÇÃO GEOMÉTRICA (PRE-AIR)</div>
-        <div class="insp-desc">Ajuste individual do clipe antes de ir para o ar, preservando o layout master.</div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>ROTAÇÃO</span>
-            <span class="insp-val-disp">${tf.rotation || 0}°</span>
-          </div>
-          <div class="insp-pills-row">
-            <button class="insp-btn-pill ${tf.rotation === 0 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 0 }); renderStudioInspector();">0°</button>
-            <button class="insp-btn-pill ${tf.rotation === -90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: -90 }); renderStudioInspector();">↺ -90°</button>
-            <button class="insp-btn-pill ${tf.rotation === 90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 90 }); renderStudioInspector();">↻ +90°</button>
-            <button class="insp-btn-pill ${tf.rotation === 180 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 180 }); renderStudioInspector();">180°</button>
-          </div>
-        </div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>ESCALA / ZOOM</span>
-            <span class="insp-val-disp" id="disp-clip-scale">${(tf.scale || 1.0).toFixed(2)}x</span>
-          </div>
-          <input type="range" min="50" max="250" value="${Math.round((tf.scale || 1.0) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTransform('${targetClipId}', { scale: v }); document.getElementById('disp-clip-scale').textContent = v.toFixed(2) + 'x';">
-        </div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>POSIÇÃO X</span>
-            <span class="insp-val-disp" id="disp-clip-posx">${tf.pos_x || 0} px</span>
-          </div>
-          <input type="range" min="-300" max="300" value="${tf.pos_x || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_x: Number(this.value) }); document.getElementById('disp-clip-posx').textContent = this.value + ' px';">
-        </div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>POSIÇÃO Y</span>
-            <span class="insp-val-disp" id="disp-clip-posy">${tf.pos_y || 0} px</span>
-          </div>
-          <input type="range" min="-300" max="300" value="${tf.pos_y || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_y: Number(this.value) }); document.getElementById('disp-clip-posy').textContent = this.value + ' px';">
-        </div>
-
-        <div style="margin-top: 10px;">
-          <button class="insp-btn-danger-outline" onclick="resetClipTransform('${targetClipId}'); renderStudioInspector();">
-            RESETAR GEOMETRIA DO CLIPE
-          </button>
-        </div>
-      </div>
-    `;
-
-    container.innerHTML = html;
-  } else if (tab === 'fx') {
-    // FX & COLOR TAB
-    if (badge) badge.textContent = 'FX & COLOR MASTER';
+  } else if (targetType === 'master') {
+    if (badge) badge.textContent = '🌐 MASTER & FX ENGINE';
     const tonal = appState.tonal || {};
 
-    let html = `
-      <div class="insp-section">
-        <div class="insp-sec-title">COLOR & LEVELS (MASTER DECK)</div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>BLACK PEDESTAL (PRETOS)</span>
-            <span class="insp-val-disp" id="disp-insp-bright">${(tonal.brightness || -0.05).toFixed(2)}</span>
-          </div>
-          <input type="range" min="-40" max="20" value="${Math.round((tonal.brightness || -0.05) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.brightness = v; document.getElementById('disp-insp-bright').textContent = v.toFixed(2);">
-        </div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>CONTRAST (CONTRASTE)</span>
-            <span class="insp-val-disp" id="disp-insp-contrast">${(tonal.contrast || 1.18).toFixed(2)}x</span>
-          </div>
-          <input type="range" min="80" max="220" value="${Math.round((tonal.contrast || 1.18) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.contrast = v; document.getElementById('disp-insp-contrast').textContent = v.toFixed(2) + 'x';">
-        </div>
-
-        <div class="insp-control-row">
-          <div class="insp-label-val">
-            <span>GAMMA (CURVA TONAL)</span>
-            <span class="insp-val-disp" id="disp-insp-gamma">${(tonal.gamma || 0.85).toFixed(2)}</span>
-          </div>
-          <input type="range" min="50" max="180" value="${Math.round((tonal.gamma || 0.85) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.gamma = v; document.getElementById('disp-insp-gamma').textContent = v.toFixed(2);">
-        </div>
-      </div>
-
-      <div class="insp-section">
-        <div class="insp-sec-title">ROTEAMENTO DE FX</div>
-        <div class="insp-control-row">
-          <span class="insp-label">DESTINO DOS EFEITOS</span>
-          <div class="insp-pills-row">
-            ${['master', 'deck_a', 'deck_b'].map(tgt => `
-              <button class="insp-btn-pill ${(appState.fx?.target || 'master') === tgt ? 'active' : ''}" onclick="if(appState.fx) appState.fx.target = '${tgt}'; renderStudioInspector();">
-                ${tgt.toUpperCase()}
-              </button>
-            `).join('')}
+    if (subtab === 'transform') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI)</div>
+          <div class="insp-control-row">
+            <span class="insp-label">ASPECT RATIO DA TRANSMISSÃO</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${appState.aspectRatio === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZONTAL</button>
+              <button class="insp-btn-pill ${appState.aspectRatio === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERTICAL</button>
+              <button class="insp-btn-pill ${appState.aspectRatio === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 QUADRADO</button>
+              <button class="insp-btn-pill ${appState.aspectRatio === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+            </div>
           </div>
         </div>
-      </div>
+      `;
+    } else if (subtab === 'color') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">COLOR & LEVELS (MASTER DECK)</div>
 
-      <div class="insp-section">
-        <div class="insp-sec-title">PLUGINS DE EFEITO (50 PRESETS EXPANDIDOS)</div>
-        <div class="insp-desc">Selecione e ative presets estilizados de Pixel Sorter, Stretch, Modulation, Bad TV e RXXR.</div>
-        <div class="insp-fx-quick-grid">
-          ${[
-            { id: 'pixel_stretch', name: 'PIXEL STRETCH' },
-            { id: 'pixel_sorter', name: 'PIXEL SORTER' },
-            { id: 'modulation', name: 'MODULATION' },
-            { id: 'bad_tv', name: 'BAD TV' },
-            { id: 'rxxr', name: 'RXXR ASCII' }
-          ].map(p => {
-            const presets = Object.keys(ROADMAP_PRESETS[p.id] || {});
-            const isPlgActive = appState.fx && appState.fx[p.id] && appState.fx[p.id].enabled;
-            return `
-              <div class="insp-fx-card">
-                <div class="insp-fx-card-hdr">
-                  <span style="font-weight:700; color:#fff;">${p.name}</span>
-                  <button class="insp-btn-toggle-sm ${isPlgActive ? 'active' : ''}" onclick="toggleFxPluginEnabled('${p.id}'); renderStudioInspector();">
-                    ${isPlgActive ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-                <div class="insp-presets-chips-flow">
-                  ${presets.map(pr => `
-                    <button class="insp-chip-pill" onclick="loadPluginPreset('${p.id}', '${pr}'); renderStudioInspector();" title="${pr}">
-                      ${pr.replace(/_/g, ' ')}
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>BLACK PEDESTAL (PRETOS)</span>
+              <span class="insp-val-disp" id="disp-insp-bright">${(tonal.brightness || -0.05).toFixed(2)}</span>
+            </div>
+            <input type="range" min="-40" max="20" value="${Math.round((tonal.brightness || -0.05) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.brightness = v; document.getElementById('disp-insp-bright').textContent = v.toFixed(2);">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>CONTRAST (CONTRASTE)</span>
+              <span class="insp-val-disp" id="disp-insp-contrast">${(tonal.contrast || 1.18).toFixed(2)}x</span>
+            </div>
+            <input type="range" min="80" max="220" value="${Math.round((tonal.contrast || 1.18) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.contrast = v; document.getElementById('disp-insp-contrast').textContent = v.toFixed(2) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>GAMMA (CURVA TONAL)</span>
+              <span class="insp-val-disp" id="disp-insp-gamma">${(tonal.gamma || 0.85).toFixed(2)}</span>
+            </div>
+            <input type="range" min="50" max="180" value="${Math.round((tonal.gamma || 0.85) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.gamma = v; document.getElementById('disp-insp-gamma').textContent = v.toFixed(2);">
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">DIMMER MASTER & BLACKOUT DE EMERGÊNCIA</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>DIMMER GERAL DA SAÍDA</span>
+              <span class="insp-val-disp" id="disp-master-dimmer">${Math.round((appState.masterDimmer !== undefined ? appState.masterDimmer : 1.0) * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="100" value="${Math.round((appState.masterDimmer !== undefined ? appState.masterDimmer : 1.0) * 100)}" class="insp-range" oninput="appState.masterDimmer = this.value / 100.0; document.getElementById('disp-master-dimmer').textContent = this.value + '%';">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">ROTEAMENTO DE FX</div>
+          <div class="insp-control-row">
+            <span class="insp-label">DESTINO DOS EFEITOS</span>
+            <div class="insp-pills-row">
+              ${['master', 'deck_a', 'deck_b'].map(tgt => `
+                <button class="insp-btn-pill ${(appState.fx?.target || 'master') === tgt ? 'active' : ''}" onclick="if(appState.fx) appState.fx.target = '${tgt}'; renderStudioInspector();">
+                  ${tgt.toUpperCase()}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">PLUGINS DE EFEITO (50 PRESETS EXPANDIDOS)</div>
+          <div class="insp-desc">Selecione e ative presets estilizados de Pixel Sorter, Stretch, Modulation, Bad TV e RXXR.</div>
+          <div class="insp-fx-quick-grid">
+            ${[
+              { id: 'pixel_stretch', name: 'PIXEL STRETCH' },
+              { id: 'pixel_sorter', name: 'PIXEL SORTER' },
+              { id: 'modulation', name: 'MODULATION' },
+              { id: 'bad_tv', name: 'BAD TV' },
+              { id: 'rxxr', name: 'RXXR ASCII' }
+            ].map(p => {
+              const presets = Object.keys(ROADMAP_PRESETS[p.id] || {});
+              const isPlgActive = appState.fx && appState.fx[p.id] && appState.fx[p.id].enabled;
+              return `
+                <div class="insp-fx-card">
+                  <div class="insp-fx-card-hdr">
+                    <span style="font-weight:700; color:#fff;">${p.name}</span>
+                    <button class="insp-btn-toggle-sm ${isPlgActive ? 'active' : ''}" onclick="toggleFxPluginEnabled('${p.id}'); renderStudioInspector();">
+                      ${isPlgActive ? 'ON' : 'OFF'}
                     </button>
-                  `).join('')}
+                  </div>
+                  <div class="insp-presets-chips-flow">
+                    ${presets.map(pr => `
+                      <button class="insp-chip-pill" onclick="loadPluginPreset('${p.id}', '${pr}'); renderStudioInspector();" title="${pr}">
+                        ${pr.replace(/_/g, ' ')}
+                      </button>
+                    `).join('')}
+                  </div>
                 </div>
-              </div>
-            `;
-          }).join('')}
+              `;
+            }).join('')}
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
 
     container.innerHTML = html;
   }

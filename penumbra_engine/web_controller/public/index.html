@@ -580,8 +580,8 @@
 
         <!-- Dock Actions -->
         <div class="dock-actions-cluster" style="display: flex; align-items: center; gap: 6px;">
-          <button class="dock-action-btn" id="btn-quick-switch-view" onclick="toggleDockViewMode()" title="Alternar entre Módulos e Timeline [TAB]">
-            <span id="lbl-quick-switch-text">TIMELINE PRO</span> <kbd>TAB</kbd>
+          <button class="dock-action-btn" id="btn-dock-toggle-inspector" onclick="toggleStudioInspector()" title="Abrir/Fechar Studio Inspector [I]">
+            <span>🔍 INSPETOR</span> <kbd>I</kbd>
           </button>
           <button class="dock-action-btn" id="btn-maximize-dock" onclick="toggleDockMaximize()" title="Maximizar Módulo [~]">
             MAXIMIZE <kbd>~</kbd>
@@ -2208,12 +2208,25 @@
                   </button>
                 </div>
 
-                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleQuickInspector()" title="Abrir/Fechar Inspetor de Parâmetros Rápidos">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                  <span>INSPETOR</span>
+                <button class="btn-lib-tb btn-toggle-inspector" id="btn-toggle-inspector" onclick="toggleStudioInspector()" title="Abrir/Fechar Studio Inspector [I]">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                  <span>INSPETOR [I]</span>
                 </button>
               </div>
             </header>
+
+            <!-- BREADCRUMB & BIN NAVIGATION TRAIL -->
+            <nav class="library-breadcrumb-nav" id="library-breadcrumb-nav">
+              <div class="lib-breadcrumb-trail" id="lib-breadcrumb-trail">
+                <button class="breadcrumb-root-btn active" id="btn-breadcrumb-root" onclick="setFolderFilter('ALL')">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                  <span>TODAS AS PASTAS</span>
+                </button>
+              </div>
+              <div class="lib-breadcrumb-pills" id="lib-breadcrumb-quick-pills">
+                <!-- Dynamically populated with project bins -->
+              </div>
+            </nav>
 
             <!-- ASSET CONTENT CONTAINER (100% vertical space) -->
             <div class="dock-media-grid" id="media-cards-container">
@@ -3466,17 +3479,28 @@
     <!-- STUDIO INSPECTOR RETRACTABLE DRAWER (DAVINCI RESOLVE / AFTER EFFECTS STYLE) -->
     <aside id="studio-inspector-drawer" class="studio-inspector-drawer hidden">
       <div class="inspector-header">
-        <div class="inspector-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-          <span>STUDIO INSPECTOR</span>
-          <span class="inspector-badge" id="inspector-target-badge">L2 FIND EDGES</span>
+        <div class="inspector-title-row">
+          <div class="inspector-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            <span>STUDIO INSPECTOR</span>
+          </div>
+          <span class="inspector-target-pill" id="inspector-target-badge">CLIPE: CUE</span>
+          <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
         </div>
-        <div class="inspector-tabs">
-          <button class="insp-tab-btn active" id="insp-tab-layer" data-tab="layer" onclick="switchInspectorTab('layer')">CAMADA</button>
-          <button class="insp-tab-btn" id="insp-tab-clip" data-tab="clip" onclick="switchInspectorTab('clip')">CLIPE</button>
-          <button class="insp-tab-btn" id="insp-tab-fx" data-tab="fx" onclick="switchInspectorTab('fx')">FX & COLOR</button>
+
+        <!-- MASTER TARGET SELECTOR -->
+        <div class="inspector-target-selector">
+          <button class="insp-target-btn active" id="insp-target-clip" onclick="switchInspectorTarget('clip')">🎯 CLIPE</button>
+          <button class="insp-target-btn" id="insp-target-layer" onclick="switchInspectorTarget('layer')">📑 CAMADA</button>
+          <button class="insp-target-btn" id="insp-target-master" onclick="switchInspectorTarget('master')">🌐 MASTER & FX</button>
         </div>
-        <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
+
+        <!-- SUBTABS BAR -->
+        <div class="inspector-subtabs">
+          <button class="insp-subtab-btn active" id="insp-subtab-transform" onclick="switchInspectorSubtab('transform')">📐 TRANSFORMAÇÃO</button>
+          <button class="insp-subtab-btn" id="insp-subtab-color" onclick="switchInspectorSubtab('color')">🎨 COR & LUZ</button>
+          <button class="insp-subtab-btn" id="insp-subtab-advanced" onclick="switchInspectorSubtab('advanced')">⚡ FX & MATTES</button>
+        </div>
       </div>
       <div class="inspector-body" id="inspector-body-content">
         <!-- Rendered dynamically via renderStudioInspector() -->
