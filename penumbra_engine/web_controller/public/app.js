@@ -816,6 +816,28 @@ let appState = {
   matte: {
     bank: 'B',
     name: 'matte_b_penumbra_vignette.png',
+    active_path: 'matte_b_penumbra_vignette.png',
+    invert: false,
+    opacity: 1.0,
+    transform: {
+      pos_x: 0,
+      pos_y: 0,
+      scale: 1.0,
+      scale_x: 1.0,
+      scale_y: 1.0,
+      rotation: 0
+    },
+    vignette: {
+      enabled: false,
+      roundness: 0.65,    // 0 = sharp rect, 0.65 = rounded, 1.0 = full oval/circle
+      feather: 0.38,      // softness falloff (0.05 to 1.0)
+      inner_radius: 0.42,
+      outer_radius: 0.95,
+      aspect_ratio: '16:9',
+      aspect_ovality: 1.0,
+      audio_pulse: 0.15,
+      audio_band: 'bass'
+    },
     deform: {
       wiggle_scale: 0.04,
       wiggle_pos: 8,
@@ -823,6 +845,30 @@ let appState = {
       edge_warp: 0.08,
       speed: 1.0,
       sync_bpm: true
+    }
+  },
+  gen3d: {
+    active_scene: 'star_13', // 'spine', 'ocean_sun', 'star_13', 'hybrid'
+    palette: 'cyan_neon',    // 'cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice'
+    camera: {
+      orbit_speed: 1.0,
+      tilt: 0.22,
+      fov: 1.35,
+      distance: 2.3
+    },
+    particles: {
+      count_mult: 1.0,
+      point_size: 1.0,
+      line_connect_dist: 55,
+      wireframe: true,
+      glow_intensity: 1.0
+    },
+    audio_reactivity: {
+      spine_swimming: 1.0,
+      ocean_wave_amp: 1.0,
+      star_treble_spin: 1.2,
+      num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
+      air_sparkle: 1.0
     }
   },
   audio_monitor: {
@@ -1190,6 +1236,18 @@ function initWebSocket() {
         syncVideoSources();
       } else if (msg.type === 'telemetry') {
         const incomingData = { ...(msg.data || {}) };
+        // Protect live browser microphone / line-in DSP from being clobbered by backend telemetry
+        const isLiveBrowserAudio = (window.PenumbraWebAudio && window.PenumbraWebAudio.isActive) || 
+                                   (currentAudioSource && currentAudioSource.mode !== 'test') ||
+                                   (appState.audio_source === 'mic' || appState.audio_source === 'p2');
+        if (isLiveBrowserAudio) {
+          delete incomingData.bands;
+          delete incomingData.stems;
+          delete incomingData.energy;
+          if (!appState.bpm_manual_lock && window.PenumbraWebAudio && window.PenumbraWebAudio.detectedBpm) {
+            delete incomingData.bpm;
+          }
+        }
         if (appState.bpm_manual_lock && incomingData.bpm !== undefined) {
           delete incomingData.bpm;
         }
@@ -1851,9 +1909,53 @@ function getTonalFilterString(t) {
   return `contrast(${totalContrast}%) brightness(${totalBrightness}%) saturate(${totalSaturate}%)`;
 }
 
+function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
+  const roundness = vig.roundness !== undefined ? Number(vig.roundness) : 0.65;
+  const feather = Math.max(0.02, Number(vig.feather || 0.38));
+  const innerR = Math.max(0.05, Number(vig.inner_radius || 0.42));
+  const outerR = Math.max(innerR + 0.05, Number(vig.outer_radius || 0.95));
+  const pulse = Number(vig.audio_pulse || 0.15) * audioPulse;
+  
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+  const maxDim = Math.max(w, h) * 0.5;
+  const minDim = Math.min(w, h) * 0.5;
+
+  ctx.save();
+  if (roundness >= 0.95) {
+    const rStart = maxDim * innerR * (1.0 - pulse);
+    const rEnd = maxDim * outerR;
+    const grad = ctx.createRadialGradient(cx, cy, Math.max(0, rStart), cx, cy, rEnd);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(Math.min(0.99, Math.max(0.01, 1.0 - feather)), 'rgba(0, 0, 0, 0.45)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    const cornerR = minDim * roundness;
+    const boxW = Math.max(40, (w * innerR * 1.8) * (1.0 + pulse));
+    const boxH = Math.max(40, (h * innerR * 1.8) * (1.0 + pulse));
+    const featherPx = Math.max(4, Math.round(minDim * feather * 0.65));
+
+    ctx.filter = `blur(${featherPx}px)`;
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.rect(-featherPx * 2, -featherPx * 2, w + featherPx * 4, h + featherPx * 4);
+    if (ctx.roundRect) {
+      ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+    } else {
+      ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+    }
+    ctx.fill('evenodd');
+  }
+  ctx.restore();
+}
+
 function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false) {
   if (!matteImg) return;
   const def = deform || { wiggle_scale: 0.04, wiggle_pos: 8, wiggle_rot: 0, speed: 4.0, sync_bpm: true };
+  const mt = (appState.matte && appState.matte.transform) || { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
+  const vig = (appState.matte && appState.matte.vignette) || {};
   const bpm = appState.bpm || 120;
   const bps = bpm / 60.0;
   
@@ -1875,29 +1977,38 @@ function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false) {
   const wigglePos = def.wiggle_pos || 8;
   const wiggleRot = def.wiggle_rot || 0;
   
-  const dx = wigglePos * Math.cos(animTime * 2.0 * speedMult * syncMult);
-  const dy = wigglePos * Math.sin(animTime * 1.5 * speedMult * syncMult);
-  const rotDeg = wiggleRot * Math.sin(animTime * 1.2 * speedMult * syncMult);
+  const dx = wigglePos * Math.cos(animTime * 2.0 * speedMult * syncMult) + (w * (mt.pos_x || 0) / 100);
+  const dy = wigglePos * Math.sin(animTime * 1.5 * speedMult * syncMult) + (h * (mt.pos_y || 0) / 100);
+  const rotDeg = wiggleRot * Math.sin(animTime * 1.2 * speedMult * syncMult) + (mt.rotation || 0);
   const rotRad = (rotDeg * Math.PI) / 180.0;
   
   // Anti-Edges Logic: Minimum scale to never reveal bounds
   const maxWiggle = Math.abs(wigglePos);
-  const maxRotDeg = Math.abs(wiggleRot);
+  const maxRotDeg = Math.abs(rotDeg);
   const safeMargin = (maxWiggle / Math.min(w, h)) * 2.5 + (maxRotDeg > 0 ? (maxRotDeg / 45) * 0.4 : 0.05);
   const baseScale = 1.0 + safeMargin;
   const scaleMod = Math.abs((def.wiggle_scale || 0.04) * Math.sin(animTime * 2.5 * speedMult * syncMult));
-  const wScale = baseScale + scaleMod;
+  const wScaleX = (baseScale + scaleMod) * (mt.scale !== undefined ? mt.scale : 1.0) * (mt.scale_x || 1.0);
+  const wScaleY = (baseScale + scaleMod) * (mt.scale !== undefined ? mt.scale : 1.0) * (mt.scale_y || 1.0);
 
   ctx.save();
   ctx.translate(w / 2 + dx, h / 2 + dy);
   if (rotRad !== 0) ctx.rotate(rotRad);
-  ctx.scale(wScale, wScale);
+  ctx.scale(wScaleX, wScaleY);
   ctx.translate(-w / 2, -h / 2);
   
-  if (invert) {
+  const isInv = invert || appState.matte?.invert;
+  if (isInv) {
     ctx.filter = 'invert(100%)';
   }
-  drawFittedImage(ctx, matteImg, w, h, 'fill');
+  
+  const isVigMatte = (matteImg.src && matteImg.src.includes('vignette')) || vig.enabled;
+  if (isVigMatte && vig.enabled) {
+    const pulseBand = vig.audio_band === 'sub' ? (appState.bands?.sub || 0) : (appState.bands?.bass || 0);
+    drawProceduralVignette(ctx, w, h, vig, pulseBand);
+  } else {
+    drawFittedImage(ctx, matteImg, w, h, 'fill');
+  }
   
   // Procedural Animation Overlay for Mattes (Evolução superada)
   drawProceduralMatteOverlay(ctx, matteImg, w, h, animTime, bps, speedMult);
@@ -3722,7 +3833,63 @@ function loadSpinePoints() {
 }
 loadSpinePoints();
 
-function getPlexusSpineCanvas(w, h, simTime) {
+function getPlexusPaletteColors(paletteKey) {
+  switch (paletteKey) {
+    case 'solar_gold':
+      return {
+        bgStart: 'rgba(38, 22, 2, 1)',
+        bgEnd: 'rgba(12, 5, 0, 1)',
+        primary: 'rgb(255, 175, 20)',
+        primaryRgba: (a) => `rgba(255, 175, 20, ${a})`,
+        accentRgba: (a) => `rgba(255, 80, 30, ${a})`,
+        nodeBase: '#ffb703',
+        nodeHot: '#ffffff'
+      };
+    case 'matrix_emerald':
+      return {
+        bgStart: 'rgba(2, 28, 14, 1)',
+        bgEnd: 'rgba(0, 8, 3, 1)',
+        primary: 'rgb(0, 255, 136)',
+        primaryRgba: (a) => `rgba(0, 255, 136, ${a})`,
+        accentRgba: (a) => `rgba(30, 220, 90, ${a})`,
+        nodeBase: '#00ff88',
+        nodeHot: '#ffffff'
+      };
+    case 'deep_violet':
+      return {
+        bgStart: 'rgba(26, 3, 38, 1)',
+        bgEnd: 'rgba(7, 0, 14, 1)',
+        primary: 'rgb(200, 50, 255)',
+        primaryRgba: (a) => `rgba(200, 50, 255, ${a})`,
+        accentRgba: (a) => `rgba(255, 40, 150, ${a})`,
+        nodeBase: '#d946ef',
+        nodeHot: '#ffffff'
+      };
+    case 'monochrome_ice':
+      return {
+        bgStart: 'rgba(18, 24, 32, 1)',
+        bgEnd: 'rgba(2, 4, 8, 1)',
+        primary: 'rgb(215, 235, 255)',
+        primaryRgba: (a) => `rgba(215, 235, 255, ${a})`,
+        accentRgba: (a) => `rgba(160, 200, 240, ${a})`,
+        nodeBase: '#e2e8f0',
+        nodeHot: '#ffffff'
+      };
+    case 'cyan_neon':
+    default:
+      return {
+        bgStart: 'rgba(3, 18, 32, 1)',
+        bgEnd: 'rgba(0, 3, 7, 1)',
+        primary: 'rgb(0, 240, 255)',
+        primaryRgba: (a) => `rgba(0, 240, 255, ${a})`,
+        accentRgba: (a) => `rgba(0, 255, 136, ${a})`,
+        nodeBase: '#00f0ff',
+        nodeHot: '#ffffff'
+      };
+  }
+}
+
+function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
   if (plexusCanvas.width !== w || plexusCanvas.height !== h) {
     plexusCanvas.width = w;
     plexusCanvas.height = h;
@@ -3733,35 +3900,61 @@ function getPlexusSpineCanvas(w, h, simTime) {
   }
 
   const ctx = plexusCtx;
-  const bass = Number(appState.bands?.bass || 0.5);
-  const sub = Number(appState.bands?.sub || 0.5);
-  const air = Number(appState.bands?.air || 0.3);
-  const presence = Number(appState.bands?.presence || 0.3);
+  const cfg3d = appState.gen3d || {};
+  const activeScene = explicitScene || cfg3d.active_scene || 'star_13';
+  const palette = getPlexusPaletteColors(cfg3d.palette || 'cyan_neon');
 
-  // Deep oceanic abyss background
-  const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, 50, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
-  bgGrad.addColorStop(0, 'rgba(3, 18, 32, 1)');
-  bgGrad.addColorStop(0.6, 'rgba(2, 8, 16, 1)');
-  bgGrad.addColorStop(1, 'rgba(0, 3, 7, 1)');
+  const bass = Number(appState.bands?.bass || 0.45);
+  const sub = Number(appState.bands?.sub || 0.45);
+  const air = Number(appState.bands?.air || 0.35);
+  const presence = Number(appState.bands?.presence || 0.35);
+
+  const camCfg = cfg3d.camera || {};
+  const orbitSpeed = camCfg.orbit_speed !== undefined ? camCfg.orbit_speed : 1.0;
+  const camTilt = camCfg.tilt !== undefined ? camCfg.tilt : 0.22;
+  const camDist = Math.max(1.2, camCfg.distance !== undefined ? camCfg.distance : 2.3);
+  const fov = camCfg.fov !== undefined ? camCfg.fov : 1.35;
+
+  // Background radial gradient
+  const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, 40, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+  bgGrad.addColorStop(0, palette.bgStart);
+  bgGrad.addColorStop(0.65, palette.bgEnd);
+  bgGrad.addColorStop(1, '#000205');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
 
-  // 3D Camera & Turntable Orbit
-  const rotY = simTime * 0.28;
-  const rotX = Math.sin(simTime * 0.18) * 0.22;
-  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-  const camDist = 2.3;
-  const fov = 1.35;
+  // 3D Camera Angles
+  let rotY = simTime * 0.28 * orbitSpeed;
+  let rotX = camTilt + Math.sin(simTime * 0.18) * 0.12;
 
-  // Houdini Undulating Swimming Simulation (Sinusoidal wave traveling head-to-tail)
+  // Branch rendering per scene
+  if (activeScene === 'ocean_sun') {
+    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'star_13') {
+    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'hybrid') {
+    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isSubMesh: true });
+    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isOverlayStar: true });
+  } else {
+    // Default: 'spine' (Houdini Biomorphic Marine Spine)
+    renderSceneMarineSpine(ctx, w, h, simTime, { rotY, rotX, camDist, fov, bass, sub, presence, air, palette, cfg3d });
+  }
+
+  return plexusCanvas;
+}
+window.getPlexusSpineCanvas = getPlexusSpineCanvas;
+
+function renderSceneMarineSpine(ctx, w, h, simTime, p) {
+  const cosY = Math.cos(p.rotY), sinY = Math.sin(p.rotY);
+  const cosX = Math.cos(p.rotX), sinX = Math.sin(p.rotX);
+
   const swimPhase = simTime * 3.2;
-  const swimAmp = 0.08 + bass * 0.14;
-  const ribExp = 1.0 + sub * 0.45;
-  const dorsalPulse = 1.0 + air * 0.35;
+  const swimAmp = 0.08 + p.bass * 0.14;
+  const ribExp = 1.0 + p.sub * 0.45;
+  const dorsalPulse = 1.0 + p.air * 0.35;
 
   const pts = plexusSpinePoints;
-  const step = Math.max(1, Math.floor(pts.length / 900)); // Sample ~900 nodes for 60 FPS
+  const step = Math.max(1, Math.floor(pts.length / 900));
   const projected = [];
 
   for (let i = 0; i < pts.length; i += step) {
@@ -3770,27 +3963,26 @@ function getPlexusSpineCanvas(w, h, simTime) {
     const py = (raw[1] * ribExp) + Math.sin(px * 5.2 - swimPhase) * swimAmp * (1.0 + Math.abs(px));
     const pz = (raw[2] * dorsalPulse) - 0.16;
 
-    // 3D Rotation Matrix
     const x1 = px * cosY + pz * sinY;
     const z1 = -px * sinY + pz * cosY;
     const y2 = py * cosX - z1 * sinX;
     const z2 = py * sinX + z1 * cosX;
 
-    const depth = camDist + z2;
+    const depth = p.camDist + z2;
     if (depth <= 0.1) continue;
 
-    const persp = fov / depth;
+    const persp = p.fov / depth;
     const sx = w * 0.5 + x1 * persp * w;
     const sy = h * 0.5 + y2 * persp * h;
 
     projected.push({ sx, sy, z: z2, depth, origIndex: i });
   }
 
-  // Render Plexus Connecting Lines (Render Objects)
+  // Connect lines
   ctx.save();
-  const lineDistMax = 55 * (1.0 + bass * 0.35);
+  const lineDistMax = 55 * (1.0 + p.bass * 0.35);
   const lineDistSq = lineDistMax * lineDistMax;
-  ctx.lineWidth = 1.0 + bass * 1.4;
+  ctx.lineWidth = 1.0 + p.bass * 1.4;
 
   const n = projected.length;
   const searchK = Math.min(14, n);
@@ -3803,8 +3995,8 @@ function getPlexusSpineCanvas(w, h, simTime) {
       const d2 = dx * dx + dy * dy;
       if (d2 < lineDistSq) {
         const d = Math.sqrt(d2);
-        const alpha = (1.0 - (d / lineDistMax)) * (0.28 + bass * 0.45);
-        ctx.strokeStyle = `rgba(0, 240, 255, ${alpha.toFixed(3)})`;
+        const alpha = (1.0 - (d / lineDistMax)) * (0.28 + p.bass * 0.45);
+        ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(3));
         ctx.beginPath();
         ctx.moveTo(p1.sx, p1.sy);
         ctx.lineTo(p2.sx, p2.sy);
@@ -3813,33 +4005,32 @@ function getPlexusSpineCanvas(w, h, simTime) {
     }
   }
 
-  // Render Bioluminescent Nodes (Geometry Objects)
+  // Nodes & Corona Glow
   for (let i = 0; i < n; i++) {
-    const p = projected[i];
-    const r = Math.max(1.2, (3.2 / p.depth) * (0.8 + bass * 0.7));
-    
-    // Corona glow
+    const pt = projected[i];
+    const r = Math.max(1.2, (3.2 / pt.depth) * (0.8 + p.bass * 0.7));
+
     if (i % 6 === 0) {
-      const halo = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, r * 4.5);
-      halo.addColorStop(0, `rgba(0, 240, 255, ${0.45 + bass * 0.3})`);
-      halo.addColorStop(0.5, 'rgba(0, 255, 136, 0.15)');
-      halo.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      const halo = ctx.createRadialGradient(pt.sx, pt.sy, 0, pt.sx, pt.sy, r * 4.5);
+      halo.addColorStop(0, p.palette.primaryRgba(0.45 + p.bass * 0.3));
+      halo.addColorStop(0.5, p.palette.accentRgba(0.15));
+      halo.addColorStop(1, p.palette.primaryRgba(0));
       ctx.fillStyle = halo;
-      ctx.fillRect(p.sx - r * 4.5, p.sy - r * 4.5, r * 9, r * 9);
+      ctx.fillRect(pt.sx - r * 4.5, pt.sy - r * 4.5, r * 9, r * 9);
     }
 
-    ctx.fillStyle = (i % 8 === 0) ? '#ffffff' : '#00f0ff';
+    ctx.fillStyle = (i % 8 === 0) ? p.palette.nodeHot : p.palette.nodeBase;
     ctx.beginPath();
-    ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+    ctx.arc(pt.sx, pt.sy, r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Render Marine Floating Spores / Plankton
+  // Floating marine spores
   ctx.globalCompositeOperation = 'screen';
   for (let i = 0; i < marineSpores.length; i++) {
     const s = marineSpores[i];
-    s.x += s.vx * (1.0 + bass * 0.5);
-    s.y += s.vy * (1.0 + presence * 0.5);
+    s.x += s.vx * (1.0 + p.bass * 0.5);
+    s.y += s.vy * (1.0 + p.presence * 0.5);
     s.z += s.vz;
     if (s.x < -0.9) s.x = 0.9; if (s.x > 0.9) s.x = -0.9;
     if (s.y < -0.7) s.y = 0.7; if (s.y > 0.7) s.y = -0.7;
@@ -3849,24 +4040,248 @@ function getPlexusSpineCanvas(w, h, simTime) {
     const z1 = -s.x * sinY + s.z * cosY;
     const y2 = s.y * cosX - z1 * sinX;
     const z2 = s.y * sinX + z1 * cosX;
-    const depth = camDist + z2;
+    const depth = p.camDist + z2;
     if (depth <= 0.1) continue;
 
-    const persp = fov / depth;
+    const persp = p.fov / depth;
     const sx = w * 0.5 + x1 * persp * w;
     const sy = h * 0.5 + y2 * persp * h;
-    const spR = Math.max(0.8, (s.size / depth) * (0.8 + air * 0.6));
+    const spR = Math.max(0.8, (s.size / depth) * (0.8 + p.air * 0.6));
 
-    ctx.fillStyle = `hsla(${s.hue}, 100%, 75%, ${(s.alpha * (0.6 + air * 0.4)).toFixed(2)})`;
+    ctx.fillStyle = p.palette.accentRgba((s.alpha * (0.6 + p.air * 0.4)).toFixed(2));
     ctx.beginPath();
     ctx.arc(sx, sy, spR, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
-
-  return plexusCanvas;
 }
-window.getPlexusSpineCanvas = getPlexusSpineCanvas;
+
+function renderSceneOceanSun(ctx, w, h, simTime, p) {
+  const rotX = 0.48;
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const waveAmp = (0.05 + p.bass * 0.08) * (p.cfg3d.audio_reactivity?.ocean_wave_amp || 1.0);
+
+  // 1. Horizon Celestial Particle Orb (Sun / Moon)
+  if (!p.isSubMesh) {
+    const sunCx = w * 0.5;
+    const sunCy = h * 0.32;
+    const sunRadius = Math.min(w, h) * (0.13 + p.air * 0.04);
+
+    const sunGrad = ctx.createRadialGradient(sunCx, sunCy, 0, sunCx, sunCy, sunRadius * 2.2);
+    sunGrad.addColorStop(0, p.palette.nodeHot);
+    sunGrad.addColorStop(0.35, p.palette.primaryRgba(0.85));
+    sunGrad.addColorStop(0.7, p.palette.accentRgba(0.35));
+    sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = sunGrad;
+    ctx.fillRect(sunCx - sunRadius * 2.2, sunCy - sunRadius * 2.2, sunRadius * 4.4, sunRadius * 4.4);
+
+    // Corona flare ring particles
+    const ringCount = 48;
+    for (let i = 0; i < ringCount; i++) {
+      const angle = (i / ringCount) * Math.PI * 2 + simTime * 0.4;
+      const flareR = sunRadius * (1.05 + Math.sin(angle * 7 + simTime * 3) * 0.18 * (1.0 + p.air * 0.5));
+      const px = sunCx + Math.cos(angle) * flareR;
+      const py = sunCy + Math.sin(angle) * flareR;
+      ctx.fillStyle = p.palette.primaryRgba(0.7);
+      ctx.beginPath();
+      ctx.arc(px, py, 2.0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 2. 3D Ocean Undulating Grid Mesh (24 x 24 nodes)
+  const cols = 24;
+  const rows = 24;
+  const gridPts = [];
+
+  for (let r = 0; r < rows; r++) {
+    const pz = (r / (rows - 1)) * 2.2 + 0.35;
+    for (let c = 0; c < cols; c++) {
+      const px = ((c / (cols - 1)) - 0.5) * 2.6;
+      const py = 0.28 + Math.sin(px * 4.2 + simTime * 2.5) * waveAmp + Math.cos(pz * 3.8 + simTime * 1.8) * (waveAmp * 0.8);
+
+      const y2 = py * cosX - pz * sinX;
+      const z2 = py * sinX + pz * cosX;
+      const depth = p.camDist + z2;
+
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        const sx = w * 0.5 + px * persp * w;
+        const sy = h * 0.5 + y2 * persp * h;
+        gridPts.push({ sx, sy, depth, r, c });
+      } else {
+        gridPts.push(null);
+      }
+    }
+  }
+
+  // Draw mesh lines
+  ctx.save();
+  ctx.lineWidth = 1.0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const p1 = gridPts[idx];
+      if (!p1) continue;
+
+      // Horizontal line
+      if (c + 1 < cols) {
+        const p2 = gridPts[idx + 1];
+        if (p2) {
+          const alpha = Math.min(0.85, (1.2 / p1.depth) * (0.25 + p.bass * 0.45));
+          ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(2));
+          ctx.beginPath();
+          ctx.moveTo(p1.sx, p1.sy);
+          ctx.lineTo(p2.sx, p2.sy);
+          ctx.stroke();
+        }
+      }
+      // Longitudinal depth line
+      if (r + 1 < rows) {
+        const p3 = gridPts[idx + cols];
+        if (p3) {
+          const alpha = Math.min(0.75, (1.0 / p1.depth) * (0.2 + p.sub * 0.4));
+          ctx.strokeStyle = p.palette.accentRgba(alpha.toFixed(2));
+          ctx.beginPath();
+          ctx.moveTo(p1.sx, p1.sy);
+          ctx.lineTo(p3.sx, p3.sy);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneStar13(ctx, w, h, simTime, p) {
+  // DECOUPLED AUDIO REACTIVITY:
+  // 1. The outer sacred vector star spins and radiates smoothly with TREBLE & AIR
+  const trebleSpin = (p.cfg3d.audio_reactivity?.star_treble_spin || 1.2);
+  const rotY = simTime * (0.45 + (p.air + p.presence) * 0.85) * trebleSpin;
+  const rotX = Math.sin(simTime * 0.28) * 0.25;
+  const rotZ = Math.cos(simTime * 0.22) * 0.15;
+
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  // 8-Pointed 3D Sacred Vector Star (Vertices)
+  const starVertices = [];
+  const points = 8;
+  const rOuter = (p.isOverlayStar ? 0.38 : 0.52) * (1.0 + p.presence * 0.15);
+  const rInner = (p.isOverlayStar ? 0.18 : 0.24);
+
+  for (let i = 0; i < points * 2; i++) {
+    const angle = (i / (points * 2)) * Math.PI * 2;
+    const rad = (i % 2 === 0) ? rOuter : rInner;
+    const zOffset = (i % 2 === 0) ? Math.sin(angle * 2) * 0.12 : -0.08;
+    const px = Math.cos(angle) * rad;
+    const py = Math.sin(angle) * rad;
+    const pz = zOffset;
+
+    // Apply 3D Rotation Matrix to outer star
+    const x1 = px * cosY + pz * sinY;
+    const z1 = -px * sinY + pz * cosY;
+    const y2 = py * cosX - z1 * sinX;
+    const z2 = py * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * (p.isOverlayStar ? 0.42 : 0.5) + y2 * persp * h;
+      starVertices.push({ sx, sy, depth });
+    }
+  }
+
+  // Draw Sacred Vector Star Lines
+  ctx.save();
+  ctx.lineWidth = 1.8 + p.presence * 1.5;
+  ctx.strokeStyle = p.palette.primaryRgba(0.85);
+  ctx.beginPath();
+  for (let i = 0; i < starVertices.length; i++) {
+    const v1 = starVertices[i];
+    const v2 = starVertices[(i + 1) % starVertices.length];
+    ctx.moveTo(v1.sx, v1.sy);
+    ctx.lineTo(v2.sx, v2.sy);
+    // Radial spokes to center
+    if (i % 2 === 0) {
+      ctx.lineTo(w * 0.5, h * (p.isOverlayStar ? 0.42 : 0.5));
+    }
+  }
+  ctx.stroke();
+
+  // Glow halo around star tips
+  for (let i = 0; i < starVertices.length; i += 2) {
+    const tip = starVertices[i];
+    const halo = ctx.createRadialGradient(tip.sx, tip.sy, 0, tip.sx, tip.sy, 16);
+    halo.addColorStop(0, p.palette.nodeHot);
+    halo.addColorStop(0.5, p.palette.accentRgba(0.4));
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(tip.sx - 16, tip.sy - 16, 32, 32);
+  }
+  ctx.restore();
+
+  // 2. THE DECOUPLED CENTRAL NUMERAL "13"
+  // Reacts VIOLENTLY to SUB-BASS & BASS kicks without inheriting the star's frantic spin!
+  const kickMult = (p.cfg3d.audio_reactivity?.num13_sub_kick || 1.8);
+  const kickEnergy = (p.sub * 0.85 + p.bass * 0.6) * kickMult;
+  const kickZDisplace = -0.35 * Math.min(1.5, kickEnergy);
+  const kickScale = 1.0 + Math.min(1.2, kickEnergy * 0.65);
+
+  const numDepth = Math.max(0.6, p.camDist + kickZDisplace);
+  const numPersp = p.fov / numDepth;
+  const numCx = w * 0.5;
+  const numCy = h * (p.isOverlayStar ? 0.42 : 0.5);
+
+  ctx.save();
+  ctx.translate(numCx, numCy);
+  ctx.scale(kickScale, kickScale);
+
+  // Stylized high-tech vector glyph for "13"
+  ctx.lineWidth = Math.max(2.5, 4.0 * (1.0 + kickEnergy * 0.4));
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const isHotKick = kickEnergy > 0.85;
+  if (isHotKick) {
+    // Chromatic aberration glow when kicking hard
+    ctx.shadowColor = p.palette.primary;
+    ctx.shadowBlur = 24 * kickEnergy;
+    ctx.strokeStyle = p.palette.nodeHot;
+  } else {
+    ctx.shadowColor = p.palette.accentRgba(0.6);
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = p.palette.primary;
+  }
+
+  const glyphH = Math.min(w, h) * (p.isOverlayStar ? 0.12 : 0.16);
+  const glyphW = glyphH * 0.65;
+  const gY0 = -glyphH * 0.5;
+  const gY1 = glyphH * 0.5;
+
+  // Numeral "1"
+  ctx.beginPath();
+  const x1_offset = -glyphW * 0.65;
+  ctx.moveTo(x1_offset - glyphW * 0.25, gY0 + glyphH * 0.25);
+  ctx.lineTo(x1_offset, gY0);
+  ctx.lineTo(x1_offset, gY1);
+  ctx.moveTo(x1_offset - glyphW * 0.3, gY1);
+  ctx.lineTo(x1_offset + glyphW * 0.25, gY1);
+  ctx.stroke();
+
+  // Numeral "3"
+  ctx.beginPath();
+  const x3_offset = glyphW * 0.35;
+  ctx.moveTo(x3_offset - glyphW * 0.3, gY0);
+  ctx.lineTo(x3_offset + glyphW * 0.3, gY0);
+  ctx.lineTo(x3_offset + glyphW * 0.05, gY0 + glyphH * 0.46);
+  ctx.arc(x3_offset, gY0 + glyphH * 0.48, glyphW * 0.15, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.arc(x3_offset, gY1 - glyphW * 0.25, glyphW * 0.32, -Math.PI * 0.4, Math.PI * 0.8);
+  ctx.stroke();
+
+  ctx.restore();
+}
 
 // ============================================================================
 // 7.1 PROFISSIONAL AFTER EFFECTS SUITE (5 PLUGINS PARÂMETRICOS INDEPENDENTES)
@@ -5966,6 +6381,7 @@ function renderMattesCards() {
            <button class="btn-route ${activeLayers.includes('L3') ? 'assigned' : ''}" data-layer="layer3" title="Armar em L3 (CUE)">L3</button>
            <button class="btn-route ${activeLayers.includes('L4') ? 'assigned' : ''}" data-layer="layer4" title="Armar em L4 (DROP)">L4</button>`
         }
+        <button class="btn-route btn-route-insp" onclick="event.stopPropagation(); openStudioInspector('matte', '${matte.path}');" title="Editar Geometria, Vinheta e Animação no Studio Inspector">⚙ INSP</button>
       </div>
     `;
 
@@ -6361,33 +6777,71 @@ async function loadMediaPool(providedClips = null) {
     // Keep only videos for the UI Grid
     allClips = allClips.filter(c => c.type !== 'model');
 
-    // Ensure Plexus 3D Espinhaço Generative clip is prepended and available in Media Pool
-    if (!allClips.some(c => c.id === 'clip_gen_plexus_spine')) {
-      allClips.unshift({
+    // Ensure all 4 Generative 3D clips are prepended and available in Media Pool
+    const genClipsDefs = [
+      {
         id: "clip_gen_plexus_spine",
         filename: "PLEXUS 3D ESPINHAÇO (Houdini Generative Marine Spine)",
         folder: "GENERATIVE",
         relative_path: "GENERATIVE/plexus_espinhaco_3d.gen",
         absolute_path: "GENERATIVE/plexus_espinhaco_3d",
-        width: 1920,
-        height: 1080,
-        duration: 999.0,
-        fps: 60.0,
-        codec: "procedural_3d",
-        size_mb: 0.07,
-        category: "GENERATIVE",
-        suggested_layer: 0,
-        has_chroma: false,
-        green_pct: 0.0,
-        mean_luminance: 0.45,
-        contrast: 0.85,
+        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
+        codec: "procedural_3d", size_mb: 0.07, category: "GENERATIVE",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.45, contrast: 0.85,
         thumbnail: "thumb_005_Metallic_spine_sculpture.jpg",
-        notes: "Sistema generativo 3D Plexus baseado no modelo 3D Espinhaço. Partículas de bioluminescência marinha, nós conectados e deformação de vértebras áudio-reativas (Houdini style).",
-        project: "Espinhaço 3D Plexus",
-        project_folder: "GENERATIVE 3D",
-        is_generative: true
-      });
-    }
+        notes: "Sistema generativo 3D Plexus baseado no modelo Espinhaço com nós biológicos áudio-reativos.",
+        project: "Espinhaço 3D Plexus", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'spine'
+      },
+      {
+        id: "clip_gen_ocean_sun",
+        filename: "OCEAN SUN 3D (Mar Ondulante + Sol Celestial de Partículas)",
+        folder: "GENERATIVE",
+        relative_path: "GENERATIVE/ocean_sun_3d.gen",
+        absolute_path: "GENERATIVE/ocean_sun_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "GENERATIVE",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.52, contrast: 0.90,
+        thumbnail: "thumb_001_Animate_silver_tail.jpg",
+        notes: "Grade 3D de oceano com ondas fluidas áudio-reativas e orbe solar de partículas no horizonte.",
+        project: "Ocean Sun 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'ocean_sun'
+      },
+      {
+        id: "clip_gen_star_13",
+        filename: "STAR 13 (Estrela Sagrada Vetorial + Numeral 13 Desacoplado)",
+        folder: "GENERATIVE",
+        relative_path: "GENERATIVE/star_13_3d.gen",
+        absolute_path: "GENERATIVE/star_13_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "GENERATIVE",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.60, contrast: 1.05,
+        thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
+        notes: "Estrela sagrada de 8 pontas com giro suave nos agudos e numeral 13 com kick violento desacoplado nos graves.",
+        project: "Star 13 Sacred", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'star_13'
+      },
+      {
+        id: "clip_gen_hybrid",
+        filename: "HYBRID COSMOS (Mar + Estrela 13 + Horizonte Solar)",
+        folder: "GENERATIVE",
+        relative_path: "GENERATIVE/hybrid_cosmos_3d.gen",
+        absolute_path: "GENERATIVE/hybrid_cosmos_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
+        codec: "procedural_3d", size_mb: 0.10, category: "GENERATIVE",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.58, contrast: 0.95,
+        thumbnail: "thumb_003_Holographic_chrome_face.jpg",
+        notes: "Composição harmônica do oceano ondulante, estrela sagrada 13 e orbe celestial.",
+        project: "Hybrid Cosmos", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'hybrid'
+      }
+    ];
+
+    genClipsDefs.forEach(gc => {
+      if (!allClips.some(c => c.id === gc.id)) {
+        allClips.unshift(gc);
+      }
+    });
 
     MediaProvider.syncSmartDeduplication();
 
@@ -7462,7 +7916,7 @@ function createMediaCardElement(clip) {
 
   let actionBtnHtml = '';
   if (isUnlinked) {
-    actionBtnHtml = `<button class="btn-card-action" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe">🔗 RELINK</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-action-relink" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> RELINK</button>`;
   } else if (clip.has_local_match || cacheInfo.isCached) {
     actionBtnHtml = `<button class="btn-card-action is-active-cached" title="Arquivo pronto no SSD local" onclick="event.stopPropagation();">✓ LOCAL</button>`;
   } else if (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream') {
@@ -7484,13 +7938,23 @@ function createMediaCardElement(clip) {
         ${cacheBadgeHtml}
       </div>
       <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}');" title="Filtrar por esta pasta: ${clipFolder}">
-        📁 ${clipFolder}
+        <svg class="folder-icon-svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        <span>${clipFolder}</span>
       </div>
       <div class="card-actions-grid">
-        <button class="btn-card-action btn-action-pgm btn-bus-a" data-bus="A" title="Enviar para Program Master [A]">▶ A (PGM)</button>
-        <button class="btn-card-action btn-action-cue btn-bus-b" data-bus="B" title="Preparar no Preview Cue [B]">● B (CUE)</button>
-        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">⚙ INSP</button>
-        <button class="btn-card-action" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
+        <button class="btn-card-action btn-action-pgm btn-bus-a" data-bus="A" title="Enviar para Program Master [A]">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>A (PGM)</span>
+        </button>
+        <button class="btn-card-action btn-action-cue btn-bus-b" data-bus="B" title="Preparar no Preview Cue [B]">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"></circle></svg>
+          <span>B (CUE)</span>
+        </button>
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>INSP</span>
+        </button>
+        <button class="btn-card-action btn-action-l5" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
         ${actionBtnHtml}
       </div>
     </div>
@@ -8214,6 +8678,8 @@ const PenumbraWebAudio = {
   highpass: null,
   lowpass: null,
   gainNode: null,
+  monitorGain: null,
+  isMonitoring: false,
   analyser: null,
   freqData: null,
   timeData: null,
@@ -8224,11 +8690,13 @@ const PenumbraWebAudio = {
   animFrameId: null,
 
   // Adaptive Leaky Peak & Noise Floor Trackers (Club Acoustic Normalization)
-  peakEnv: 0.55,
-  floorEnv: 0.04,
+  peakEnv: 0.15,
+  floorEnv: 0.005,
   prevKickMag: 0.0,
-  kickThreshold: 0.12,
+  kickThreshold: 0.08,
   lastBeatTime: 0,
+  beatIntervals: [],
+  detectedBpm: null,
 
   initContext() {
     if (!this.ctx) {
@@ -8240,6 +8708,15 @@ const PenumbraWebAudio = {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
+  },
+
+  setMonitor(enabled, vol = null) {
+    this.isMonitoring = Boolean(enabled);
+    if (this.monitorGain && this.ctx) {
+      const sliderVal = document.getElementById('slider-cue-vol')?.value || 70;
+      const v = this.isMonitoring ? (vol !== null ? vol : (Number(sliderVal) / 100.0)) : 0.0;
+      this.monitorGain.gain.setValueAtTime(v, this.ctx.currentTime);
+    }
   },
 
   async enumerateDevices() {
@@ -8278,79 +8755,84 @@ const PenumbraWebAudio = {
       try { await this.ctx.resume(); } catch (e) {}
     }
 
-    // Se estiver tocando áudio de teste de arquivo, pausa para não sobrepor
-    if (audioCuePlayer && !audioCuePlayer.paused) {
+    // Se estiver tocando áudio de teste de arquivo, pausa e silencia imediatamente
+    if (audioCuePlayer) {
       audioCuePlayer.pause();
+      audioCuePlayer.currentTime = 0;
     }
     if (btnAudioMonitor) btnAudioMonitor.classList.remove('active');
     if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE OFF';
 
     this.stopMicrophone();
 
-    // Configurações de Vanguarda para Áudio Musical em Club/Pista:
-    // echoCancellation e noiseSuppression DESATIVADOS para não cortar bumbos e graves!
-    const audioConstraints = {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      channelCount: 1,
-      sampleRate: 48000
-    };
-    if (this.selectedDeviceId) {
-      audioConstraints.deviceId = { exact: this.selectedDeviceId };
-    }
-
     try {
-      showMacroToast('Solicitando acesso ao microfone/linha...');
+      showMacroToast('Solicitando microfone/linha...');
       let stream = null;
+      // Cascade de compatibilidade resiliente de captura
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
-      } catch (firstErr) {
-        // Fallback simplificado sem deviceId restrito
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-        });
+        const c = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+        if (this.selectedDeviceId) c.deviceId = { exact: this.selectedDeviceId };
+        stream = await navigator.mediaDevices.getUserMedia({ audio: c });
+      } catch (err1) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+          });
+        } catch (err2) {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
       }
+
       this.stream = stream;
       this.isActive = true;
 
       // Monta cadeia de processamento de áudio DSP
       this.sourceNode = this.ctx.createMediaStreamSource(this.stream);
 
-      // 1. Filtro Passa-Alta 28 Hz: corta sub-rumble mecânico de subwoofer e DC offset
+      // 1. Filtro Passa-Alta 24 Hz: corta DC offset e rumble mecânico
       this.highpass = this.ctx.createBiquadFilter();
       this.highpass.type = 'highpass';
-      this.highpass.frequency.setValueAtTime(28, this.ctx.currentTime);
+      this.highpass.frequency.setValueAtTime(24, this.ctx.currentTime);
       this.highpass.Q.setValueAtTime(0.707, this.ctx.currentTime);
 
-      // 2. Filtro Passa-Baixa 15.5 kHz: corta chiado do ambiente e taças
+      // 2. Filtro Passa-Baixa 16 kHz: corta chiado do ambiente
       this.lowpass = this.ctx.createBiquadFilter();
       this.lowpass.type = 'lowpass';
-      this.lowpass.frequency.setValueAtTime(15500, this.ctx.currentTime);
+      this.lowpass.frequency.setValueAtTime(16000, this.ctx.currentTime);
       this.lowpass.Q.setValueAtTime(0.707, this.ctx.currentTime);
 
-      // 3. Ganho Pré-amplificador ajustável pelo usuário
+      // 3. Ganho Pré-amplificador ajustável (padrão 2.2x para sensibilidade de microfone)
       this.gainNode = this.ctx.createGain();
-      const initialGain = appState.audio_gain || 1.0;
+      const initialGain = appState.audio_gain || 2.2;
       this.gainNode.gain.setValueAtTime(initialGain, this.ctx.currentTime);
+      const stripGainSlider = document.getElementById('strip-audio-gain');
+      if (stripGainSlider) stripGainSlider.value = Math.round(initialGain * 100);
 
       // 4. Analisador FFT de 2048 pontos
       this.analyser = this.ctx.createAnalyser();
       this.analyser.fftSize = 2048;
-      this.analyser.smoothingTimeConstant = 0.65;
+      this.analyser.smoothingTimeConstant = 0.55;
       this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
       this.timeData = new Uint8Array(this.analyser.frequencyBinCount);
 
-      // Conexões: Source -> Highpass -> Lowpass -> Gain -> Analyser (NUNCA para ctx.destination para evitar microfonia!)
+      // 5. Headphone Audition (CUE Monitor) Gain Node (silenciado por padrão para evitar microfonia)
+      this.monitorGain = this.ctx.createGain();
+      this.monitorGain.gain.setValueAtTime(0.0, this.ctx.currentTime);
+
+      // Conexões:
+      // Source -> Highpass -> Lowpass -> Gain -> Analyser
+      // Gain -> MonitorGain -> Destination (para escuta controlada via CUE)
       this.sourceNode.connect(this.highpass);
       this.highpass.connect(this.lowpass);
       this.lowpass.connect(this.gainNode);
       this.gainNode.connect(this.analyser);
+      this.gainNode.connect(this.monitorGain);
+      this.monitorGain.connect(this.ctx.destination);
 
-      // Atualiza dispositivos com labels reais concedidos pela permissão
+      // Atualiza lista de dispositivos
       await this.enumerateDevices();
 
-      // Inicia loop de extração de bandas e batidas a 60 FPS
+      // Inicia loop de análise e VU metering em tempo real
       this.startProcessingLoop();
 
       const devTrack = this.stream.getAudioTracks()[0];
@@ -8360,11 +8842,11 @@ const PenumbraWebAudio = {
       updateAudioSourceUI(currentAudioSource);
 
       showMacroToast(`Áudio Conectado: ${devLabel.slice(0, 22)}`);
-      console.log(`[PenumbraWebAudio] DSP Club Ativo: ${devLabel} (Highpass 28Hz + Lowpass 15.5kHz + FFT 2048)`);
+      console.log(`[PenumbraWebAudio] DSP Ativo: ${devLabel} (Preamp ${initialGain.toFixed(1)}x, Highpass 24Hz, FFT 2048)`);
     } catch (err) {
       console.error('[PenumbraWebAudio] Erro ao obter microfone:', err);
       this.isActive = false;
-      showMacroToast('Permissão do microfone negada ou erro de captura');
+      showMacroToast('Permissão de áudio não concedida');
       currentAudioSource.mode = 'test';
       currentAudioSource.device_name = 'MP3 Interno (Fallback)';
       updateAudioSourceUI(currentAudioSource);
@@ -8373,6 +8855,7 @@ const PenumbraWebAudio = {
 
   stopMicrophone() {
     this.isActive = false;
+    this.setMonitor(false);
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
@@ -8384,6 +8867,10 @@ const PenumbraWebAudio = {
     if (this.sourceNode) {
       try { this.sourceNode.disconnect(); } catch (e) {}
       this.sourceNode = null;
+    }
+    if (this.monitorGain) {
+      try { this.monitorGain.disconnect(); } catch (e) {}
+      this.monitorGain = null;
     }
     const wrap = document.getElementById('audio-input-device-wrap');
     if (wrap && this.activeMode === 'test') wrap.style.display = 'none';
@@ -8403,14 +8890,42 @@ const PenumbraWebAudio = {
       this.animFrameId = requestAnimationFrame(loop);
 
       this.analyser.getByteFrequencyData(this.freqData);
+      this.analyser.getByteTimeDomainData(this.timeData);
+
+      // Cálculo de RMS e Peak dB do sinal de entrada (Hardware-grade VU Meter)
+      let sumSq = 0;
+      let peakSample = 0;
+      const tLen = this.timeData.length;
+      for (let i = 0; i < tLen; i++) {
+        const val = (this.timeData[i] - 128) / 128.0;
+        const absVal = Math.abs(val);
+        if (absVal > peakSample) peakSample = absVal;
+        sumSq += val * val;
+      }
+      const rmsVal = Math.sqrt(sumSq / tLen);
+      const peakDb = peakSample > 0.0001 ? 20 * Math.log10(peakSample) : -60;
+      const clampedDb = Math.max(-60, Math.min(0, peakDb));
+      const vuPct = Math.max(0, Math.min(100, ((clampedDb + 60) / 60) * 100));
+
+      // 1. Atualiza VU Meter do Cabeçalho
+      const hdrFill = document.getElementById('hdr-vu-fill');
+      const hdrPeak = document.getElementById('hdr-vu-peak');
+      const hdrVal = document.getElementById('hdr-vu-val');
+      const hdrClip = document.getElementById('hdr-vu-clip');
+      if (hdrFill) hdrFill.style.width = `${vuPct.toFixed(1)}%`;
+      if (hdrPeak) hdrPeak.style.left = `${vuPct.toFixed(1)}%`;
+      if (hdrVal) hdrVal.textContent = peakDb <= -58 ? '-∞ dB' : `${clampedDb.toFixed(1)} dB`;
+      if (hdrClip) hdrClip.classList.toggle('clipped', peakSample >= 0.96);
+
+      // 2. Atualiza VU Meter da Inline Strip
+      const stripFill = document.getElementById('strip-vu-fill');
+      const stripPeak = document.getElementById('strip-vu-peak');
+      const stripDb = document.getElementById('strip-vu-db');
+      if (stripFill) stripFill.style.width = `${vuPct.toFixed(1)}%`;
+      if (stripPeak) stripPeak.style.left = `${vuPct.toFixed(1)}%`;
+      if (stripDb) stripDb.textContent = peakDb <= -58 ? '-∞ dB' : `${clampedDb.toFixed(1)} dB`;
 
       // Faixas de frequências (com FFT 2048 a 48kHz, 1 bin ≈ 23.4Hz):
-      // Sub: 23Hz - 70Hz (bins 1-3)
-      // Bass: 70Hz - 250Hz (bins 3-11)
-      // Lo-Mid: 250Hz - 1000Hz (bins 11-43)
-      // Hi-Mid: 1000Hz - 4000Hz (bins 43-170)
-      // Presence: 4000Hz - 8000Hz (bins 170-340)
-      // Air: 8000Hz - 16000Hz (bins 340-680)
       const avgBand = (start, end) => {
         let sum = 0;
         const count = Math.max(1, end - start);
@@ -8428,20 +8943,20 @@ const PenumbraWebAudio = {
       const rawAir = avgBand(342, 684);
       const rawEnergy = (rawSub * 0.3 + rawBass * 0.35 + rawLoMid * 0.15 + rawHiMid * 0.1 + rawPres * 0.05 + rawAir * 0.05);
 
-      // Seguidor adaptativo de pico e piso de ruído (Club Leaky Normalizer)
+      // Seguidor adaptativo suave sem piso artificial elevado
       if (rawEnergy > this.peakEnv) {
-        this.peakEnv = rawEnergy; // Ataque instantâneo em picos
+        this.peakEnv = Math.max(0.04, rawEnergy);
       } else {
-        this.peakEnv = Math.max(0.18, this.peakEnv * 0.996); // Decaimento lento
+        this.peakEnv = Math.max(0.04, this.peakEnv * 0.995);
       }
 
       if (rawEnergy < this.floorEnv) {
-        this.floorEnv = Math.max(0.01, rawEnergy);
+        this.floorEnv = Math.max(0.001, rawEnergy);
       } else {
-        this.floorEnv = Math.min(this.peakEnv * 0.65, this.floorEnv * 1.002);
+        this.floorEnv = Math.min(this.peakEnv * 0.35, this.floorEnv * 1.001);
       }
 
-      const dynRange = Math.max(0.08, this.peakEnv - this.floorEnv);
+      const dynRange = Math.max(0.04, this.peakEnv - this.floorEnv);
       const norm = (v) => Math.min(1.0, Math.max(0.0, (v - this.floorEnv) / dynRange));
 
       const normSub = norm(rawSub);
@@ -8452,14 +8967,43 @@ const PenumbraWebAudio = {
       const normAir = norm(rawAir);
       const normEnergy = norm(rawEnergy);
 
-      // Detecção de Transientes de Bumbo (Spectral Flux)
+      // Detecção de Transientes de Bumbo (Spectral Flux) e Contador de BPM Realtime
       const kickFlux = Math.max(0, normBass - this.prevKickMag);
-      this.prevKickMag = normBass * 0.8 + this.prevKickMag * 0.2;
+      this.prevKickMag = normBass * 0.75 + this.prevKickMag * 0.25;
 
       const now = performance.now();
-      const isBeat = kickFlux > this.kickThreshold && (now - this.lastBeatTime > 260); // Max 230 BPM
+      const isBeat = (kickFlux > this.kickThreshold || (normSub > 0.65 && kickFlux > 0.05)) && (now - this.lastBeatTime > 270);
       if (isBeat) {
+        const deltaMs = now - this.lastBeatTime;
         this.lastBeatTime = now;
+
+        if (deltaMs >= 270 && deltaMs <= 1100) {
+          this.beatIntervals.push(deltaMs);
+          if (this.beatIntervals.length > 8) this.beatIntervals.shift();
+
+          if (this.beatIntervals.length >= 3) {
+            const sorted = [...this.beatIntervals].sort((a, b) => a - b);
+            const medDelta = sorted[Math.floor(sorted.length / 2)];
+            let rawBpm = 60000 / medDelta;
+            while (rawBpm < 70) rawBpm *= 2;
+            while (rawBpm > 175) rawBpm /= 2;
+
+            this.detectedBpm = this.detectedBpm ? (this.detectedBpm * 0.65 + rawBpm * 0.35) : rawBpm;
+            if (!appState.bpm_manual_lock) {
+              appState.bpm = Math.round(this.detectedBpm * 10) / 10.0;
+              const chipBpm = document.getElementById('chip-bpm');
+              const inputBpm = document.getElementById('input-bpm');
+              const badgeBpm = document.getElementById('badge-bpm');
+              const bpmDisplayEl = document.getElementById('bpm-display');
+              const formattedBpm = appState.bpm.toFixed(1);
+              if (chipBpm) chipBpm.textContent = `${formattedBpm} BPM`;
+              if (inputBpm && document.activeElement !== inputBpm) inputBpm.value = formattedBpm;
+              if (badgeBpm) badgeBpm.textContent = formattedBpm;
+              if (bpmDisplayEl) bpmDisplayEl.textContent = `${formattedBpm} BPM`;
+            }
+          }
+        }
+
         if (beatOrb) {
           beatOrb.style.transform = `scale(1.45)`;
           beatOrb.style.filter = `drop-shadow(0 0 20px rgba(0, 240, 255, 0.95))`;
@@ -8490,7 +9034,7 @@ const PenumbraWebAudio = {
       };
       appState.energy = normEnergy;
 
-      // Atualiza VU meters no cockpit em tempo real
+      // Atualiza VU meters de espectro no cockpit em tempo real
       if (meters.sub) meters.sub.style.height = `${Math.min(100, Math.round(normSub * 95) + 5)}%`;
       if (meters.bass) meters.bass.style.height = `${Math.min(100, Math.round(normBass * 95) + 5)}%`;
       if (meters.lomid) meters.lomid.style.height = `${Math.min(100, Math.round(normLoMid * 95) + 5)}%`;
@@ -8504,9 +9048,21 @@ const PenumbraWebAudio = {
 };
 window.PenumbraWebAudio = PenumbraWebAudio;
 
+window.setAudioPreampGain = function(gainVal) {
+  const val = Math.max(0.5, Math.min(6.0, Number(gainVal) || 2.2));
+  appState.audio_gain = val;
+  if (PenumbraWebAudio.gainNode && PenumbraWebAudio.ctx) {
+    PenumbraWebAudio.gainNode.gain.setValueAtTime(val, PenumbraWebAudio.ctx.currentTime);
+  }
+  const slider = document.getElementById('strip-audio-gain');
+  if (slider) slider.value = Math.round(val * 100);
+  console.log(`[Audio Preamp] Ganho ajustado para: ${val.toFixed(2)}x`);
+};
+
 function setAudioSource(mode, deviceId = null) {
-  document.querySelectorAll('.src-pill').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.source === mode);
+  document.querySelectorAll('.src-pill, .hdr-src-pill').forEach(btn => {
+    const s = btn.dataset.source || (btn.id ? btn.id.replace('hdr-src-', '').replace('src-', '') : '');
+    btn.classList.toggle('active', s === mode);
   });
   const names = { test: 'MP3 Interno', mic: 'Microfone Interno', p2: 'Entrada P2 (Mesa DJ)', usb: 'Placa USB (UMC22)' };
   const lbl = document.getElementById('lbl-audio-device');
@@ -8520,6 +9076,8 @@ function setAudioSource(mode, deviceId = null) {
 
   currentAudioSource.mode = mode;
   if (deviceId) currentAudioSource.device_id = deviceId;
+  appState.audio_source = mode;
+  window.appState = appState;
 
   if (mode === 'test') {
     PenumbraWebAudio.stopMicrophone();
@@ -8546,8 +9104,9 @@ function updateAudioSourceUI(srcInfo) {
   currentAudioSource = { ...currentAudioSource, ...srcInfo };
   const mode = srcInfo.mode || srcInfo.current_mode;
   if (mode) {
-    document.querySelectorAll('.src-pill').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.source === mode);
+    document.querySelectorAll('.src-pill, .hdr-src-pill').forEach(btn => {
+      const s = btn.dataset.source || (btn.id ? btn.id.replace('hdr-src-', '').replace('src-', '') : '');
+      btn.classList.toggle('active', s === mode);
     });
   }
   const lbl = document.getElementById('lbl-audio-device');
@@ -8628,7 +9187,26 @@ function startWebAudioVisualizerLoop() {
       if (meters.himid) meters.himid.style.height = `${Math.min(100, Math.round(himidVal * 125))}%`;
       if (meters.pres) meters.pres.style.height = `${Math.min(100, Math.round(presVal * 125))}%`;
       if (meters.air) meters.air.style.height = `${Math.min(100, Math.round(airVal * 125))}%`;
-      
+
+      // Update VU meter in test playback
+      const testEng = Math.min(1.0, subVal * 0.35 + bassVal * 0.4 + lomidVal * 0.25);
+      const testDb = testEng > 0.001 ? 20 * Math.log10(testEng) : -60;
+      const clampDb = Math.max(-60, Math.min(0, testDb));
+      const testPct = Math.max(0, Math.min(100, ((clampDb + 60) / 60) * 100));
+
+      const hFill = document.getElementById('hdr-vu-fill');
+      const hPeak = document.getElementById('hdr-vu-peak');
+      const hVal = document.getElementById('hdr-vu-val');
+      const sFill = document.getElementById('strip-vu-fill');
+      const sPeak = document.getElementById('strip-vu-peak');
+      const sDb = document.getElementById('strip-vu-db');
+      if (hFill) hFill.style.width = `${testPct.toFixed(1)}%`;
+      if (hPeak) hPeak.style.left = `${testPct.toFixed(1)}%`;
+      if (hVal) hVal.textContent = clampDb <= -58 ? '-∞ dB' : `${clampDb.toFixed(1)} dB`;
+      if (sFill) sFill.style.width = `${testPct.toFixed(1)}%`;
+      if (sPeak) sPeak.style.left = `${testPct.toFixed(1)}%`;
+      if (sDb) sDb.textContent = clampDb <= -58 ? '-∞ dB' : `${clampDb.toFixed(1)} dB`;
+
       if (beatOrb && (bassVal > 0.45 || subVal > 0.55)) {
         beatOrb.style.transform = `scale(${1 + Math.max(subVal, bassVal) * 0.45})`;
         beatOrb.style.filter = `drop-shadow(0 0 16px rgba(0,240,255,0.85))`;
@@ -9247,33 +9825,49 @@ function setupEvents() {
   if (btnAudioMonitor && audioCuePlayer) {
     btnAudioMonitor.addEventListener('click', () => {
       const isAuditioning = btnAudioMonitor.classList.contains('active');
+      const isMicMode = (currentAudioSource.mode !== 'test');
+
       if (isAuditioning) {
-        audioCuePlayer.pause();
+        if (isMicMode) {
+          PenumbraWebAudio.setMonitor(false);
+        } else {
+          audioCuePlayer.pause();
+        }
         btnAudioMonitor.classList.remove('active');
         if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE OFF';
         sendAction('set_audio_monitor', { enabled: false });
       } else {
-        if (!audioCuePlayer.src || audioCuePlayer.src === window.location.href || audioCuePlayer.src.endsWith('/')) {
-          const isNodeServer = (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) && window.location.port === '3000';
-          audioCuePlayer.src = isNodeServer ? '/api/audio-stream' : './assets/audio/test_preview.mp3';
-        }
-        audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
-        audioCuePlayer.play().then(() => {
+        if (isMicMode) {
+          // No modo microfone/linha, silencia o MP3 e monitora o sinal do microfone
+          audioCuePlayer.pause();
+          const cueVol = Number(sliderCueVol?.value || 70) / 100.0;
+          PenumbraWebAudio.setMonitor(true, cueVol);
           btnAudioMonitor.classList.add('active');
-          if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
-          initWebAudioAnalyser();
-          sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
-        }).catch(err => {
-          console.warn('[Audio] Falha ao tocar áudio inicial, tentando fallback:', err);
-          if (audioCuePlayer.src.includes('/api/audio-stream')) {
-            audioCuePlayer.src = './assets/audio/test_preview.mp3';
-            audioCuePlayer.play().then(() => {
-              btnAudioMonitor.classList.add('active');
-              if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
-              initWebAudioAnalyser();
-            }).catch(() => {});
+          if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE MIC';
+          sendAction('set_audio_monitor', { enabled: true, mode: 'mic', volume: cueVol });
+        } else {
+          if (!audioCuePlayer.src || audioCuePlayer.src === window.location.href || audioCuePlayer.src.endsWith('/')) {
+            const isNodeServer = (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) && window.location.port === '3000';
+            audioCuePlayer.src = isNodeServer ? '/api/audio-stream' : './assets/audio/test_preview.mp3';
           }
-        });
+          audioCuePlayer.volume = Number(sliderCueVol?.value || 70) / 100.0;
+          audioCuePlayer.play().then(() => {
+            btnAudioMonitor.classList.add('active');
+            if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+            initWebAudioAnalyser();
+            sendAction('set_audio_monitor', { enabled: true, volume: audioCuePlayer.volume });
+          }).catch(err => {
+            console.warn('[Audio] Falha ao tocar áudio inicial, tentando fallback:', err);
+            if (audioCuePlayer.src.includes('/api/audio-stream')) {
+              audioCuePlayer.src = './assets/audio/test_preview.mp3';
+              audioCuePlayer.play().then(() => {
+                btnAudioMonitor.classList.add('active');
+                if (txtAudioMonitor) txtAudioMonitor.textContent = 'CUE ON';
+                initWebAudioAnalyser();
+              }).catch(() => {});
+            }
+          });
+        }
       }
     });
 
@@ -9281,17 +9875,20 @@ function setupEvents() {
       if (audioCuePlayer.src.includes('/api/audio-stream')) {
         console.log('[Audio] /api/audio-stream indisponível, alternando para test_preview.mp3...');
         audioCuePlayer.src = './assets/audio/test_preview.mp3';
-        if (btnAudioMonitor.classList.contains('active')) {
+        if (btnAudioMonitor.classList.contains('active') && currentAudioSource.mode === 'test') {
           audioCuePlayer.play().catch(() => {});
         }
       }
     });
   }
 
-  if (sliderCueVol && audioCuePlayer) {
+  if (sliderCueVol) {
     sliderCueVol.addEventListener('input', (e) => {
       const vol = Number(e.target.value) / 100.0;
-      audioCuePlayer.volume = vol;
+      if (audioCuePlayer) audioCuePlayer.volume = vol;
+      if (PenumbraWebAudio.isMonitoring) {
+        PenumbraWebAudio.setMonitor(true, vol);
+      }
       sendAction('set_audio_monitor', { volume: vol });
     });
   }
@@ -11185,6 +11782,12 @@ function openStudioInspector(context = 'clip', id = null, subtab = null) {
     } else {
       studioInspectorState.activeSubtab = 'color';
     }
+  } else if (context === 'matte') {
+    studioInspectorState.targetType = 'matte';
+    studioInspectorState.activeSubtab = subtab || 'transform';
+  } else if (context === '3d' || context === 'gen3d') {
+    studioInspectorState.targetType = '3d';
+    studioInspectorState.activeSubtab = subtab || 'transform';
   }
 
   studioInspectorState.isOpen = true;
@@ -11309,18 +11912,31 @@ function renderStudioInspector() {
   // Synchronize target buttons
   const btnClip = document.getElementById('insp-target-clip');
   const btnLayer = document.getElementById('insp-target-layer');
+  const btnMatte = document.getElementById('insp-target-matte');
+  const btn3d = document.getElementById('insp-target-3d');
   const btnMaster = document.getElementById('insp-target-master');
   if (btnClip) btnClip.classList.toggle('active', targetType === 'clip');
   if (btnLayer) btnLayer.classList.toggle('active', targetType === 'layer');
+  if (btnMatte) btnMatte.classList.toggle('active', targetType === 'matte');
+  if (btn3d) btn3d.classList.toggle('active', targetType === '3d');
   if (btnMaster) btnMaster.classList.toggle('active', targetType === 'master');
 
   // Synchronize subtab buttons
   const btnSubTrans = document.getElementById('insp-subtab-transform');
   const btnSubColor = document.getElementById('insp-subtab-color');
   const btnSubAdv = document.getElementById('insp-subtab-advanced');
-  if (btnSubTrans) btnSubTrans.classList.toggle('active', subtab === 'transform');
-  if (btnSubColor) btnSubColor.classList.toggle('active', subtab === 'color');
-  if (btnSubAdv) btnSubAdv.classList.toggle('active', subtab === 'advanced');
+  if (btnSubTrans) {
+    btnSubTrans.classList.toggle('active', subtab === 'transform');
+    btnSubTrans.textContent = targetType === '3d' ? 'CENAS 3D' : 'GEOMETRIA';
+  }
+  if (btnSubColor) {
+    btnSubColor.classList.toggle('active', subtab === 'color');
+    btnSubColor.textContent = targetType === 'matte' ? 'VINHETA' : (targetType === '3d' ? 'PALETAS' : 'COR & LUZ');
+  }
+  if (btnSubAdv) {
+    btnSubAdv.classList.toggle('active', subtab === 'advanced');
+    btnSubAdv.textContent = targetType === 'matte' ? 'DINÂMICA' : (targetType === '3d' ? 'CÂMERA & KICK' : 'AVANÇADO');
+  }
 
   let html = '';
 
@@ -11893,9 +12509,361 @@ function renderStudioInspector() {
     }
 
     container.innerHTML = html;
+  } else if (targetType === 'matte') {
+    if (badge) badge.textContent = '🎭 MÁSCARAS & VINHETA';
+    const mConfig = appState.matte || {};
+    const tf = mConfig.transform || { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
+    const vig = mConfig.vignette || { enabled: false, roundness: 0.65, feather: 0.38, inner_radius: 0.42, outer_radius: 0.95, aspect_ratio: '16:9', audio_pulse: 0.15, audio_band: 'bass' };
+    const def = mConfig.deform || { speed: 4.0, wiggle_pos: 8, wiggle_scale: 0.04, wiggle_rot: 0, sync_bpm: true };
+    const activeMatteName = mConfig.active_path || mConfig.name || 'matte_b_penumbra_vignette.png';
+
+    html += `
+      <!-- MATTE SELECTION & DESTINATION LAYER -->
+      <div class="insp-section">
+        <div class="insp-sec-title">MÁSCARA ATIVA & ROTEAMENTO</div>
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>SELETOR DE MÁSCARA</span>
+            <span class="insp-val-disp">${activeMatteName.replace('.png', '').slice(0, 20)}</span>
+          </div>
+          <select class="insp-select" onchange="setGlobalMatteAsset(this.value); renderStudioInspector();">
+            <option value="none">NENHUMA (DESATIVADA)</option>
+            ${(typeof allMattes !== 'undefined' ? allMattes : []).map(m => `
+              <option value="${m.path || m.filename}" ${(activeMatteName.includes(m.filename || m.path)) ? 'selected' : ''}>
+                ${m.name || m.filename}
+              </option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="insp-control-row">
+          <span class="insp-label">CAMADA DE DESTINO</span>
+          <div class="insp-pills-row">
+            ${['layer0', 'layer3', 'layer4', 'master'].map(tgt => `
+              <button class="insp-btn-pill ${(appState.matte_target_layer || 'layer3') === tgt ? 'active' : ''}" onclick="appState.matte_target_layer = '${tgt}'; renderStudioInspector();">
+                ${tgt === 'layer0' ? 'L0 PGM' : tgt === 'layer3' ? 'L3 CUE' : tgt === 'layer4' ? 'L4 DROP' : 'MASTER'}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="insp-row-between" style="margin-top: 8px;">
+          <span class="insp-label">INVERTER RECORTE (ALPHA INVERT)</span>
+          <button class="insp-btn-toggle ${mConfig.invert ? 'active' : ''}" onclick="appState.matte.invert = !appState.matte.invert; renderStudioInspector();">
+            ${mConfig.invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    if (subtab === 'transform') {
+      const px = tf.pos_x || 0;
+      const py = tf.pos_y || 0;
+      const sc = tf.scale !== undefined ? tf.scale : 1.0;
+      const scX = tf.scale_x !== undefined ? tf.scale_x : 1.0;
+      const scY = tf.scale_y !== undefined ? tf.scale_y : 1.0;
+      const rot = tf.rotation || 0;
+
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">GEOMETRIA & POSICIONAMENTO DA MÁSCARA</div>
+          
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO X</span>
+              <span class="insp-val-disp" id="disp-matte-posx">${px} %</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-100" max="100" value="${px}" class="insp-range" oninput="appState.matte.transform.pos_x = Number(this.value); document.getElementById('disp-matte-posx').textContent = this.value + ' %';">
+              <button class="insp-btn-pill" onclick="appState.matte.transform.pos_x = 0; renderStudioInspector();">0</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO Y</span>
+              <span class="insp-val-disp" id="disp-matte-posy">${py} %</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-100" max="100" value="${py}" class="insp-range" oninput="appState.matte.transform.pos_y = Number(this.value); document.getElementById('disp-matte-posy').textContent = this.value + ' %';">
+              <button class="insp-btn-pill" onclick="appState.matte.transform.pos_y = 0; renderStudioInspector();">0</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESCALA UNIFORME</span>
+              <span class="insp-val-disp" id="disp-matte-sc">${sc.toFixed(2)}x</span>
+            </div>
+            <input type="range" min="20" max="300" value="${Math.round(sc * 100)}" class="insp-range" oninput="appState.matte.transform.scale = this.value / 100.0; document.getElementById('disp-matte-sc').textContent = (this.value / 100.0).toFixed(2) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ALONGAMENTO ANAMÓRFICO (SCALE X / Y)</span>
+              <span class="insp-val-disp">${scX.toFixed(2)}x / ${scY.toFixed(2)}x</span>
+            </div>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${scX === 1.0 && scY === 1.0 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.0; appState.matte.transform.scale_y = 1.0; renderStudioInspector();">1:1</button>
+              <button class="insp-btn-pill ${scX === 1.33 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.33; appState.matte.transform.scale_y = 1.0; renderStudioInspector();">WIDE X (1.33x)</button>
+              <button class="insp-btn-pill ${scY === 1.33 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.0; appState.matte.transform.scale_y = 1.33; renderStudioInspector();">TALL Y (1.33x)</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ROTAÇÃO</span>
+              <span class="insp-val-disp" id="disp-matte-rot">${rot}°</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-180" max="180" value="${rot}" class="insp-range" oninput="appState.matte.transform.rotation = Number(this.value); document.getElementById('disp-matte-rot').textContent = this.value + '°';">
+              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 0; renderStudioInspector();">0°</button>
+              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 90; renderStudioInspector();">90°</button>
+              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 180; renderStudioInspector();">180°</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      const isVigOn = Boolean(vig.enabled);
+      const roundPct = Math.round((vig.roundness !== undefined ? vig.roundness : 0.65) * 100);
+      const featherPct = Math.round((vig.feather !== undefined ? vig.feather : 0.38) * 100);
+      const inRadPct = Math.round((vig.inner_radius !== undefined ? vig.inner_radius : 0.42) * 100);
+      const outRadPct = Math.round((vig.outer_radius !== undefined ? vig.outer_radius : 0.95) * 100);
+      const pulsePct = Math.round((vig.audio_pulse !== undefined ? vig.audio_pulse : 0.15) * 100);
+
+      html += `
+        <div class="insp-section insp-highlight-card">
+          <div class="insp-row-between">
+            <div class="insp-sec-title insp-cyan-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20"></path></svg>
+              VINHETA PROCEDURAL DINÂMICA
+            </div>
+            <button class="insp-btn-toggle ${isVigOn ? 'active' : ''}" onclick="appState.matte.vignette.enabled = !appState.matte.vignette.enabled; renderStudioInspector();">
+              ${isVigOn ? 'ATIVO' : 'DESATIVADO'}
+            </button>
+          </div>
+          <div class="insp-desc">Controle de geometria suave com bordas arredondadas e falloff cinematográfico.</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ARREDONDAMENTO DAS BORDAS (ROUNDNESS)</span>
+              <span class="insp-val-disp text-cyan" id="disp-vig-round">${roundPct}%</span>
+            </div>
+            <input type="range" min="0" max="100" value="${roundPct}" class="insp-range" oninput="appState.matte.vignette.roundness = this.value / 100.0; document.getElementById('disp-vig-round').textContent = this.value + '%';">
+            <div class="insp-pills-row" style="margin-top:4px;">
+              <button class="insp-btn-pill ${roundPct === 0 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 0; renderStudioInspector();">0% (RETÂNGULO PURO)</button>
+              <button class="insp-btn-pill ${roundPct === 65 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 0.65; renderStudioInspector();">65% (ARREDONDADO)</button>
+              <button class="insp-btn-pill ${roundPct === 100 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 1.0; renderStudioInspector();">100% (ELIPSE / CÍRCULO)</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>SUAVIDADE DE BORDA (FEATHER / FALLOFF)</span>
+              <span class="insp-val-disp text-cyan" id="disp-vig-feather">${featherPct}%</span>
+            </div>
+            <input type="range" min="5" max="95" value="${featherPct}" class="insp-range" oninput="appState.matte.vignette.feather = this.value / 100.0; document.getElementById('disp-vig-feather').textContent = this.value + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>RAIO INTERNO (AURA CENTRAL LIVRE)</span>
+              <span class="insp-val-disp" id="disp-vig-inrad">${inRadPct}%</span>
+            </div>
+            <input type="range" min="10" max="85" value="${inRadPct}" class="insp-range" oninput="appState.matte.vignette.inner_radius = this.value / 100.0; document.getElementById('disp-vig-inrad').textContent = this.value + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>RAIO EXTERNO (ALCANCE DA PENUMBRA)</span>
+              <span class="insp-val-disp" id="disp-vig-outrad">${outRadPct}%</span>
+            </div>
+            <input type="range" min="50" max="150" value="${outRadPct}" class="insp-range" oninput="appState.matte.vignette.outer_radius = this.value / 100.0; document.getElementById('disp-vig-outrad').textContent = this.value + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>RESPIRAÇÃO ÁUDIO-REATIVA (PULSE BEAT)</span>
+              <span class="insp-val-disp text-cyan" id="disp-vig-pulse">${pulsePct}%</span>
+            </div>
+            <input type="range" min="0" max="50" value="${pulsePct}" class="insp-range" oninput="appState.matte.vignette.audio_pulse = this.value / 100.0; document.getElementById('disp-vig-pulse').textContent = this.value + '%';">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">CINEMÁTICA E OSCILAÇÃO (WIGGLE ENGINE)</div>
+          
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>AMPLITUDE DE WIGGLE (POSIÇÃO)</span>
+              <span class="insp-val-disp">${def.wiggle_pos || 8} px</span>
+            </div>
+            <input type="range" min="0" max="40" value="${def.wiggle_pos || 8}" class="insp-range" oninput="appState.matte.deform.wiggle_pos = Number(this.value);">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>VELOCIDADE (PERÍODO EM BEATS)</span>
+              <span class="insp-val-disp">${def.speed || 4} Beats</span>
+            </div>
+            <input type="range" min="1" max="16" value="${def.speed || 4}" class="insp-range" oninput="appState.matte.deform.speed = Number(this.value);">
+          </div>
+
+          <div class="insp-row-between" style="margin-top: 10px;">
+            <span class="insp-label">SINCRONIZAR COM O BPM MASTER</span>
+            <button class="insp-btn-toggle ${def.sync_bpm ? 'active' : ''}" onclick="appState.matte.deform.sync_bpm = !appState.matte.deform.sync_bpm; renderStudioInspector();">
+              ${def.sync_bpm ? 'SYNC ON' : 'LIVRE'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } else if (targetType === '3d') {
+    if (badge) badge.textContent = '🌌 CENÁRIOS 3D & ESTRELA 13';
+    const cfg3d = appState.gen3d || {};
+    const curScene = cfg3d.active_scene || 'star_13';
+    const curPal = cfg3d.palette || 'cyan_neon';
+    const react = cfg3d.audio_reactivity || {};
+
+    html += `
+      <!-- 3D SCENE PICKER GRID -->
+      <div class="insp-section">
+        <div class="insp-sec-title">CENÁRIO 3D GENERATIVO</div>
+        <div class="insp-scene-grid">
+          ${[
+            { id: 'spine', name: 'ESPINHAÇO', desc: 'Vértebras marinhas Houdini abyss' },
+            { id: 'ocean_sun', name: 'OCEAN SUN', desc: 'Mar ondulante + sol/lua de partículas' },
+            { id: 'star_13', name: 'ESTRELA 13', desc: 'Estrela sagrada + numeral 13 desacoplado' },
+            { id: 'hybrid', name: 'HYBRID COSMOS', desc: 'Mar + estrela 13 + horizonte solar' }
+          ].map(sc => `
+            <div class="insp-scene-card ${curScene === sc.id ? 'active' : ''}" onclick="appState.gen3d.active_scene = '${sc.id}'; renderStudioInspector();">
+              <div class="insp-scene-card-name">${sc.name}</div>
+              <div class="insp-scene-card-desc">${sc.desc}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- PALETTE SELECTOR -->
+      <div class="insp-section">
+        <div class="insp-sec-title">PALETA DE COR & LUZ (LUXURY THEMES)</div>
+        <div class="insp-pills-row">
+          ${[
+            { id: 'cyan_neon', label: 'CIANO NEON', color: '#00f0ff' },
+            { id: 'solar_gold', label: 'SOLAR DOURADO', color: '#ffb703' },
+            { id: 'matrix_emerald', label: 'MATRIX ESMERALDA', color: '#00ff88' },
+            { id: 'deep_violet', label: 'ULTRAVIOLETA', color: '#d946ef' },
+            { id: 'monochrome_ice', label: 'GELO MONO', color: '#e2e8f0' }
+          ].map(pal => `
+            <button class="insp-palette-pill ${curPal === pal.id ? 'active' : ''}" onclick="appState.gen3d.palette = '${pal.id}'; renderStudioInspector();">
+              <span class="pal-dot" style="background:${pal.color};"></span>
+              <span>${pal.label}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    if (subtab === 'transform') {
+      const cam = cfg3d.camera || {};
+      const orbSpd = cam.orbit_speed !== undefined ? cam.orbit_speed : 1.0;
+      const tilt = cam.tilt !== undefined ? cam.tilt : 0.22;
+      const dist = cam.distance !== undefined ? cam.distance : 2.3;
+
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">CÂMERA 3D & PERSPECTIVA</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>VELOCIDADE DE ÓRBITA</span>
+              <span class="insp-val-disp">${orbSpd.toFixed(1)}x</span>
+            </div>
+            <input type="range" min="-30" max="30" value="${Math.round(orbSpd * 10)}" class="insp-range" oninput="appState.gen3d.camera.orbit_speed = this.value / 10.0; renderStudioInspector();">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>INCLINAÇÃO DA CÂMERA (TILT)</span>
+              <span class="insp-val-disp">${(tilt * 180 / Math.PI).toFixed(1)}°</span>
+            </div>
+            <input type="range" min="-60" max="60" value="${Math.round(tilt * 100)}" class="insp-range" oninput="appState.gen3d.camera.tilt = this.value / 100.0; renderStudioInspector();">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>DISTÂNCIA / ZOOM (CAMERA DISTANCE)</span>
+              <span class="insp-val-disp">${dist.toFixed(2)}</span>
+            </div>
+            <input type="range" min="12" max="45" value="${Math.round(dist * 10)}" class="insp-range" oninput="appState.gen3d.camera.distance = this.value / 10.0; renderStudioInspector();">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      html += `
+        <div class="insp-section insp-highlight-card">
+          <div class="insp-sec-title insp-cyan-title">REATIVIDADE DESACOPLADA · ESTRELA 13</div>
+          <div class="insp-desc">A estrela sagrada gira nos agudos e médios. O numeral 13 responde de forma isolada com impulsos vigorosos no subgrave.</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>KICK DO NUMERAL 13 (SUB & BASS)</span>
+              <span class="insp-val-disp text-cyan" id="disp-gen-kick">${(react.num13_sub_kick || 1.8).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="5" max="40" value="${Math.round((react.num13_sub_kick || 1.8) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.num13_sub_kick = this.value / 10.0; document.getElementById('disp-gen-kick').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>GIRO DA ESTRELA SAGRADA (TREBLE & AIR)</span>
+              <span class="insp-val-disp text-cyan" id="disp-gen-spin">${(react.star_treble_spin || 1.2).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="30" value="${Math.round((react.star_treble_spin || 1.2) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.star_treble_spin = this.value / 10.0; document.getElementById('disp-gen-spin').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ONDULAÇÃO DO OCEANO (WAVE AMPLITUDE)</span>
+              <span class="insp-val-disp">${(react.ocean_wave_amp || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((react.ocean_wave_amp || 1.0) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.ocean_wave_amp = this.value / 10.0;">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">CONTROLE DIRETO MIDI · BANCO 3D (BANK 3)</div>
+          <div class="insp-desc">Use o botão BANK no cabeçalho ou o atalho "[" / "]" para entrar no modo 3D MATRIX no seu controlador físico.</div>
+          <button class="insp-btn-toggle active" onclick="if(window.penumbraMidi){ window.penumbraMidi.setBank(3); showMacroToast('Modo MIDI 3D Ativado'); }">
+            ATIVAR MAPEAMENTO MIDI 3D MATRIX
+          </button>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
   }
 }
 window.renderStudioInspector = renderStudioInspector;
+
+function setGlobalMatteAsset(assetPath) {
+  if (!appState.matte) appState.matte = {};
+  appState.matte.active_path = assetPath;
+  appState.matte.name = assetPath;
+  const tgt = appState.matte_target_layer || 'layer3';
+  if (tgt === 'master') {
+    appState.master_matte = assetPath;
+  } else if (appState.layers && appState.layers[tgt]) {
+    appState.layers[tgt].matte = assetPath;
+  }
+  showMacroToast(`Máscara definida: ${assetPath.replace('.png', '').slice(0, 18)}`);
+}
+window.setGlobalMatteAsset = setGlobalMatteAsset;
 
 function layer2_setLuminance(val) {
   if (!appState.layers.layer2) return;

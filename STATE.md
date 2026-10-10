@@ -9,12 +9,10 @@
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
 - **Estabilização da Barra Central:** 🟢 RESOLVIDO (Cápsula de 215px fixa, eliminação de jitter e tag estável `FORÇADO`)
-- **Persistência de Áudio Mic/P2:** 🟢 CORRIGIDO (Estado `audio_source` persistido no backend e protegido no frontend contra sobrescrita de telemetria)
-- **Vídeo em Nuvem (Anti-Freeze 60 FPS):** 🟢 RESOLVIDO (6 clipes nativos CDN adicionados ao topo, fallback resiliente, crossOrigin anonymous, sem telas congeladas)
-- **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
-- **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
-- **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
-- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
+- **Microfone & Line-In Ao Vivo:** 🟢 ATIVO (Captura resiliente via `getUserMedia`, Preamp Gain slider 0.5x-4.0x, VU meter hardware-grade RMS/Peak dB com indicador de clip, spectral flux BPM counter, e CUE seguro 100% isolado do MP3)
+- **Painel Studio Inspector (🎭 MATTE):** 🟢 ATIVO (Controle paramétrico de máscaras: Geometria X/Y, escala anamórfica, rotação, vinheta procedural com roundness 0%-100%, feathering suave, auras concêntricas e dinâmica áudio-reativa, acionável via botão `⚙ INSP` nos cards)
+- **Matriz 3D Generativa & Estrela 13 Desacoplada (🌌 3D GEN):** 🟢 ATIVO (4 cenas: `ESPINHAÇO`, `OCEAN SUN`, `ESTRELA 13`, `HYBRID COSMOS`; 5 paletas de luxo; reatividade desacoplada com rotação da estrela no treble/air e kick explosivo no Z-depth do numeral 13 no sub/bass)
+- **Página MIDI Dedicada Banco 3 (BANK C · 3D MATRIX):** 🟢 ATIVO (Ciclo de 3 bancos A/B/C no hardware twin, 8 faders e 8 knobs mapeados para morph 3D, câmeras, kick Z, amplitude de onda, vinheta e preamp gain)
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)

@@ -28,7 +28,8 @@ class PenumbraMidiHub {
     this.activeBank = 1;
     this.bankNames = {
       1: 'BANK A · LIVE MIX, TAKES & LEVELS',
-      2: 'BANK B · FX ENGINE, MATTES & SCULPT'
+      2: 'BANK B · FX ENGINE, MATTES & SCULPT',
+      3: 'BANK C · 3D GENERATIVE MATRIX & ESTRELA 13'
     };
     
     // Foco de Camada para o Banco 2
@@ -661,6 +662,70 @@ class PenumbraMidiHub {
         this.setMasterBrightnessDimmer(normValue);
       }
     }
+
+    // =============================================================
+    // BANCO 3 (BANK C): 3D GENERATIVE MATRIX & SCENE MORPH
+    // Fader 0: Scene Morph / Selector (Spine / Ocean Sun / Star 13 / Hybrid)
+    // Fader 1: Palette Morph (Cyan Neon / Solar / Emerald / Violet / Ice)
+    // Fader 2: Numeral 13 Z-Displacement Kick Mult (0.5x a 4.0x)
+    // Fader 3: Star 13 Treble Spin Sensitivity (0.2x a 3.0x)
+    // Fader 4: Ocean Wave Amplitude (0.2x a 2.5x)
+    // Fader 5: Preamp Microphone Gain (0.5x a 5.0x)
+    // Fader 6: Vignette Roundness (0% a 100%)
+    // Fader 7: Master Dimmer / Blackout
+    // =============================================================
+    else if (this.activeBank === 3) {
+      if (faderIdx === 0) {
+        const scenes = ['spine', 'ocean_sun', 'star_13', 'hybrid'];
+        const scIdx = Math.min(3, Math.floor(normValue * 4));
+        if (window.appState?.gen3d) {
+          window.appState.gen3d.active_scene = scenes[scIdx];
+        }
+        this.flashToastHud(`3D CENA: ${scenes[scIdx].toUpperCase()}`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (faderIdx === 1) {
+        const palettes = ['cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice'];
+        const pIdx = Math.min(4, Math.floor(normValue * 5));
+        if (window.appState?.gen3d) {
+          window.appState.gen3d.palette = palettes[pIdx];
+        }
+        this.flashToastHud(`3D PALETA: ${palettes[pIdx].toUpperCase()}`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (faderIdx === 2) {
+        const kick = 0.5 + normValue * 3.5;
+        if (window.appState?.gen3d?.audio_reactivity) {
+          window.appState.gen3d.audio_reactivity.num13_sub_kick = kick;
+        }
+        this.flashToastHud(`NUMERAL 13 KICK: ${kick.toFixed(1)}x`);
+      } else if (faderIdx === 3) {
+        const spin = 0.2 + normValue * 2.8;
+        if (window.appState?.gen3d?.audio_reactivity) {
+          window.appState.gen3d.audio_reactivity.star_treble_spin = spin;
+        }
+        this.flashToastHud(`ESTRELA TREBLE SPIN: ${spin.toFixed(1)}x`);
+      } else if (faderIdx === 4) {
+        const wave = 0.2 + normValue * 2.3;
+        if (window.appState?.gen3d?.audio_reactivity) {
+          window.appState.gen3d.audio_reactivity.ocean_wave_amp = wave;
+        }
+        this.flashToastHud(`OCEAN WAVE AMP: ${wave.toFixed(1)}x`);
+      } else if (faderIdx === 5) {
+        const gain = 0.5 + normValue * 4.5;
+        if (typeof window.setAudioPreampGain === 'function') {
+          window.setAudioPreampGain(gain);
+        }
+        this.flashToastHud(`PREAMP GAIN: ${gain.toFixed(2)}x`);
+      } else if (faderIdx === 6) {
+        if (window.appState?.matte?.vignette) {
+          window.appState.matte.vignette.roundness = normValue;
+          window.appState.matte.vignette.enabled = true;
+        }
+        this.flashToastHud(`VINHETA ROUNDNESS: ${Math.round(normValue * 100)}%`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (faderIdx === 7) {
+        this.setMasterBrightnessDimmer(normValue);
+      }
+    }
   }
 
   handleMasterFaderInput(normValue) {
@@ -811,6 +876,59 @@ class PenumbraMidiHub {
         }
       }
     }
+
+    // =============================================================
+    // BANCO 3 (BANK C): 3D GENERATIVE MATRIX & CAMERA DYNAMICS
+    // Knob 0: 3D Orbit Speed (-2.0x a +2.0x)
+    // Knob 1: Camera Tilt Angle (-45° a +45°)
+    // Knob 2: Camera Distance / Zoom (1.2 a 4.2)
+    // Knob 3: Star 13 Treble Spin Sensitivity (0.2x a 3.0x)
+    // Knob 4: Numeral 13 Decoupled Sub Kick Sensitivity (0.5x a 4.0x)
+    // Knob 5: Ocean Wave Amplitude (0.2x a 2.5x)
+    // Knob 6: Vignette Roundness (0% a 100%)
+    // Knob 7: Vignette Feather Softness (5% a 95%)
+    // =============================================================
+    else if (this.activeBank === 3) {
+      if (knobIdx === 0) {
+        const spd = (newKnobVal - 0.5) * 4.0;
+        if (window.appState?.gen3d?.camera) window.appState.gen3d.camera.orbit_speed = spd;
+        this.flashToastHud(`3D ORBIT SPEED: ${spd.toFixed(1)}x`);
+      } else if (knobIdx === 1) {
+        const tilt = (newKnobVal - 0.5) * 1.2;
+        if (window.appState?.gen3d?.camera) window.appState.gen3d.camera.tilt = tilt;
+        this.flashToastHud(`3D TILT: ${(tilt * 180 / Math.PI).toFixed(0)}°`);
+      } else if (knobIdx === 2) {
+        const dist = 1.2 + newKnobVal * 3.0;
+        if (window.appState?.gen3d?.camera) window.appState.gen3d.camera.distance = dist;
+        this.flashToastHud(`3D ZOOM DIST: ${dist.toFixed(1)}`);
+      } else if (knobIdx === 3) {
+        const spin = 0.2 + newKnobVal * 2.8;
+        if (window.appState?.gen3d?.audio_reactivity) window.appState.gen3d.audio_reactivity.star_treble_spin = spin;
+        this.flashToastHud(`ESTRELA TREBLE SPIN: ${spin.toFixed(1)}x`);
+      } else if (knobIdx === 4) {
+        const kick = 0.5 + newKnobVal * 3.5;
+        if (window.appState?.gen3d?.audio_reactivity) window.appState.gen3d.audio_reactivity.num13_sub_kick = kick;
+        this.flashToastHud(`NUMERAL 13 KICK: ${kick.toFixed(1)}x`);
+      } else if (knobIdx === 5) {
+        const wave = 0.2 + newKnobVal * 2.3;
+        if (window.appState?.gen3d?.audio_reactivity) window.appState.gen3d.audio_reactivity.ocean_wave_amp = wave;
+        this.flashToastHud(`OCEAN WAVE AMP: ${wave.toFixed(1)}x`);
+      } else if (knobIdx === 6) {
+        if (window.appState?.matte?.vignette) {
+          window.appState.matte.vignette.roundness = newKnobVal;
+          window.appState.matte.vignette.enabled = true;
+        }
+        this.flashToastHud(`VINHETA ROUNDNESS: ${Math.round(newKnobVal * 100)}%`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 7) {
+        if (window.appState?.matte?.vignette) {
+          window.appState.matte.vignette.feather = 0.05 + newKnobVal * 0.9;
+          window.appState.matte.vignette.enabled = true;
+        }
+        this.flashToastHud(`VINHETA FEATHER: ${Math.round((0.05 + newKnobVal * 0.9) * 100)}%`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      }
+    }
   }
 
   // =========================================================================
@@ -903,6 +1021,23 @@ class PenumbraMidiHub {
   handleButtonRec(channelIdx) {
     if (channelIdx < 0 || channelIdx > 7) return;
 
+    if (this.activeBank === 3) {
+      if (channelIdx <= 3) {
+        const scenes = ['spine', 'ocean_sun', 'star_13', 'hybrid'];
+        const sc = scenes[channelIdx];
+        if (window.appState?.gen3d) window.appState.gen3d.active_scene = sc;
+        this.flashToastHud(`3D CENA: ${sc.toUpperCase()}`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else {
+        const palettes = ['cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet'];
+        const pal = palettes[channelIdx - 4];
+        if (window.appState?.gen3d) window.appState.gen3d.palette = pal;
+        this.flashToastHud(`3D PALETA: ${pal.toUpperCase()}`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      }
+      return;
+    }
+
     if (this.activeBank === 2) {
       // No Banco 2 (Bank B), os botões Rec ligam/desligam os 5 Plugins do After Effects!
       const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
@@ -966,30 +1101,31 @@ class PenumbraMidiHub {
   // 8. TRANSPORTE & NAVEGAÇÃO DE BANCOS (DUAL-BANK HARDWARE & SOFTWARE)
   // =========================================================================
   setBank(bankNum) {
-    if (bankNum < 1 || bankNum > 2) return;
+    if (bankNum < 1 || bankNum > 3) return;
     this.activeBank = bankNum;
-    this.hardwareBank = (bankNum === 2) ? 'bank2' : 'bank1';
+    this.hardwareBank = (bankNum === 2) ? 'bank2' : (bankNum === 3 ? 'bank3' : 'bank1');
     try {
       localStorage.setItem('penumbra_midi_hw_bank', this.hardwareBank);
       localStorage.setItem('penumbra_midi_active_bank', String(this.activeBank));
     } catch (e) {}
     this.resetTakeoverForBankChange();
-    this.flashToastHud(`BANCO MIDI ${bankNum === 1 ? 'A' : 'B'}: ${this.bankNames[bankNum]}`);
+    const bLetter = bankNum === 1 ? 'A' : (bankNum === 2 ? 'B' : 'C');
+    this.flashToastHud(`BANCO MIDI ${bLetter}: ${this.bankNames[bankNum]}`);
     console.log(`[PENUMBRA MIDI] Banco comutado para: ${bankNum} (${this.bankNames[bankNum]})`);
     this.sendLedFeedbackAll();
     this.notifyUI();
   }
 
   nextBank() {
-    this.setBank(this.activeBank === 1 ? 2 : 1);
+    this.setBank((this.activeBank % 3) + 1);
   }
 
   prevBank() {
-    this.setBank(this.activeBank === 1 ? 2 : 1);
+    this.setBank(this.activeBank === 1 ? 3 : this.activeBank - 1);
   }
 
   toggleBank() {
-    this.setBank(this.activeBank === 1 ? 2 : 1);
+    this.nextBank();
   }
 
   actionRewind() {
@@ -1524,8 +1660,8 @@ class PenumbraMidiHub {
     }
 
     if (bankBadge) {
-      bankBadge.textContent = `B${this.activeBank}: ${this.bankNames[this.activeBank].split(' ')[0]}`;
-      bankBadge.title = `Banco de Software Ativo: B${this.activeBank} (${this.bankNames[this.activeBank]}) · Clique para avançar banco [Atalho: Tecla B ou F1-F4]`;
+      bankBadge.textContent = this.activeBank === 1 ? 'BANK A' : (this.activeBank === 2 ? 'BANK B' : 'BANK C (3D)');
+      bankBadge.title = `Banco MIDI Ativo: ${this.bankNames[this.activeBank]} · Clique para alternar [Atalho: [ ou ]]`;
     }
 
     const hwBadge = document.getElementById('chip-midi-hw-bank');
@@ -1710,7 +1846,7 @@ class HardwareTwinUI {
 
     // Atualiza Badges e Seletor de Bancos
     const bankBadge = document.getElementById('midi-active-bank-badge');
-    if (bankBadge) bankBadge.textContent = `BANCO ${bank === 1 ? 'A' : 'B'}: ${this.hub.bankNames[bank] || ''}`;
+    if (bankBadge) bankBadge.textContent = `BANCO ${bank === 1 ? 'A' : (bank === 2 ? 'B' : 'C')}: ${this.hub.bankNames[bank] || ''}`;
 
     for (let b = 1; b <= 4; b++) {
       const card = document.getElementById(`btn-bank-${b}`);

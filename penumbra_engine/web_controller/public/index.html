@@ -258,6 +258,23 @@
 
     <!-- Headphone Cue Audio Monitor & Master Tools -->
     <div class="header-actions">
+      <!-- Direct Audio Source Switcher Pills -->
+      <div class="hdr-audio-source-group" title="Selecionar Fonte de Áudio: MP3 Interno, Microfone ou Line-In">
+        <button class="hdr-src-pill active" id="hdr-src-test" onclick="setAudioSource('test')">MP3</button>
+        <button class="hdr-src-pill" id="hdr-src-mic" onclick="setAudioSource('mic')">🎤 MIC</button>
+        <button class="hdr-src-pill" id="hdr-src-p2" onclick="setAudioSource('p2')">P2</button>
+      </div>
+
+      <!-- Live Input VU Meter Capsule -->
+      <div class="header-vu-meter-capsule" id="header-vu-capsule" title="VU Meter de Entrada em Tempo Real (RMS & Peak)">
+        <div class="header-vu-led-track">
+          <div class="header-vu-led-fill" id="hdr-vu-fill" style="width: 0%;"></div>
+          <div class="header-vu-peak-dot" id="hdr-vu-peak" style="left: 0%;"></div>
+        </div>
+        <span class="header-vu-val-txt" id="hdr-vu-val">-∞ dB</span>
+        <div class="header-vu-clip-led" id="hdr-vu-clip" title="Alerta de Distorção / Clip"></div>
+      </div>
+
       <!-- Headphone Audition Module -->
       <div class="audio-cue-box" title="Monitor de Áudio (CUE) · Teste e Pré-escuta">
         <button class="btn btn-cue" id="btn-audio-monitor">
@@ -475,6 +492,22 @@
         <div class="spec-bar-item" title="Hi-Mid (800-4kHz)"><div class="spec-bar-wrap"><div class="spec-bar-fill" id="meter-himid"></div></div><span>HMD</span></div>
         <div class="spec-bar-item" title="Presence (4-8kHz)"><div class="spec-bar-wrap"><div class="spec-bar-fill" id="meter-pres"></div></div><span>PRS</span></div>
         <div class="spec-bar-item" title="Air (8-20kHz)"><div class="spec-bar-wrap"><div class="spec-bar-fill" id="meter-air"></div></div><span>AIR</span></div>
+      </div>
+
+      <!-- 6. Realtime Audio Input Level & Preamp Gain Column -->
+      <div class="audio-strip-col col-input-vu" title="Medidor VU de Entrada do Microfone/Linha">
+        <div class="input-vu-header">
+          <span class="input-vu-lbl">IN VU</span>
+          <span class="input-vu-db-readout" id="strip-vu-db">-inf dB</span>
+        </div>
+        <div class="input-vu-meter-bar-track">
+          <div class="input-vu-meter-bar-fill" id="strip-vu-fill" style="width: 0%;"></div>
+          <div class="input-vu-meter-peak" id="strip-vu-peak" style="left: 0%;"></div>
+        </div>
+        <div class="input-vu-gain-control" title="Aumentar ganho do microfone">
+          <span>GAIN</span>
+          <input type="range" id="strip-audio-gain" min="50" max="400" value="180" class="mini-preamp-range" oninput="setAudioPreampGain(this.value / 100)">
+        </div>
       </div>
     </div>
 
@@ -3490,9 +3523,11 @@
 
         <!-- MASTER TARGET SELECTOR -->
         <div class="inspector-target-selector">
-          <button class="insp-target-btn active" id="insp-target-clip" onclick="switchInspectorTarget('clip')">🎯 CLIPE</button>
-          <button class="insp-target-btn" id="insp-target-layer" onclick="switchInspectorTarget('layer')">📑 CAMADA</button>
-          <button class="insp-target-btn" id="insp-target-master" onclick="switchInspectorTarget('master')">🌐 MASTER & FX</button>
+          <button class="insp-target-btn active" id="insp-target-clip" onclick="switchInspectorTarget('clip')" title="Inspecionar Parâmetros do Clipe em Foco">🎯 CLIPE</button>
+          <button class="insp-target-btn" id="insp-target-layer" onclick="switchInspectorTarget('layer')" title="Inspecionar Parâmetros da Camada Selecionada">📑 CAMADA</button>
+          <button class="insp-target-btn" id="insp-target-matte" onclick="switchInspectorTarget('matte')" title="Inspecionar Máscara Matte, Geometria e Vinheta">🎭 MATTE</button>
+          <button class="insp-target-btn" id="insp-target-3d" onclick="switchInspectorTarget('3d')" title="Inspecionar Cenários 3D, Partículas e Estrela 13">🌌 3D GEN</button>
+          <button class="insp-target-btn" id="insp-target-master" onclick="switchInspectorTarget('master')" title="Inspecionar Master Deck, Tonal e Plugins FX">🌐 MASTER</button>
         </div>
 
         <!-- SUBTABS BAR -->
