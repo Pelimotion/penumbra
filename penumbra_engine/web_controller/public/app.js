@@ -6028,24 +6028,48 @@ window.setAutopilotMattePolicy = setAutopilotMattePolicy;
 // AUTOPILOT POOL ARCHITECTURE (Granular Folders & Takes Gating Engine)
 // Industry benchmark: Resolume Arena 7, Ableton Live 12 follow actions, disguise
 // ============================================================================
+// AUTOPILOT POOL ARCHITECTURE (Granular Folders & Takes Gating Engine)
+// Industry benchmark: Resolume Arena 7, Ableton Live 12 follow actions, disguise
+// ============================================================================
 if (!appState.autopilot_pool) {
   let storedAp = null;
   try {
     const raw = localStorage.getItem('penumbra_autopilot_pool');
     if (raw) storedAp = JSON.parse(raw);
   } catch (e) {}
+
+  let initExcludedFolders = [];
+  if (storedAp && Array.isArray(storedAp.excluded_folders)) {
+    initExcludedFolders = storedAp.excluded_folders;
+  }
+  let initExcludedClips = [];
+  if (storedAp && Array.isArray(storedAp.excluded_clips)) {
+    initExcludedClips = storedAp.excluded_clips;
+  }
+
   appState.autopilot_pool = {
+    excluded_folders: initExcludedFolders,
+    excluded_clips: initExcludedClips,
     active_folders: (storedAp && Array.isArray(storedAp.active_folders)) ? storedAp.active_folders : [],
-    excluded_clips: (storedAp && Array.isArray(storedAp.excluded_clips)) ? storedAp.excluded_clips : [],
-    view_filter: 'ALL'
+    view_filter: (storedAp && storedAp.view_filter) || 'ALL',
+    toolbar_expanded: false
   };
 }
+
+function getAllAvailableFolders() {
+  const set = new Set();
+  (allClips || []).forEach(c => set.add(getClipFolder(c)));
+  return Array.from(set).sort();
+}
+window.getAllAvailableFolders = getAllAvailableFolders;
 
 function saveAutopilotPoolState() {
   try {
     localStorage.setItem('penumbra_autopilot_pool', JSON.stringify({
-      active_folders: appState.autopilot_pool.active_folders,
-      excluded_clips: appState.autopilot_pool.excluded_clips
+      excluded_folders: appState.autopilot_pool.excluded_folders || [],
+      excluded_clips: appState.autopilot_pool.excluded_clips || [],
+      active_folders: appState.autopilot_pool.active_folders || [],
+      view_filter: appState.autopilot_pool.view_filter || 'ALL'
     }));
     if (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile) {
       UserProfileManager.profile.autopilot_pool = appState.autopilot_pool;
@@ -6056,18 +6080,26 @@ function saveAutopilotPoolState() {
 
 function isClipEligibleForAutopilot(clip) {
   if (!clip || !clip.id) return false;
-  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [] };
-  // 1. Excluded individual clip takes check
-  if (pool.excluded_clips && pool.excluded_clips.includes(clip.id)) {
+  const pool = appState.autopilot_pool || { excluded_folders: [], excluded_clips: [] };
+  const folder = getClipFolder(clip);
+
+  // 1. Folder-level exclusion check
+  if (Array.isArray(pool.excluded_folders) && pool.excluded_folders.includes(folder)) {
     return false;
   }
-  // 2. Folder-level gating check (if any active folders are designated)
-  if (pool.active_folders && pool.active_folders.length > 0) {
-    const folder = getClipFolder(clip);
+
+  // 2. Backward compatibility with active_folders if present and excluded_folders is empty
+  if (Array.isArray(pool.active_folders) && pool.active_folders.length > 0 && (!pool.excluded_folders || pool.excluded_folders.length === 0)) {
     if (!pool.active_folders.includes(folder)) {
       return false;
     }
   }
+
+  // 3. Excluded individual clip takes check
+  if (Array.isArray(pool.excluded_clips) && pool.excluded_clips.includes(clip.id)) {
+    return false;
+  }
+
   return true;
 }
 window.isClipEligibleForAutopilot = isClipEligibleForAutopilot;
@@ -6076,6 +6108,7 @@ function toggleClipAutopilot(clipId, event) {
   if (event) event.stopPropagation();
   if (!clipId) return;
   const pool = appState.autopilot_pool;
+  if (!Array.isArray(pool.excluded_clips)) pool.excluded_clips = [];
   const isExcluded = pool.excluded_clips.includes(clipId);
   if (isExcluded) {
     pool.excluded_clips = pool.excluded_clips.filter(id => id !== clipId);
@@ -6093,11 +6126,10 @@ function toggleClipAutopilot(clipId, event) {
     const apBtn = card.querySelector('.btn-action-ap');
     if (apBtn) {
       apBtn.className = `btn-card-action btn-action-ap ${isNowAuto ? 'is-auto-active' : 'is-auto-excluded'}`;
-      apBtn.innerHTML = `
-        <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-        <span>${isNowAuto ? 'AUTO' : 'MANUAL'}</span>
-      `;
-      apBtn.title = isNowAuto ? 'Take ativo no Autopilot · Clique para excluir da rotação' : 'Take excluído do Autopilot · Apenas disparo manual';
+      apBtn.innerHTML = isNowAuto 
+        ? `<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg> <span>NO AUTO</span>`
+        : `<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span>MANUAL</span>`;
+      apBtn.title = isNowAuto ? 'Take ATIVO no Autopilot · Clique para travar em apenas MANUAL seu' : 'Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot';
     }
     const thumbContainer = card.querySelector('.media-card-thumb');
     if (thumbContainer) {
@@ -6107,8 +6139,9 @@ function toggleClipAutopilot(clipId, event) {
       if (existingAuto) existingAuto.remove();
       const badge = document.createElement('span');
       badge.className = isNowAuto ? 'thumb-auto-indicator' : 'thumb-manual-indicator';
-      badge.textContent = isNowAuto ? '⚡ AUTO' : '✕ MANUAL';
-      badge.title = isNowAuto ? 'Elegível para o Autopilot' : 'Excluído do Autopilot · Somente manual';
+      badge.textContent = isNowAuto ? '⚡ AUTO' : '🔒 MANUAL';
+      badge.title = isNowAuto ? 'Take ATIVO no Autopilot · Clique para travar em MANUAL' : 'Take TRAVADO em manual · Clique para incluir no Autopilot';
+      badge.onclick = (e) => toggleClipAutopilot(clipId, e);
       thumbContainer.appendChild(badge);
     }
     card.classList.toggle('is-autopilot-excluded', !isNowAuto);
@@ -6118,36 +6151,112 @@ function toggleClipAutopilot(clipId, event) {
 
   const clipObj = (allClips || []).find(c => c.id === clipId);
   const title = clipObj ? (clipObj.display_title || clipObj.filename) : clipId;
-  const statusMsg = isExcluded ? `⚡ Take ativado no Autopilot: "${title}"` : `✕ Take restrito a disparo manual: "${title}"`;
+  const statusMsg = isExcluded ? `⚡ Take incluído no Autopilot: "${title}"` : `🔒 Take travado para disparo manual: "${title}"`;
   showMacroToast(statusMsg);
 }
 window.toggleClipAutopilot = toggleClipAutopilot;
 
 function toggleAutopilotFolder(folderName, isChecked) {
   const pool = appState.autopilot_pool;
+  if (!Array.isArray(pool.excluded_folders)) pool.excluded_folders = [];
+
   if (isChecked) {
-    if (!pool.active_folders.includes(folderName)) {
-      pool.active_folders.push(folderName);
-    }
+    // Include folder in Autopilot -> remove from excluded_folders
+    pool.excluded_folders = pool.excluded_folders.filter(f => f !== folderName);
   } else {
-    pool.active_folders = pool.active_folders.filter(f => f !== folderName);
+    // Exclude folder from Autopilot -> add to excluded_folders
+    if (!pool.excluded_folders.includes(folderName)) {
+      pool.excluded_folders.push(folderName);
+    }
+  }
+
+  // Update active_folders for backward compatibility
+  const allFolderNames = getAllAvailableFolders();
+  pool.active_folders = allFolderNames.filter(f => !pool.excluded_folders.includes(f));
+
+  saveAutopilotPoolState();
+  updateAutopilotPoolUI();
+  if (typeof renderMediaCards === 'function') renderMediaCards();
+  if (typeof renderLibraryBreadcrumbs === 'function') renderLibraryBreadcrumbs();
+
+  showMacroToast(isChecked ? `📁 Pasta "${folderName}" incluída no Autopilot` : `📁 Pasta "${folderName}" excluída do Autopilot (só manual)`);
+}
+window.toggleAutopilotFolder = toggleAutopilotFolder;
+
+function setAllFoldersAutopilot(enableAll) {
+  const pool = appState.autopilot_pool;
+  const allFolderNames = getAllAvailableFolders();
+  if (enableAll) {
+    pool.excluded_folders = [];
+    pool.active_folders = [...allFolderNames];
+    showMacroToast('✓ Todas as pastas incluídas no Autopilot');
+  } else {
+    pool.excluded_folders = [...allFolderNames];
+    pool.active_folders = [];
+    showMacroToast('✕ Todas as pastas excluídas do Autopilot');
   }
   saveAutopilotPoolState();
   updateAutopilotPoolUI();
   if (typeof renderMediaCards === 'function') renderMediaCards();
-  showMacroToast(isChecked ? `📁 Pasta "${folderName}" adicionada ao Autopilot` : `📁 Pasta "${folderName}" removida do Autopilot`);
+  if (typeof renderLibraryBreadcrumbs === 'function') renderLibraryBreadcrumbs();
 }
-window.toggleAutopilotFolder = toggleAutopilotFolder;
+window.setAllFoldersAutopilot = setAllFoldersAutopilot;
+
+function renderAutopilotFoldersSettings() {
+  const apFoldersList = document.getElementById('autopilot-folders-list');
+  if (!apFoldersList || !allClips || allClips.length === 0) return;
+
+  const pool = appState.autopilot_pool;
+  if (!Array.isArray(pool.excluded_folders)) pool.excluded_folders = [];
+  const folderCounts = {};
+  allClips.forEach(c => {
+    const f = getClipFolder(c);
+    folderCounts[f] = (folderCounts[f] || 0) + 1;
+  });
+  const folders = Object.keys(folderCounts).sort();
+  const activeCount = folders.filter(f => !pool.excluded_folders.includes(f)).length;
+
+  apFoldersList.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); width:100%;">
+      <span style="font-size:10px; color:#00f0ff; font-family:var(--font-mono); font-weight:700;">
+        ${activeCount} de ${folders.length} PASTAS NO AUTOPILOT
+      </span>
+      <div style="display:flex; gap:4px;">
+        <button type="button" class="btn-xs-clean" onclick="setAllFoldersAutopilot(true)" style="background:rgba(0,240,255,0.12); border:1px solid rgba(0,240,255,0.3); color:#00f0ff; font-size:9px; padding:2px 8px; border-radius:3px; cursor:pointer; font-weight:600;">✓ MARCAR TODAS</button>
+        <button type="button" class="btn-xs-clean" onclick="setAllFoldersAutopilot(false)" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; font-size:9px; padding:2px 8px; border-radius:3px; cursor:pointer;">✕ DESMARCAR TODAS</button>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:3px; width:100%;">
+      ${folders.map(f => {
+        const isFolderActive = !pool.excluded_folders.includes(f);
+        return `
+          <label class="cfg-check-item" style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; border-radius:4px; background:${isFolderActive ? 'rgba(0,240,255,0.05)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isFolderActive ? 'rgba(0,240,255,0.2)' : 'rgba(255,255,255,0.05)'}; cursor:pointer; transition:all 0.15s ease;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" class="ap-folder-chk" data-folder="${f}" onchange="toggleAutopilotFolder('${f}', this.checked)" ${isFolderActive ? 'checked' : ''} style="cursor:pointer; accent-color:#00f0ff;">
+              <span style="color:${isFolderActive ? '#f8fafc' : '#64748b'}; font-size:11px; font-weight:${isFolderActive ? '600' : '400'};">${f}</span>
+            </div>
+            <span style="font-size:10px; color:${isFolderActive ? '#00f0ff' : '#475569'}; font-family:var(--font-mono);">${folderCounts[f]} takes</span>
+          </label>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+window.renderAutopilotFoldersSettings = renderAutopilotFoldersSettings;
 
 function setAllClipsAutopilot(mode) {
   const pool = appState.autopilot_pool;
+  if (!Array.isArray(pool.excluded_clips)) pool.excluded_clips = [];
+  if (!Array.isArray(pool.excluded_folders)) pool.excluded_folders = [];
+
   if (mode === 'all') {
     pool.excluded_clips = [];
-    pool.active_folders = [];
-    showMacroToast('✓ Todos os takes incluídos no Autopilot');
+    pool.excluded_folders = [];
+    pool.active_folders = getAllAvailableFolders();
+    showMacroToast('✓ Todos os takes e pastas incluídos no Autopilot');
   } else if (mode === 'none') {
     pool.excluded_clips = (allClips || []).map(c => c.id);
-    showMacroToast('✕ Todos os takes restritos a manual (Autopilot zerado)');
+    showMacroToast('🔒 Todos os takes travados em manual (Autopilot zerado)');
   } else if (mode === 'invert') {
     const allIds = (allClips || []).map(c => c.id);
     const newExcluded = allIds.filter(id => !pool.excluded_clips.includes(id));
@@ -6155,6 +6264,8 @@ function setAllClipsAutopilot(mode) {
     showMacroToast('🔄 Seleção do Autopilot invertida');
   } else if (mode === 'current_folder') {
     if (activeFolderFilter && activeFolderFilter !== 'ALL') {
+      const allFolderNames = getAllAvailableFolders();
+      pool.excluded_folders = allFolderNames.filter(f => f !== activeFolderFilter);
       pool.active_folders = [activeFolderFilter];
       const folderClips = (allClips || []).filter(c => getClipFolder(c) === activeFolderFilter).map(c => c.id);
       pool.excluded_clips = pool.excluded_clips.filter(id => !folderClips.includes(id));
@@ -6164,6 +6275,7 @@ function setAllClipsAutopilot(mode) {
   saveAutopilotPoolState();
   updateAutopilotPoolUI();
   if (typeof renderMediaCards === 'function') renderMediaCards();
+  if (typeof renderLibraryBreadcrumbs === 'function') renderLibraryBreadcrumbs();
 }
 window.setAllClipsAutopilot = setAllClipsAutopilot;
 
@@ -6176,8 +6288,14 @@ function setAutopilotPoolViewFilter(mode) {
 }
 window.setAutopilotPoolViewFilter = setAutopilotPoolViewFilter;
 
+function toggleAutopilotToolbarDrawer() {
+  appState.autopilot_pool.toolbar_expanded = !appState.autopilot_pool.toolbar_expanded;
+  renderLibraryBreadcrumbs();
+}
+window.toggleAutopilotToolbarDrawer = toggleAutopilotToolbarDrawer;
+
 function updateAutopilotPoolUI() {
-  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [] };
+  const pool = appState.autopilot_pool || { excluded_folders: [], excluded_clips: [] };
   const total = (allClips || []).length;
   let eligibleCount = 0;
   (allClips || []).forEach(c => {
@@ -6191,28 +6309,16 @@ function updateAutopilotPoolUI() {
   if (countEl) countEl.textContent = eligibleCount;
   if (totalEl) totalEl.textContent = total;
   if (badgeApCount) badgeApCount.textContent = `${eligibleCount}/${total} TAKES NO AUTOPILOT`;
-  if (apCardCount) apCardCount.textContent = `${eligibleCount} de ${total} takes elegíveis (${pool.active_folders.length ? pool.active_folders.length + ' pastas filtradas' : 'todas as pastas'})`;
-
-  // Render or update folder checkboxes in Settings
-  const apFoldersList = document.getElementById('autopilot-folders-list');
-  if (apFoldersList) {
-    const folderCounts = {};
-    (allClips || []).forEach(c => {
-      const f = getClipFolder(c);
-      folderCounts[f] = (folderCounts[f] || 0) + 1;
-    });
-    const folders = Object.keys(folderCounts).sort();
-    const activeFolders = pool.active_folders.length > 0 ? pool.active_folders : folders;
-
-    apFoldersList.innerHTML = folders.map(f => `
-      <label class="cfg-check-item">
-        <input type="checkbox" onchange="toggleAutopilotFolder('${f}', this.checked)" ${activeFolders.includes(f) ? 'checked' : ''}>
-        <span>${f} <small style="color: rgba(0,240,255,0.7); font-size: 10px;">(${folderCounts[f]} takes)</small></span>
-      </label>
-    `).join('');
+  if (apCardCount) {
+    const excludedFCount = (pool.excluded_folders || []).length;
+    apCardCount.textContent = `${eligibleCount} de ${total} takes elegíveis (${excludedFCount ? excludedFCount + ' pastas excluídas' : 'todas as pastas'})`;
   }
+
+  // Update folder checkboxes in Settings
+  renderAutopilotFoldersSettings();
 }
 window.updateAutopilotPoolUI = updateAutopilotPoolUI;
+
 
 function advanceSmartQueue(targetState = null) {
   if (!allClips || allClips.length === 0) return;
@@ -7812,16 +7918,7 @@ function renderFolderPills() {
   });
 
   // Renderiza também a lista de pastas para o Autopilot em Settings
-  const apFoldersList = document.getElementById('autopilot-folders-list');
-  if (apFoldersList) {
-    const activeFolders = appState.autopilot_active_folders || folders;
-    apFoldersList.innerHTML = folders.map(f => `
-      <label class="cfg-check-item">
-        <input type="checkbox" onchange="toggleAutopilotFolder('${f}', this.checked)" ${activeFolders.includes(f) ? 'checked' : ''}>
-        <span>${f}</span>
-      </label>
-    `).join('');
-  }
+  renderAutopilotFoldersSettings();
 }
 window.renderFolderPills = renderFolderPills;
 
@@ -7837,7 +7934,7 @@ function renderLibraryBreadcrumbs() {
   });
   const folders = Object.keys(folderCounts).sort();
 
-  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [], view_filter: 'ALL' };
+  const pool = appState.autopilot_pool || { excluded_folders: [], excluded_clips: [], view_filter: 'ALL' };
   const totalClips = (allClips || []).length;
   let eligibleCount = 0;
   (allClips || []).forEach(c => {
@@ -7845,40 +7942,19 @@ function renderLibraryBreadcrumbs() {
   });
   const excludedCount = totalClips - eligibleCount;
   const curFilter = pool.view_filter || 'ALL';
+  const isExpanded = !!pool.toolbar_expanded;
 
-  const poolToolbarHtml = `
-    <div class="autopilot-pool-toolbar" id="autopilot-pool-toolbar">
-      <div class="ap-pool-summary-group">
-        <span class="ap-pool-icon">⚡</span>
-        <span class="ap-pool-title">POOL AUTOPILOT:</span>
-        <span class="ap-pool-stats"><strong id="ap-pool-count">${eligibleCount}</strong>/<span id="ap-total-count">${totalClips}</span> Takes</span>
-      </div>
-      <div class="ap-pool-filter-group">
-        <button class="ap-pool-filter-btn ${curFilter === 'ALL' ? 'active' : ''}" data-filter="ALL" onclick="setAutopilotPoolViewFilter('ALL')" title="Exibir todo o catálogo">TODOS</button>
-        <button class="ap-pool-filter-btn ${curFilter === 'AUTO_ONLY' ? 'active' : ''}" data-filter="AUTO_ONLY" onclick="setAutopilotPoolViewFilter('AUTO_ONLY')" title="Exibir apenas takes ativos no Autopilot">⚡ NO AUTO (${eligibleCount})</button>
-        <button class="ap-pool-filter-btn ${curFilter === 'MANUAL_ONLY' ? 'active' : ''}" data-filter="MANUAL_ONLY" onclick="setAutopilotPoolViewFilter('MANUAL_ONLY')" title="Exibir apenas takes restritos a disparo manual">✕ MANUAIS (${excludedCount})</button>
-      </div>
-      <div class="ap-pool-bulk-actions">
-        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('all')" title="Incluir todos os takes no Autopilot">✓ TUDO AUTO</button>
-        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('none')" title="Excluir todos os takes do Autopilot (zerar rotação)">✕ ZERAR POOL</button>
-        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('invert')" title="Inverter takes selecionados para o Autopilot">🔄 INVERTER</button>
-        ${isFiltered ? `<button class="btn-ap-bulk btn-ap-bulk-folder" onclick="setAllClipsAutopilot('current_folder')" title="Ativar apenas takes da pasta atual no Autopilot">📁 SÓ "${activeFolderFilter}"</button>` : ''}
-      </div>
-    </div>
-  `;
-
+  let leftNavHtml = '';
   if (!isFiltered) {
-    nav.innerHTML = `
-      <div class="lib-breadcrumb-row">
-        <div class="lib-breadcrumb-trail">
-          <button class="breadcrumb-root-btn active" onclick="setFolderFilter('ALL')" title="Exibindo todas as pastas">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            <span>TODAS AS PASTAS</span>
-            <span class="breadcrumb-bin-count">(${allClips ? allClips.length : 0})</span>
-          </button>
-        </div>
-        <div class="lib-breadcrumb-pills">
-          ${folders.map(f => `
+    leftNavHtml = `
+      <div style="display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden;">
+        <button class="breadcrumb-root-btn active" onclick="setFolderFilter('ALL')" title="Exibindo todas as pastas">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>TODAS AS PASTAS</span>
+          <span class="breadcrumb-bin-count">(${totalClips})</span>
+        </button>
+        <div class="lib-breadcrumb-pills" style="display:inline-flex; gap:3px; overflow-x:auto; max-width:420px;">
+          ${folders.slice(0, 7).map(f => `
             <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Filtrar por esta pasta: ${f}">
               <span>${f}</span>
               <span class="bin-pill-num">${folderCounts[f]}</span>
@@ -7886,43 +7962,66 @@ function renderLibraryBreadcrumbs() {
           `).join('')}
         </div>
       </div>
-      ${poolToolbarHtml}
     `;
   } else {
     const curCount = folderCounts[activeFolderFilter] || 0;
-    nav.innerHTML = `
-      <div class="lib-breadcrumb-row">
-        <div class="lib-breadcrumb-trail">
-          <button class="breadcrumb-root-btn" onclick="setFolderFilter('ALL')" title="Voltar a todas as pastas">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            <span>TODAS AS PASTAS</span>
-          </button>
-          <span class="breadcrumb-sep">/</span>
-          <span class="breadcrumb-current-bin">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            <span>${activeFolderFilter}</span>
-            <span class="breadcrumb-bin-count">(${curCount})</span>
-          </span>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button class="btn-bin-return-all" onclick="setFolderFilter('ALL')" title="Sair desta pasta e exibir todo o acervo">
-            <span>◂ TODAS AS PASTAS [✕]</span>
-          </button>
-          <div class="lib-breadcrumb-pills">
-            ${folders.filter(f => f !== activeFolderFilter).slice(0, 5).map(f => `
-              <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Trocar para pasta: ${f}">
-                <span>${f}</span>
-                <span class="bin-pill-num">${folderCounts[f]}</span>
-              </button>
-            `).join('')}
-          </div>
-        </div>
+    leftNavHtml = `
+      <div style="display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden;">
+        <button class="breadcrumb-root-btn" onclick="setFolderFilter('ALL')" title="Voltar a todas as pastas">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>TODAS</span>
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current-bin" style="font-size:8.5px; padding:1px 6px;">
+          <span>${activeFolderFilter}</span>
+          <span class="breadcrumb-bin-count">(${curCount})</span>
+        </span>
+        <button class="btn-bin-return-all" onclick="setFolderFilter('ALL')" title="Sair desta pasta e exibir todo o acervo" style="padding:1px 6px; font-size:8px;">
+          <span>✕ VER TODAS</span>
+        </button>
       </div>
-      ${poolToolbarHtml}
     `;
   }
+
+  nav.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px;">
+      ${leftNavHtml}
+
+      <!-- ULTRA-COMPACT AUTOPILOT POOL CAPSULE (24px, zero extra rows!) -->
+      <div class="ap-pool-capsule">
+        <div class="ap-pool-counter-badge" title="${eligibleCount} takes ativos na rotação automática do Autopilot. Clique no botão [⚡ NO AUTO / 🔒 MANUAL] de qualquer card para incluir/excluir.">
+          <span class="ap-icon">⚡</span>
+          <span>POOL:</span>
+          <strong id="ap-pool-count">${eligibleCount}</strong>/<span id="ap-total-count">${totalClips}</span>
+        </div>
+        <div class="ap-pool-filter-group">
+          <button class="ap-pool-filter-btn ${curFilter === 'ALL' ? 'active' : ''}" data-filter="ALL" onclick="setAutopilotPoolViewFilter('ALL')" title="Exibir todo o catálogo">TODOS</button>
+          <button class="ap-pool-filter-btn ${curFilter === 'AUTO_ONLY' ? 'active' : ''}" data-filter="AUTO_ONLY" onclick="setAutopilotPoolViewFilter('AUTO_ONLY')" title="Exibir apenas takes ativos no Autopilot">⚡ NO AUTO (${eligibleCount})</button>
+          <button class="ap-pool-filter-btn ${curFilter === 'MANUAL_ONLY' ? 'active' : ''}" data-filter="MANUAL_ONLY" onclick="setAutopilotPoolViewFilter('MANUAL_ONLY')" title="Exibir apenas takes restritos a disparo manual">🔒 SÓ MANUAL (${excludedCount})</button>
+        </div>
+        <button class="btn-toggle-ap-drawer ${isExpanded ? 'is-active' : ''}" onclick="toggleAutopilotToolbarDrawer()" title="Abrir ações em lote e instruções do Pool">
+          <span>⚡ AÇÕES</span>
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- COLLAPSIBLE BULK ACTIONS STRIP (Hidden by default to save 100% vertical space!) -->
+    <div class="ap-pool-collapsible-strip ${isExpanded ? 'is-open' : ''}" id="ap-pool-bulk-strip">
+      <div class="ap-pool-bulk-actions">
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('all')" title="Incluir todos os takes e pastas no Autopilot">✓ ATIVAR TODOS</button>
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('none')" title="Travar todos os takes em manual (Autopilot zerado)">🔒 ZERAR (SÓ MANUAL)</button>
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('invert')" title="Inverter takes selecionados para o Autopilot">🔄 INVERTER</button>
+        ${isFiltered ? `<button class="btn-ap-bulk btn-ap-bulk-folder" onclick="setAllClipsAutopilot('current_folder')" title="Ativar apenas takes da pasta atual no Autopilot">📁 SÓ "${activeFolderFilter}"</button>` : ''}
+      </div>
+      <div class="ap-pool-help-tip">
+        💡 <strong>Como operar:</strong> Takes em <strong>🔒 MANUAL</strong> nunca tocam sozinhos no Autopilot (só você dispara). Clique no botão <strong>[⚡ NO AUTO / 🔒 MANUAL]</strong> no card do vídeo para alternar.
+      </div>
+    </div>
+  `;
 }
 window.renderLibraryBreadcrumbs = renderLibraryBreadcrumbs;
+
 
 // ============================================================================
 // CENTRALIZED USER PROFILE & ZERO-WASTE LOCAL CACHE MANAGER
@@ -8863,7 +8962,7 @@ function createMediaCardElement(clip) {
       ${srcBadgeHtml}
       ${isOnAir ? '<span class="thumb-air-indicator">● NO AR</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
-      ${isAutoEligible ? '<span class="thumb-auto-indicator" title="Ativo no Autopilot">⚡ AUTO</span>' : '<span class="thumb-manual-indicator" title="Excluído do Autopilot · Apenas disparo manual">✕ MANUAL</span>'}
+      ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
       <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
       <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
     </div>
@@ -8889,10 +8988,10 @@ function createMediaCardElement(clip) {
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
         </button>
-        <button class="btn-card-action btn-action-ap ${isAutoEligible ? 'is-auto-active' : 'is-auto-excluded'}" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="${isAutoEligible ? 'Take ativo no Autopilot · Clique para excluir da rotação' : 'Take excluído do Autopilot · Apenas disparo manual'}">
-          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-          <span>${isAutoEligible ? 'AUTO' : 'MANUAL'}</span>
+        <button class="btn-card-action btn-action-ap ${isAutoEligible ? 'is-auto-active' : 'is-auto-excluded'}" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="${isAutoEligible ? 'Take ATIVO no Autopilot · Clique para travar em apenas MANUAL seu' : 'Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot'}">
+          ${isAutoEligible ? '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg> <span>NO AUTO</span>' : '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span>MANUAL</span>'}
         </button>
+
         <button class="btn-card-action btn-action-l5" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
         ${actionBtnHtml}
       </div>

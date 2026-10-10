@@ -8330,12 +8330,14 @@ body.resizing-workspace-active .top-zone {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 3px 10px;
   background: #0b0c10;
   border-bottom: 1px solid #181a22;
   font-family: var(--font-mono);
   font-size: 9px;
   min-height: 28px;
+  max-height: 32px;
+  flex-shrink: 0;
   gap: 8px;
   box-sizing: border-box;
 }
@@ -10907,81 +10909,125 @@ body.resizing-workspace-active .top-zone {
 
 /* ============================================================================
    AUTOPILOT POOL MANAGER TOOLBAR & MEDIA CARD CONTROLS
+/* ============================================================================
+   AUTOPILOT POOL MANAGER: COMPACT NAV BAR & CLEAR TAKE GATING CONTROLS
+   Saves ~80px of vertical space; clear visual distinction for manual vs auto takes
    ============================================================================ */
-.autopilot-pool-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  background: rgba(6, 11, 20, 0.88);
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  border-radius: 6px;
-  padding: 6px 12px;
-  margin: 6px 0 10px 0;
-  backdrop-filter: blur(8px);
-}
-
-.ap-pool-summary-group {
-  display: flex;
+.ap-pool-capsule {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.ap-pool-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 3px;
+  padding: 2px 7px;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.ap-pool-counter-badge .ap-icon {
+  color: #00f0ff;
   font-size: 10px;
 }
 
-.ap-pool-icon {
+.ap-pool-counter-badge strong {
   color: #00f0ff;
-  font-size: 11px;
-}
-
-.ap-pool-title {
-  color: #94a3b8;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.ap-pool-stats {
-  color: #e2e8f0;
-}
-
-.ap-pool-stats strong {
-  color: #00f0ff;
-  font-size: 11px;
+  font-weight: 800;
 }
 
 .ap-pool-filter-group {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .ap-pool-filter-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .ap-pool-filter-btn:hover {
-  background: rgba(0, 240, 255, 0.08);
+  background: rgba(0, 240, 255, 0.1);
   color: #ffffff;
 }
 
 .ap-pool-filter-btn.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.3);
+}
+
+.btn-toggle-ap-drawer {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn-toggle-ap-drawer:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+}
+
+.btn-toggle-ap-drawer.is-active {
   background: rgba(0, 240, 255, 0.18);
   border-color: #00f0ff;
   color: #00f0ff;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+}
+
+/* Collapsible Bulk Actions Strip (Hidden by default to save 100% vertical space!) */
+.ap-pool-collapsible-strip {
+  display: none;
+  background: rgba(5, 9, 16, 0.96);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  padding: 4px 12px;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  box-sizing: border-box;
+  animation: apStripSlideDown 0.15s ease-out;
+}
+
+.ap-pool-collapsible-strip.is-open {
+  display: flex;
+}
+
+@keyframes apStripSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ap-pool-bulk-actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
@@ -10990,16 +11036,16 @@ body.resizing-workspace-active .top-zone {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
-  font-size: 8.5px;
-  font-weight: 600;
-  padding: 3px 7px;
-  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.14s ease;
 }
 
 .btn-ap-bulk:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
@@ -11008,78 +11054,105 @@ body.resizing-workspace-active .top-zone {
   color: #00f0ff;
 }
 
-/* Card Button & Badges */
+.ap-pool-help-tip {
+  color: #64748b;
+  font-size: 8.5px;
+}
+
+.ap-pool-help-tip strong {
+  color: #f59e0b;
+}
+
+/* Media Card Take Action Buttons */
 .btn-action-ap {
   font-size: 8px;
   font-weight: 700;
-  padding: 2px 4px;
+  padding: 2px 5px;
   border-radius: 3px;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.14s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .btn-action-ap.is-auto-active {
-  background: rgba(0, 240, 255, 0.12);
-  border: 1px solid rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.14);
+  border: 1px solid rgba(0, 240, 255, 0.45);
   color: #00f0ff;
 }
 
 .btn-action-ap.is-auto-active:hover {
-  background: rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.45);
 }
 
 .btn-action-ap.is-auto-excluded {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #64748b;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
 }
 
 .btn-action-ap.is-auto-excluded:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
 }
 
+/* Clickable Thumbnail Badges */
 .thumb-auto-indicator {
   position: absolute;
   top: 4px;
   left: 4px;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(0, 240, 255, 0.5);
+  background: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.6);
   color: #00f0ff;
   font-size: 7.5px;
   font-weight: 800;
   padding: 1px 4px;
   border-radius: 2px;
-  z-index: 2;
-  pointer-events: none;
+  z-index: 3;
+  cursor: pointer;
+  pointer-events: auto;
   letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+
+.thumb-auto-indicator:hover {
+  background: rgba(0, 240, 255, 0.3);
+  transform: scale(1.05);
 }
 
 .thumb-manual-indicator {
   position: absolute;
   top: 4px;
   left: 4px;
-  background: rgba(15, 23, 42, 0.88);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #f59e0b;
   font-size: 7.5px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 1px 4px;
   border-radius: 2px;
-  z-index: 2;
-  pointer-events: none;
+  z-index: 3;
+  cursor: pointer;
+  pointer-events: auto;
   letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+
+.thumb-manual-indicator:hover {
+  background: rgba(245, 158, 11, 0.25);
+  transform: scale(1.05);
 }
 
 .media-card.is-autopilot-excluded {
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  border-color: rgba(245, 158, 11, 0.22);
+  opacity: 0.88;
+  transition: all 0.2s ease;
 }
 
 .media-card.is-autopilot-excluded:hover {
   opacity: 1.0;
+  border-color: rgba(245, 158, 11, 0.45);
 }
-
-
-

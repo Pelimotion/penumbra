@@ -1,14 +1,16 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 15:40:00 BRT
+- **Última Atualização:** 10/10/2026, 16:15:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Barra Compacta do Media Pool & Recuperação de Espaço Vertical (28px):** 🟢 RESOLVIDO (Barra unificada de 28px de altura, breadcrumbs integrados com cápsula do Autopilot Pool `⚡ POOL: X/Y`, filtros rápidos e gaveta retrátil de ações `[⚡ AÇÕES ▾]`, recuperando mais de 100px verticais para os cards de vídeo)
+- **Operação Intuitiva de Takes do Autopilot & Trava Manual:** 🟢 RESOLVIDO (Badges explícitas e botões `⚡ NO AUTO` vs `🔒 MANUAL` com ícone de cadeado âmbar, com alternância instantânea por clique no botão ou na miniatura)
+- **Sincronização de Pastas do Autopilot nas Configurações:** 🟢 RESOLVIDO (Arquitetura determinística `excluded_folders: string[]` eliminando o bug de pastas que persistiam marcadas, com botões em lote `[✓ MARCAR TODAS]` e `[✕ DESMARCAR TODAS]`)
 - **Pro Timeline Arranger (Padrão Resolume Arena 7 / DaVinci Resolve 19):** 🟢 ATIVO (Escalonamento rítmico dinâmico 4B-64B, horizonte preditivo de fila com thumbnails reais, playhead sub-pixel 60 FPS com badge `BAR X.Y`, 7 tracks sincronizados, régua SMPTE com estados narrativos e integração bidirecional com Studio Inspector)
 - **Studio Inspector Unificado (Padrão DaVinci/Resolume):** 🟢 ATIVO (Eliminação da barra comprimida da timeline, nova `.tl-inspector-bridge`, controles de Pos X/Y, Nudge Pad, Escala e Reset integrados no drawer lateral)
 - **Motor Per-Matte & Inspeção Desacoplada:** 🟢 ATIVO (Inspeção imediata ao clicar em qualquer máscara ou clipe na biblioteca/Media Pool sem alterar camadas ao vivo, motor isolado `mattes_config`, modo Pin `[⚡ SEGUIR]`/`[📌 FIXADO]`)
 - **Eliminação de Flash em Transições & Sobel Find Edges Redesign:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
-- **Pool Granular de Autopilot (Pastas e Takes):** 🟢 ATIVO (Controle duplo de inclusão por pastas em Configurações/Tab 5 e por clipe nos cards com toggles `[⚡ AUTO]`/`[✕ MANUAL]`, filtros rápidos e ações em lote)
 - **Entrada de Linha (P2) & Microfone:** 🟢 ATIVO (Smart auto-detection de dispositivos P2/Line-in, filtros Biquad HPF 24Hz e LPF 16kHz, VU meter hardware-grade RMS/Peak dB e spectral flux BPM)
 - **BPM Permanente & Tap Tempo HUD:** 🟢 ATIVO (Capsule no cabeçalho com LED downbeat, pill no Master Control Bridge, Tap Tempo com média móvel ponderada, contador de toques e animação neon)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`)
