@@ -1,9 +1,13 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 02:35:08 BRT
+- **Última Atualização:** 10/10/2026, 03:15:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Dual-Bank MIDI M-Vave (SMC-MIXER):** 🟢 ATIVO (Banco A: Live Mix, Takes & Levels / Banco B: FX Engine, Mattes & Sculpt, Safe Solo Toggle, atalhos `[` e `]`, `H` para alternar)
+- **Studio Inspector Unificado:** 🟢 ATIVO (Drawer lateral padrão DaVinci/AE via atalho `[I]` ou header, abas Camada, Clipe Pré-Ar e FX & Color, topo dos monitores despoluído)
+- **Find Edges (Layer 2) com Alta Luminância:** 🟢 ATIVO (Camada 2 acima de L0/L1, Sobel com boost 2.8x e renderização nítida de contornos giz/neon sobre `#000000` em Solo)
+- **Expansão de FX Presets (50 Curados) & Macros:** 🟢 ATIVO (10 presets por plugin AE, nomes ergonômicos e ágeis no Autopilot)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
@@ -25,19 +29,20 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 10,963 | 441.4 KB |
-| `styles.css` | 9,180 | 178.2 KB |
-| `index.html` | 3,462 | 223.4 KB |
-| `Penumbra_Portable.html` | — | 936.5 KB |
+| `app.js` | 11,456 | 468.0 KB |
+| `styles.css` | 9,656 | 187.0 KB |
+| `index.html` | 3,492 | 226.0 KB |
+| `midi.js` | 2,336 | 98.4 KB |
+| `Penumbra_Portable.html` | — | 975.0 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 81 entradas
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
-- **Branch:** `feat/penumbra-collaborative-dev`
-- **Último Commit:** `8903b66` — feat(transform-vj): implement dual-tier clip pre-air transforms, Layer 5 overlay deck, locked master matte, and visual MIDI click-to-map
-- **Data:** 2026-10-10 02:10:00
+- **Branch:** `feat/vj-inspector-midi-findedges-redesign`
+- **Último Commit:** Em preparação para PR
+- **Data:** 2026-10-10 03:15:00
 - **Total de Commits:** 46
 
 ## Recursos de Visualização Ampliada & Janela Flutuante

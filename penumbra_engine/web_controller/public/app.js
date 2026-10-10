@@ -805,7 +805,7 @@ let appState = {
   layers: {
     layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
-    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer2: { active: true, opacity: 0.85, blend: 'Screen', edge_mix: 0.85, edge_threshold: 0.28, luminance: 2.8, edge_width: 2.2, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer5: { active: true, opacity: 0.0, blend: 'Screen', clipId: 'clip_002', name: 'Installation_documentation_breat…_202603282136.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' }
@@ -828,8 +828,10 @@ let appState = {
     brightness: -0.05,
     midtones: 1.00,
     contrast: 1.18,
-    edge_mix: 0.22,
-    edge_threshold: 0.30
+    edge_mix: 0.85,
+    edge_threshold: 0.28,
+    edge_luminance: 2.8,
+    edge_width: 2.2
   },
   matte: {
     bank: 'B',
@@ -2101,14 +2103,14 @@ function setPhraseLength(bars) {
 }
 window.setPhraseLength = setPhraseLength;
 
-// ============================================================================
-// 4.1 CURATED NARRATIVE MACRO-STATE PRESETS (MANUAL & AUTOPILOT ADAPTIVE)
-// ============================================================================
+// ----------------------------------------------------------------------------
+// 4.1 CURATED NARRATIVE MACRO-STATE PRESETS (FAST ERGONOMIC SELECTORS)
+// ----------------------------------------------------------------------------
 const MACRO_PRESETS = {
   INTRO: [
     {
       id: 'intro_obsidian_minimal',
-      name: 'Obsidian Minimalist',
+      name: 'Void',
       desc: 'Frame limpo, deformação ultra suave, atmosfera cinematográfica',
       energy: 0.15,
       kinematics: { wiggle_scale: 0.02, wiggle_pos: 4, wiggle_rot: 0.5, posterize_rate: 0, edge_warp: 0.02, speed: 0.4 },
@@ -2119,7 +2121,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'intro_ghost_operator',
-      name: 'Ghost Operator Matrix',
+      name: 'Fog',
       desc: 'ASCII sutil verde esmeralda com silhuetas de alta densidade',
       energy: 0.22,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 8, wiggle_rot: 1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.6 },
@@ -2130,7 +2132,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'intro_deep_space_tape',
-      name: 'Deep Space CRT Tape',
+      name: 'Dawn',
       desc: 'Sinal analógico distante, scanlines delicadas e foco etéreo',
       energy: 0.18,
       kinematics: { wiggle_scale: 0.02, wiggle_pos: 6, wiggle_rot: -0.5, posterize_rate: 0, edge_warp: 0.03, speed: 0.5 },
@@ -2144,18 +2146,18 @@ const MACRO_PRESETS = {
   GROOVE: [
     {
       id: 'groove_pure_clean',
-      name: 'Pure Clean Cinema',
+      name: 'Clean',
       desc: '100% puro e sem distorção: vídeo original cristalino em 60 FPS',
       energy: 0.50,
       kinematics: { wiggle_scale: 0.04, wiggle_pos: 6, wiggle_rot: 1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.8 },
       matte: { type: 'none', preferred: 'none', master_matte: 'none' },
-      fx: { active: false, plugin: 'pixel_stretch', preset: 'cinematic_anamorphic', intensity: 0.0 }, // TOTALMENTE LIMPO!
+      fx: { active: false, plugin: 'pixel_stretch', preset: 'cinematic_anamorphic', intensity: 0.0 },
       layers: { l1_opacity: 0.0, l2_opacity: 0.12, l4_opacity: 0.0, blend: 'soft_light' },
       transition: { mode: 'dissolve', duration: 1.5 }
     },
     {
       id: 'groove_rhythmic_pulse',
-      name: 'Rhythmic Pulse',
+      name: 'Pulse',
       desc: 'Balanço rítmico elegante: leve reflexo na batida e máscara orgânica',
       energy: 0.55,
       kinematics: { wiggle_scale: 0.06, wiggle_pos: 12, wiggle_rot: 2.0, posterize_rate: 16, edge_warp: 0.08, speed: 1.0 },
@@ -2166,7 +2168,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'groove_subtle_satori',
-      name: 'Subtle Satori Shimmer',
+      name: 'Satori',
       desc: 'Toque discreto de brilho anamórfico apenas nas altas luzes',
       energy: 0.58,
       kinematics: { wiggle_scale: 0.08, wiggle_pos: 14, wiggle_rot: 2.5, posterize_rate: 16, edge_warp: 0.09, speed: 1.1 },
@@ -2180,7 +2182,7 @@ const MACRO_PRESETS = {
   BUILD: [
     {
       id: 'build_anamorphic_tension',
-      name: 'Anamorphic Tension Pull',
+      name: 'Tension',
       desc: 'Alongamento direcional crescente com aceleração rítmica de batidas',
       energy: 0.78,
       kinematics: { wiggle_scale: 0.18, wiggle_pos: 28, wiggle_rot: 6.0, posterize_rate: 8, edge_warp: 0.35, speed: 1.8 },
@@ -2191,7 +2193,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'build_rf_harmonic_swell',
-      name: 'RF Harmonic Swell',
+      name: 'RF Swell',
       desc: 'Síntese de osciloscópio CMYK em modulação de alta frequência',
       energy: 0.82,
       kinematics: { wiggle_scale: 0.20, wiggle_pos: 32, wiggle_rot: 7.5, posterize_rate: 8, edge_warp: 0.40, speed: 2.0 },
@@ -2202,7 +2204,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'build_cyber_edge_tracer',
-      name: 'Cyber Edge Contour Tracer',
+      name: 'Tracer',
       desc: 'Sobel de alto contraste e marcadores cibernéticos se expandindo',
       energy: 0.75,
       kinematics: { wiggle_scale: 0.16, wiggle_pos: 24, wiggle_rot: 5.0, posterize_rate: 12, edge_warp: 0.30, speed: 1.7 },
@@ -2216,8 +2218,8 @@ const MACRO_PRESETS = {
   DROP: [
     {
       id: 'drop_bitonic_melt_impact',
-      name: 'Bitonic Melt Impact',
-      desc: 'Cascata algorítmica total: derretimento de pixels, flash e camada L4 clímax',
+      name: 'Melt',
+      desc: 'Cascata algorítmica total: derretimento de pixels e clímax',
       energy: 0.98,
       kinematics: { wiggle_scale: 0.32, wiggle_pos: 48, wiggle_rot: 12.0, posterize_rate: 4, edge_warp: 0.58, speed: 2.4 },
       matte: { type: 'geometric', preferred: 'matte_b_fractal', master_matte: 'none' },
@@ -2227,8 +2229,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_crt_shatter_vcr',
-      name: 'Analog CRT VCR Shatter',
-      desc: 'Colapso analógico violento com rolling contínuo, RGB split e scanlines',
+      name: 'CRT Glitch',
+      desc: 'Colapso analógico com rolling contínuo, RGB split e scanlines',
       energy: 0.95,
       kinematics: { wiggle_scale: 0.30, wiggle_pos: 52, wiggle_rot: -14.0, posterize_rate: 4, edge_warp: 0.62, speed: 2.5 },
       matte: { type: 'geometric', preferred: 'matte_a_geometric', master_matte: 'none' },
@@ -2238,8 +2240,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_center_melt_radial',
-      name: 'Center Melt Supernova',
-      desc: 'Supernova radial de pixel sorting no centro mantendo as bordas nítidas',
+      name: 'Supernova',
+      desc: 'Supernova radial de pixel sorting no centro',
       energy: 0.96,
       kinematics: { wiggle_scale: 0.28, wiggle_pos: 44, wiggle_rot: 10.0, posterize_rate: 4, edge_warp: 0.52, speed: 2.2 },
       matte: { type: 'geometric', preferred: 'matte_b_fractal', master_matte: 'none' },
@@ -2249,8 +2251,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_cmyk_strobe_pulse',
-      name: 'CMYK Strobe Sonic Burst',
-      desc: 'Explosão vetorial Joy Division / CMYK com estroboscópio e flash',
+      name: 'Torrent',
+      desc: 'Explosão vetorial Joy Division / CMYK com flash sutil',
       energy: 0.94,
       kinematics: { wiggle_scale: 0.26, wiggle_pos: 40, wiggle_rot: 8.0, posterize_rate: 4, edge_warp: 0.50, speed: 2.2 },
       matte: { type: 'geometric', preferred: 'matte_a_geometric', master_matte: 'none' },
@@ -2263,18 +2265,18 @@ const MACRO_PRESETS = {
   BREAK: [
     {
       id: 'break_ambient_dissolve',
-      name: 'Atmospheric Ambient Dissolve',
-      desc: 'Desaceleração suave: longa transição líquida, ar puro e espaço negativo',
+      name: 'Ambient',
+      desc: 'Desaceleração suave: longa transição líquida e espaço negativo',
       energy: 0.20,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 12, wiggle_rot: -2.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.4 },
       matte: { type: 'soft', preferred: 'matte_c_fluid', master_matte: 'none' },
-      fx: { active: false, plugin: 'bad_tv', preset: 'subdued_vhs', intensity: 0.0 }, // LIMPO
+      fx: { active: false, plugin: 'bad_tv', preset: 'subdued_vhs', intensity: 0.0 },
       layers: { l1_opacity: 0.10, l2_opacity: 0.10, l4_opacity: 0.0, blend: 'multiply' },
       transition: { mode: 'dissolve', duration: 4.0 }
     },
     {
       id: 'break_pastel_oil_drift',
-      name: 'Pastel Oil Drift',
+      name: 'Oil Drift',
       desc: 'Pintura a óleo suave com saturação orgânica flutuando no tempo',
       energy: 0.25,
       kinematics: { wiggle_scale: 0.04, wiggle_pos: 16, wiggle_rot: 1.5, posterize_rate: 0, edge_warp: 0.05, speed: 0.5 },
@@ -2285,7 +2287,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'break_cyan_rf_wave',
-      name: 'Cyan RF Spectrum Calm',
+      name: 'Cyan Wave',
       desc: 'Ondas monocromáticas relaxantes de sintetizador modular',
       energy: 0.22,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 10, wiggle_rot: -1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.45 },
@@ -3270,12 +3272,19 @@ function renderVisuals(time) {
       busCtxA.restore();
     }
 
-    // LAYER 2: EDGE TRACE (Sobel Contours)
+    // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
     if (baseSource && appState.layers.layer2.active) {
-      const edgeMix = (appState.tonal.edge_mix || 0.22) * (appState.layers.layer2.opacity || 0.22);
+      const isL2Solo = !appState.layers.layer0.active && !appState.layers.layer1.active;
+      const l2 = appState.layers.layer2;
       busCtxA.save();
-      busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.8 + air * 0.4));
-      drawSobelContours(busCtxA, baseSource, w, h, simTime, appState.tonal.edge_threshold || 0.30);
+      if (isL2Solo) {
+        busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
+        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
+      } else {
+        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
+        busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
+        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
+      }
       busCtxA.restore();
     }
 
@@ -3297,56 +3306,64 @@ function renderVisuals(time) {
     const videoL3Ready = playerL3 && playerL3.readyState >= 2;
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
-    if (queuedSource && appState.layers.layer3.active) {
-      offCtxB.clearRect(0, 0, w, h);
-      offCtxB.fillStyle = '#050608';
-      offCtxB.fillRect(0, 0, w, h);
+    if (queuedSource) {
+      if (appState.layers.layer3.active) {
+        offCtxB.clearRect(0, 0, w, h);
+        offCtxB.fillStyle = '#050608';
+        offCtxB.fillRect(0, 0, w, h);
 
-      // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
-      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
-      const l3 = appState.layers.layer3;
-      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
-      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
-      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
-      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
-      drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
+        // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
+        const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+        const l3 = appState.layers.layer3;
+        const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+        const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+        const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+        const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+        drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
 
-      // Apply Layer 3 Matte with invert support
-      const matteL3 = getMatteImage(appState.layers.layer3.matte);
-      if (matteL3 && appState.layers.layer3.matte !== 'none') {
-        offCtxB.save();
-        offCtxB.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert);
-        offCtxB.restore();
-      }
+        // Apply Layer 3 Matte with invert support
+        const matteL3 = getMatteImage(appState.layers.layer3.matte);
+        if (matteL3 && appState.layers.layer3.matte !== 'none') {
+          offCtxB.save();
+          offCtxB.globalCompositeOperation = 'destination-in';
+          drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert);
+          offCtxB.restore();
+        }
 
-      busCtxB.save();
-      busCtxB.filter = getTonalFilterString(appState.tonal);
-      busCtxB.globalAlpha = (appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
-      busCtxB.drawImage(offscreenB, 0, 0, w, h);
-      busCtxB.restore();
-
-      // Organic penumbra vignette removed
-      // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-      if (appState.layers.layer1.active) {
         busCtxB.save();
-        busCtxB.translate(w/2, h/2);
-        const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
-        busCtxB.scale(s, s);
-        busCtxB.translate(-w/2, -h/2);
-        const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
-        busCtxB.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
-        busCtxB.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
-        drawFittedImage(busCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = (appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
         busCtxB.restore();
+
+        // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
+        if (appState.layers.layer1.active) {
+          busCtxB.save();
+          busCtxB.translate(w/2, h/2);
+          const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
+          busCtxB.scale(s, s);
+          busCtxB.translate(-w/2, -h/2);
+          const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
+          busCtxB.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
+          busCtxB.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
+          drawFittedImage(busCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+          busCtxB.restore();
+        }
       }
 
-      // LAYER 2 on Bus B: EDGE TRACE SOBEL
+      // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
       if (appState.layers.layer2.active) {
-        const edgeMix = (appState.tonal.edge_mix || 0.22) * (appState.layers.layer2.opacity || 0.22);
+        const isL2Solo = !appState.layers.layer3.active && !appState.layers.layer1.active;
+        const l2 = appState.layers.layer2;
         busCtxB.save();
-        busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.8 + air * 0.4));
-        drawSobelContours(busCtxB, queuedSource, w, h, simTime, appState.tonal.edge_threshold || 0.30);
+        if (isL2Solo) {
+          busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
+          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
+        } else {
+          const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
+          busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
+          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
+        }
         busCtxB.restore();
       }
 
@@ -3577,24 +3594,45 @@ function renderVisuals(time) {
   requestAnimationFrame(renderVisuals);
 }
 
-// Hardware-Accelerated Video Difference Sobel Contour Synthesizer
-function drawSobelContours(ctx, baseSource, w, h, t, threshold) {
+// Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
+function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
   if (!baseSource) return;
   offCtxB.clearRect(0, 0, w, h);
   offCtxB.save();
-  const contrastBoost = Math.round(180 + (1.0 - threshold) * 140);
+
+  const l2 = (appState.layers && appState.layers.layer2) || {};
+  const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
+  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.8);
+  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
+  const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
+
+  // 1. Grayscale de alto contraste
   offCtxB.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(offCtxB, baseSource, w, h, appState.fit_mode);
-  
-  // 1.8px spatial offset with difference blend mode creates the spatial gradient
-  const shift = 1.8;
+  drawFittedImage(offCtxB, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+
+  // 2. Extração de contornos por gradiente espacial de diferença
   offCtxB.globalCompositeOperation = 'difference';
-  offCtxB.drawImage(offscreenB, shift, shift);
+  offCtxB.drawImage(offscreenB, edgeWidth, edgeWidth);
   offCtxB.restore();
 
+  // 3. Elevação de luminância e renderização com brancos vívidos
   ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  ctx.drawImage(offscreenB, 0, 0, w, h);
+  if (isSolo) {
+    // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+    // Realce luminoso para chalk/neon orgânico sem clipping digital
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.65;
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+  } else {
+    // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
+    const blendMode = (l2.blend || 'Screen').toLowerCase();
+    ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
+    ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+  }
   ctx.restore();
 }
 
@@ -3865,7 +3903,7 @@ function getExpandedBuffer(dim) {
 }
 
 // ----------------------------------------------------------------------------
-// ROADMAP PRESETS DATABASE (AFTER EFFECTS 1:1 REPLICATION)
+// ROADMAP PRESETS DATABASE (50 CURATED CONTEMPORARY VISUAL ART PRESETS)
 // ----------------------------------------------------------------------------
 const ROADMAP_PRESETS = {
   pixel_stretch: {
@@ -3874,7 +3912,11 @@ const ROADMAP_PRESETS = {
     edge_smear: { direction: 45, intensity: 1.0, curve: 'linear', smoothness: 1.0, threshold: 0.35, length: 260, channels: 'rgba_split', start_offset: 0.65, pixel_size: 3, source: 'chroma' },
     cyberpunk_rain: { direction: 90, intensity: 0.75, curve: 'exponential', smoothness: 1.2, threshold: 0.45, length: 380, channels: 'blue_only', start_offset: 0.0, pixel_size: 2, source: 'luma' },
     hyperdrive_tunnel: { direction: 180, intensity: 0.90, curve: 'logarithmic', smoothness: 0.8, threshold: 0.30, length: 420, channels: 'rgba_split', start_offset: 0.05, pixel_size: 4, source: 'luma' },
-    needle_threads: { direction: 0, intensity: 0.95, curve: 'linear', smoothness: 0.1, threshold: 0.80, length: 500, channels: 'luma_all', start_offset: 0.0, pixel_size: 1, source: 'luma' }
+    needle_threads: { direction: 0, intensity: 0.95, curve: 'linear', smoothness: 0.1, threshold: 0.80, length: 500, channels: 'luma_all', start_offset: 0.0, pixel_size: 1, source: 'luma' },
+    subtle_mist: { direction: 0, intensity: 0.35, curve: 'scurve', smoothness: 2.8, threshold: 0.15, length: 140, channels: 'luma_all', start_offset: 0.20, pixel_size: 1, source: 'luma' },
+    vertical_spire: { direction: 270, intensity: 0.80, curve: 'exponential', smoothness: 1.5, threshold: 0.50, length: 440, channels: 'rgba_split', start_offset: 0.0, pixel_size: 2, source: 'luma' },
+    chroma_echo: { direction: 135, intensity: 0.65, curve: 'exponential', smoothness: 2.0, threshold: 0.30, length: 220, channels: 'rgba_split', start_offset: 0.15, pixel_size: 3, source: 'chroma' },
+    solar_flare: { direction: 0, intensity: 0.90, curve: 'logarithmic', smoothness: 1.2, threshold: 0.75, length: 480, channels: 'rgba_split', start_offset: 0.0, pixel_size: 2, source: 'luma' }
   },
   pixel_sorter: {
     glitch_waterfall: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.30, threshold_max: 0.80, random_noise: 0.05, length: 220, stretch_mode: false, mask: 'full', noise_scale: 18 },
@@ -3882,7 +3924,11 @@ const ROADMAP_PRESETS = {
     corrupted_signal: { angle: 180, sorting_mode: 'hue', threshold_min: 0.50, threshold_max: 0.60, random_noise: 0.40, length: 260, stretch_mode: false, mask: 'full', noise_scale: 25 },
     center_melt: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.35, threshold_max: 0.85, random_noise: 0.20, length: 240, stretch_mode: true, mask: 'center', noise_scale: 18 },
     neon_threading: { angle: 270, sorting_mode: 'luminance', threshold_min: 0.85, threshold_max: 1.0, random_noise: 0.10, length: 300, stretch_mode: false, mask: 'full', noise_scale: 12 },
-    diagonal_drift: { angle: 45, sorting_mode: 'red', threshold_min: 0.20, threshold_max: 0.70, random_noise: 0.20, length: 180, stretch_mode: true, mask: 'full', noise_scale: 20 }
+    diagonal_drift: { angle: 45, sorting_mode: 'red', threshold_min: 0.20, threshold_max: 0.70, random_noise: 0.20, length: 180, stretch_mode: true, mask: 'full', noise_scale: 20 },
+    penumbra_shadows: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.05, threshold_max: 0.35, random_noise: 0.08, length: 150, stretch_mode: false, mask: 'full', noise_scale: 15 },
+    zen_minimal: { angle: 0, sorting_mode: 'luminance', threshold_min: 0.40, threshold_max: 0.70, random_noise: 0.02, length: 30, stretch_mode: true, mask: 'full', noise_scale: 8 },
+    raster_scan: { angle: 180, sorting_mode: 'blue', threshold_min: 0.25, threshold_max: 0.65, random_noise: 0.12, length: 190, stretch_mode: false, mask: 'edges', noise_scale: 16 },
+    torrent_climax: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.20, threshold_max: 0.95, random_noise: 0.35, length: 380, stretch_mode: true, mask: 'full', noise_scale: 28 }
   },
   bad_tv: {
     subdued_vhs: { tv_rgb_split: 3, tv_scanlines_opacity: 0.20, tv_scanlines_density: 300, tv_warp_wiggle: 0.08, tv_curvature: 0.04, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.15 },
@@ -3890,7 +3936,11 @@ const ROADMAP_PRESETS = {
     arcade_crt: { tv_rgb_split: 9, tv_scanlines_opacity: 0.75, tv_scanlines_density: 420, tv_warp_wiggle: 0.05, tv_curvature: 0.22, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.10 },
     analog_aberration: { tv_rgb_split: 24, tv_scanlines_opacity: 0.10, tv_scanlines_density: 200, tv_warp_wiggle: 0.02, tv_curvature: 0.0, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.05 },
     security_cam: { tv_rgb_split: 5, tv_scanlines_opacity: 0.55, tv_scanlines_density: 180, tv_warp_wiggle: 0.15, tv_curvature: 0.10, tv_warp_sync_v: 0.12, tv_warp_sync_h: -4, tv_tape_noise: 0.65 },
-    broken_vcr: { tv_rgb_split: 28, tv_scanlines_opacity: 0.80, tv_scanlines_density: 320, tv_warp_wiggle: 0.85, tv_curvature: 0.15, tv_warp_sync_v: 0.35, tv_warp_sync_h: 18, tv_tape_noise: 0.75 }
+    broken_vcr: { tv_rgb_split: 28, tv_scanlines_opacity: 0.80, tv_scanlines_density: 320, tv_warp_wiggle: 0.85, tv_curvature: 0.15, tv_warp_sync_v: 0.35, tv_warp_sync_h: 18, tv_tape_noise: 0.75 },
+    oscilloscope_tube: { tv_rgb_split: 6, tv_scanlines_opacity: 0.45, tv_scanlines_density: 380, tv_warp_wiggle: 0.04, tv_curvature: 0.30, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.08 },
+    magnetic_drift: { tv_rgb_split: 14, tv_scanlines_opacity: 0.30, tv_scanlines_density: 260, tv_warp_wiggle: 0.25, tv_curvature: 0.08, tv_warp_sync_v: 0.08, tv_warp_sync_h: 7, tv_tape_noise: 0.30 },
+    subliminal_flicker: { tv_rgb_split: 12, tv_scanlines_opacity: 0.50, tv_scanlines_density: 340, tv_warp_wiggle: 0.50, tv_curvature: 0.05, tv_warp_sync_v: 0.22, tv_warp_sync_h: -8, tv_tape_noise: 0.40 },
+    ghost_signal: { tv_rgb_split: 18, tv_scanlines_opacity: 0.25, tv_scanlines_density: 280, tv_warp_wiggle: 0.12, tv_curvature: 0.06, tv_warp_sync_v: 0.04, tv_warp_sync_h: 2, tv_tape_noise: 0.20 }
   },
   rxxr: {
     terminal_ascii: { style: 'terminal_amber', density: 10, edge_mode: false, edge_threshold: 0.35, expand_markers: 0.10, tint: '#ffb800' },
@@ -3898,7 +3948,11 @@ const ROADMAP_PRESETS = {
     hex_stream: { style: 'binary_hex', density: 12, edge_mode: false, edge_threshold: 0.30, expand_markers: 0.20, tint: '#00f0ff' },
     glitch_shading: { style: 'glitch_blocks', density: 14, edge_mode: false, edge_threshold: 0.30, expand_markers: 0.60, tint: '#ffffff' },
     wireframe_grid: { style: 'wireframe_grid', density: 16, edge_mode: true, edge_threshold: 0.50, expand_markers: 0.20, tint: '#c084fc' },
-    ghost_operator: { style: 'matrix_code', density: 6, edge_mode: true, edge_threshold: 0.40, expand_markers: 0.40, tint: '#38bdf8' }
+    ghost_operator: { style: 'matrix_code', density: 6, edge_mode: true, edge_threshold: 0.40, expand_markers: 0.40, tint: '#38bdf8' },
+    ikeda_binary: { style: 'binary_hex', density: 18, edge_mode: false, edge_threshold: 0.50, expand_markers: 0.05, tint: '#ffffff' },
+    runic_sigils: { style: 'terminal_amber', density: 12, edge_mode: true, edge_threshold: 0.30, expand_markers: 0.45, tint: '#f43f5e' },
+    vector_crosshairs: { style: 'wireframe_grid', density: 8, edge_mode: true, edge_threshold: 0.55, expand_markers: 0.35, tint: '#22d3ee' },
+    sub_density: { style: 'matrix_code', density: 4, edge_mode: false, edge_threshold: 0.25, expand_markers: 0.15, tint: '#a78bfa' }
   },
   modulation: {
     joy_division: { color_mode: 'joy_division', lines_count: 70, amplitude: 38, frequency: 55, lowpass: 0.30, line_thickness: 1.4 },
@@ -3906,7 +3960,11 @@ const ROADMAP_PRESETS = {
     liquid_metal: { color_mode: 'cyan_spectrum', lines_count: 36, amplitude: 48, frequency: 22, lowpass: 0.60, line_thickness: 2.2 },
     laser_topo: { color_mode: 'laser_topo', lines_count: 96, amplitude: 26, frequency: 80, lowpass: 0.20, line_thickness: 1.0 },
     concentric_holo: { color_mode: 'cmyk_misreg', lines_count: 52, cmyk_offset: 16, amplitude: 38, frequency: 65, lowpass: 0.40, line_thickness: 1.6 },
-    binary_shift: { color_mode: 'amber_matrix', lines_count: 110, amplitude: 18, frequency: 120, lowpass: 0.10, line_thickness: 0.9 }
+    binary_shift: { color_mode: 'amber_matrix', lines_count: 110, amplitude: 18, frequency: 120, lowpass: 0.10, line_thickness: 0.9 },
+    nonotak_lattices: { color_mode: 'joy_division', lines_count: 85, amplitude: 15, frequency: 95, lowpass: 0.15, line_thickness: 0.8 },
+    micro_topography: { color_mode: 'laser_topo', lines_count: 120, amplitude: 12, frequency: 130, lowpass: 0.12, line_thickness: 0.7 },
+    seismic_pulse: { color_mode: 'cyan_spectrum', lines_count: 44, amplitude: 55, frequency: 30, lowpass: 0.50, line_thickness: 1.8 },
+    aurora_dispersion: { color_mode: 'cmyk_misreg', lines_count: 60, cmyk_offset: 20, amplitude: 42, frequency: 40, lowpass: 0.45, line_thickness: 1.5 }
   }
 };
 
@@ -10959,4 +11017,440 @@ function clearPreferencesSearch() {
   filterPreferencesSearch('');
 }
 window.clearPreferencesSearch = clearPreferencesSearch;
+
+// ============================================================================
+// STUDIO INSPECTOR MODULE (DAVINCI RESOLVE / AFTER EFFECTS PROPERTIES)
+// ============================================================================
+const studioInspectorState = {
+  isOpen: false,
+  activeTab: 'layer', // 'layer', 'clip', 'fx'
+  targetLayer: 2,     // 0, 1, 2, 3, 4, 5
+  targetClipId: null
+};
+window.studioInspectorState = studioInspectorState;
+
+function toggleStudioInspector() {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  if (!drawer) return;
+  studioInspectorState.isOpen = !studioInspectorState.isOpen;
+  drawer.classList.toggle('open', studioInspectorState.isOpen);
+  drawer.classList.toggle('hidden', !studioInspectorState.isOpen);
+
+  const btn = document.getElementById('btn-toggle-studio-inspector');
+  if (btn) btn.classList.toggle('active', studioInspectorState.isOpen);
+
+  if (studioInspectorState.isOpen) {
+    renderStudioInspector();
+  }
+}
+window.toggleStudioInspector = toggleStudioInspector;
+
+function openStudioInspector(context, id) {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  if (!drawer) return;
+
+  if (context === 'layer') {
+    studioInspectorState.activeTab = 'layer';
+    studioInspectorState.targetLayer = (id !== undefined && id !== null) ? Number(id) : 2;
+  } else if (context === 'clip') {
+    studioInspectorState.activeTab = 'clip';
+    studioInspectorState.targetClipId = id || (appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId);
+  } else if (context === 'fx') {
+    studioInspectorState.activeTab = 'fx';
+  }
+
+  studioInspectorState.isOpen = true;
+  drawer.classList.add('open');
+  drawer.classList.remove('hidden');
+
+  const btn = document.getElementById('btn-toggle-studio-inspector');
+  if (btn) btn.classList.add('active');
+
+  renderStudioInspector();
+}
+window.openStudioInspector = openStudioInspector;
+
+function switchInspectorTab(tab) {
+  studioInspectorState.activeTab = tab;
+  renderStudioInspector();
+}
+window.switchInspectorTab = switchInspectorTab;
+
+function setInspectorLayer(layerIdx) {
+  studioInspectorState.targetLayer = Number(layerIdx);
+  renderStudioInspector();
+}
+window.setInspectorLayer = setInspectorLayer;
+
+function setInspectorClip(clipId) {
+  studioInspectorState.targetClipId = clipId;
+  renderStudioInspector();
+}
+window.setInspectorClip = setInspectorClip;
+
+function renderStudioInspector() {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  const container = document.getElementById('inspector-body-content');
+  const badge = document.getElementById('inspector-target-badge');
+  if (!drawer || !container) return;
+
+  // Tabs status
+  document.querySelectorAll('.insp-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === studioInspectorState.activeTab);
+  });
+
+  const tab = studioInspectorState.activeTab;
+
+  if (tab === 'layer') {
+    const lIdx = studioInspectorState.targetLayer !== undefined ? studioInspectorState.targetLayer : 2;
+    const lKey = `layer${lIdx}`;
+    const layer = (appState.layers && appState.layers[lKey]) || {};
+    const layerNames = ['L0 BASE', 'L1 DOUBLE', 'L2 FIND EDGES', 'L3 CUE QUEUE', 'L4 DIFFERENCE', 'L5 OVERLAY'];
+    if (badge) badge.textContent = `${layerNames[lIdx] || `L${lIdx}`}`;
+
+    let html = `
+      <!-- LAYER PICKER STRIP -->
+      <div class="insp-section">
+        <div class="insp-sec-title">CAMADA EM FOCO</div>
+        <div class="insp-pills-row">
+          ${[0, 1, 2, 3, 4, 5].map(idx => `
+            <button class="insp-layer-pill ${idx === lIdx ? 'active' : ''}" onclick="setInspectorLayer(${idx})">
+              L${idx}${idx === 2 ? ' EDGES' : ''}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- MAIN LAYER CONTROLS (ACTIVE, SOLO, MUTE) -->
+      <div class="insp-section">
+        <div class="insp-row-between">
+          <span class="insp-label">ESTADO DA CAMADA</span>
+          <div class="insp-btn-group">
+            <button class="insp-btn-toggle ${layer.active ? 'active-green' : ''}" onclick="toggleLayerActive('${lKey}'); renderStudioInspector();">
+              ${layer.active ? 'ATIVO' : 'MUTADO'}
+            </button>
+            <button class="insp-btn-solo" onclick="if(window.penumbraMidi){ window.penumbraMidi.soloLayer(${lIdx}); } else { toggleLayerActive('${lKey}'); } renderStudioInspector();" title="Isolar esta camada em Solo">
+              SOLO
+            </button>
+            <button class="insp-btn-ghost" onclick="if(window.penumbraMidi){ window.penumbraMidi.unsoloAll(); } renderStudioInspector();" title="Restaurar todas as camadas">
+              UNSOLO ALL
+            </button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>OPACIDADE</span>
+            <span class="insp-val-disp" id="insp-disp-opac">${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}%</span>
+          </div>
+          <input type="range" min="0" max="100" value="${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}" class="insp-range" oninput="onLayerOpacityChange('${lKey}', this.value); document.getElementById('insp-disp-opac').textContent = this.value + '%';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>MODO DE BLEND</span>
+            <span class="insp-val-disp">${layer.blend || 'Normal'}</span>
+          </div>
+          <select class="insp-select" onchange="onLayerBlendChange('${lKey}', this.value); renderStudioInspector();">
+            ${['Normal', 'Screen', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
+              <option value="${b}" ${(layer.blend || 'Normal').toLowerCase() === b.toLowerCase() ? 'selected' : ''}>${b}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+    `;
+
+    // SPECIAL DEDICATED PANEL FOR LAYER 2 (FIND EDGES CONTOURS)
+    if (lIdx === 2) {
+      const lumBoost = (layer.luminance !== undefined ? layer.luminance : (appState.tonal?.edge_luminance || 2.8));
+      const edgeWidth = (layer.edge_width !== undefined ? layer.edge_width : (appState.tonal?.edge_width || 2.2));
+      const edgeThresh = (layer.edge_threshold !== undefined ? layer.edge_threshold : (appState.tonal?.edge_threshold || 0.28));
+      const edgeMix = (layer.edge_mix !== undefined ? layer.edge_mix : (appState.tonal?.edge_mix || 0.85));
+
+      html += `
+        <div class="insp-section insp-highlight-card">
+          <div class="insp-sec-title insp-cyan-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
+            FIND EDGES · CONTORNO & LUMINÂNCIA (L2)
+          </div>
+          <div class="insp-desc">Contornos Sobel no topo do master. Luminância calibrada para projetor com brancos destacados.</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>LUMINÂNCIA DOS BRANCOS (WHITE GAIN)</span>
+              <span class="insp-val-disp text-cyan" id="disp-l2-lum">${lumBoost.toFixed(1)}x</span>
+            </div>
+            <input type="range" min="10" max="50" value="${Math.round(lumBoost * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setLuminance(v); document.getElementById('disp-l2-lum').textContent = v.toFixed(1) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>LIMIAR DE BORDA (THRESHOLD)</span>
+              <span class="insp-val-disp" id="disp-l2-thresh">${Math.round(edgeThresh * 100)}%</span>
+            </div>
+            <input type="range" min="5" max="85" value="${Math.round(edgeThresh * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setThreshold(v); document.getElementById('disp-l2-thresh').textContent = Math.round(v * 100) + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESPESSURA DO TRAÇADO (EDGE WIDTH)</span>
+              <span class="insp-val-disp" id="disp-l2-width">${edgeWidth.toFixed(1)} px</span>
+            </div>
+            <input type="range" min="10" max="45" value="${Math.round(edgeWidth * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setWidth(v); document.getElementById('disp-l2-width').textContent = v.toFixed(1) + ' px';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>MIX DIRETO DO FIND EDGES</span>
+              <span class="insp-val-disp" id="disp-l2-mix">${Math.round(edgeMix * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="100" value="${Math.round(edgeMix * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setMix(v); document.getElementById('disp-l2-mix').textContent = Math.round(v * 100) + '%';">
+          </div>
+        </div>
+      `;
+    }
+
+    // GEOMETRIA E ENQUADRAMENTO DA CAMADA
+    const rot = layer.rotation || 0;
+    const fit = layer.fit_mode || 'fill';
+    html += `
+      <div class="insp-section">
+        <div class="insp-sec-title">GEOMETRIA & ENQUADRAMENTO</div>
+        <div class="insp-control-row">
+          <span class="insp-label">ORIENTAÇÃO / ROTAÇÃO</span>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${rot === 0 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 0); renderStudioInspector();">0°</button>
+            <button class="insp-btn-pill ${rot === -90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', -90); renderStudioInspector();">↺ -90°</button>
+            <button class="insp-btn-pill ${rot === 90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 90); renderStudioInspector();">↻ +90°</button>
+            <button class="insp-btn-pill ${rot === 180 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 180); renderStudioInspector();">180°</button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <span class="insp-label">MODO DE FIT</span>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${fit === 'fill' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fill'); renderStudioInspector();">FILL</button>
+            <button class="insp-btn-pill ${fit === 'fit' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fit'); renderStudioInspector();">FIT</button>
+            <button class="insp-btn-pill ${fit === 'wings' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'wings'); renderStudioInspector();">WINGS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MÁSCARA (MATTE) DA CAMADA -->
+      <div class="insp-section">
+        <div class="insp-sec-title">MÁSCARA DA CAMADA</div>
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>SELETOR DE MÁSCARA</span>
+            <button class="insp-btn-ghost-sm ${layer.matte_invert ? 'active' : ''}" onclick="toggleLayerMatteInvert('${lKey}'); renderStudioInspector();">
+              ${layer.matte_invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
+            </button>
+          </div>
+          <select class="insp-select" onchange="onLayerMatteChange('${lKey}', this.value); renderStudioInspector();">
+            <option value="none" ${(!layer.matte || layer.matte === 'none') ? 'selected' : ''}>PASSTHROUGH (SEM MÁSCARA)</option>
+            ${(allMattes || []).map(m => `
+              <option value="${m.path || m.filename}" ${(layer.matte === m.path || layer.matte === m.filename) ? 'selected' : ''}>${m.name || m.filename}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } else if (tab === 'clip') {
+    // CLIPE TAB (PRE-AIR TRANSFORMS & MEDIA)
+    const baseClipId = appState.layers?.layer0?.clipId || 'clip_001';
+    const cueClipId = appState.layers?.layer3?.clipId || 'clip_005';
+    const targetClipId = studioInspectorState.targetClipId || cueClipId;
+    const clip = (allClips || []).find(c => c.id === targetClipId) || { id: targetClipId, name: targetClipId };
+    const tf = getClipTransform(targetClipId);
+    if (badge) badge.textContent = `CLIPE: ${clip.name ? clip.name.slice(0, 16) : targetClipId}`;
+
+    let html = `
+      <div class="insp-section">
+        <div class="insp-sec-title">SELECIONAR CLIPE</div>
+        <div class="insp-pills-row">
+          <button class="insp-layer-pill ${targetClipId === baseClipId ? 'active' : ''}" onclick="setInspectorClip('${baseClipId}')">
+            PGM DECK A (L0)
+          </button>
+          <button class="insp-layer-pill ${targetClipId === cueClipId ? 'active' : ''}" onclick="setInspectorClip('${cueClipId}')">
+            CUE DECK B (L3)
+          </button>
+        </div>
+        <div class="insp-clip-name-box">${clip.name || targetClipId}</div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">TRANSFORMAÇÃO GEOMÉTRICA (PRE-AIR)</div>
+        <div class="insp-desc">Ajuste individual do clipe antes de ir para o ar, preservando o layout master.</div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>ROTAÇÃO</span>
+            <span class="insp-val-disp">${tf.rotation || 0}°</span>
+          </div>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${tf.rotation === 0 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 0 }); renderStudioInspector();">0°</button>
+            <button class="insp-btn-pill ${tf.rotation === -90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: -90 }); renderStudioInspector();">↺ -90°</button>
+            <button class="insp-btn-pill ${tf.rotation === 90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 90 }); renderStudioInspector();">↻ +90°</button>
+            <button class="insp-btn-pill ${tf.rotation === 180 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 180 }); renderStudioInspector();">180°</button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>ESCALA / ZOOM</span>
+            <span class="insp-val-disp" id="disp-clip-scale">${(tf.scale || 1.0).toFixed(2)}x</span>
+          </div>
+          <input type="range" min="50" max="250" value="${Math.round((tf.scale || 1.0) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTransform('${targetClipId}', { scale: v }); document.getElementById('disp-clip-scale').textContent = v.toFixed(2) + 'x';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>POSIÇÃO X</span>
+            <span class="insp-val-disp" id="disp-clip-posx">${tf.pos_x || 0} px</span>
+          </div>
+          <input type="range" min="-300" max="300" value="${tf.pos_x || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_x: Number(this.value) }); document.getElementById('disp-clip-posx').textContent = this.value + ' px';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>POSIÇÃO Y</span>
+            <span class="insp-val-disp" id="disp-clip-posy">${tf.pos_y || 0} px</span>
+          </div>
+          <input type="range" min="-300" max="300" value="${tf.pos_y || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_y: Number(this.value) }); document.getElementById('disp-clip-posy').textContent = this.value + ' px';">
+        </div>
+
+        <div style="margin-top: 10px;">
+          <button class="insp-btn-danger-outline" onclick="resetClipTransform('${targetClipId}'); renderStudioInspector();">
+            RESETAR GEOMETRIA DO CLIPE
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } else if (tab === 'fx') {
+    // FX & COLOR TAB
+    if (badge) badge.textContent = 'FX & COLOR MASTER';
+    const tonal = appState.tonal || {};
+
+    let html = `
+      <div class="insp-section">
+        <div class="insp-sec-title">COLOR & LEVELS (MASTER DECK)</div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>BLACK PEDESTAL (PRETOS)</span>
+            <span class="insp-val-disp" id="disp-insp-bright">${(tonal.brightness || -0.05).toFixed(2)}</span>
+          </div>
+          <input type="range" min="-40" max="20" value="${Math.round((tonal.brightness || -0.05) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.brightness = v; document.getElementById('disp-insp-bright').textContent = v.toFixed(2);">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>CONTRAST (CONTRASTE)</span>
+            <span class="insp-val-disp" id="disp-insp-contrast">${(tonal.contrast || 1.18).toFixed(2)}x</span>
+          </div>
+          <input type="range" min="80" max="220" value="${Math.round((tonal.contrast || 1.18) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.contrast = v; document.getElementById('disp-insp-contrast').textContent = v.toFixed(2) + 'x';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>GAMMA (CURVA TONAL)</span>
+            <span class="insp-val-disp" id="disp-insp-gamma">${(tonal.gamma || 0.85).toFixed(2)}</span>
+          </div>
+          <input type="range" min="50" max="180" value="${Math.round((tonal.gamma || 0.85) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.gamma = v; document.getElementById('disp-insp-gamma').textContent = v.toFixed(2);">
+        </div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">ROTEAMENTO DE FX</div>
+        <div class="insp-control-row">
+          <span class="insp-label">DESTINO DOS EFEITOS</span>
+          <div class="insp-pills-row">
+            ${['master', 'deck_a', 'deck_b'].map(tgt => `
+              <button class="insp-btn-pill ${(appState.fx?.target || 'master') === tgt ? 'active' : ''}" onclick="if(appState.fx) appState.fx.target = '${tgt}'; renderStudioInspector();">
+                ${tgt.toUpperCase()}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">PLUGINS DE EFEITO (50 PRESETS EXPANDIDOS)</div>
+        <div class="insp-desc">Selecione e ative presets estilizados de Pixel Sorter, Stretch, Modulation, Bad TV e RXXR.</div>
+        <div class="insp-fx-quick-grid">
+          ${[
+            { id: 'pixel_stretch', name: 'PIXEL STRETCH' },
+            { id: 'pixel_sorter', name: 'PIXEL SORTER' },
+            { id: 'modulation', name: 'MODULATION' },
+            { id: 'bad_tv', name: 'BAD TV' },
+            { id: 'rxxr', name: 'RXXR ASCII' }
+          ].map(p => {
+            const presets = Object.keys(ROADMAP_PRESETS[p.id] || {});
+            const isPlgActive = appState.fx && appState.fx[p.id] && appState.fx[p.id].enabled;
+            return `
+              <div class="insp-fx-card">
+                <div class="insp-fx-card-hdr">
+                  <span style="font-weight:700; color:#fff;">${p.name}</span>
+                  <button class="insp-btn-toggle-sm ${isPlgActive ? 'active' : ''}" onclick="toggleFxPluginEnabled('${p.id}'); renderStudioInspector();">
+                    ${isPlgActive ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div class="insp-presets-chips-flow">
+                  ${presets.map(pr => `
+                    <button class="insp-chip-pill" onclick="loadPluginPreset('${p.id}', '${pr}'); renderStudioInspector();" title="${pr}">
+                      ${pr.replace(/_/g, ' ')}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  }
+}
+window.renderStudioInspector = renderStudioInspector;
+
+function layer2_setLuminance(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.luminance = val;
+  if (appState.tonal) appState.tonal.edge_luminance = val;
+}
+window.layer2_setLuminance = layer2_setLuminance;
+
+function layer2_setThreshold(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_threshold = val;
+  if (appState.tonal) appState.tonal.edge_threshold = val;
+}
+window.layer2_setThreshold = layer2_setThreshold;
+
+function layer2_setWidth(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_width = val;
+  if (appState.tonal) appState.tonal.edge_width = val;
+}
+window.layer2_setWidth = layer2_setWidth;
+
+function layer2_setMix(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_mix = val;
+  if (appState.tonal) appState.tonal.edge_mix = val;
+}
+window.layer2_setMix = layer2_setMix;
+
+function toggleFxPluginEnabled(pluginId) {
+  if (appState.fx && appState.fx[pluginId]) {
+    appState.fx[pluginId].enabled = !appState.fx[pluginId].enabled;
+  }
+}
+window.toggleFxPluginEnabled = toggleFxPluginEnabled;
+
 

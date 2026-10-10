@@ -9193,6 +9193,483 @@ body.resizing-workspace-active .top-zone {
   justify-content: space-between;
 }
 
+/* ==========================================================================
+   STUDIO INSPECTOR DRAWER (DAVINCI RESOLVE / AFTER EFFECTS PROPERTIES)
+   ========================================================================== */
+.studio-inspector-drawer {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  width: 350px;
+  z-index: 1200;
+  background: rgba(9, 12, 17, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(0, 240, 255, 0.2);
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  font-family: var(--font-sans);
+  color: #fff;
+}
+
+.studio-inspector-drawer.hidden {
+  transform: translateX(100%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.studio-inspector-drawer.open {
+  transform: translateX(0);
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.inspector-header {
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.inspector-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.inspector-title svg {
+  color: var(--cyan);
+}
+
+.inspector-badge {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--cyan);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.inspector-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.insp-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 5px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.insp-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.insp-tab-btn.active {
+  background: rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--cyan);
+}
+
+.insp-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.insp-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.inspector-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.inspector-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.inspector-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.inspector-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.insp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.insp-section:last-child {
+  border-bottom: none;
+}
+
+.insp-sec-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #a0aec0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.insp-desc {
+  font-size: 9px;
+  color: #718096;
+  line-height: 1.35;
+}
+
+.insp-highlight-card {
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.insp-cyan-title {
+  color: var(--cyan);
+}
+
+.insp-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.insp-layer-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.insp-layer-pill:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: #fff;
+  border-color: var(--cyan);
+}
+
+.insp-layer-pill.active {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: #000;
+}
+
+.insp-btn-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.insp-btn-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.insp-btn-pill.active {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: #000;
+}
+
+.insp-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.insp-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.insp-label-val {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: #a0aec0;
+  font-weight: 700;
+}
+
+.insp-val-disp {
+  color: #fff;
+  font-weight: 700;
+}
+
+.insp-range {
+  width: 100%;
+  accent-color: var(--cyan);
+  height: 4px;
+  cursor: pointer;
+}
+
+.insp-select {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  width: 100%;
+  outline: none;
+}
+
+.insp-select:focus {
+  border-color: var(--cyan);
+}
+
+.insp-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.insp-btn-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.insp-btn-toggle.active-green {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.insp-btn-solo {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.insp-btn-solo:hover {
+  background: #f59e0b;
+  color: #000;
+}
+
+.insp-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a0aec0;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.insp-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.insp-btn-ghost-sm {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.insp-btn-ghost-sm.active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.insp-clip-name-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insp-btn-danger-outline {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.12s ease;
+}
+
+.insp-btn-danger-outline:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+.insp-fx-quick-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insp-fx-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insp-fx-card-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.insp-btn-toggle-sm {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #718096;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.insp-btn-toggle-sm.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.insp-presets-chips-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.insp-chip-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.insp-chip-pill:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan);
+  color: #fff;
+}
+
+.btn-studio-inspector {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+
+.btn-studio-inspector:hover, .btn-studio-inspector.active {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
 
 </style>
 </head>
@@ -9432,8 +9909,8 @@ body.resizing-workspace-active .top-zone {
           <circle cx="15" cy="15" r="1.5" fill="currentColor"></circle>
         </svg>
         <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
-        <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Hardware M-Vave (◄ Faders / ► Botões) · Clique para alternar [Atalho: H]" onclick="event.stopPropagation(); window.toggleHardwareBank && window.toggleHardwareBank()">◄ HW1: FADERS</span>
-        <span class="midi-bank-badge" id="chip-midi-bank" title="Banco de Software (B1-B4) · Clique para avançar banco [Atalho: B ou F1-F4]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.nextBank()">B1: MIXER</span>
+        <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Dual-Bank (◄ Bank A: Mix & Takes / ► Bank B: FX & Mattes) · [Atalho: H]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">◄ BANK A (MIX)</span>
+        <span class="midi-bank-badge" id="chip-midi-bank" title="Banco Ativo · Clique para alternar [Atalho: [ ou ]]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">BANK A</span>
       </div>
     </div>
 
@@ -9453,6 +9930,11 @@ body.resizing-workspace-active .top-zone {
         </label>
         <audio id="html5-audio-cue" preload="none"></audio>
       </div>
+
+      <!-- Studio Inspector Trigger -->
+      <button class="btn btn-outline btn-sm btn-studio-inspector" id="btn-toggle-studio-inspector" onclick="toggleStudioInspector()" data-tooltip-title="STUDIO INSPECTOR" data-tooltip-desc="Abre o painel Studio Inspector de camadas, Find Edges, clipes e parâmetros FX." data-shortcut="I">
+        <span>🔍 INSPECTOR [I]</span>
+      </button>
 
       <!-- Settings Modal Trigger -->
       <button class="btn btn-outline btn-sm" id="btn-show-settings" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
@@ -9478,19 +9960,13 @@ body.resizing-workspace-active .top-zone {
     <section class="top-zone">
       <!-- DUAL VIDEO MONITORS (PROGRAM & PREVIEW) -->
       <div class="monitors-container">
-        <!-- PROGRAM (AO VIVO NO BE) -->
+        <!-- PROGRAM (AO VIVO NO MASTER) -->
         <div class="screen-box program-box" id="program-screen-box">
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-live" id="badge-prg-status">PROGRAM (AO VIVO)</span>
               <button class="geom-pill pill-vert-mode" id="btn-prg-toggle-vertical" onclick="toggleVerticalMode()" title="Alternar Modo Vertical (9:16) / Padrão Horizontal (16:9)">9:16 VERTICAL</button>
-              <div class="geom-pills-group" title="Orientação e Enquadramento L0 (Gire 90° para clips 9:16 preencherem 16:9!)">
-                <button class="geom-pill active" id="btn-prg-rot-0" onclick="setLayerRotation('layer0', 0)">0°</button>
-                <button class="geom-pill" id="btn-prg-rot-ccw" onclick="setLayerRotation('layer0', -90)" title="Girar 90° Anti-Horário (9:16 vira 16:9)">↺ -90°</button>
-                <button class="geom-pill" id="btn-prg-rot-cw" onclick="setLayerRotation('layer0', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
-                <button class="geom-pill" id="btn-prg-fit-wings" onclick="setLayerFitMode('layer0', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
-                <button class="geom-pill" id="btn-prg-fit-mode" onclick="toggleLayerFitMode('layer0')" title="Alternar FIT / FILL">FIT</button>
-              </div>
+              <button class="geom-pill" id="btn-prg-open-insp" onclick="openStudioInspector('layer', 0)" title="Abrir Studio Inspector para L0 (Orientação, Fit e Enquadramento) [I]">📐 GEOM L0</button>
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prg-timecode">TC 00:01:24.18</div>
@@ -9524,14 +10000,8 @@ body.resizing-workspace-active .top-zone {
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-preview">PREVIEW (PRÓXIMO CUE)</span>
-              <div class="geom-pills-group" title="Orientação e Enquadramento L3 (Gire 90° para clips 9:16 preencherem 16:9!)">
-                <button class="geom-pill active" id="btn-prv-rot-0" onclick="setLayerRotation('layer3', 0)">0°</button>
-                <button class="geom-pill" id="btn-prv-rot-ccw" onclick="setLayerRotation('layer3', -90)" title="Girar 90° Anti-Horário (9:16 vira 16:9)">↺ -90°</button>
-                <button class="geom-pill" id="btn-prv-rot-cw" onclick="setLayerRotation('layer3', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
-                <button class="geom-pill" id="btn-prv-fit-wings" onclick="setLayerFitMode('layer3', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
-                <button class="geom-pill" id="btn-prv-fit-mode" onclick="toggleLayerFitMode('layer3')" title="Alternar FIT / FILL">FIT</button>
-                <button class="geom-pill" id="btn-prv-clip-tf" onclick="openPreviewClipTransform()" title="Transformação Geométrica Individual do Clipe em Cue (Rotação/Escala/Posição antes de ir pro Ar)" style="background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; color: #22d3ee; font-weight: 700;">📐 CLIPE</button>
-              </div>
+              <button class="geom-pill highlight-action" id="btn-prv-open-insp" onclick="openStudioInspector('layer', 3)" title="Abrir Studio Inspector para L3 Cue [I]">📐 GEOM L3</button>
+              <button class="geom-pill highlight-action" id="btn-prv-clip-insp" onclick="openStudioInspector('clip', appState.layers?.layer3?.clipId)" title="Transformação Geométrica Individual do Clipe em Cue">📐 CLIPE</button>
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prv-timecode">CUE IN 4 BARS</div>
@@ -10493,6 +10963,10 @@ body.resizing-workspace-active .top-zone {
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'cyberpunk_rain')">Cyberpunk Rain</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'hyperdrive_tunnel')">Hyperdrive Tunnel</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'needle_threads')">Needle Threads</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'subtle_mist')">Subtle Mist</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'vertical_spire')">Vertical Spire</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'chroma_echo')">Chroma Echo</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'solar_flare')">Solar Flare</button>
                 </div>
               </div>
 
@@ -10633,6 +11107,10 @@ body.resizing-workspace-active .top-zone {
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'center_melt')">Center Melt</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'neon_threading')">Neon Line Threading</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'diagonal_drift')">Diagonal Drift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'penumbra_shadows')">Penumbra Shadows</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'zen_minimal')">Zen Minimal</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'raster_scan')">Raster Scan</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'torrent_climax')">Torrent Climax</button>
                 </div>
               </div>
 
@@ -10764,6 +11242,10 @@ body.resizing-workspace-active .top-zone {
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'analog_aberration')">Analog Chromatic Aberration</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'security_cam')">Security Cam Tape</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'broken_vcr')">Broken VCR Head</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'oscilloscope_tube')">Oscilloscope Tube</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'magnetic_drift')">Magnetic Drift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'subliminal_flicker')">Subliminal Flicker</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'ghost_signal')">Ghost Signal</button>
                 </div>
               </div>
 
@@ -10857,6 +11339,10 @@ body.resizing-workspace-active .top-zone {
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'glitch_shading')">Glitch Shading Block</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'wireframe_grid')">Wireframe Cyber Grid</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'ghost_operator')">Ghost Operator</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'ikeda_binary')">Ikeda Binary</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'runic_sigils')">Runic Sigils</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'vector_crosshairs')">Vector Crosshairs</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'sub_density')">Sub Density</button>
                 </div>
               </div>
 
@@ -10947,6 +11433,10 @@ body.resizing-workspace-active .top-zone {
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'laser_topo')">Laser Topography</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'concentric_holo')">Concentric Holographic</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'binary_shift')">Binary Grid Shift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'nonotak_lattices')">Nonotak Lattices</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'micro_topography')">Micro Topography</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'seismic_pulse')">Seismic Pulse</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'aurora_dispersion')">Aurora Dispersion</button>
                 </div>
               </div>
 
@@ -12631,7 +13121,25 @@ body.resizing-workspace-active .top-zone {
     <!-- Floating HUD Macro State & Presets Toast -->
     <div id="hud-macro-toast" class="hud-macro-toast"></div>
 
-
+    <!-- STUDIO INSPECTOR RETRACTABLE DRAWER (DAVINCI RESOLVE / AFTER EFFECTS STYLE) -->
+    <aside id="studio-inspector-drawer" class="studio-inspector-drawer hidden">
+      <div class="inspector-header">
+        <div class="inspector-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+          <span>STUDIO INSPECTOR</span>
+          <span class="inspector-badge" id="inspector-target-badge">L2 FIND EDGES</span>
+        </div>
+        <div class="inspector-tabs">
+          <button class="insp-tab-btn active" id="insp-tab-layer" data-tab="layer" onclick="switchInspectorTab('layer')">CAMADA</button>
+          <button class="insp-tab-btn" id="insp-tab-clip" data-tab="clip" onclick="switchInspectorTab('clip')">CLIPE</button>
+          <button class="insp-tab-btn" id="insp-tab-fx" data-tab="fx" onclick="switchInspectorTab('fx')">FX & COLOR</button>
+        </div>
+        <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
+      </div>
+      <div class="inspector-body" id="inspector-body-content">
+        <!-- Rendered dynamically via renderStudioInspector() -->
+      </div>
+    </aside>
 
     <!-- MIDI Controller Hub -->
     <script>
@@ -12659,17 +13167,13 @@ class PenumbraMidiHub {
     this.activeOutput = null;
     this.devicesList = [];
     
-    // Modos / Bancos Operacionais
-    // 1: Master Live Mixer (Macro)
-    // 2: Layer Focus & Deep Params (Micro)
-    // 3: Conductor & Macro Presets (Narrativo)
-    // 4: Color Lab & Grading (Estúdio)
+    // Modos / Bancos Operacionais (Hardware M-Vave SMC-MIXER Dual-Bank Architecture)
+    // 1: Banco A (Master Live Mixer, Takes, Levels & Layers)
+    // 2: Banco B (FX Engine, Mattes, Shaders & Creative Sculpt)
     this.activeBank = 1;
     this.bankNames = {
-      1: 'MASTER LIVE MIXER',
-      2: 'LAYER FOCUS & PARAMS',
-      3: 'CONDUCTOR MACROS',
-      4: 'COLOR LAB & GRADING'
+      1: 'BANK A · LIVE MIX, TAKES & LEVELS',
+      2: 'BANK B · FX ENGINE, MATTES & SCULPT'
     };
     
     // Foco de Camada para o Banco 2
@@ -12928,145 +13432,87 @@ class PenumbraMidiHub {
     this.activeTelemetry.detectedProtocol = 'Modo CC';
 
     // 2. DETECÇÃO INTELIGENTE DE MUDANÇA DE BANCO DE HARDWARE DO M-VAVE:
-    // O M-Vave possui 2 presets internos de fábrica:
-    //   - Banco 1 (Seta Esquerda ◄): Faders CC 20..27, Master CC 28, Encoders CC 30..37
-    //   - Banco 2 (Seta Direita ►): Matriz Completa de Botões (Mute CC 20..27, Solo CC 28..35, Rec CC 36..43, Sel CC 44..51, Setas/Transporte CC 56..63)
+    // Seta Esquerda ◄ (CC 86 ou CC 46) -> Seleciona BANCO A (Live Mixer, Takes & Levels)
+    // Seta Direita ► (CC 87 ou CC 47) -> Seleciona BANCO B (FX Engine, Mattes & Sculpt)
     if (cc === 86 || (cc === 46 && value > 0)) {
-      this.setHardwareBank('bank1');
+      this.setBank(1);
       return;
     }
     if (cc === 87 || (cc === 47 && value > 0)) {
-      this.setHardwareBank('bank2');
+      this.setBank(2);
       return;
     }
 
-    // Auto-identificação dinâmica por tráfego quando o perfil for Auto (mvave_smc):
-    if (this.activeProfile === 'mvave_smc') {
-      if ((cc >= 56 && cc <= 63) || (cc >= 36 && cc <= 43) || (cc >= 44 && cc <= 51)) {
-        if (this.hardwareBank !== 'bank2') {
-          this.setHardwareBank('bank2');
-        }
-      } else if (cc >= 20 && cc <= 27 && value > 2 && value < 125) {
-        // Movimento analógico intermediário em CC 20..27 confirma Fader físico em movimento (Banco 1 ◄)
-        if (this.hardwareBank !== 'bank1') {
-          this.setHardwareBank('bank1');
-        }
+    // 1. Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1 ou CC 9 a 16):
+    if (channel === 1 && ((cc >= 20 && cc <= 27) || (cc >= 9 && cc <= 16))) {
+      const faderIdx = (cc >= 20 && cc <= 27) ? (cc - 20) : (cc - 9);
+      this.handleFaderInput(faderIdx, norm);
+      return;
+    }
+
+    // 2. Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1, CC 17, CC 11):
+    if (channel === 1 && (cc === 28 || cc === 29 || cc === 17 || cc === 11)) {
+      this.handleMasterFaderInput(norm);
+      return;
+    }
+
+    // 3. Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1 ou CC 1 a 8):
+    if (channel === 1 && ((cc >= 30 && cc <= 37) || (cc >= 1 && cc <= 8))) {
+      const knobIdx = (cc >= 30 && cc <= 37) ? (cc - 30) : (cc - 1);
+      this.handleKnobInput(knobIdx, value, norm);
+      return;
+    }
+
+    // 4. Botões de Mute (CC 40 a 47 no Canal 1):
+    if (channel === 1 && cc >= 40 && cc <= 47 && value > 0) {
+      this.handleButtonMute(cc - 40);
+      return;
+    }
+
+    // 5. Botões de Solo (CC 48 a 55 no Canal 1):
+    if (channel === 1 && cc >= 48 && cc <= 55 && value > 0) {
+      this.handleButtonSolo(cc - 48);
+      return;
+    }
+
+    // 6. Botões de Rec / Trigger (CC 36 a 43 no Canal 1):
+    if (channel === 1 && cc >= 36 && cc <= 43 && value > 0) {
+      this.handleButtonRec(cc - 36);
+      return;
+    }
+
+    // 7. Botões de Select / Inspect (CC 64 a 71 no Canal 1):
+    if (channel === 1 && cc >= 64 && cc <= 71 && value > 0) {
+      this.handleButtonSelect(cc - 64);
+      return;
+    }
+
+    // 8. Transporte & Setas de Navegação (CC 56 a 63 no Canal 1):
+    if (channel === 1 && cc >= 56 && cc <= 63 && value > 0) {
+      switch (cc) {
+        case 56: this.actionRewind(); return;          // Rewind / Downbeat 1.1.1
+        case 57: this.actionFastForward(); return;     // FastForward / Advance Take
+        case 58: this.stepCrossfader(-5); return;      // Seta Esquerda (◄ Nudge A)
+        case 59: this.navigateUp(); return;            // Seta Acima (▲ Preset Anterior)
+        case 60: this.navigateDown(); return;          // Seta Abaixo (▼ Próximo Preset)
+        case 61: this.stepCrossfader(+5); return;      // Seta Direita (► Nudge B)
+        case 62: this.toggleBank(); return;            // Cycle / Loop (Alterna Bank A / Bank B)
+        case 63: this.actionBlackout(); return;        // Record / Panic Blackout
       }
     }
 
-    const isHwBank2 = (this.activeProfile === 'mvave_bank2' || (this.activeProfile === 'mvave_smc' && this.hardwareBank === 'bank2'));
-
-    // ---------------------------------------------------------------------------------------
-    // A) SE ESTIVER NO BANCO 2 DO HARDWARE (SETA DIREITA ► · MATRIZ COMPLETA DE BOTÕES):
-    // ---------------------------------------------------------------------------------------
-    if (isHwBank2) {
-      // 1. Linha Mute (CC 20 a 27):
-      if (channel === 1 && cc >= 20 && cc <= 27 && value > 0) {
-        this.handleButtonMute(cc - 20);
-        return;
-      }
-      // 2. Linha Solo (CC 28 a 35):
-      if (channel === 1 && cc >= 28 && cc <= 35 && value > 0) {
-        this.handleButtonSolo(cc - 28);
-        return;
-      }
-      // 3. Linha Rec / Trigger (CC 36 a 43):
-      if (channel === 1 && cc >= 36 && cc <= 43 && value > 0) {
-        this.handleButtonRec(cc - 36);
-        return;
-      }
-      // 4. Linha Select (CC 44 a 51):
-      if (channel === 1 && cc >= 44 && cc <= 51 && value > 0) {
-        this.handleButtonSelect(cc - 44);
-        return;
-      }
-      // 5. Linha Transporte & Setas de Navegação (CC 56 a 63):
-      if (channel === 1 && cc >= 56 && cc <= 63 && value > 0) {
-        switch (cc) {
-          case 56: this.actionRewind(); return;          // Rewind / Downbeat 1.1.1
-          case 57: this.actionFastForward(); return;     // FastForward / Advance Take
-          case 58: this.stepCrossfader(-5); return;      // Seta Esquerda (◄ Nudge A)
-          case 59: this.navigateUp(); return;            // Seta Acima (▲ Preset Anterior)
-          case 60: this.navigateDown(); return;          // Seta Abaixo (▼ Próximo Preset)
-          case 61: this.stepCrossfader(+5); return;      // Seta Direita (► Nudge B)
-          case 62: this.nextBank(); return;              // Cycle / Loop (Cicla B1..B4!)
-          case 63: this.actionBlackout(); return;        // Record / Panic Blackout
-        }
-      }
-      // Faders e Knobs secundários no Modo 2 (se configurados):
-      if (channel === 1 && cc >= 9 && cc <= 16) {
-        this.handleFaderInput(cc - 9, norm);
-        return;
-      }
-      if (channel === 1 && cc >= 1 && cc <= 8) {
-        this.handleKnobInput(cc - 1, value, norm);
-        return;
-      }
-    }
-
-    // ---------------------------------------------------------------------------------------
-    // B) SE ESTIVER NO BANCO 1 DO HARDWARE (SETA ESQUERDA ◄ · FADERS & ENCODERS NATIVOS):
-    // ---------------------------------------------------------------------------------------
-    else {
-      // 1. Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1):
-      if (channel === 1 && cc >= 20 && cc <= 27) {
-        const faderIdx = cc - 20;
-        this.handleFaderInput(faderIdx, norm);
-        return;
-      }
-
-      // 2. Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1):
-      if (channel === 1 && (cc === 28 || cc === 29)) {
-        this.handleMasterFaderInput(norm);
-        return;
-      }
-
-      // 3. Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1):
-      if (channel === 1 && cc >= 30 && cc <= 37) {
-        const knobIdx = cc - 30;
-        this.handleKnobInput(knobIdx, value, norm);
-        return;
-      }
-
-      // 4. Botões Complementares via CC (Modo 1):
-      if (cc >= 40 && cc <= 47 && value > 0) {
-        this.handleButtonMute(cc - 40);
-        return;
-      }
-      if (cc >= 48 && cc <= 55 && value > 0) {
-        this.handleButtonSolo(cc - 48);
-        return;
-      }
-      if (cc >= 56 && cc <= 63 && value > 0) {
-        switch (cc) {
-          case 56: this.actionRewind(); return;
-          case 57: this.actionFastForward(); return;
-          case 58: this.stepCrossfader(-5); return;
-          case 59: this.navigateUp(); return;
-          case 60: this.navigateDown(); return;
-          case 61: this.stepCrossfader(+5); return;
-          case 62: this.nextBank(); return;              // Cycle cicla B1..B4!
-          case 63: this.actionBlackout(); return;
-        }
-      }
-      if (cc >= 64 && cc <= 71 && value > 0) {
-        this.handleButtonSelect(cc - 64);
-        return;
-      }
-
-      // 5. Botões de Transporte Mackie CC:
-      if (value > 0) {
-        switch (cc) {
-          case 80: case 114: this.actionRewind(); return;
-          case 81: case 115: this.actionFastForward(); return;
-          case 82: case 116: this.actionStop(); return;
-          case 83: case 117: this.actionPlay(); return;
-          case 84: case 118: this.nextBank(); return;   // Cycle cicla B1..B4!
-          case 85: case 119: this.actionBlackout(); return;
-          case 86: this.prevBank(); return;
-          case 87: this.nextBank(); return;
-          case 88: this.actionTapTempo(); return;
-        }
+    // 9. Botões de Transporte Mackie CC Adicionais:
+    if (value > 0) {
+      switch (cc) {
+        case 80: case 114: this.actionRewind(); return;
+        case 81: case 115: this.actionFastForward(); return;
+        case 82: case 116: this.actionStop(); return;
+        case 83: case 117: this.actionPlay(); return;
+        case 84: case 118: this.toggleBank(); return;
+        case 85: case 119: this.actionBlackout(); return;
+        case 86: this.setBank(1); return;
+        case 87: this.setBank(2); return;
+        case 88: this.actionTapTempo(); return;
       }
     }
 
@@ -13170,9 +13616,9 @@ class PenumbraMidiHub {
       case 93: this.actionStop(); return;            // Stop (||)
       case 94: this.actionPlay(); return;            // Play (>)
       case 95: this.actionBlackout(); return;        // Record (O) -> Master Blackout Panic
-      case 86: this.actionLoop(); return;            // Cycle / Loop (🔁)
-      case 46: this.prevBank(); return;              // Channel / Bank Left («)
-      case 47: this.nextBank(); return;              // Channel / Bank Right (»)
+      case 86: this.toggleBank(); return;            // Cycle / Loop (🔁 Alterna Bank A/B)
+      case 46: this.setBank(1); return;              // Channel / Bank Left (« Bank A)
+      case 47: this.setBank(2); return;              // Channel / Bank Right (» Bank B)
       case 96: this.navigateUp(); return;            // Seta Acima (▲)
       case 97: this.navigateDown(); return;          // Seta Abaixo (▼)
       case 98: this.stepCrossfader(-5); return;      // Seta Esquerda (◀)
@@ -13286,17 +13732,19 @@ class PenumbraMidiHub {
     this.activeTelemetry.lastAction = `Fader ${faderIdx + 1} (${(normValue * 100).toFixed(0)}%)`;
     this.twinState.faders[faderIdx] = normValue;
 
-    // -------------------------------------------------------------
-    // BANCO 1: MASTER LIVE MIXER
-    // Faders 1 a 5: Opacidade das Camadas 0 a 4
-    // Fader 6: Master FX Intensity / Crossfader
-    // Fader 7: Video Speed Master
-    // Fader 8: Master Brightness / Fade to Black
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 1 (BANK A): LIVE MIXER, TAKES & LEVELS
+    // Faders 0 a 4: Opacidade das Camadas L0, L1, L2 (Find Edges), L3 (Cue B), L5 (Overlay)
+    // Fader 5: Master Brightness / Fade to Black Dimmer
+    // Fader 6: Master Video Speed (0.25x a 2.5x)
+    // Fader 7: T-Bar Crossfader A/B (Takes)
+    // =============================================================
     if (this.activeBank === 1) {
-      if (faderIdx >= 0 && faderIdx <= 5) {
-        const layerKey = `layer${faderIdx}`;
-        const inputId = `l${faderIdx}-opacity`;
+      const layerMap = [0, 1, 2, 3, 5];
+      if (faderIdx >= 0 && faderIdx < layerMap.length) {
+        const lNum = layerMap[faderIdx];
+        const layerKey = `layer${lNum}`;
+        const inputId = `l${lNum}-opacity`;
         const el = document.getElementById(inputId);
         const currNorm = el ? (Number(el.value) / 100.0) : 0;
         
@@ -13304,66 +13752,57 @@ class PenumbraMidiHub {
         if (takeover.allowUpdate) {
           this.setLayerOpacityDirect(layerKey, takeover.finalValue * 100);
         }
-      } else if (faderIdx === 6) {
-        // Crossfader Master Bus A/B
-        const el = document.getElementById('crossfader');
-        const currNorm = el ? (Number(el.value) / 100.0) : 0.5;
-        const takeover = this.applySoftTakeover(`b1_fader_6`, normValue, currNorm);
-        if (takeover.allowUpdate && el) {
-          el.value = (takeover.finalValue * 100).toFixed(1);
-          el.dispatchEvent(new Event('input'));
-        }
-      } else if (faderIdx === 7) {
+      } else if (faderIdx === 5) {
         // Master Dimmer / Brightness
         this.setMasterBrightnessDimmer(normValue);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 2: LAYER FOCUS & DEEP PARAMETERS
-    // Opera na camada ativa: this.activeFocusLayer (0..4)
-    // Faders 1 a 4: Mascaramento Procedural (Crop Top, Bottom, Left, Right)
-    // Faders 5 a 8: Áudio DSP Reactivity Bands (Sub, Bass, Mids, Air)
-    // -------------------------------------------------------------
-    else if (this.activeBank === 2) {
-      const layerKey = `layer${this.activeFocusLayer}`;
-      if (faderIdx >= 0 && faderIdx <= 3) {
-        this.setLayerProceduralCrop(layerKey, faderIdx, normValue);
-      } else if (faderIdx >= 4 && faderIdx <= 7) {
-        this.setAudioBandSensitivity(faderIdx - 4, normValue);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 3: CONDUCTOR & MACRO PRESETS
-    // Faders 1 a 5: Opacidade de Layers L0..L4
-    // Fader 6: Master Macro Chaos Intensity
-    // Fader 7: Tempo Nudge
-    // Fader 8: Master Blackout Fade
-    // -------------------------------------------------------------
-    else if (this.activeBank === 3) {
-      if (faderIdx <= 4) {
-        this.setLayerOpacityDirect(`layer${faderIdx}`, normValue * 100);
-      } else if (faderIdx === 5) {
-        if (window.appState) window.appState.macro_chaos = normValue;
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 4: COLOR LAB & GRADING
-    // Faders 1 a 5: Camadas L0..L4
-    // Fader 6: Master Saturation (-100 a +100)
-    // Fader 7: Color Temp
-    // Fader 8: Master Blackout
-    // -------------------------------------------------------------
-    else if (this.activeBank === 4) {
-      if (faderIdx <= 4) {
-        this.setLayerOpacityDirect(`layer${faderIdx}`, normValue * 100);
-      } else if (faderIdx === 5) {
-        this.updateFaderElement('fader-contrast', normValue, 60, 160);
       } else if (faderIdx === 6) {
-        this.updateFaderElement('fader-edge-mix', normValue, 0, 45);
+        // Video Speed Master
+        const spd = 0.25 + normValue * 2.25;
+        this.setPlaybackSpeedGlobal(spd);
       } else if (faderIdx === 7) {
+        // Crossfader Master Bus A/B
+        this.handleMasterFaderInput(normValue);
+      }
+    }
+
+    // =============================================================
+    // BANCO 2 (BANK B): FX ENGINE, MATTES & SCULPT
+    // Faders 0 a 4: Opacidades dos 5 Plugins de Efeitos (Pixel Sorter, Stretch, Modulation, Bad TV, RXXR)
+    // Fader 5: Master FX Dry/Wet Mix
+    // Fader 6: Find Edges Sobel Mix / Opacity
+    // Fader 7: Master Blackout / Fade
+    // =============================================================
+    else if (this.activeBank === 2) {
+      const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
+      if (faderIdx >= 0 && faderIdx < plugins.length) {
+        const pId = plugins[faderIdx];
+        const currInt = window.appState?.fx?.[pId]?.intensity !== undefined ? window.appState.fx[pId].intensity : 0.8;
+        const takeover = this.applySoftTakeover(`b2_fader_${faderIdx}`, normValue, currInt);
+        if (takeover.allowUpdate) {
+          this.setFxPluginIntensityByIndex(faderIdx, takeover.finalValue);
+          this.flashToastHud(`FX ${pId.replace('_', ' ').toUpperCase()}: ${Math.round(takeover.finalValue * 100)}%`);
+        }
+      } else if (faderIdx === 5) {
+        // Master FX Dry/Wet Mix
+        const currDryWet = window.appState?.fx?.masterIntensity !== undefined ? window.appState.fx.masterIntensity : 0.8;
+        const takeover = this.applySoftTakeover('b2_fader_5', normValue, currDryWet);
+        if (takeover.allowUpdate && window.setFxMasterParam) {
+          window.setFxMasterParam('masterIntensity', takeover.finalValue);
+          const slider = document.getElementById('slider-fx-intensity');
+          if (slider) slider.value = Math.round(takeover.finalValue * 100);
+          const valLbl = document.getElementById('val-fx-intensity');
+          if (valLbl) valLbl.textContent = `${Math.round(takeover.finalValue * 100)}%`;
+          this.flashToastHud(`MASTER FX DRY/WET: ${Math.round(takeover.finalValue * 100)}%`);
+        }
+      } else if (faderIdx === 6) {
+        // Find Edges Sobel Mix
+        this.updateFaderElement('fader-edge-mix', normValue, 0, 100);
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_mix = normValue;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_mix = normValue;
+        }
+      } else if (faderIdx === 7) {
+        // Master Dimmer / Fade
         this.setMasterBrightnessDimmer(normValue);
       }
     }
@@ -13384,23 +13823,19 @@ class PenumbraMidiHub {
     if (knobIdx < 0 || knobIdx > 7) return;
 
     // Detecta se o controlador está operando em Modo Relativo (ex: Mackie MCU / Relative Sign-Magnitude)
-    // No modo relativo do M-Vave/MCU, os encoders enviam apenas 1 (+1) ou 65 (-1)
     const isRelativeStep = (rawValue === 1 || rawValue === 65 || (rawValue >= 2 && rawValue <= 4) || (rawValue >= 66 && rawValue <= 68));
     const isExplicitRelative = this.encoderMode === 'relative';
     const isExplicitAbsolute = this.encoderMode === 'absolute';
 
     let newKnobVal;
     if (isExplicitAbsolute || (!isExplicitRelative && !isRelativeStep && (rawValue > 4 && rawValue < 64 || rawValue > 68 && rawValue <= 127 || rawValue === 0))) {
-      // Modo Absoluto Direto Contínuo (0.0 a 1.0): segue a rotação do knob 1:1
       newKnobVal = normValue;
     } else if (isExplicitRelative || isRelativeStep) {
-      // Modo Relativo com aceleração balística
       const now = performance.now();
       const lastTime = this.encoderLastTime[knobIdx] || now;
       const dt = Math.max(1, now - lastTime);
       this.encoderLastTime[knobIdx] = now;
 
-      // Aceleração balística por delta-t
       const acceleration = dt < 30 ? 3.5 : (dt < 70 ? 2.0 : 1.0);
       const baseStep = (this.encoderSensitivities[this.activeSensitivity] || 0.015) * acceleration;
 
@@ -13425,93 +13860,101 @@ class PenumbraMidiHub {
     this.twinState.knobs[knobIdx] = newKnobVal;
     this.activeTelemetry.lastAction = `Knob ${knobIdx + 1} (${(newKnobVal * 100).toFixed(0)}%)`;
 
-    // -------------------------------------------------------------
-    // BANCO 1: MASTER MIXER
-    // Knobs 1 a 5: Sobel Edge Threshold por Camada (L0..L4)
-    // Knobs 6 a 8: Gamma, Contraste, Sobel Mix Master
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 1 (BANK A): LEVELS & MATTES
+    // Knobs 0 a 3: Levels (Pretos, Contraste, Gamma, Find Edges White Luminance Boost)
+    // Knobs 4 a 7: Mattes (Selector, Scale/Zoom, Invert Toggle, Mix/Opacity)
+    // =============================================================
     if (this.activeBank === 1) {
-      if (knobIdx <= 4) {
-        this.setLayerEdgeThreshold(knobIdx, newKnobVal);
-      } else if (knobIdx === 5) {
+      if (knobIdx === 0) {
+        // Black Pedestal (-30% a +20%)
+        this.updateFaderElement('fader-brightness', newKnobVal, -30, 20);
+      } else if (knobIdx === 1) {
+        // Contrast (60% a 160%)
+        this.updateFaderElement('fader-contrast', newKnobVal, 60, 160);
+      } else if (knobIdx === 2) {
+        // Gamma (0.40 a 1.60)
         this.updateFaderElement('fader-gamma', newKnobVal, 40, 160);
+      } else if (knobIdx === 3) {
+        // Find Edges White Luminance Boost (1.0x a 4.0x)
+        const boost = 1.0 + newKnobVal * 3.0;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_luminance = boost;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_luminance = boost;
+        }
+        this.flashToastHud(`FIND EDGES WHITE LUMINANCE: ${(boost).toFixed(1)}x`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 4) {
+        // Matte Selector
+        this.cycleMatteByKnob(newKnobVal);
+      } else if (knobIdx === 5) {
+        // Matte Scale / Zoom (0.5x a 2.5x)
+        const scale = 0.5 + newKnobVal * 2.0;
+        if (window.appState?.matte?.deform) {
+          window.appState.matte.deform.wiggle_scale = scale * 0.05;
+        }
+        this.flashToastHud(`MÁSCARA ZOOM: ${(scale).toFixed(2)}x`);
       } else if (knobIdx === 6) {
-        this.updateFaderElement('fader-contrast', newKnobVal, 70, 160);
+        // Matte Invert Toggle (acima de 50% inverte)
+        const inv = newKnobVal > 0.5;
+        if (window.appState?.layers?.layer3) {
+          window.appState.layers.layer3.matte_invert = inv;
+        }
+        this.flashToastHud(`MÁSCARA INVERT: ${inv ? 'INVERTIDA' : 'NORMAL'}`);
       } else if (knobIdx === 7) {
-        this.updateFaderElement('fader-edge-mix', newKnobVal, 0, 40);
+        // Matte Opacity / Mix
+        this.setLayerMatteThreshold('layer3', newKnobVal);
       }
     }
 
-    // -------------------------------------------------------------
-    // BANCO 2: LAYER FOCUS & DEEP PARAMETERS
-    // Opera nos parâmetros profundos da camada focada (L0..L4)
-    // Knob 1: Opacidade Fina
-    // Knob 2: Velocidade de Reprodução (0.25x a 3.0x)
-    // Knob 3: Edge Sobel Threshold
-    // Knob 4: Zoom / Escala (0.8x a 2.0x)
-    // Knob 5: Rotação / Orientação (0°, -90°, +90°, 180°)
-    // Knob 6: Tint / Hue Shift
-    // Knob 7: Inversão de Máscara / Threshold
-    // Knob 8: Seletor de Blend Mode (Normal, Multiply, Screen, Darken, Overlay, Difference)
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 2 (BANK B): FX ENGINE KEY PARAMETERS & FIND EDGES
+    // Knob 0: Pixel Sorter (Threshold & Chunk Size)
+    // Knob 1: Pixel Stretch (Length & Direction)
+    // Knob 2: Modulation (Frequency & Density)
+    // Knob 3: Bad TV (Warp Distortion & Tape Noise)
+    // Knob 4: RXXR (Matrix Density & Shift)
+    // Knob 5: Find Edges Threshold (Sensibilidade 5% a 90%)
+    // Knob 6: Find Edges White Luminance Boost (1.0x a 4.0x)
+    // Knob 7: FX Audio Reactivity (Sensibilidade musical)
+    // =============================================================
     else if (this.activeBank === 2) {
-      const layerKey = `layer${this.activeFocusLayer}`;
-      switch (knobIdx) {
-        case 0:
-          this.setLayerOpacityDirect(layerKey, newKnobVal * 100);
-          break;
-        case 1:
-          this.setLayerSpeedDirect(layerKey, 0.25 + newKnobVal * 2.75);
-          break;
-        case 2:
-          this.setLayerEdgeThreshold(this.activeFocusLayer, newKnobVal);
-          break;
-        case 3:
-          this.setLayerScale(layerKey, 0.8 + newKnobVal * 1.4);
-          break;
-        case 4:
-          this.cycleLayerRotationByKnob(layerKey, newKnobVal);
-          break;
-        case 5:
-          this.setLayerHueTint(layerKey, newKnobVal);
-          break;
-        case 6:
-          this.setLayerMatteThreshold(layerKey, newKnobVal);
-          break;
-        case 7:
-          this.cycleLayerBlendByKnob(layerKey, newKnobVal);
-          break;
+      if (knobIdx === 0) {
+        this.setFxParam('pixel_sorter', 'threshold_min', 0.1 + newKnobVal * 0.8);
+      } else if (knobIdx === 1) {
+        this.setFxParam('pixel_stretch', 'length', Math.round(50 + newKnobVal * 450));
+      } else if (knobIdx === 2) {
+        this.setFxParam('modulation', 'frequency', Math.round(10 + newKnobVal * 120));
+      } else if (knobIdx === 3) {
+        this.setFxParam('bad_tv', 'tv_warp_wiggle', newKnobVal * 0.9);
+      } else if (knobIdx === 4) {
+        this.setFxParam('rxxr', 'density', Math.round(4 + newKnobVal * 20));
+      } else if (knobIdx === 5) {
+        // Find Edges Sensitivity (Threshold)
+        const th = 0.05 + newKnobVal * 0.85;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_threshold = th;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_threshold = th;
+        }
+        this.updateFaderElement('fader-edge-thresh', newKnobVal, 5, 90);
+        this.flashToastHud(`FIND EDGES THRESHOLD: ${Math.round(th * 100)}%`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 6) {
+        // Find Edges White Luminance Boost
+        const boost = 1.0 + newKnobVal * 3.0;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_luminance = boost;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_luminance = boost;
+        }
+        this.flashToastHud(`FIND EDGES WHITE LUMINANCE: ${(boost).toFixed(1)}x`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 7) {
+        // Audio Gain / Reactivity
+        if (typeof window.setAudioInputGain === 'function') {
+          window.setAudioInputGain(Math.round(newKnobVal * 200));
+          this.flashToastHud(`ÁUDIO GAIN: ${Math.round(newKnobVal * 200)}%`);
+        }
       }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 3: CONDUCTOR & MACRO PRESETS
-    // Knobs 1 a 4: Autopilot Dwell Time, Glitch Probability, Motion Dynamics, Audio Sensitivity
-    // Knobs 5 a 8: After Effects Plugins Intensity
-    // -------------------------------------------------------------
-    else if (this.activeBank === 3) {
-      if (knobIdx === 0 && window.appState) {
-        window.appState.autopilot_dwell = Math.round(8 + newKnobVal * 32);
-      } else if (knobIdx === 1 && window.appState) {
-        window.appState.glitch_prob = newKnobVal;
-      } else if (knobIdx === 2 && window.setAudioInputGain) {
-        window.setAudioInputGain(Math.round(newKnobVal * 200));
-      } else if (knobIdx >= 4 && knobIdx <= 7) {
-        this.setFxPluginIntensityByIndex(knobIdx - 4, newKnobVal);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 4: COLOR LAB & GRADING
-    // Knobs 1 a 8: Gamma, Pretos, Médios, Contraste, Edge Mix, Saturação, Temp, Grão
-    // -------------------------------------------------------------
-    else if (this.activeBank === 4) {
-      if (knobIdx === 0) this.updateFaderElement('fader-gamma', newKnobVal, 40, 160);
-      else if (knobIdx === 1) this.updateFaderElement('fader-brightness', newKnobVal, -30, 20);
-      else if (knobIdx === 2) this.updateFaderElement('fader-midtones', newKnobVal, 50, 150);
-      else if (knobIdx === 3) this.updateFaderElement('fader-contrast', newKnobVal, 70, 160);
-      else if (knobIdx === 4) this.updateFaderElement('fader-edge-mix', newKnobVal, 0, 40);
-      else if (knobIdx === 5) this.updateFaderElement('fader-edge-thresh', newKnobVal, 10, 80);
     }
   }
 
@@ -13580,15 +14023,12 @@ class PenumbraMidiHub {
     }
 
     if (channelIdx <= 4) {
-      this.soloLayer(channelIdx);
-      this.activeTelemetry.lastAction = `Solo Camada L${channelIdx}`;
+      const targetLayer = channelIdx === 4 ? 5 : channelIdx;
+      this.soloLayer(targetLayer);
+      this.activeTelemetry.lastAction = `Solo Camada L${targetLayer}`;
     } else if (channelIdx === 5) {
-      // Canal 6: Invert Matte da Camada Ativa
-      const layerKey = `layer${this.activeFocusLayer}`;
-      if (window.appState && window.appState[layerKey]) {
-        window.appState[layerKey].invert = !window.appState[layerKey].invert;
-        this.flashToastHud(`MÁSCARA L${this.activeFocusLayer}: ${window.appState[layerKey].invert ? 'INVERTIDA' : 'NORMAL'}`);
-      }
+      // Canal 6: UNSOLO ALL (Destrava todos os canais de solo!)
+      this.unsoloAll();
     } else if (channelIdx === 6) {
       // Canal 7: Reset Playback Speed
       this.setPlaybackSpeedGlobal(1.0);
@@ -13609,8 +14049,8 @@ class PenumbraMidiHub {
     if (channelIdx < 0 || channelIdx > 7) return;
 
     if (this.activeBank === 2) {
-      // No Banco 2 (Layer Focus), os botões Rec ligam/desligam os 5 Plugins do After Effects!
-      const plugins = ['pixel_sorter', 'pixel_stretch', 'bad_tv', 'rxxr', 'modulation'];
+      // No Banco 2 (Bank B), os botões Rec ligam/desligam os 5 Plugins do After Effects!
+      const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
       if (channelIdx < plugins.length) {
         const pId = plugins[channelIdx];
         const isCurrent = window.appState && window.appState.fx && window.appState.fx[pId] && window.appState.fx[pId].enabled;
@@ -13645,13 +14085,17 @@ class PenumbraMidiHub {
   handleButtonSelect(channelIdx) {
     if (channelIdx < 0 || channelIdx > 7) return;
 
-    // Seleciona o foco da camada sem forçar troca indesejada de banco
+    // Foca na camada e atualiza o Studio Inspector
     if (channelIdx <= 4) {
-      this.activeFocusLayer = channelIdx;
+      const targetLayer = channelIdx === 4 ? 5 : channelIdx;
+      this.activeFocusLayer = targetLayer;
       this.twinState.buttons.sel.fill(false);
       this.twinState.buttons.sel[channelIdx] = true;
-      this.flashToastHud(`FOCO EM CAMADA L${channelIdx}`);
-      this.activeTelemetry.lastAction = `Foco Camada L${channelIdx}`;
+      this.flashToastHud(`INSPECTOR: FOCO CAMADA L${targetLayer}`);
+      this.activeTelemetry.lastAction = `Foco Camada L${targetLayer}`;
+      if (typeof window.openStudioInspector === 'function') {
+        window.openStudioInspector('layer', targetLayer);
+      }
       this.sendLedFeedbackAll();
       this.notifyUI();
     } else if (channelIdx === 5) {
@@ -13659,33 +14103,38 @@ class PenumbraMidiHub {
     } else if (channelIdx === 6) {
       this.setBank(2);
     } else if (channelIdx === 7) {
-      this.setBank(this.activeBank === 3 ? 4 : 3);
+      this.toggleBank();
     }
   }
 
   // =========================================================================
-  // 8. TRANSPORTE & NAVEGAÇÃO DE BANCOS
+  // 8. TRANSPORTE & NAVEGAÇÃO DE BANCOS (DUAL-BANK HARDWARE & SOFTWARE)
   // =========================================================================
   setBank(bankNum) {
-    if (bankNum < 1 || bankNum > 4) return;
+    if (bankNum < 1 || bankNum > 2) return;
     this.activeBank = bankNum;
+    this.hardwareBank = (bankNum === 2) ? 'bank2' : 'bank1';
+    try {
+      localStorage.setItem('penumbra_midi_hw_bank', this.hardwareBank);
+      localStorage.setItem('penumbra_midi_active_bank', String(this.activeBank));
+    } catch (e) {}
     this.resetTakeoverForBankChange();
-    this.flashToastHud(`BANCO MIDI ${bankNum}: ${this.bankNames[bankNum]}`);
+    this.flashToastHud(`BANCO MIDI ${bankNum === 1 ? 'A' : 'B'}: ${this.bankNames[bankNum]}`);
     console.log(`[PENUMBRA MIDI] Banco comutado para: ${bankNum} (${this.bankNames[bankNum]})`);
     this.sendLedFeedbackAll();
     this.notifyUI();
   }
 
   nextBank() {
-    let next = this.activeBank + 1;
-    if (next > 4) next = 1;
-    this.setBank(next);
+    this.setBank(this.activeBank === 1 ? 2 : 1);
   }
 
   prevBank() {
-    let prev = this.activeBank - 1;
-    if (prev < 1) prev = 4;
-    this.setBank(prev);
+    this.setBank(this.activeBank === 1 ? 2 : 1);
+  }
+
+  toggleBank() {
+    this.setBank(this.activeBank === 1 ? 2 : 1);
   }
 
   actionRewind() {
@@ -13884,16 +14333,71 @@ class PenumbraMidiHub {
   }
 
   soloLayer(layerIdx) {
-    for (let i = 0; i <= 4; i++) {
+    // Verifica se já está em solo nessa camada para fazer toggle
+    let isCurrentlyOnlyThisActive = true;
+    for (let i = 0; i <= 5; i++) {
+      const targetKey = `layer${i}`;
+      if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
+        if (i === layerIdx && !window.appState.layers[targetKey].active) isCurrentlyOnlyThisActive = false;
+        if (i !== layerIdx && window.appState.layers[targetKey].active) isCurrentlyOnlyThisActive = false;
+      }
+    }
+
+    if (isCurrentlyOnlyThisActive) {
+      // Toggle OFF: desfaz o solo e reativa todas as camadas
+      this.unsoloAll();
+      return;
+    }
+
+    for (let i = 0; i <= 5; i++) {
       const targetKey = `layer${i}`;
       const shouldActive = (i === layerIdx);
       if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
         window.appState.layers[targetKey].active = shouldActive;
       }
-      this.twinState.buttons.solo[i] = shouldActive;
+      if (this.twinState.buttons.solo && i < this.twinState.buttons.solo.length) {
+        this.twinState.buttons.solo[i] = shouldActive;
+      }
       this.sendLedFeedback('solo', i, shouldActive);
     }
-    this.flashToastHud(`SOLO ISOLADO NA CAMADA L${layerIdx}`);
+    this.flashToastHud(`SOLO ATIVADO: CAMADA L${layerIdx}`);
+    if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+  }
+
+  unsoloAll() {
+    for (let i = 0; i <= 5; i++) {
+      const targetKey = `layer${i}`;
+      if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
+        window.appState.layers[targetKey].active = true;
+      }
+      if (this.twinState.buttons.solo && i < this.twinState.buttons.solo.length) {
+        this.twinState.buttons.solo[i] = false;
+      }
+      this.sendLedFeedback('solo', i, false);
+    }
+    this.flashToastHud('TODAS AS CAMADAS REATIVADAS (UNSOLO ALL)');
+    if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+  }
+
+  cycleMatteByKnob(normVal) {
+    const list = (typeof allMattes !== 'undefined' && allMattes) || window.allMattes || [];
+    if (!list.length) return;
+    const idx = Math.min(list.length - 1, Math.floor(normVal * list.length));
+    const m = list[idx];
+    if (m && window.appState) {
+      const targetLayer = this.activeFocusLayer !== undefined ? `layer${this.activeFocusLayer}` : 'layer3';
+      if (window.appState.layers && window.appState.layers[targetLayer]) {
+        window.appState.layers[targetLayer].matte = m.path || m.filename;
+      }
+      this.flashToastHud(`MÁSCARA ${targetLayer.toUpperCase()}: ${m.name || m.filename}`);
+      if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+    }
+  }
+
+  setFxParam(pluginId, paramName, value) {
+    if (window.appState && window.appState.fx && window.appState.fx[pluginId]) {
+      window.appState.fx[pluginId][paramName] = value;
+    }
   }
 
   triggerSoftPulseLayer(layerIdx) {
@@ -13909,7 +14413,7 @@ class PenumbraMidiHub {
   }
 
   setFxPluginIntensityByIndex(idx, normVal) {
-    const plugins = ['pixel_sorter', 'pixel_stretch', 'bad_tv', 'rxxr', 'modulation'];
+    const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
     if (idx < plugins.length) {
       const pId = plugins[idx];
       if (window.appState && window.appState.fx && window.appState.fx[pId]) {
@@ -14188,11 +14692,10 @@ class PenumbraMidiHub {
         return;
       }
 
-      // Alternar Bancos de Software: [ e ] ou Tecla B
-      if (e.key === '[' || ((e.key === 'b' || e.key === 'B') && !e.ctrlKey && !e.metaKey && !e.altKey)) {
+      // Alternar Bancos de Hardware: [ e ]
+      if (e.key === '[') {
         e.preventDefault();
-        if (e.key === '[') this.prevBank();
-        else this.nextBank();
+        this.prevBank();
         return;
       }
       if (e.key === ']') {
@@ -14201,16 +14704,23 @@ class PenumbraMidiHub {
         return;
       }
 
-      // Teclas F1 a F4: Ir direto para B1, B2, B3, B4
+      // Teclas F1 e F2: Ir direto para Bank A (1) ou Bank B (2)
       if (e.key === 'F1') { e.preventDefault(); this.setBank(1); return; }
       if (e.key === 'F2') { e.preventDefault(); this.setBank(2); return; }
-      if (e.key === 'F3') { e.preventDefault(); this.setBank(3); return; }
-      if (e.key === 'F4') { e.preventDefault(); this.setBank(4); return; }
 
-      // Tecla H: Alternar Preset de Hardware M-Vave (◄ Banco 1 Faders / ► Banco 2 Botões)
+      // Tecla I: Alternar Studio Inspector
+      if ((e.key === 'i' || e.key === 'I') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        if (typeof window.toggleStudioInspector === 'function') {
+          window.toggleStudioInspector();
+        }
+        return;
+      }
+
+      // Tecla H: Alternar Banco A / Banco B
       if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        this.toggleHardwareBank();
+        this.toggleBank();
         return;
       }
 
@@ -14268,19 +14778,15 @@ class HardwareTwinUI {
     this.isDraggingFader = false;
     this.isDraggingKnob = false;
 
-    // Rótulos Dinâmicos dos Knobs e Faders por Banco
+    // Rótulos Dinâmicos dos Knobs e Faders por Banco (Dual-Bank A / B)
     this.labels = {
       knobs: {
-        1: ['SOBEL L0', 'SOBEL L1', 'SOBEL L2', 'SOBEL L3', 'SOBEL L4', 'GAMMA', 'CONTRAST', 'EDGE MIX'],
-        2: ['OPACITY', 'SPEED', 'SOBEL', 'SCALE', 'PAN/ROT', 'HUE TINT', 'MATTE INV', 'BLEND'],
-        3: ['DWELL', 'GLITCH', 'AUDIO SENS', 'CHAOS', 'PX SORT', 'PX STRETCH', 'BAD TV', 'MODULAT'],
-        4: ['GAMMA', 'BLACKS', 'MIDS', 'CONTRAST', 'EDGE MIX', 'THRESH', 'COLOR BAL', 'GRAIN']
+        1: ['BLACKS', 'CONTRAST', 'GAMMA', 'FIND LUM', 'MATTE SEL', 'MATTE ZOOM', 'MATTE INV', 'MATTE MIX'],
+        2: ['SORT THRESH', 'STR LENGTH', 'MOD FREQ', 'TV WARP', 'RXXR DENS', 'EDGE THRESH', 'FIND LUM', 'AUDIO GAIN']
       },
       faders: {
-        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'L5 OVERLAY', 'CROSS', 'DIMMER'],
-        2: ['CROP TOP', 'CROP BTM', 'CROP LFT', 'CROP RGT', 'DSP SUB', 'DSP BASS', 'DSP MIDS', 'DSP AIR'],
-        3: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CHAOS FX', 'NUDGE', 'DIMMER'],
-        4: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CONTRAST', 'EDGE MIX', 'DIMMER']
+        1: ['L0 BASE', 'L1 DOUBLE', 'L2 EDGES', 'L3 CUE', 'L5 OVERLAY', 'DIMMER', 'SPEED', 'CROSSFADER'],
+        2: ['PX SORTER', 'PX STRETCH', 'MODULATION', 'BAD TV', 'RXXR', 'MASTER FX', 'EDGE MIX', 'BLACKOUT']
       }
     };
 
@@ -14323,9 +14829,9 @@ class HardwareTwinUI {
           <!-- Matriz de Botões M, S, R, Sel -->
           <div class="hw-btn-group">
             <button class="hw-btn hw-btn-mute" id="hw-btn-mute-${i}" onclick="handleHwButtonClick('mute', ${i})" title="Mute da Camada (Alt + ${i + 1})">M</button>
-            <button class="hw-btn hw-btn-solo" id="hw-btn-solo-${i}" onclick="handleHwButtonClick('solo', ${i})" title="Solo da Camada">S</button>
+            <button class="hw-btn hw-btn-solo" id="hw-btn-solo-${i}" onclick="handleHwButtonClick('solo', ${i})" title="Solo da Camada (Clique novamente para Unsolo)">S</button>
             <button class="hw-btn hw-btn-rec" id="hw-btn-rec-${i}" onclick="handleHwButtonClick('rec', ${i})" title="Trigger / Macro">R</button>
-            <button class="hw-btn hw-btn-sel" id="hw-btn-sel-${i}" onclick="handleHwButtonClick('sel', ${i})" title="Focar Camada (Shift + ${i + 1})">SEL</button>
+            <button class="hw-btn hw-btn-sel" id="hw-btn-sel-${i}" onclick="handleHwButtonClick('sel', ${i})" title="Focar Camada no Inspector (Shift + ${i + 1})">SEL</button>
           </div>
 
           <!-- Fader Linear Tátil -->
@@ -14349,19 +14855,17 @@ class HardwareTwinUI {
 
     // Atualiza Badges e Seletor de Bancos
     const bankBadge = document.getElementById('midi-active-bank-badge');
-    if (bankBadge) bankBadge.textContent = `BANCO ${bank}: ${this.hub.bankNames[bank]}`;
+    if (bankBadge) bankBadge.textContent = `BANCO ${bank === 1 ? 'A' : 'B'}: ${this.hub.bankNames[bank] || ''}`;
 
     for (let b = 1; b <= 4; b++) {
-      const bBtn = document.getElementById(`btn-bank-1`);
       const card = document.getElementById(`btn-bank-${b}`);
       if (card) card.classList.toggle('active', b === bank);
     }
 
-    // Foco de Camada (Banco 2)
+    // Foco de Camada
     const focusRow = document.getElementById('midi-focus-layer-row');
     if (focusRow) {
-      focusRow.style.display = (bank === 2) ? 'flex' : 'none';
-      for (let l = 0; l <= 4; l++) {
+      for (let l = 0; l <= 5; l++) {
         const btn = document.getElementById(`btn-focus-l${l}`);
         if (btn) btn.classList.toggle('active', l === focusLayer);
       }
@@ -14371,8 +14875,8 @@ class HardwareTwinUI {
     const oled1 = document.getElementById('oled-line-1');
     const oled2 = document.getElementById('oled-line-2');
     if (oled1) {
-      const hwTxt = (this.hub.hardwareBank === 'bank1') ? 'HW: ◄ B1 (FADERS)' : 'HW: ► B2 (BOTÕES)';
-      oled1.textContent = `${hwTxt} · SW B${bank}: ${this.hub.bankNames[bank]} · ${this.hub.activeTelemetry.deviceName.slice(0, 14)}`;
+      const hwTxt = (this.hub.hardwareBank === 'bank1') ? 'HW: ◄ BANK A (MIX & TAKES)' : 'HW: ► BANK B (FX & MATTES)';
+      oled1.textContent = `${hwTxt} · SW ${bank === 1 ? 'A' : 'B'}: ${this.hub.bankNames[bank] || ''} · ${this.hub.activeTelemetry.deviceName.slice(0, 14)}`;
     }
     if (oled2) {
       const bpm = (window.appState && window.appState.bpm) ? Math.round(window.appState.bpm) : 120;
@@ -14399,15 +14903,17 @@ class HardwareTwinUI {
     for (let i = 0; i < 8; i++) {
       const strip = document.getElementById(`hw-strip-${i}`);
       if (strip) {
-        strip.classList.toggle('focused', bank === 2 && i === focusLayer);
+        strip.classList.toggle('focused', i === focusLayer);
       }
 
       // Rótulos Dinâmicos
       const knobLbl = document.getElementById(`hw-knob-lbl-${i}`);
-      if (knobLbl) knobLbl.textContent = this.labels.knobs[bank][i];
+      const knobBankLabels = this.labels.knobs[bank] || this.labels.knobs[1];
+      if (knobLbl && knobBankLabels) knobLbl.textContent = knobBankLabels[i] || `KNOB ${i+1}`;
 
       const faderLbl = document.getElementById(`hw-fader-lbl-${i}`);
-      if (faderLbl) faderLbl.textContent = this.labels.faders[bank][i];
+      const faderBankLabels = this.labels.faders[bank] || this.labels.faders[1];
+      if (faderLbl && faderBankLabels) faderLbl.textContent = faderBankLabels[i] || `FADER ${i+1}`;
 
       // Knobs: Rotação (-135° a +135°)
       const knobVal = this.hub.twinState.knobs[i] || 0;
@@ -15783,7 +16289,7 @@ let appState = {
   layers: {
     layer0: { active: true, opacity: 1.0, clipId: 'clip_001', name: 'Animate_silver_tail_in_sand_202608120209.mp4', blend: 'Normal', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer1: { active: true, scale: 1.12, blend: 'Multiply', opacity: 0.0, matte: 'none', matte_invert: false, rotation: 0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
-    layer2: { active: true, opacity: 0.22, blend: 'Screen', edge_mix: 0.22, edge_threshold: 0.30, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
+    layer2: { active: true, opacity: 0.85, blend: 'Screen', edge_mix: 0.85, edge_threshold: 0.28, luminance: 2.8, edge_width: 2.2, matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer3: { active: true, opacity: 1.0, blend: 'Normal', clipId: 'clip_005', name: 'Metallic_spine_sculpture_moving_1080p_202608292000.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer4: { active: false, opacity: 0.0, blend: 'Difference', clipId: 'clip_006', name: 'Silver_fish_spine_descending_ocean_202608120051.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' },
     layer5: { active: true, opacity: 0.0, blend: 'Screen', clipId: 'clip_002', name: 'Installation_documentation_breat…_202603282136.mp4', matte: 'none', matte_invert: false, rotation: 0, scale: 1.0, pos_x: 0, pos_y: 0, fit_mode: 'fill' }
@@ -15806,8 +16312,10 @@ let appState = {
     brightness: -0.05,
     midtones: 1.00,
     contrast: 1.18,
-    edge_mix: 0.22,
-    edge_threshold: 0.30
+    edge_mix: 0.85,
+    edge_threshold: 0.28,
+    edge_luminance: 2.8,
+    edge_width: 2.2
   },
   matte: {
     bank: 'B',
@@ -17079,14 +17587,14 @@ function setPhraseLength(bars) {
 }
 window.setPhraseLength = setPhraseLength;
 
-// ============================================================================
-// 4.1 CURATED NARRATIVE MACRO-STATE PRESETS (MANUAL & AUTOPILOT ADAPTIVE)
-// ============================================================================
+// ----------------------------------------------------------------------------
+// 4.1 CURATED NARRATIVE MACRO-STATE PRESETS (FAST ERGONOMIC SELECTORS)
+// ----------------------------------------------------------------------------
 const MACRO_PRESETS = {
   INTRO: [
     {
       id: 'intro_obsidian_minimal',
-      name: 'Obsidian Minimalist',
+      name: 'Void',
       desc: 'Frame limpo, deformação ultra suave, atmosfera cinematográfica',
       energy: 0.15,
       kinematics: { wiggle_scale: 0.02, wiggle_pos: 4, wiggle_rot: 0.5, posterize_rate: 0, edge_warp: 0.02, speed: 0.4 },
@@ -17097,7 +17605,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'intro_ghost_operator',
-      name: 'Ghost Operator Matrix',
+      name: 'Fog',
       desc: 'ASCII sutil verde esmeralda com silhuetas de alta densidade',
       energy: 0.22,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 8, wiggle_rot: 1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.6 },
@@ -17108,7 +17616,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'intro_deep_space_tape',
-      name: 'Deep Space CRT Tape',
+      name: 'Dawn',
       desc: 'Sinal analógico distante, scanlines delicadas e foco etéreo',
       energy: 0.18,
       kinematics: { wiggle_scale: 0.02, wiggle_pos: 6, wiggle_rot: -0.5, posterize_rate: 0, edge_warp: 0.03, speed: 0.5 },
@@ -17122,18 +17630,18 @@ const MACRO_PRESETS = {
   GROOVE: [
     {
       id: 'groove_pure_clean',
-      name: 'Pure Clean Cinema',
+      name: 'Clean',
       desc: '100% puro e sem distorção: vídeo original cristalino em 60 FPS',
       energy: 0.50,
       kinematics: { wiggle_scale: 0.04, wiggle_pos: 6, wiggle_rot: 1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.8 },
       matte: { type: 'none', preferred: 'none', master_matte: 'none' },
-      fx: { active: false, plugin: 'pixel_stretch', preset: 'cinematic_anamorphic', intensity: 0.0 }, // TOTALMENTE LIMPO!
+      fx: { active: false, plugin: 'pixel_stretch', preset: 'cinematic_anamorphic', intensity: 0.0 },
       layers: { l1_opacity: 0.0, l2_opacity: 0.12, l4_opacity: 0.0, blend: 'soft_light' },
       transition: { mode: 'dissolve', duration: 1.5 }
     },
     {
       id: 'groove_rhythmic_pulse',
-      name: 'Rhythmic Pulse',
+      name: 'Pulse',
       desc: 'Balanço rítmico elegante: leve reflexo na batida e máscara orgânica',
       energy: 0.55,
       kinematics: { wiggle_scale: 0.06, wiggle_pos: 12, wiggle_rot: 2.0, posterize_rate: 16, edge_warp: 0.08, speed: 1.0 },
@@ -17144,7 +17652,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'groove_subtle_satori',
-      name: 'Subtle Satori Shimmer',
+      name: 'Satori',
       desc: 'Toque discreto de brilho anamórfico apenas nas altas luzes',
       energy: 0.58,
       kinematics: { wiggle_scale: 0.08, wiggle_pos: 14, wiggle_rot: 2.5, posterize_rate: 16, edge_warp: 0.09, speed: 1.1 },
@@ -17158,7 +17666,7 @@ const MACRO_PRESETS = {
   BUILD: [
     {
       id: 'build_anamorphic_tension',
-      name: 'Anamorphic Tension Pull',
+      name: 'Tension',
       desc: 'Alongamento direcional crescente com aceleração rítmica de batidas',
       energy: 0.78,
       kinematics: { wiggle_scale: 0.18, wiggle_pos: 28, wiggle_rot: 6.0, posterize_rate: 8, edge_warp: 0.35, speed: 1.8 },
@@ -17169,7 +17677,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'build_rf_harmonic_swell',
-      name: 'RF Harmonic Swell',
+      name: 'RF Swell',
       desc: 'Síntese de osciloscópio CMYK em modulação de alta frequência',
       energy: 0.82,
       kinematics: { wiggle_scale: 0.20, wiggle_pos: 32, wiggle_rot: 7.5, posterize_rate: 8, edge_warp: 0.40, speed: 2.0 },
@@ -17180,7 +17688,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'build_cyber_edge_tracer',
-      name: 'Cyber Edge Contour Tracer',
+      name: 'Tracer',
       desc: 'Sobel de alto contraste e marcadores cibernéticos se expandindo',
       energy: 0.75,
       kinematics: { wiggle_scale: 0.16, wiggle_pos: 24, wiggle_rot: 5.0, posterize_rate: 12, edge_warp: 0.30, speed: 1.7 },
@@ -17194,8 +17702,8 @@ const MACRO_PRESETS = {
   DROP: [
     {
       id: 'drop_bitonic_melt_impact',
-      name: 'Bitonic Melt Impact',
-      desc: 'Cascata algorítmica total: derretimento de pixels, flash e camada L4 clímax',
+      name: 'Melt',
+      desc: 'Cascata algorítmica total: derretimento de pixels e clímax',
       energy: 0.98,
       kinematics: { wiggle_scale: 0.32, wiggle_pos: 48, wiggle_rot: 12.0, posterize_rate: 4, edge_warp: 0.58, speed: 2.4 },
       matte: { type: 'geometric', preferred: 'matte_b_fractal', master_matte: 'none' },
@@ -17205,8 +17713,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_crt_shatter_vcr',
-      name: 'Analog CRT VCR Shatter',
-      desc: 'Colapso analógico violento com rolling contínuo, RGB split e scanlines',
+      name: 'CRT Glitch',
+      desc: 'Colapso analógico com rolling contínuo, RGB split e scanlines',
       energy: 0.95,
       kinematics: { wiggle_scale: 0.30, wiggle_pos: 52, wiggle_rot: -14.0, posterize_rate: 4, edge_warp: 0.62, speed: 2.5 },
       matte: { type: 'geometric', preferred: 'matte_a_geometric', master_matte: 'none' },
@@ -17216,8 +17724,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_center_melt_radial',
-      name: 'Center Melt Supernova',
-      desc: 'Supernova radial de pixel sorting no centro mantendo as bordas nítidas',
+      name: 'Supernova',
+      desc: 'Supernova radial de pixel sorting no centro',
       energy: 0.96,
       kinematics: { wiggle_scale: 0.28, wiggle_pos: 44, wiggle_rot: 10.0, posterize_rate: 4, edge_warp: 0.52, speed: 2.2 },
       matte: { type: 'geometric', preferred: 'matte_b_fractal', master_matte: 'none' },
@@ -17227,8 +17735,8 @@ const MACRO_PRESETS = {
     },
     {
       id: 'drop_cmyk_strobe_pulse',
-      name: 'CMYK Strobe Sonic Burst',
-      desc: 'Explosão vetorial Joy Division / CMYK com estroboscópio e flash',
+      name: 'Torrent',
+      desc: 'Explosão vetorial Joy Division / CMYK com flash sutil',
       energy: 0.94,
       kinematics: { wiggle_scale: 0.26, wiggle_pos: 40, wiggle_rot: 8.0, posterize_rate: 4, edge_warp: 0.50, speed: 2.2 },
       matte: { type: 'geometric', preferred: 'matte_a_geometric', master_matte: 'none' },
@@ -17241,18 +17749,18 @@ const MACRO_PRESETS = {
   BREAK: [
     {
       id: 'break_ambient_dissolve',
-      name: 'Atmospheric Ambient Dissolve',
-      desc: 'Desaceleração suave: longa transição líquida, ar puro e espaço negativo',
+      name: 'Ambient',
+      desc: 'Desaceleração suave: longa transição líquida e espaço negativo',
       energy: 0.20,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 12, wiggle_rot: -2.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.4 },
       matte: { type: 'soft', preferred: 'matte_c_fluid', master_matte: 'none' },
-      fx: { active: false, plugin: 'bad_tv', preset: 'subdued_vhs', intensity: 0.0 }, // LIMPO
+      fx: { active: false, plugin: 'bad_tv', preset: 'subdued_vhs', intensity: 0.0 },
       layers: { l1_opacity: 0.10, l2_opacity: 0.10, l4_opacity: 0.0, blend: 'multiply' },
       transition: { mode: 'dissolve', duration: 4.0 }
     },
     {
       id: 'break_pastel_oil_drift',
-      name: 'Pastel Oil Drift',
+      name: 'Oil Drift',
       desc: 'Pintura a óleo suave com saturação orgânica flutuando no tempo',
       energy: 0.25,
       kinematics: { wiggle_scale: 0.04, wiggle_pos: 16, wiggle_rot: 1.5, posterize_rate: 0, edge_warp: 0.05, speed: 0.5 },
@@ -17263,7 +17771,7 @@ const MACRO_PRESETS = {
     },
     {
       id: 'break_cyan_rf_wave',
-      name: 'Cyan RF Spectrum Calm',
+      name: 'Cyan Wave',
       desc: 'Ondas monocromáticas relaxantes de sintetizador modular',
       energy: 0.22,
       kinematics: { wiggle_scale: 0.03, wiggle_pos: 10, wiggle_rot: -1.0, posterize_rate: 0, edge_warp: 0.04, speed: 0.45 },
@@ -18248,12 +18756,19 @@ function renderVisuals(time) {
       busCtxA.restore();
     }
 
-    // LAYER 2: EDGE TRACE (Sobel Contours)
+    // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
     if (baseSource && appState.layers.layer2.active) {
-      const edgeMix = (appState.tonal.edge_mix || 0.22) * (appState.layers.layer2.opacity || 0.22);
+      const isL2Solo = !appState.layers.layer0.active && !appState.layers.layer1.active;
+      const l2 = appState.layers.layer2;
       busCtxA.save();
-      busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.8 + air * 0.4));
-      drawSobelContours(busCtxA, baseSource, w, h, simTime, appState.tonal.edge_threshold || 0.30);
+      if (isL2Solo) {
+        busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
+        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
+      } else {
+        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
+        busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
+        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
+      }
       busCtxA.restore();
     }
 
@@ -18275,56 +18790,64 @@ function renderVisuals(time) {
     const videoL3Ready = playerL3 && playerL3.readyState >= 2;
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
-    if (queuedSource && appState.layers.layer3.active) {
-      offCtxB.clearRect(0, 0, w, h);
-      offCtxB.fillStyle = '#050608';
-      offCtxB.fillRect(0, 0, w, h);
+    if (queuedSource) {
+      if (appState.layers.layer3.active) {
+        offCtxB.clearRect(0, 0, w, h);
+        offCtxB.fillStyle = '#050608';
+        offCtxB.fillRect(0, 0, w, h);
 
-      // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
-      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
-      const l3 = appState.layers.layer3;
-      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
-      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
-      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
-      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
-      drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
+        // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
+        const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+        const l3 = appState.layers.layer3;
+        const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+        const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+        const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+        const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+        drawFittedImage(offCtxB, queuedSource, w, h, l3.fit_mode || 'fill', totalRot3, totalScale3, totalPosX3, totalPosY3);
 
-      // Apply Layer 3 Matte with invert support
-      const matteL3 = getMatteImage(appState.layers.layer3.matte);
-      if (matteL3 && appState.layers.layer3.matte !== 'none') {
-        offCtxB.save();
-        offCtxB.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert);
-        offCtxB.restore();
-      }
+        // Apply Layer 3 Matte with invert support
+        const matteL3 = getMatteImage(appState.layers.layer3.matte);
+        if (matteL3 && appState.layers.layer3.matte !== 'none') {
+          offCtxB.save();
+          offCtxB.globalCompositeOperation = 'destination-in';
+          drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert);
+          offCtxB.restore();
+        }
 
-      busCtxB.save();
-      busCtxB.filter = getTonalFilterString(appState.tonal);
-      busCtxB.globalAlpha = (appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
-      busCtxB.drawImage(offscreenB, 0, 0, w, h);
-      busCtxB.restore();
-
-      // Organic penumbra vignette removed
-      // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-      if (appState.layers.layer1.active) {
         busCtxB.save();
-        busCtxB.translate(w/2, h/2);
-        const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
-        busCtxB.scale(s, s);
-        busCtxB.translate(-w/2, -h/2);
-        const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
-        busCtxB.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
-        busCtxB.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
-        drawFittedImage(busCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = (appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
         busCtxB.restore();
+
+        // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
+        if (appState.layers.layer1.active) {
+          busCtxB.save();
+          busCtxB.translate(w/2, h/2);
+          const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
+          busCtxB.scale(s, s);
+          busCtxB.translate(-w/2, -h/2);
+          const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
+          busCtxB.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
+          busCtxB.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
+          drawFittedImage(busCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
+          busCtxB.restore();
+        }
       }
 
-      // LAYER 2 on Bus B: EDGE TRACE SOBEL
+      // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
       if (appState.layers.layer2.active) {
-        const edgeMix = (appState.tonal.edge_mix || 0.22) * (appState.layers.layer2.opacity || 0.22);
+        const isL2Solo = !appState.layers.layer3.active && !appState.layers.layer1.active;
+        const l2 = appState.layers.layer2;
         busCtxB.save();
-        busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.8 + air * 0.4));
-        drawSobelContours(busCtxB, queuedSource, w, h, simTime, appState.tonal.edge_threshold || 0.30);
+        if (isL2Solo) {
+          busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
+          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
+        } else {
+          const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
+          busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
+          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
+        }
         busCtxB.restore();
       }
 
@@ -18555,24 +19078,45 @@ function renderVisuals(time) {
   requestAnimationFrame(renderVisuals);
 }
 
-// Hardware-Accelerated Video Difference Sobel Contour Synthesizer
-function drawSobelContours(ctx, baseSource, w, h, t, threshold) {
+// Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
+function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
   if (!baseSource) return;
   offCtxB.clearRect(0, 0, w, h);
   offCtxB.save();
-  const contrastBoost = Math.round(180 + (1.0 - threshold) * 140);
+
+  const l2 = (appState.layers && appState.layers.layer2) || {};
+  const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
+  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.8);
+  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
+  const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
+
+  // 1. Grayscale de alto contraste
   offCtxB.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(offCtxB, baseSource, w, h, appState.fit_mode);
-  
-  // 1.8px spatial offset with difference blend mode creates the spatial gradient
-  const shift = 1.8;
+  drawFittedImage(offCtxB, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+
+  // 2. Extração de contornos por gradiente espacial de diferença
   offCtxB.globalCompositeOperation = 'difference';
-  offCtxB.drawImage(offscreenB, shift, shift);
+  offCtxB.drawImage(offscreenB, edgeWidth, edgeWidth);
   offCtxB.restore();
 
+  // 3. Elevação de luminância e renderização com brancos vívidos
   ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  ctx.drawImage(offscreenB, 0, 0, w, h);
+  if (isSolo) {
+    // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+    // Realce luminoso para chalk/neon orgânico sem clipping digital
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.65;
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+  } else {
+    // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
+    const blendMode = (l2.blend || 'Screen').toLowerCase();
+    ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
+    ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
+    ctx.drawImage(offscreenB, 0, 0, w, h);
+  }
   ctx.restore();
 }
 
@@ -18843,7 +19387,7 @@ function getExpandedBuffer(dim) {
 }
 
 // ----------------------------------------------------------------------------
-// ROADMAP PRESETS DATABASE (AFTER EFFECTS 1:1 REPLICATION)
+// ROADMAP PRESETS DATABASE (50 CURATED CONTEMPORARY VISUAL ART PRESETS)
 // ----------------------------------------------------------------------------
 const ROADMAP_PRESETS = {
   pixel_stretch: {
@@ -18852,7 +19396,11 @@ const ROADMAP_PRESETS = {
     edge_smear: { direction: 45, intensity: 1.0, curve: 'linear', smoothness: 1.0, threshold: 0.35, length: 260, channels: 'rgba_split', start_offset: 0.65, pixel_size: 3, source: 'chroma' },
     cyberpunk_rain: { direction: 90, intensity: 0.75, curve: 'exponential', smoothness: 1.2, threshold: 0.45, length: 380, channels: 'blue_only', start_offset: 0.0, pixel_size: 2, source: 'luma' },
     hyperdrive_tunnel: { direction: 180, intensity: 0.90, curve: 'logarithmic', smoothness: 0.8, threshold: 0.30, length: 420, channels: 'rgba_split', start_offset: 0.05, pixel_size: 4, source: 'luma' },
-    needle_threads: { direction: 0, intensity: 0.95, curve: 'linear', smoothness: 0.1, threshold: 0.80, length: 500, channels: 'luma_all', start_offset: 0.0, pixel_size: 1, source: 'luma' }
+    needle_threads: { direction: 0, intensity: 0.95, curve: 'linear', smoothness: 0.1, threshold: 0.80, length: 500, channels: 'luma_all', start_offset: 0.0, pixel_size: 1, source: 'luma' },
+    subtle_mist: { direction: 0, intensity: 0.35, curve: 'scurve', smoothness: 2.8, threshold: 0.15, length: 140, channels: 'luma_all', start_offset: 0.20, pixel_size: 1, source: 'luma' },
+    vertical_spire: { direction: 270, intensity: 0.80, curve: 'exponential', smoothness: 1.5, threshold: 0.50, length: 440, channels: 'rgba_split', start_offset: 0.0, pixel_size: 2, source: 'luma' },
+    chroma_echo: { direction: 135, intensity: 0.65, curve: 'exponential', smoothness: 2.0, threshold: 0.30, length: 220, channels: 'rgba_split', start_offset: 0.15, pixel_size: 3, source: 'chroma' },
+    solar_flare: { direction: 0, intensity: 0.90, curve: 'logarithmic', smoothness: 1.2, threshold: 0.75, length: 480, channels: 'rgba_split', start_offset: 0.0, pixel_size: 2, source: 'luma' }
   },
   pixel_sorter: {
     glitch_waterfall: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.30, threshold_max: 0.80, random_noise: 0.05, length: 220, stretch_mode: false, mask: 'full', noise_scale: 18 },
@@ -18860,7 +19408,11 @@ const ROADMAP_PRESETS = {
     corrupted_signal: { angle: 180, sorting_mode: 'hue', threshold_min: 0.50, threshold_max: 0.60, random_noise: 0.40, length: 260, stretch_mode: false, mask: 'full', noise_scale: 25 },
     center_melt: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.35, threshold_max: 0.85, random_noise: 0.20, length: 240, stretch_mode: true, mask: 'center', noise_scale: 18 },
     neon_threading: { angle: 270, sorting_mode: 'luminance', threshold_min: 0.85, threshold_max: 1.0, random_noise: 0.10, length: 300, stretch_mode: false, mask: 'full', noise_scale: 12 },
-    diagonal_drift: { angle: 45, sorting_mode: 'red', threshold_min: 0.20, threshold_max: 0.70, random_noise: 0.20, length: 180, stretch_mode: true, mask: 'full', noise_scale: 20 }
+    diagonal_drift: { angle: 45, sorting_mode: 'red', threshold_min: 0.20, threshold_max: 0.70, random_noise: 0.20, length: 180, stretch_mode: true, mask: 'full', noise_scale: 20 },
+    penumbra_shadows: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.05, threshold_max: 0.35, random_noise: 0.08, length: 150, stretch_mode: false, mask: 'full', noise_scale: 15 },
+    zen_minimal: { angle: 0, sorting_mode: 'luminance', threshold_min: 0.40, threshold_max: 0.70, random_noise: 0.02, length: 30, stretch_mode: true, mask: 'full', noise_scale: 8 },
+    raster_scan: { angle: 180, sorting_mode: 'blue', threshold_min: 0.25, threshold_max: 0.65, random_noise: 0.12, length: 190, stretch_mode: false, mask: 'edges', noise_scale: 16 },
+    torrent_climax: { angle: 90, sorting_mode: 'luminance', threshold_min: 0.20, threshold_max: 0.95, random_noise: 0.35, length: 380, stretch_mode: true, mask: 'full', noise_scale: 28 }
   },
   bad_tv: {
     subdued_vhs: { tv_rgb_split: 3, tv_scanlines_opacity: 0.20, tv_scanlines_density: 300, tv_warp_wiggle: 0.08, tv_curvature: 0.04, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.15 },
@@ -18868,7 +19420,11 @@ const ROADMAP_PRESETS = {
     arcade_crt: { tv_rgb_split: 9, tv_scanlines_opacity: 0.75, tv_scanlines_density: 420, tv_warp_wiggle: 0.05, tv_curvature: 0.22, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.10 },
     analog_aberration: { tv_rgb_split: 24, tv_scanlines_opacity: 0.10, tv_scanlines_density: 200, tv_warp_wiggle: 0.02, tv_curvature: 0.0, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.05 },
     security_cam: { tv_rgb_split: 5, tv_scanlines_opacity: 0.55, tv_scanlines_density: 180, tv_warp_wiggle: 0.15, tv_curvature: 0.10, tv_warp_sync_v: 0.12, tv_warp_sync_h: -4, tv_tape_noise: 0.65 },
-    broken_vcr: { tv_rgb_split: 28, tv_scanlines_opacity: 0.80, tv_scanlines_density: 320, tv_warp_wiggle: 0.85, tv_curvature: 0.15, tv_warp_sync_v: 0.35, tv_warp_sync_h: 18, tv_tape_noise: 0.75 }
+    broken_vcr: { tv_rgb_split: 28, tv_scanlines_opacity: 0.80, tv_scanlines_density: 320, tv_warp_wiggle: 0.85, tv_curvature: 0.15, tv_warp_sync_v: 0.35, tv_warp_sync_h: 18, tv_tape_noise: 0.75 },
+    oscilloscope_tube: { tv_rgb_split: 6, tv_scanlines_opacity: 0.45, tv_scanlines_density: 380, tv_warp_wiggle: 0.04, tv_curvature: 0.30, tv_warp_sync_v: 0.0, tv_warp_sync_h: 0, tv_tape_noise: 0.08 },
+    magnetic_drift: { tv_rgb_split: 14, tv_scanlines_opacity: 0.30, tv_scanlines_density: 260, tv_warp_wiggle: 0.25, tv_curvature: 0.08, tv_warp_sync_v: 0.08, tv_warp_sync_h: 7, tv_tape_noise: 0.30 },
+    subliminal_flicker: { tv_rgb_split: 12, tv_scanlines_opacity: 0.50, tv_scanlines_density: 340, tv_warp_wiggle: 0.50, tv_curvature: 0.05, tv_warp_sync_v: 0.22, tv_warp_sync_h: -8, tv_tape_noise: 0.40 },
+    ghost_signal: { tv_rgb_split: 18, tv_scanlines_opacity: 0.25, tv_scanlines_density: 280, tv_warp_wiggle: 0.12, tv_curvature: 0.06, tv_warp_sync_v: 0.04, tv_warp_sync_h: 2, tv_tape_noise: 0.20 }
   },
   rxxr: {
     terminal_ascii: { style: 'terminal_amber', density: 10, edge_mode: false, edge_threshold: 0.35, expand_markers: 0.10, tint: '#ffb800' },
@@ -18876,7 +19432,11 @@ const ROADMAP_PRESETS = {
     hex_stream: { style: 'binary_hex', density: 12, edge_mode: false, edge_threshold: 0.30, expand_markers: 0.20, tint: '#00f0ff' },
     glitch_shading: { style: 'glitch_blocks', density: 14, edge_mode: false, edge_threshold: 0.30, expand_markers: 0.60, tint: '#ffffff' },
     wireframe_grid: { style: 'wireframe_grid', density: 16, edge_mode: true, edge_threshold: 0.50, expand_markers: 0.20, tint: '#c084fc' },
-    ghost_operator: { style: 'matrix_code', density: 6, edge_mode: true, edge_threshold: 0.40, expand_markers: 0.40, tint: '#38bdf8' }
+    ghost_operator: { style: 'matrix_code', density: 6, edge_mode: true, edge_threshold: 0.40, expand_markers: 0.40, tint: '#38bdf8' },
+    ikeda_binary: { style: 'binary_hex', density: 18, edge_mode: false, edge_threshold: 0.50, expand_markers: 0.05, tint: '#ffffff' },
+    runic_sigils: { style: 'terminal_amber', density: 12, edge_mode: true, edge_threshold: 0.30, expand_markers: 0.45, tint: '#f43f5e' },
+    vector_crosshairs: { style: 'wireframe_grid', density: 8, edge_mode: true, edge_threshold: 0.55, expand_markers: 0.35, tint: '#22d3ee' },
+    sub_density: { style: 'matrix_code', density: 4, edge_mode: false, edge_threshold: 0.25, expand_markers: 0.15, tint: '#a78bfa' }
   },
   modulation: {
     joy_division: { color_mode: 'joy_division', lines_count: 70, amplitude: 38, frequency: 55, lowpass: 0.30, line_thickness: 1.4 },
@@ -18884,7 +19444,11 @@ const ROADMAP_PRESETS = {
     liquid_metal: { color_mode: 'cyan_spectrum', lines_count: 36, amplitude: 48, frequency: 22, lowpass: 0.60, line_thickness: 2.2 },
     laser_topo: { color_mode: 'laser_topo', lines_count: 96, amplitude: 26, frequency: 80, lowpass: 0.20, line_thickness: 1.0 },
     concentric_holo: { color_mode: 'cmyk_misreg', lines_count: 52, cmyk_offset: 16, amplitude: 38, frequency: 65, lowpass: 0.40, line_thickness: 1.6 },
-    binary_shift: { color_mode: 'amber_matrix', lines_count: 110, amplitude: 18, frequency: 120, lowpass: 0.10, line_thickness: 0.9 }
+    binary_shift: { color_mode: 'amber_matrix', lines_count: 110, amplitude: 18, frequency: 120, lowpass: 0.10, line_thickness: 0.9 },
+    nonotak_lattices: { color_mode: 'joy_division', lines_count: 85, amplitude: 15, frequency: 95, lowpass: 0.15, line_thickness: 0.8 },
+    micro_topography: { color_mode: 'laser_topo', lines_count: 120, amplitude: 12, frequency: 130, lowpass: 0.12, line_thickness: 0.7 },
+    seismic_pulse: { color_mode: 'cyan_spectrum', lines_count: 44, amplitude: 55, frequency: 30, lowpass: 0.50, line_thickness: 1.8 },
+    aurora_dispersion: { color_mode: 'cmyk_misreg', lines_count: 60, cmyk_offset: 20, amplitude: 42, frequency: 40, lowpass: 0.45, line_thickness: 1.5 }
   }
 };
 
@@ -25942,6 +26506,442 @@ function clearPreferencesSearch() {
   filterPreferencesSearch('');
 }
 window.clearPreferencesSearch = clearPreferencesSearch;
+
+// ============================================================================
+// STUDIO INSPECTOR MODULE (DAVINCI RESOLVE / AFTER EFFECTS PROPERTIES)
+// ============================================================================
+const studioInspectorState = {
+  isOpen: false,
+  activeTab: 'layer', // 'layer', 'clip', 'fx'
+  targetLayer: 2,     // 0, 1, 2, 3, 4, 5
+  targetClipId: null
+};
+window.studioInspectorState = studioInspectorState;
+
+function toggleStudioInspector() {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  if (!drawer) return;
+  studioInspectorState.isOpen = !studioInspectorState.isOpen;
+  drawer.classList.toggle('open', studioInspectorState.isOpen);
+  drawer.classList.toggle('hidden', !studioInspectorState.isOpen);
+
+  const btn = document.getElementById('btn-toggle-studio-inspector');
+  if (btn) btn.classList.toggle('active', studioInspectorState.isOpen);
+
+  if (studioInspectorState.isOpen) {
+    renderStudioInspector();
+  }
+}
+window.toggleStudioInspector = toggleStudioInspector;
+
+function openStudioInspector(context, id) {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  if (!drawer) return;
+
+  if (context === 'layer') {
+    studioInspectorState.activeTab = 'layer';
+    studioInspectorState.targetLayer = (id !== undefined && id !== null) ? Number(id) : 2;
+  } else if (context === 'clip') {
+    studioInspectorState.activeTab = 'clip';
+    studioInspectorState.targetClipId = id || (appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId);
+  } else if (context === 'fx') {
+    studioInspectorState.activeTab = 'fx';
+  }
+
+  studioInspectorState.isOpen = true;
+  drawer.classList.add('open');
+  drawer.classList.remove('hidden');
+
+  const btn = document.getElementById('btn-toggle-studio-inspector');
+  if (btn) btn.classList.add('active');
+
+  renderStudioInspector();
+}
+window.openStudioInspector = openStudioInspector;
+
+function switchInspectorTab(tab) {
+  studioInspectorState.activeTab = tab;
+  renderStudioInspector();
+}
+window.switchInspectorTab = switchInspectorTab;
+
+function setInspectorLayer(layerIdx) {
+  studioInspectorState.targetLayer = Number(layerIdx);
+  renderStudioInspector();
+}
+window.setInspectorLayer = setInspectorLayer;
+
+function setInspectorClip(clipId) {
+  studioInspectorState.targetClipId = clipId;
+  renderStudioInspector();
+}
+window.setInspectorClip = setInspectorClip;
+
+function renderStudioInspector() {
+  const drawer = document.getElementById('studio-inspector-drawer');
+  const container = document.getElementById('inspector-body-content');
+  const badge = document.getElementById('inspector-target-badge');
+  if (!drawer || !container) return;
+
+  // Tabs status
+  document.querySelectorAll('.insp-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === studioInspectorState.activeTab);
+  });
+
+  const tab = studioInspectorState.activeTab;
+
+  if (tab === 'layer') {
+    const lIdx = studioInspectorState.targetLayer !== undefined ? studioInspectorState.targetLayer : 2;
+    const lKey = `layer${lIdx}`;
+    const layer = (appState.layers && appState.layers[lKey]) || {};
+    const layerNames = ['L0 BASE', 'L1 DOUBLE', 'L2 FIND EDGES', 'L3 CUE QUEUE', 'L4 DIFFERENCE', 'L5 OVERLAY'];
+    if (badge) badge.textContent = `${layerNames[lIdx] || `L${lIdx}`}`;
+
+    let html = `
+      <!-- LAYER PICKER STRIP -->
+      <div class="insp-section">
+        <div class="insp-sec-title">CAMADA EM FOCO</div>
+        <div class="insp-pills-row">
+          ${[0, 1, 2, 3, 4, 5].map(idx => `
+            <button class="insp-layer-pill ${idx === lIdx ? 'active' : ''}" onclick="setInspectorLayer(${idx})">
+              L${idx}${idx === 2 ? ' EDGES' : ''}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- MAIN LAYER CONTROLS (ACTIVE, SOLO, MUTE) -->
+      <div class="insp-section">
+        <div class="insp-row-between">
+          <span class="insp-label">ESTADO DA CAMADA</span>
+          <div class="insp-btn-group">
+            <button class="insp-btn-toggle ${layer.active ? 'active-green' : ''}" onclick="toggleLayerActive('${lKey}'); renderStudioInspector();">
+              ${layer.active ? 'ATIVO' : 'MUTADO'}
+            </button>
+            <button class="insp-btn-solo" onclick="if(window.penumbraMidi){ window.penumbraMidi.soloLayer(${lIdx}); } else { toggleLayerActive('${lKey}'); } renderStudioInspector();" title="Isolar esta camada em Solo">
+              SOLO
+            </button>
+            <button class="insp-btn-ghost" onclick="if(window.penumbraMidi){ window.penumbraMidi.unsoloAll(); } renderStudioInspector();" title="Restaurar todas as camadas">
+              UNSOLO ALL
+            </button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>OPACIDADE</span>
+            <span class="insp-val-disp" id="insp-disp-opac">${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}%</span>
+          </div>
+          <input type="range" min="0" max="100" value="${Math.round((layer.opacity !== undefined ? layer.opacity : 1.0) * 100)}" class="insp-range" oninput="onLayerOpacityChange('${lKey}', this.value); document.getElementById('insp-disp-opac').textContent = this.value + '%';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>MODO DE BLEND</span>
+            <span class="insp-val-disp">${layer.blend || 'Normal'}</span>
+          </div>
+          <select class="insp-select" onchange="onLayerBlendChange('${lKey}', this.value); renderStudioInspector();">
+            ${['Normal', 'Screen', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
+              <option value="${b}" ${(layer.blend || 'Normal').toLowerCase() === b.toLowerCase() ? 'selected' : ''}>${b}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+    `;
+
+    // SPECIAL DEDICATED PANEL FOR LAYER 2 (FIND EDGES CONTOURS)
+    if (lIdx === 2) {
+      const lumBoost = (layer.luminance !== undefined ? layer.luminance : (appState.tonal?.edge_luminance || 2.8));
+      const edgeWidth = (layer.edge_width !== undefined ? layer.edge_width : (appState.tonal?.edge_width || 2.2));
+      const edgeThresh = (layer.edge_threshold !== undefined ? layer.edge_threshold : (appState.tonal?.edge_threshold || 0.28));
+      const edgeMix = (layer.edge_mix !== undefined ? layer.edge_mix : (appState.tonal?.edge_mix || 0.85));
+
+      html += `
+        <div class="insp-section insp-highlight-card">
+          <div class="insp-sec-title insp-cyan-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path></svg>
+            FIND EDGES · CONTORNO & LUMINÂNCIA (L2)
+          </div>
+          <div class="insp-desc">Contornos Sobel no topo do master. Luminância calibrada para projetor com brancos destacados.</div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>LUMINÂNCIA DOS BRANCOS (WHITE GAIN)</span>
+              <span class="insp-val-disp text-cyan" id="disp-l2-lum">${lumBoost.toFixed(1)}x</span>
+            </div>
+            <input type="range" min="10" max="50" value="${Math.round(lumBoost * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setLuminance(v); document.getElementById('disp-l2-lum').textContent = v.toFixed(1) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>LIMIAR DE BORDA (THRESHOLD)</span>
+              <span class="insp-val-disp" id="disp-l2-thresh">${Math.round(edgeThresh * 100)}%</span>
+            </div>
+            <input type="range" min="5" max="85" value="${Math.round(edgeThresh * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setThreshold(v); document.getElementById('disp-l2-thresh').textContent = Math.round(v * 100) + '%';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESPESSURA DO TRAÇADO (EDGE WIDTH)</span>
+              <span class="insp-val-disp" id="disp-l2-width">${edgeWidth.toFixed(1)} px</span>
+            </div>
+            <input type="range" min="10" max="45" value="${Math.round(edgeWidth * 10)}" class="insp-range" oninput="const v = this.value / 10.0; layer2_setWidth(v); document.getElementById('disp-l2-width').textContent = v.toFixed(1) + ' px';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>MIX DIRETO DO FIND EDGES</span>
+              <span class="insp-val-disp" id="disp-l2-mix">${Math.round(edgeMix * 100)}%</span>
+            </div>
+            <input type="range" min="0" max="100" value="${Math.round(edgeMix * 100)}" class="insp-range" oninput="const v = this.value / 100.0; layer2_setMix(v); document.getElementById('disp-l2-mix').textContent = Math.round(v * 100) + '%';">
+          </div>
+        </div>
+      `;
+    }
+
+    // GEOMETRIA E ENQUADRAMENTO DA CAMADA
+    const rot = layer.rotation || 0;
+    const fit = layer.fit_mode || 'fill';
+    html += `
+      <div class="insp-section">
+        <div class="insp-sec-title">GEOMETRIA & ENQUADRAMENTO</div>
+        <div class="insp-control-row">
+          <span class="insp-label">ORIENTAÇÃO / ROTAÇÃO</span>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${rot === 0 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 0); renderStudioInspector();">0°</button>
+            <button class="insp-btn-pill ${rot === -90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', -90); renderStudioInspector();">↺ -90°</button>
+            <button class="insp-btn-pill ${rot === 90 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 90); renderStudioInspector();">↻ +90°</button>
+            <button class="insp-btn-pill ${rot === 180 ? 'active' : ''}" onclick="setLayerRotation('${lKey}', 180); renderStudioInspector();">180°</button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <span class="insp-label">MODO DE FIT</span>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${fit === 'fill' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fill'); renderStudioInspector();">FILL</button>
+            <button class="insp-btn-pill ${fit === 'fit' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'fit'); renderStudioInspector();">FIT</button>
+            <button class="insp-btn-pill ${fit === 'wings' ? 'active' : ''}" onclick="setLayerFitMode('${lKey}', 'wings'); renderStudioInspector();">WINGS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MÁSCARA (MATTE) DA CAMADA -->
+      <div class="insp-section">
+        <div class="insp-sec-title">MÁSCARA DA CAMADA</div>
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>SELETOR DE MÁSCARA</span>
+            <button class="insp-btn-ghost-sm ${layer.matte_invert ? 'active' : ''}" onclick="toggleLayerMatteInvert('${lKey}'); renderStudioInspector();">
+              ${layer.matte_invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
+            </button>
+          </div>
+          <select class="insp-select" onchange="onLayerMatteChange('${lKey}', this.value); renderStudioInspector();">
+            <option value="none" ${(!layer.matte || layer.matte === 'none') ? 'selected' : ''}>PASSTHROUGH (SEM MÁSCARA)</option>
+            ${(allMattes || []).map(m => `
+              <option value="${m.path || m.filename}" ${(layer.matte === m.path || layer.matte === m.filename) ? 'selected' : ''}>${m.name || m.filename}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } else if (tab === 'clip') {
+    // CLIPE TAB (PRE-AIR TRANSFORMS & MEDIA)
+    const baseClipId = appState.layers?.layer0?.clipId || 'clip_001';
+    const cueClipId = appState.layers?.layer3?.clipId || 'clip_005';
+    const targetClipId = studioInspectorState.targetClipId || cueClipId;
+    const clip = (allClips || []).find(c => c.id === targetClipId) || { id: targetClipId, name: targetClipId };
+    const tf = getClipTransform(targetClipId);
+    if (badge) badge.textContent = `CLIPE: ${clip.name ? clip.name.slice(0, 16) : targetClipId}`;
+
+    let html = `
+      <div class="insp-section">
+        <div class="insp-sec-title">SELECIONAR CLIPE</div>
+        <div class="insp-pills-row">
+          <button class="insp-layer-pill ${targetClipId === baseClipId ? 'active' : ''}" onclick="setInspectorClip('${baseClipId}')">
+            PGM DECK A (L0)
+          </button>
+          <button class="insp-layer-pill ${targetClipId === cueClipId ? 'active' : ''}" onclick="setInspectorClip('${cueClipId}')">
+            CUE DECK B (L3)
+          </button>
+        </div>
+        <div class="insp-clip-name-box">${clip.name || targetClipId}</div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">TRANSFORMAÇÃO GEOMÉTRICA (PRE-AIR)</div>
+        <div class="insp-desc">Ajuste individual do clipe antes de ir para o ar, preservando o layout master.</div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>ROTAÇÃO</span>
+            <span class="insp-val-disp">${tf.rotation || 0}°</span>
+          </div>
+          <div class="insp-pills-row">
+            <button class="insp-btn-pill ${tf.rotation === 0 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 0 }); renderStudioInspector();">0°</button>
+            <button class="insp-btn-pill ${tf.rotation === -90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: -90 }); renderStudioInspector();">↺ -90°</button>
+            <button class="insp-btn-pill ${tf.rotation === 90 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 90 }); renderStudioInspector();">↻ +90°</button>
+            <button class="insp-btn-pill ${tf.rotation === 180 ? 'active' : ''}" onclick="setClipTransform('${targetClipId}', { rotation: 180 }); renderStudioInspector();">180°</button>
+          </div>
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>ESCALA / ZOOM</span>
+            <span class="insp-val-disp" id="disp-clip-scale">${(tf.scale || 1.0).toFixed(2)}x</span>
+          </div>
+          <input type="range" min="50" max="250" value="${Math.round((tf.scale || 1.0) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setClipTransform('${targetClipId}', { scale: v }); document.getElementById('disp-clip-scale').textContent = v.toFixed(2) + 'x';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>POSIÇÃO X</span>
+            <span class="insp-val-disp" id="disp-clip-posx">${tf.pos_x || 0} px</span>
+          </div>
+          <input type="range" min="-300" max="300" value="${tf.pos_x || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_x: Number(this.value) }); document.getElementById('disp-clip-posx').textContent = this.value + ' px';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>POSIÇÃO Y</span>
+            <span class="insp-val-disp" id="disp-clip-posy">${tf.pos_y || 0} px</span>
+          </div>
+          <input type="range" min="-300" max="300" value="${tf.pos_y || 0}" class="insp-range" oninput="setClipTransform('${targetClipId}', { pos_y: Number(this.value) }); document.getElementById('disp-clip-posy').textContent = this.value + ' px';">
+        </div>
+
+        <div style="margin-top: 10px;">
+          <button class="insp-btn-danger-outline" onclick="resetClipTransform('${targetClipId}'); renderStudioInspector();">
+            RESETAR GEOMETRIA DO CLIPE
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } else if (tab === 'fx') {
+    // FX & COLOR TAB
+    if (badge) badge.textContent = 'FX & COLOR MASTER';
+    const tonal = appState.tonal || {};
+
+    let html = `
+      <div class="insp-section">
+        <div class="insp-sec-title">COLOR & LEVELS (MASTER DECK)</div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>BLACK PEDESTAL (PRETOS)</span>
+            <span class="insp-val-disp" id="disp-insp-bright">${(tonal.brightness || -0.05).toFixed(2)}</span>
+          </div>
+          <input type="range" min="-40" max="20" value="${Math.round((tonal.brightness || -0.05) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.brightness = v; document.getElementById('disp-insp-bright').textContent = v.toFixed(2);">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>CONTRAST (CONTRASTE)</span>
+            <span class="insp-val-disp" id="disp-insp-contrast">${(tonal.contrast || 1.18).toFixed(2)}x</span>
+          </div>
+          <input type="range" min="80" max="220" value="${Math.round((tonal.contrast || 1.18) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.contrast = v; document.getElementById('disp-insp-contrast').textContent = v.toFixed(2) + 'x';">
+        </div>
+
+        <div class="insp-control-row">
+          <div class="insp-label-val">
+            <span>GAMMA (CURVA TONAL)</span>
+            <span class="insp-val-disp" id="disp-insp-gamma">${(tonal.gamma || 0.85).toFixed(2)}</span>
+          </div>
+          <input type="range" min="50" max="180" value="${Math.round((tonal.gamma || 0.85) * 100)}" class="insp-range" oninput="const v = this.value / 100.0; appState.tonal.gamma = v; document.getElementById('disp-insp-gamma').textContent = v.toFixed(2);">
+        </div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">ROTEAMENTO DE FX</div>
+        <div class="insp-control-row">
+          <span class="insp-label">DESTINO DOS EFEITOS</span>
+          <div class="insp-pills-row">
+            ${['master', 'deck_a', 'deck_b'].map(tgt => `
+              <button class="insp-btn-pill ${(appState.fx?.target || 'master') === tgt ? 'active' : ''}" onclick="if(appState.fx) appState.fx.target = '${tgt}'; renderStudioInspector();">
+                ${tgt.toUpperCase()}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="insp-section">
+        <div class="insp-sec-title">PLUGINS DE EFEITO (50 PRESETS EXPANDIDOS)</div>
+        <div class="insp-desc">Selecione e ative presets estilizados de Pixel Sorter, Stretch, Modulation, Bad TV e RXXR.</div>
+        <div class="insp-fx-quick-grid">
+          ${[
+            { id: 'pixel_stretch', name: 'PIXEL STRETCH' },
+            { id: 'pixel_sorter', name: 'PIXEL SORTER' },
+            { id: 'modulation', name: 'MODULATION' },
+            { id: 'bad_tv', name: 'BAD TV' },
+            { id: 'rxxr', name: 'RXXR ASCII' }
+          ].map(p => {
+            const presets = Object.keys(ROADMAP_PRESETS[p.id] || {});
+            const isPlgActive = appState.fx && appState.fx[p.id] && appState.fx[p.id].enabled;
+            return `
+              <div class="insp-fx-card">
+                <div class="insp-fx-card-hdr">
+                  <span style="font-weight:700; color:#fff;">${p.name}</span>
+                  <button class="insp-btn-toggle-sm ${isPlgActive ? 'active' : ''}" onclick="toggleFxPluginEnabled('${p.id}'); renderStudioInspector();">
+                    ${isPlgActive ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div class="insp-presets-chips-flow">
+                  ${presets.map(pr => `
+                    <button class="insp-chip-pill" onclick="loadPluginPreset('${p.id}', '${pr}'); renderStudioInspector();" title="${pr}">
+                      ${pr.replace(/_/g, ' ')}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  }
+}
+window.renderStudioInspector = renderStudioInspector;
+
+function layer2_setLuminance(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.luminance = val;
+  if (appState.tonal) appState.tonal.edge_luminance = val;
+}
+window.layer2_setLuminance = layer2_setLuminance;
+
+function layer2_setThreshold(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_threshold = val;
+  if (appState.tonal) appState.tonal.edge_threshold = val;
+}
+window.layer2_setThreshold = layer2_setThreshold;
+
+function layer2_setWidth(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_width = val;
+  if (appState.tonal) appState.tonal.edge_width = val;
+}
+window.layer2_setWidth = layer2_setWidth;
+
+function layer2_setMix(val) {
+  if (!appState.layers.layer2) return;
+  appState.layers.layer2.edge_mix = val;
+  if (appState.tonal) appState.tonal.edge_mix = val;
+}
+window.layer2_setMix = layer2_setMix;
+
+function toggleFxPluginEnabled(pluginId) {
+  if (appState.fx && appState.fx[pluginId]) {
+    appState.fx[pluginId].enabled = !appState.fx[pluginId].enabled;
+  }
+}
+window.toggleFxPluginEnabled = toggleFxPluginEnabled;
+
 
 
 </script>

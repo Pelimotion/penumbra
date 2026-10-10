@@ -22,17 +22,13 @@ class PenumbraMidiHub {
     this.activeOutput = null;
     this.devicesList = [];
     
-    // Modos / Bancos Operacionais
-    // 1: Master Live Mixer (Macro)
-    // 2: Layer Focus & Deep Params (Micro)
-    // 3: Conductor & Macro Presets (Narrativo)
-    // 4: Color Lab & Grading (Estúdio)
+    // Modos / Bancos Operacionais (Hardware M-Vave SMC-MIXER Dual-Bank Architecture)
+    // 1: Banco A (Master Live Mixer, Takes, Levels & Layers)
+    // 2: Banco B (FX Engine, Mattes, Shaders & Creative Sculpt)
     this.activeBank = 1;
     this.bankNames = {
-      1: 'MASTER LIVE MIXER',
-      2: 'LAYER FOCUS & PARAMS',
-      3: 'CONDUCTOR MACROS',
-      4: 'COLOR LAB & GRADING'
+      1: 'BANK A · LIVE MIX, TAKES & LEVELS',
+      2: 'BANK B · FX ENGINE, MATTES & SCULPT'
     };
     
     // Foco de Camada para o Banco 2
@@ -291,145 +287,87 @@ class PenumbraMidiHub {
     this.activeTelemetry.detectedProtocol = 'Modo CC';
 
     // 2. DETECÇÃO INTELIGENTE DE MUDANÇA DE BANCO DE HARDWARE DO M-VAVE:
-    // O M-Vave possui 2 presets internos de fábrica:
-    //   - Banco 1 (Seta Esquerda ◄): Faders CC 20..27, Master CC 28, Encoders CC 30..37
-    //   - Banco 2 (Seta Direita ►): Matriz Completa de Botões (Mute CC 20..27, Solo CC 28..35, Rec CC 36..43, Sel CC 44..51, Setas/Transporte CC 56..63)
+    // Seta Esquerda ◄ (CC 86 ou CC 46) -> Seleciona BANCO A (Live Mixer, Takes & Levels)
+    // Seta Direita ► (CC 87 ou CC 47) -> Seleciona BANCO B (FX Engine, Mattes & Sculpt)
     if (cc === 86 || (cc === 46 && value > 0)) {
-      this.setHardwareBank('bank1');
+      this.setBank(1);
       return;
     }
     if (cc === 87 || (cc === 47 && value > 0)) {
-      this.setHardwareBank('bank2');
+      this.setBank(2);
       return;
     }
 
-    // Auto-identificação dinâmica por tráfego quando o perfil for Auto (mvave_smc):
-    if (this.activeProfile === 'mvave_smc') {
-      if ((cc >= 56 && cc <= 63) || (cc >= 36 && cc <= 43) || (cc >= 44 && cc <= 51)) {
-        if (this.hardwareBank !== 'bank2') {
-          this.setHardwareBank('bank2');
-        }
-      } else if (cc >= 20 && cc <= 27 && value > 2 && value < 125) {
-        // Movimento analógico intermediário em CC 20..27 confirma Fader físico em movimento (Banco 1 ◄)
-        if (this.hardwareBank !== 'bank1') {
-          this.setHardwareBank('bank1');
-        }
+    // 1. Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1 ou CC 9 a 16):
+    if (channel === 1 && ((cc >= 20 && cc <= 27) || (cc >= 9 && cc <= 16))) {
+      const faderIdx = (cc >= 20 && cc <= 27) ? (cc - 20) : (cc - 9);
+      this.handleFaderInput(faderIdx, norm);
+      return;
+    }
+
+    // 2. Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1, CC 17, CC 11):
+    if (channel === 1 && (cc === 28 || cc === 29 || cc === 17 || cc === 11)) {
+      this.handleMasterFaderInput(norm);
+      return;
+    }
+
+    // 3. Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1 ou CC 1 a 8):
+    if (channel === 1 && ((cc >= 30 && cc <= 37) || (cc >= 1 && cc <= 8))) {
+      const knobIdx = (cc >= 30 && cc <= 37) ? (cc - 30) : (cc - 1);
+      this.handleKnobInput(knobIdx, value, norm);
+      return;
+    }
+
+    // 4. Botões de Mute (CC 40 a 47 no Canal 1):
+    if (channel === 1 && cc >= 40 && cc <= 47 && value > 0) {
+      this.handleButtonMute(cc - 40);
+      return;
+    }
+
+    // 5. Botões de Solo (CC 48 a 55 no Canal 1):
+    if (channel === 1 && cc >= 48 && cc <= 55 && value > 0) {
+      this.handleButtonSolo(cc - 48);
+      return;
+    }
+
+    // 6. Botões de Rec / Trigger (CC 36 a 43 no Canal 1):
+    if (channel === 1 && cc >= 36 && cc <= 43 && value > 0) {
+      this.handleButtonRec(cc - 36);
+      return;
+    }
+
+    // 7. Botões de Select / Inspect (CC 64 a 71 no Canal 1):
+    if (channel === 1 && cc >= 64 && cc <= 71 && value > 0) {
+      this.handleButtonSelect(cc - 64);
+      return;
+    }
+
+    // 8. Transporte & Setas de Navegação (CC 56 a 63 no Canal 1):
+    if (channel === 1 && cc >= 56 && cc <= 63 && value > 0) {
+      switch (cc) {
+        case 56: this.actionRewind(); return;          // Rewind / Downbeat 1.1.1
+        case 57: this.actionFastForward(); return;     // FastForward / Advance Take
+        case 58: this.stepCrossfader(-5); return;      // Seta Esquerda (◄ Nudge A)
+        case 59: this.navigateUp(); return;            // Seta Acima (▲ Preset Anterior)
+        case 60: this.navigateDown(); return;          // Seta Abaixo (▼ Próximo Preset)
+        case 61: this.stepCrossfader(+5); return;      // Seta Direita (► Nudge B)
+        case 62: this.toggleBank(); return;            // Cycle / Loop (Alterna Bank A / Bank B)
+        case 63: this.actionBlackout(); return;        // Record / Panic Blackout
       }
     }
 
-    const isHwBank2 = (this.activeProfile === 'mvave_bank2' || (this.activeProfile === 'mvave_smc' && this.hardwareBank === 'bank2'));
-
-    // ---------------------------------------------------------------------------------------
-    // A) SE ESTIVER NO BANCO 2 DO HARDWARE (SETA DIREITA ► · MATRIZ COMPLETA DE BOTÕES):
-    // ---------------------------------------------------------------------------------------
-    if (isHwBank2) {
-      // 1. Linha Mute (CC 20 a 27):
-      if (channel === 1 && cc >= 20 && cc <= 27 && value > 0) {
-        this.handleButtonMute(cc - 20);
-        return;
-      }
-      // 2. Linha Solo (CC 28 a 35):
-      if (channel === 1 && cc >= 28 && cc <= 35 && value > 0) {
-        this.handleButtonSolo(cc - 28);
-        return;
-      }
-      // 3. Linha Rec / Trigger (CC 36 a 43):
-      if (channel === 1 && cc >= 36 && cc <= 43 && value > 0) {
-        this.handleButtonRec(cc - 36);
-        return;
-      }
-      // 4. Linha Select (CC 44 a 51):
-      if (channel === 1 && cc >= 44 && cc <= 51 && value > 0) {
-        this.handleButtonSelect(cc - 44);
-        return;
-      }
-      // 5. Linha Transporte & Setas de Navegação (CC 56 a 63):
-      if (channel === 1 && cc >= 56 && cc <= 63 && value > 0) {
-        switch (cc) {
-          case 56: this.actionRewind(); return;          // Rewind / Downbeat 1.1.1
-          case 57: this.actionFastForward(); return;     // FastForward / Advance Take
-          case 58: this.stepCrossfader(-5); return;      // Seta Esquerda (◄ Nudge A)
-          case 59: this.navigateUp(); return;            // Seta Acima (▲ Preset Anterior)
-          case 60: this.navigateDown(); return;          // Seta Abaixo (▼ Próximo Preset)
-          case 61: this.stepCrossfader(+5); return;      // Seta Direita (► Nudge B)
-          case 62: this.nextBank(); return;              // Cycle / Loop (Cicla B1..B4!)
-          case 63: this.actionBlackout(); return;        // Record / Panic Blackout
-        }
-      }
-      // Faders e Knobs secundários no Modo 2 (se configurados):
-      if (channel === 1 && cc >= 9 && cc <= 16) {
-        this.handleFaderInput(cc - 9, norm);
-        return;
-      }
-      if (channel === 1 && cc >= 1 && cc <= 8) {
-        this.handleKnobInput(cc - 1, value, norm);
-        return;
-      }
-    }
-
-    // ---------------------------------------------------------------------------------------
-    // B) SE ESTIVER NO BANCO 1 DO HARDWARE (SETA ESQUERDA ◄ · FADERS & ENCODERS NATIVOS):
-    // ---------------------------------------------------------------------------------------
-    else {
-      // 1. Faders Físicos 1 a 8 (CC 20 a 27 no Canal 1):
-      if (channel === 1 && cc >= 20 && cc <= 27) {
-        const faderIdx = cc - 20;
-        this.handleFaderInput(faderIdx, norm);
-        return;
-      }
-
-      // 2. Master Fader / Crossfader Físico (CC 28 ou CC 29 no Canal 1):
-      if (channel === 1 && (cc === 28 || cc === 29)) {
-        this.handleMasterFaderInput(norm);
-        return;
-      }
-
-      // 3. Knobs / Rotary Encoders 1 a 8 (CC 30 a 37 no Canal 1):
-      if (channel === 1 && cc >= 30 && cc <= 37) {
-        const knobIdx = cc - 30;
-        this.handleKnobInput(knobIdx, value, norm);
-        return;
-      }
-
-      // 4. Botões Complementares via CC (Modo 1):
-      if (cc >= 40 && cc <= 47 && value > 0) {
-        this.handleButtonMute(cc - 40);
-        return;
-      }
-      if (cc >= 48 && cc <= 55 && value > 0) {
-        this.handleButtonSolo(cc - 48);
-        return;
-      }
-      if (cc >= 56 && cc <= 63 && value > 0) {
-        switch (cc) {
-          case 56: this.actionRewind(); return;
-          case 57: this.actionFastForward(); return;
-          case 58: this.stepCrossfader(-5); return;
-          case 59: this.navigateUp(); return;
-          case 60: this.navigateDown(); return;
-          case 61: this.stepCrossfader(+5); return;
-          case 62: this.nextBank(); return;              // Cycle cicla B1..B4!
-          case 63: this.actionBlackout(); return;
-        }
-      }
-      if (cc >= 64 && cc <= 71 && value > 0) {
-        this.handleButtonSelect(cc - 64);
-        return;
-      }
-
-      // 5. Botões de Transporte Mackie CC:
-      if (value > 0) {
-        switch (cc) {
-          case 80: case 114: this.actionRewind(); return;
-          case 81: case 115: this.actionFastForward(); return;
-          case 82: case 116: this.actionStop(); return;
-          case 83: case 117: this.actionPlay(); return;
-          case 84: case 118: this.nextBank(); return;   // Cycle cicla B1..B4!
-          case 85: case 119: this.actionBlackout(); return;
-          case 86: this.prevBank(); return;
-          case 87: this.nextBank(); return;
-          case 88: this.actionTapTempo(); return;
-        }
+    // 9. Botões de Transporte Mackie CC Adicionais:
+    if (value > 0) {
+      switch (cc) {
+        case 80: case 114: this.actionRewind(); return;
+        case 81: case 115: this.actionFastForward(); return;
+        case 82: case 116: this.actionStop(); return;
+        case 83: case 117: this.actionPlay(); return;
+        case 84: case 118: this.toggleBank(); return;
+        case 85: case 119: this.actionBlackout(); return;
+        case 86: this.setBank(1); return;
+        case 87: this.setBank(2); return;
+        case 88: this.actionTapTempo(); return;
       }
     }
 
@@ -533,9 +471,9 @@ class PenumbraMidiHub {
       case 93: this.actionStop(); return;            // Stop (||)
       case 94: this.actionPlay(); return;            // Play (>)
       case 95: this.actionBlackout(); return;        // Record (O) -> Master Blackout Panic
-      case 86: this.actionLoop(); return;            // Cycle / Loop (🔁)
-      case 46: this.prevBank(); return;              // Channel / Bank Left («)
-      case 47: this.nextBank(); return;              // Channel / Bank Right (»)
+      case 86: this.toggleBank(); return;            // Cycle / Loop (🔁 Alterna Bank A/B)
+      case 46: this.setBank(1); return;              // Channel / Bank Left (« Bank A)
+      case 47: this.setBank(2); return;              // Channel / Bank Right (» Bank B)
       case 96: this.navigateUp(); return;            // Seta Acima (▲)
       case 97: this.navigateDown(); return;          // Seta Abaixo (▼)
       case 98: this.stepCrossfader(-5); return;      // Seta Esquerda (◀)
@@ -649,17 +587,19 @@ class PenumbraMidiHub {
     this.activeTelemetry.lastAction = `Fader ${faderIdx + 1} (${(normValue * 100).toFixed(0)}%)`;
     this.twinState.faders[faderIdx] = normValue;
 
-    // -------------------------------------------------------------
-    // BANCO 1: MASTER LIVE MIXER
-    // Faders 1 a 5: Opacidade das Camadas 0 a 4
-    // Fader 6: Master FX Intensity / Crossfader
-    // Fader 7: Video Speed Master
-    // Fader 8: Master Brightness / Fade to Black
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 1 (BANK A): LIVE MIXER, TAKES & LEVELS
+    // Faders 0 a 4: Opacidade das Camadas L0, L1, L2 (Find Edges), L3 (Cue B), L5 (Overlay)
+    // Fader 5: Master Brightness / Fade to Black Dimmer
+    // Fader 6: Master Video Speed (0.25x a 2.5x)
+    // Fader 7: T-Bar Crossfader A/B (Takes)
+    // =============================================================
     if (this.activeBank === 1) {
-      if (faderIdx >= 0 && faderIdx <= 5) {
-        const layerKey = `layer${faderIdx}`;
-        const inputId = `l${faderIdx}-opacity`;
+      const layerMap = [0, 1, 2, 3, 5];
+      if (faderIdx >= 0 && faderIdx < layerMap.length) {
+        const lNum = layerMap[faderIdx];
+        const layerKey = `layer${lNum}`;
+        const inputId = `l${lNum}-opacity`;
         const el = document.getElementById(inputId);
         const currNorm = el ? (Number(el.value) / 100.0) : 0;
         
@@ -667,66 +607,57 @@ class PenumbraMidiHub {
         if (takeover.allowUpdate) {
           this.setLayerOpacityDirect(layerKey, takeover.finalValue * 100);
         }
-      } else if (faderIdx === 6) {
-        // Crossfader Master Bus A/B
-        const el = document.getElementById('crossfader');
-        const currNorm = el ? (Number(el.value) / 100.0) : 0.5;
-        const takeover = this.applySoftTakeover(`b1_fader_6`, normValue, currNorm);
-        if (takeover.allowUpdate && el) {
-          el.value = (takeover.finalValue * 100).toFixed(1);
-          el.dispatchEvent(new Event('input'));
-        }
-      } else if (faderIdx === 7) {
+      } else if (faderIdx === 5) {
         // Master Dimmer / Brightness
         this.setMasterBrightnessDimmer(normValue);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 2: LAYER FOCUS & DEEP PARAMETERS
-    // Opera na camada ativa: this.activeFocusLayer (0..4)
-    // Faders 1 a 4: Mascaramento Procedural (Crop Top, Bottom, Left, Right)
-    // Faders 5 a 8: Áudio DSP Reactivity Bands (Sub, Bass, Mids, Air)
-    // -------------------------------------------------------------
-    else if (this.activeBank === 2) {
-      const layerKey = `layer${this.activeFocusLayer}`;
-      if (faderIdx >= 0 && faderIdx <= 3) {
-        this.setLayerProceduralCrop(layerKey, faderIdx, normValue);
-      } else if (faderIdx >= 4 && faderIdx <= 7) {
-        this.setAudioBandSensitivity(faderIdx - 4, normValue);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 3: CONDUCTOR & MACRO PRESETS
-    // Faders 1 a 5: Opacidade de Layers L0..L4
-    // Fader 6: Master Macro Chaos Intensity
-    // Fader 7: Tempo Nudge
-    // Fader 8: Master Blackout Fade
-    // -------------------------------------------------------------
-    else if (this.activeBank === 3) {
-      if (faderIdx <= 4) {
-        this.setLayerOpacityDirect(`layer${faderIdx}`, normValue * 100);
-      } else if (faderIdx === 5) {
-        if (window.appState) window.appState.macro_chaos = normValue;
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 4: COLOR LAB & GRADING
-    // Faders 1 a 5: Camadas L0..L4
-    // Fader 6: Master Saturation (-100 a +100)
-    // Fader 7: Color Temp
-    // Fader 8: Master Blackout
-    // -------------------------------------------------------------
-    else if (this.activeBank === 4) {
-      if (faderIdx <= 4) {
-        this.setLayerOpacityDirect(`layer${faderIdx}`, normValue * 100);
-      } else if (faderIdx === 5) {
-        this.updateFaderElement('fader-contrast', normValue, 60, 160);
       } else if (faderIdx === 6) {
-        this.updateFaderElement('fader-edge-mix', normValue, 0, 45);
+        // Video Speed Master
+        const spd = 0.25 + normValue * 2.25;
+        this.setPlaybackSpeedGlobal(spd);
       } else if (faderIdx === 7) {
+        // Crossfader Master Bus A/B
+        this.handleMasterFaderInput(normValue);
+      }
+    }
+
+    // =============================================================
+    // BANCO 2 (BANK B): FX ENGINE, MATTES & SCULPT
+    // Faders 0 a 4: Opacidades dos 5 Plugins de Efeitos (Pixel Sorter, Stretch, Modulation, Bad TV, RXXR)
+    // Fader 5: Master FX Dry/Wet Mix
+    // Fader 6: Find Edges Sobel Mix / Opacity
+    // Fader 7: Master Blackout / Fade
+    // =============================================================
+    else if (this.activeBank === 2) {
+      const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
+      if (faderIdx >= 0 && faderIdx < plugins.length) {
+        const pId = plugins[faderIdx];
+        const currInt = window.appState?.fx?.[pId]?.intensity !== undefined ? window.appState.fx[pId].intensity : 0.8;
+        const takeover = this.applySoftTakeover(`b2_fader_${faderIdx}`, normValue, currInt);
+        if (takeover.allowUpdate) {
+          this.setFxPluginIntensityByIndex(faderIdx, takeover.finalValue);
+          this.flashToastHud(`FX ${pId.replace('_', ' ').toUpperCase()}: ${Math.round(takeover.finalValue * 100)}%`);
+        }
+      } else if (faderIdx === 5) {
+        // Master FX Dry/Wet Mix
+        const currDryWet = window.appState?.fx?.masterIntensity !== undefined ? window.appState.fx.masterIntensity : 0.8;
+        const takeover = this.applySoftTakeover('b2_fader_5', normValue, currDryWet);
+        if (takeover.allowUpdate && window.setFxMasterParam) {
+          window.setFxMasterParam('masterIntensity', takeover.finalValue);
+          const slider = document.getElementById('slider-fx-intensity');
+          if (slider) slider.value = Math.round(takeover.finalValue * 100);
+          const valLbl = document.getElementById('val-fx-intensity');
+          if (valLbl) valLbl.textContent = `${Math.round(takeover.finalValue * 100)}%`;
+          this.flashToastHud(`MASTER FX DRY/WET: ${Math.round(takeover.finalValue * 100)}%`);
+        }
+      } else if (faderIdx === 6) {
+        // Find Edges Sobel Mix
+        this.updateFaderElement('fader-edge-mix', normValue, 0, 100);
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_mix = normValue;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_mix = normValue;
+        }
+      } else if (faderIdx === 7) {
+        // Master Dimmer / Fade
         this.setMasterBrightnessDimmer(normValue);
       }
     }
@@ -747,23 +678,19 @@ class PenumbraMidiHub {
     if (knobIdx < 0 || knobIdx > 7) return;
 
     // Detecta se o controlador está operando em Modo Relativo (ex: Mackie MCU / Relative Sign-Magnitude)
-    // No modo relativo do M-Vave/MCU, os encoders enviam apenas 1 (+1) ou 65 (-1)
     const isRelativeStep = (rawValue === 1 || rawValue === 65 || (rawValue >= 2 && rawValue <= 4) || (rawValue >= 66 && rawValue <= 68));
     const isExplicitRelative = this.encoderMode === 'relative';
     const isExplicitAbsolute = this.encoderMode === 'absolute';
 
     let newKnobVal;
     if (isExplicitAbsolute || (!isExplicitRelative && !isRelativeStep && (rawValue > 4 && rawValue < 64 || rawValue > 68 && rawValue <= 127 || rawValue === 0))) {
-      // Modo Absoluto Direto Contínuo (0.0 a 1.0): segue a rotação do knob 1:1
       newKnobVal = normValue;
     } else if (isExplicitRelative || isRelativeStep) {
-      // Modo Relativo com aceleração balística
       const now = performance.now();
       const lastTime = this.encoderLastTime[knobIdx] || now;
       const dt = Math.max(1, now - lastTime);
       this.encoderLastTime[knobIdx] = now;
 
-      // Aceleração balística por delta-t
       const acceleration = dt < 30 ? 3.5 : (dt < 70 ? 2.0 : 1.0);
       const baseStep = (this.encoderSensitivities[this.activeSensitivity] || 0.015) * acceleration;
 
@@ -788,93 +715,101 @@ class PenumbraMidiHub {
     this.twinState.knobs[knobIdx] = newKnobVal;
     this.activeTelemetry.lastAction = `Knob ${knobIdx + 1} (${(newKnobVal * 100).toFixed(0)}%)`;
 
-    // -------------------------------------------------------------
-    // BANCO 1: MASTER MIXER
-    // Knobs 1 a 5: Sobel Edge Threshold por Camada (L0..L4)
-    // Knobs 6 a 8: Gamma, Contraste, Sobel Mix Master
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 1 (BANK A): LEVELS & MATTES
+    // Knobs 0 a 3: Levels (Pretos, Contraste, Gamma, Find Edges White Luminance Boost)
+    // Knobs 4 a 7: Mattes (Selector, Scale/Zoom, Invert Toggle, Mix/Opacity)
+    // =============================================================
     if (this.activeBank === 1) {
-      if (knobIdx <= 4) {
-        this.setLayerEdgeThreshold(knobIdx, newKnobVal);
-      } else if (knobIdx === 5) {
+      if (knobIdx === 0) {
+        // Black Pedestal (-30% a +20%)
+        this.updateFaderElement('fader-brightness', newKnobVal, -30, 20);
+      } else if (knobIdx === 1) {
+        // Contrast (60% a 160%)
+        this.updateFaderElement('fader-contrast', newKnobVal, 60, 160);
+      } else if (knobIdx === 2) {
+        // Gamma (0.40 a 1.60)
         this.updateFaderElement('fader-gamma', newKnobVal, 40, 160);
+      } else if (knobIdx === 3) {
+        // Find Edges White Luminance Boost (1.0x a 4.0x)
+        const boost = 1.0 + newKnobVal * 3.0;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_luminance = boost;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_luminance = boost;
+        }
+        this.flashToastHud(`FIND EDGES WHITE LUMINANCE: ${(boost).toFixed(1)}x`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 4) {
+        // Matte Selector
+        this.cycleMatteByKnob(newKnobVal);
+      } else if (knobIdx === 5) {
+        // Matte Scale / Zoom (0.5x a 2.5x)
+        const scale = 0.5 + newKnobVal * 2.0;
+        if (window.appState?.matte?.deform) {
+          window.appState.matte.deform.wiggle_scale = scale * 0.05;
+        }
+        this.flashToastHud(`MÁSCARA ZOOM: ${(scale).toFixed(2)}x`);
       } else if (knobIdx === 6) {
-        this.updateFaderElement('fader-contrast', newKnobVal, 70, 160);
+        // Matte Invert Toggle (acima de 50% inverte)
+        const inv = newKnobVal > 0.5;
+        if (window.appState?.layers?.layer3) {
+          window.appState.layers.layer3.matte_invert = inv;
+        }
+        this.flashToastHud(`MÁSCARA INVERT: ${inv ? 'INVERTIDA' : 'NORMAL'}`);
       } else if (knobIdx === 7) {
-        this.updateFaderElement('fader-edge-mix', newKnobVal, 0, 40);
+        // Matte Opacity / Mix
+        this.setLayerMatteThreshold('layer3', newKnobVal);
       }
     }
 
-    // -------------------------------------------------------------
-    // BANCO 2: LAYER FOCUS & DEEP PARAMETERS
-    // Opera nos parâmetros profundos da camada focada (L0..L4)
-    // Knob 1: Opacidade Fina
-    // Knob 2: Velocidade de Reprodução (0.25x a 3.0x)
-    // Knob 3: Edge Sobel Threshold
-    // Knob 4: Zoom / Escala (0.8x a 2.0x)
-    // Knob 5: Rotação / Orientação (0°, -90°, +90°, 180°)
-    // Knob 6: Tint / Hue Shift
-    // Knob 7: Inversão de Máscara / Threshold
-    // Knob 8: Seletor de Blend Mode (Normal, Multiply, Screen, Darken, Overlay, Difference)
-    // -------------------------------------------------------------
+    // =============================================================
+    // BANCO 2 (BANK B): FX ENGINE KEY PARAMETERS & FIND EDGES
+    // Knob 0: Pixel Sorter (Threshold & Chunk Size)
+    // Knob 1: Pixel Stretch (Length & Direction)
+    // Knob 2: Modulation (Frequency & Density)
+    // Knob 3: Bad TV (Warp Distortion & Tape Noise)
+    // Knob 4: RXXR (Matrix Density & Shift)
+    // Knob 5: Find Edges Threshold (Sensibilidade 5% a 90%)
+    // Knob 6: Find Edges White Luminance Boost (1.0x a 4.0x)
+    // Knob 7: FX Audio Reactivity (Sensibilidade musical)
+    // =============================================================
     else if (this.activeBank === 2) {
-      const layerKey = `layer${this.activeFocusLayer}`;
-      switch (knobIdx) {
-        case 0:
-          this.setLayerOpacityDirect(layerKey, newKnobVal * 100);
-          break;
-        case 1:
-          this.setLayerSpeedDirect(layerKey, 0.25 + newKnobVal * 2.75);
-          break;
-        case 2:
-          this.setLayerEdgeThreshold(this.activeFocusLayer, newKnobVal);
-          break;
-        case 3:
-          this.setLayerScale(layerKey, 0.8 + newKnobVal * 1.4);
-          break;
-        case 4:
-          this.cycleLayerRotationByKnob(layerKey, newKnobVal);
-          break;
-        case 5:
-          this.setLayerHueTint(layerKey, newKnobVal);
-          break;
-        case 6:
-          this.setLayerMatteThreshold(layerKey, newKnobVal);
-          break;
-        case 7:
-          this.cycleLayerBlendByKnob(layerKey, newKnobVal);
-          break;
+      if (knobIdx === 0) {
+        this.setFxParam('pixel_sorter', 'threshold_min', 0.1 + newKnobVal * 0.8);
+      } else if (knobIdx === 1) {
+        this.setFxParam('pixel_stretch', 'length', Math.round(50 + newKnobVal * 450));
+      } else if (knobIdx === 2) {
+        this.setFxParam('modulation', 'frequency', Math.round(10 + newKnobVal * 120));
+      } else if (knobIdx === 3) {
+        this.setFxParam('bad_tv', 'tv_warp_wiggle', newKnobVal * 0.9);
+      } else if (knobIdx === 4) {
+        this.setFxParam('rxxr', 'density', Math.round(4 + newKnobVal * 20));
+      } else if (knobIdx === 5) {
+        // Find Edges Sensitivity (Threshold)
+        const th = 0.05 + newKnobVal * 0.85;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_threshold = th;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_threshold = th;
+        }
+        this.updateFaderElement('fader-edge-thresh', newKnobVal, 5, 90);
+        this.flashToastHud(`FIND EDGES THRESHOLD: ${Math.round(th * 100)}%`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 6) {
+        // Find Edges White Luminance Boost
+        const boost = 1.0 + newKnobVal * 3.0;
+        if (window.appState) {
+          if (window.appState.tonal) window.appState.tonal.edge_luminance = boost;
+          if (window.appState.layers?.layer2) window.appState.layers.layer2.edge_luminance = boost;
+        }
+        this.flashToastHud(`FIND EDGES WHITE LUMINANCE: ${(boost).toFixed(1)}x`);
+        if (window.renderStudioInspector) window.renderStudioInspector();
+      } else if (knobIdx === 7) {
+        // Audio Gain / Reactivity
+        if (typeof window.setAudioInputGain === 'function') {
+          window.setAudioInputGain(Math.round(newKnobVal * 200));
+          this.flashToastHud(`ÁUDIO GAIN: ${Math.round(newKnobVal * 200)}%`);
+        }
       }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 3: CONDUCTOR & MACRO PRESETS
-    // Knobs 1 a 4: Autopilot Dwell Time, Glitch Probability, Motion Dynamics, Audio Sensitivity
-    // Knobs 5 a 8: After Effects Plugins Intensity
-    // -------------------------------------------------------------
-    else if (this.activeBank === 3) {
-      if (knobIdx === 0 && window.appState) {
-        window.appState.autopilot_dwell = Math.round(8 + newKnobVal * 32);
-      } else if (knobIdx === 1 && window.appState) {
-        window.appState.glitch_prob = newKnobVal;
-      } else if (knobIdx === 2 && window.setAudioInputGain) {
-        window.setAudioInputGain(Math.round(newKnobVal * 200));
-      } else if (knobIdx >= 4 && knobIdx <= 7) {
-        this.setFxPluginIntensityByIndex(knobIdx - 4, newKnobVal);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // BANCO 4: COLOR LAB & GRADING
-    // Knobs 1 a 8: Gamma, Pretos, Médios, Contraste, Edge Mix, Saturação, Temp, Grão
-    // -------------------------------------------------------------
-    else if (this.activeBank === 4) {
-      if (knobIdx === 0) this.updateFaderElement('fader-gamma', newKnobVal, 40, 160);
-      else if (knobIdx === 1) this.updateFaderElement('fader-brightness', newKnobVal, -30, 20);
-      else if (knobIdx === 2) this.updateFaderElement('fader-midtones', newKnobVal, 50, 150);
-      else if (knobIdx === 3) this.updateFaderElement('fader-contrast', newKnobVal, 70, 160);
-      else if (knobIdx === 4) this.updateFaderElement('fader-edge-mix', newKnobVal, 0, 40);
-      else if (knobIdx === 5) this.updateFaderElement('fader-edge-thresh', newKnobVal, 10, 80);
     }
   }
 
@@ -943,15 +878,12 @@ class PenumbraMidiHub {
     }
 
     if (channelIdx <= 4) {
-      this.soloLayer(channelIdx);
-      this.activeTelemetry.lastAction = `Solo Camada L${channelIdx}`;
+      const targetLayer = channelIdx === 4 ? 5 : channelIdx;
+      this.soloLayer(targetLayer);
+      this.activeTelemetry.lastAction = `Solo Camada L${targetLayer}`;
     } else if (channelIdx === 5) {
-      // Canal 6: Invert Matte da Camada Ativa
-      const layerKey = `layer${this.activeFocusLayer}`;
-      if (window.appState && window.appState[layerKey]) {
-        window.appState[layerKey].invert = !window.appState[layerKey].invert;
-        this.flashToastHud(`MÁSCARA L${this.activeFocusLayer}: ${window.appState[layerKey].invert ? 'INVERTIDA' : 'NORMAL'}`);
-      }
+      // Canal 6: UNSOLO ALL (Destrava todos os canais de solo!)
+      this.unsoloAll();
     } else if (channelIdx === 6) {
       // Canal 7: Reset Playback Speed
       this.setPlaybackSpeedGlobal(1.0);
@@ -972,8 +904,8 @@ class PenumbraMidiHub {
     if (channelIdx < 0 || channelIdx > 7) return;
 
     if (this.activeBank === 2) {
-      // No Banco 2 (Layer Focus), os botões Rec ligam/desligam os 5 Plugins do After Effects!
-      const plugins = ['pixel_sorter', 'pixel_stretch', 'bad_tv', 'rxxr', 'modulation'];
+      // No Banco 2 (Bank B), os botões Rec ligam/desligam os 5 Plugins do After Effects!
+      const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
       if (channelIdx < plugins.length) {
         const pId = plugins[channelIdx];
         const isCurrent = window.appState && window.appState.fx && window.appState.fx[pId] && window.appState.fx[pId].enabled;
@@ -1008,13 +940,17 @@ class PenumbraMidiHub {
   handleButtonSelect(channelIdx) {
     if (channelIdx < 0 || channelIdx > 7) return;
 
-    // Seleciona o foco da camada sem forçar troca indesejada de banco
+    // Foca na camada e atualiza o Studio Inspector
     if (channelIdx <= 4) {
-      this.activeFocusLayer = channelIdx;
+      const targetLayer = channelIdx === 4 ? 5 : channelIdx;
+      this.activeFocusLayer = targetLayer;
       this.twinState.buttons.sel.fill(false);
       this.twinState.buttons.sel[channelIdx] = true;
-      this.flashToastHud(`FOCO EM CAMADA L${channelIdx}`);
-      this.activeTelemetry.lastAction = `Foco Camada L${channelIdx}`;
+      this.flashToastHud(`INSPECTOR: FOCO CAMADA L${targetLayer}`);
+      this.activeTelemetry.lastAction = `Foco Camada L${targetLayer}`;
+      if (typeof window.openStudioInspector === 'function') {
+        window.openStudioInspector('layer', targetLayer);
+      }
       this.sendLedFeedbackAll();
       this.notifyUI();
     } else if (channelIdx === 5) {
@@ -1022,33 +958,38 @@ class PenumbraMidiHub {
     } else if (channelIdx === 6) {
       this.setBank(2);
     } else if (channelIdx === 7) {
-      this.setBank(this.activeBank === 3 ? 4 : 3);
+      this.toggleBank();
     }
   }
 
   // =========================================================================
-  // 8. TRANSPORTE & NAVEGAÇÃO DE BANCOS
+  // 8. TRANSPORTE & NAVEGAÇÃO DE BANCOS (DUAL-BANK HARDWARE & SOFTWARE)
   // =========================================================================
   setBank(bankNum) {
-    if (bankNum < 1 || bankNum > 4) return;
+    if (bankNum < 1 || bankNum > 2) return;
     this.activeBank = bankNum;
+    this.hardwareBank = (bankNum === 2) ? 'bank2' : 'bank1';
+    try {
+      localStorage.setItem('penumbra_midi_hw_bank', this.hardwareBank);
+      localStorage.setItem('penumbra_midi_active_bank', String(this.activeBank));
+    } catch (e) {}
     this.resetTakeoverForBankChange();
-    this.flashToastHud(`BANCO MIDI ${bankNum}: ${this.bankNames[bankNum]}`);
+    this.flashToastHud(`BANCO MIDI ${bankNum === 1 ? 'A' : 'B'}: ${this.bankNames[bankNum]}`);
     console.log(`[PENUMBRA MIDI] Banco comutado para: ${bankNum} (${this.bankNames[bankNum]})`);
     this.sendLedFeedbackAll();
     this.notifyUI();
   }
 
   nextBank() {
-    let next = this.activeBank + 1;
-    if (next > 4) next = 1;
-    this.setBank(next);
+    this.setBank(this.activeBank === 1 ? 2 : 1);
   }
 
   prevBank() {
-    let prev = this.activeBank - 1;
-    if (prev < 1) prev = 4;
-    this.setBank(prev);
+    this.setBank(this.activeBank === 1 ? 2 : 1);
+  }
+
+  toggleBank() {
+    this.setBank(this.activeBank === 1 ? 2 : 1);
   }
 
   actionRewind() {
@@ -1247,16 +1188,71 @@ class PenumbraMidiHub {
   }
 
   soloLayer(layerIdx) {
-    for (let i = 0; i <= 4; i++) {
+    // Verifica se já está em solo nessa camada para fazer toggle
+    let isCurrentlyOnlyThisActive = true;
+    for (let i = 0; i <= 5; i++) {
+      const targetKey = `layer${i}`;
+      if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
+        if (i === layerIdx && !window.appState.layers[targetKey].active) isCurrentlyOnlyThisActive = false;
+        if (i !== layerIdx && window.appState.layers[targetKey].active) isCurrentlyOnlyThisActive = false;
+      }
+    }
+
+    if (isCurrentlyOnlyThisActive) {
+      // Toggle OFF: desfaz o solo e reativa todas as camadas
+      this.unsoloAll();
+      return;
+    }
+
+    for (let i = 0; i <= 5; i++) {
       const targetKey = `layer${i}`;
       const shouldActive = (i === layerIdx);
       if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
         window.appState.layers[targetKey].active = shouldActive;
       }
-      this.twinState.buttons.solo[i] = shouldActive;
+      if (this.twinState.buttons.solo && i < this.twinState.buttons.solo.length) {
+        this.twinState.buttons.solo[i] = shouldActive;
+      }
       this.sendLedFeedback('solo', i, shouldActive);
     }
-    this.flashToastHud(`SOLO ISOLADO NA CAMADA L${layerIdx}`);
+    this.flashToastHud(`SOLO ATIVADO: CAMADA L${layerIdx}`);
+    if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+  }
+
+  unsoloAll() {
+    for (let i = 0; i <= 5; i++) {
+      const targetKey = `layer${i}`;
+      if (window.appState && window.appState.layers && window.appState.layers[targetKey]) {
+        window.appState.layers[targetKey].active = true;
+      }
+      if (this.twinState.buttons.solo && i < this.twinState.buttons.solo.length) {
+        this.twinState.buttons.solo[i] = false;
+      }
+      this.sendLedFeedback('solo', i, false);
+    }
+    this.flashToastHud('TODAS AS CAMADAS REATIVADAS (UNSOLO ALL)');
+    if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+  }
+
+  cycleMatteByKnob(normVal) {
+    const list = (typeof allMattes !== 'undefined' && allMattes) || window.allMattes || [];
+    if (!list.length) return;
+    const idx = Math.min(list.length - 1, Math.floor(normVal * list.length));
+    const m = list[idx];
+    if (m && window.appState) {
+      const targetLayer = this.activeFocusLayer !== undefined ? `layer${this.activeFocusLayer}` : 'layer3';
+      if (window.appState.layers && window.appState.layers[targetLayer]) {
+        window.appState.layers[targetLayer].matte = m.path || m.filename;
+      }
+      this.flashToastHud(`MÁSCARA ${targetLayer.toUpperCase()}: ${m.name || m.filename}`);
+      if (typeof window.renderStudioInspector === 'function') window.renderStudioInspector();
+    }
+  }
+
+  setFxParam(pluginId, paramName, value) {
+    if (window.appState && window.appState.fx && window.appState.fx[pluginId]) {
+      window.appState.fx[pluginId][paramName] = value;
+    }
   }
 
   triggerSoftPulseLayer(layerIdx) {
@@ -1272,7 +1268,7 @@ class PenumbraMidiHub {
   }
 
   setFxPluginIntensityByIndex(idx, normVal) {
-    const plugins = ['pixel_sorter', 'pixel_stretch', 'bad_tv', 'rxxr', 'modulation'];
+    const plugins = ['pixel_sorter', 'pixel_stretch', 'modulation', 'bad_tv', 'rxxr'];
     if (idx < plugins.length) {
       const pId = plugins[idx];
       if (window.appState && window.appState.fx && window.appState.fx[pId]) {
@@ -1551,11 +1547,10 @@ class PenumbraMidiHub {
         return;
       }
 
-      // Alternar Bancos de Software: [ e ] ou Tecla B
-      if (e.key === '[' || ((e.key === 'b' || e.key === 'B') && !e.ctrlKey && !e.metaKey && !e.altKey)) {
+      // Alternar Bancos de Hardware: [ e ]
+      if (e.key === '[') {
         e.preventDefault();
-        if (e.key === '[') this.prevBank();
-        else this.nextBank();
+        this.prevBank();
         return;
       }
       if (e.key === ']') {
@@ -1564,16 +1559,23 @@ class PenumbraMidiHub {
         return;
       }
 
-      // Teclas F1 a F4: Ir direto para B1, B2, B3, B4
+      // Teclas F1 e F2: Ir direto para Bank A (1) ou Bank B (2)
       if (e.key === 'F1') { e.preventDefault(); this.setBank(1); return; }
       if (e.key === 'F2') { e.preventDefault(); this.setBank(2); return; }
-      if (e.key === 'F3') { e.preventDefault(); this.setBank(3); return; }
-      if (e.key === 'F4') { e.preventDefault(); this.setBank(4); return; }
 
-      // Tecla H: Alternar Preset de Hardware M-Vave (◄ Banco 1 Faders / ► Banco 2 Botões)
+      // Tecla I: Alternar Studio Inspector
+      if ((e.key === 'i' || e.key === 'I') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        if (typeof window.toggleStudioInspector === 'function') {
+          window.toggleStudioInspector();
+        }
+        return;
+      }
+
+      // Tecla H: Alternar Banco A / Banco B
       if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        this.toggleHardwareBank();
+        this.toggleBank();
         return;
       }
 
@@ -1631,19 +1633,15 @@ class HardwareTwinUI {
     this.isDraggingFader = false;
     this.isDraggingKnob = false;
 
-    // Rótulos Dinâmicos dos Knobs e Faders por Banco
+    // Rótulos Dinâmicos dos Knobs e Faders por Banco (Dual-Bank A / B)
     this.labels = {
       knobs: {
-        1: ['SOBEL L0', 'SOBEL L1', 'SOBEL L2', 'SOBEL L3', 'SOBEL L4', 'GAMMA', 'CONTRAST', 'EDGE MIX'],
-        2: ['OPACITY', 'SPEED', 'SOBEL', 'SCALE', 'PAN/ROT', 'HUE TINT', 'MATTE INV', 'BLEND'],
-        3: ['DWELL', 'GLITCH', 'AUDIO SENS', 'CHAOS', 'PX SORT', 'PX STRETCH', 'BAD TV', 'MODULAT'],
-        4: ['GAMMA', 'BLACKS', 'MIDS', 'CONTRAST', 'EDGE MIX', 'THRESH', 'COLOR BAL', 'GRAIN']
+        1: ['BLACKS', 'CONTRAST', 'GAMMA', 'FIND LUM', 'MATTE SEL', 'MATTE ZOOM', 'MATTE INV', 'MATTE MIX'],
+        2: ['SORT THRESH', 'STR LENGTH', 'MOD FREQ', 'TV WARP', 'RXXR DENS', 'EDGE THRESH', 'FIND LUM', 'AUDIO GAIN']
       },
       faders: {
-        1: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'L5 OVERLAY', 'CROSS', 'DIMMER'],
-        2: ['CROP TOP', 'CROP BTM', 'CROP LFT', 'CROP RGT', 'DSP SUB', 'DSP BASS', 'DSP MIDS', 'DSP AIR'],
-        3: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CHAOS FX', 'NUDGE', 'DIMMER'],
-        4: ['L0 OPAC', 'L1 OPAC', 'L2 OPAC', 'L3 OPAC', 'L4 OPAC', 'CONTRAST', 'EDGE MIX', 'DIMMER']
+        1: ['L0 BASE', 'L1 DOUBLE', 'L2 EDGES', 'L3 CUE', 'L5 OVERLAY', 'DIMMER', 'SPEED', 'CROSSFADER'],
+        2: ['PX SORTER', 'PX STRETCH', 'MODULATION', 'BAD TV', 'RXXR', 'MASTER FX', 'EDGE MIX', 'BLACKOUT']
       }
     };
 
@@ -1686,9 +1684,9 @@ class HardwareTwinUI {
           <!-- Matriz de Botões M, S, R, Sel -->
           <div class="hw-btn-group">
             <button class="hw-btn hw-btn-mute" id="hw-btn-mute-${i}" onclick="handleHwButtonClick('mute', ${i})" title="Mute da Camada (Alt + ${i + 1})">M</button>
-            <button class="hw-btn hw-btn-solo" id="hw-btn-solo-${i}" onclick="handleHwButtonClick('solo', ${i})" title="Solo da Camada">S</button>
+            <button class="hw-btn hw-btn-solo" id="hw-btn-solo-${i}" onclick="handleHwButtonClick('solo', ${i})" title="Solo da Camada (Clique novamente para Unsolo)">S</button>
             <button class="hw-btn hw-btn-rec" id="hw-btn-rec-${i}" onclick="handleHwButtonClick('rec', ${i})" title="Trigger / Macro">R</button>
-            <button class="hw-btn hw-btn-sel" id="hw-btn-sel-${i}" onclick="handleHwButtonClick('sel', ${i})" title="Focar Camada (Shift + ${i + 1})">SEL</button>
+            <button class="hw-btn hw-btn-sel" id="hw-btn-sel-${i}" onclick="handleHwButtonClick('sel', ${i})" title="Focar Camada no Inspector (Shift + ${i + 1})">SEL</button>
           </div>
 
           <!-- Fader Linear Tátil -->
@@ -1712,19 +1710,17 @@ class HardwareTwinUI {
 
     // Atualiza Badges e Seletor de Bancos
     const bankBadge = document.getElementById('midi-active-bank-badge');
-    if (bankBadge) bankBadge.textContent = `BANCO ${bank}: ${this.hub.bankNames[bank]}`;
+    if (bankBadge) bankBadge.textContent = `BANCO ${bank === 1 ? 'A' : 'B'}: ${this.hub.bankNames[bank] || ''}`;
 
     for (let b = 1; b <= 4; b++) {
-      const bBtn = document.getElementById(`btn-bank-1`);
       const card = document.getElementById(`btn-bank-${b}`);
       if (card) card.classList.toggle('active', b === bank);
     }
 
-    // Foco de Camada (Banco 2)
+    // Foco de Camada
     const focusRow = document.getElementById('midi-focus-layer-row');
     if (focusRow) {
-      focusRow.style.display = (bank === 2) ? 'flex' : 'none';
-      for (let l = 0; l <= 4; l++) {
+      for (let l = 0; l <= 5; l++) {
         const btn = document.getElementById(`btn-focus-l${l}`);
         if (btn) btn.classList.toggle('active', l === focusLayer);
       }
@@ -1734,8 +1730,8 @@ class HardwareTwinUI {
     const oled1 = document.getElementById('oled-line-1');
     const oled2 = document.getElementById('oled-line-2');
     if (oled1) {
-      const hwTxt = (this.hub.hardwareBank === 'bank1') ? 'HW: ◄ B1 (FADERS)' : 'HW: ► B2 (BOTÕES)';
-      oled1.textContent = `${hwTxt} · SW B${bank}: ${this.hub.bankNames[bank]} · ${this.hub.activeTelemetry.deviceName.slice(0, 14)}`;
+      const hwTxt = (this.hub.hardwareBank === 'bank1') ? 'HW: ◄ BANK A (MIX & TAKES)' : 'HW: ► BANK B (FX & MATTES)';
+      oled1.textContent = `${hwTxt} · SW ${bank === 1 ? 'A' : 'B'}: ${this.hub.bankNames[bank] || ''} · ${this.hub.activeTelemetry.deviceName.slice(0, 14)}`;
     }
     if (oled2) {
       const bpm = (window.appState && window.appState.bpm) ? Math.round(window.appState.bpm) : 120;
@@ -1762,15 +1758,17 @@ class HardwareTwinUI {
     for (let i = 0; i < 8; i++) {
       const strip = document.getElementById(`hw-strip-${i}`);
       if (strip) {
-        strip.classList.toggle('focused', bank === 2 && i === focusLayer);
+        strip.classList.toggle('focused', i === focusLayer);
       }
 
       // Rótulos Dinâmicos
       const knobLbl = document.getElementById(`hw-knob-lbl-${i}`);
-      if (knobLbl) knobLbl.textContent = this.labels.knobs[bank][i];
+      const knobBankLabels = this.labels.knobs[bank] || this.labels.knobs[1];
+      if (knobLbl && knobBankLabels) knobLbl.textContent = knobBankLabels[i] || `KNOB ${i+1}`;
 
       const faderLbl = document.getElementById(`hw-fader-lbl-${i}`);
-      if (faderLbl) faderLbl.textContent = this.labels.faders[bank][i];
+      const faderBankLabels = this.labels.faders[bank] || this.labels.faders[1];
+      if (faderLbl && faderBankLabels) faderLbl.textContent = faderBankLabels[i] || `FADER ${i+1}`;
 
       // Knobs: Rotação (-135° a +135°)
       const knobVal = this.hub.twinState.knobs[i] || 0;

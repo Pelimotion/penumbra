@@ -251,8 +251,8 @@
           <circle cx="15" cy="15" r="1.5" fill="currentColor"></circle>
         </svg>
         <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
-        <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Hardware M-Vave (◄ Faders / ► Botões) · Clique para alternar [Atalho: H]" onclick="event.stopPropagation(); window.toggleHardwareBank && window.toggleHardwareBank()">◄ HW1: FADERS</span>
-        <span class="midi-bank-badge" id="chip-midi-bank" title="Banco de Software (B1-B4) · Clique para avançar banco [Atalho: B ou F1-F4]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.nextBank()">B1: MIXER</span>
+        <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Dual-Bank (◄ Bank A: Mix & Takes / ► Bank B: FX & Mattes) · [Atalho: H]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">◄ BANK A (MIX)</span>
+        <span class="midi-bank-badge" id="chip-midi-bank" title="Banco Ativo · Clique para alternar [Atalho: [ ou ]]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">BANK A</span>
       </div>
     </div>
 
@@ -272,6 +272,11 @@
         </label>
         <audio id="html5-audio-cue" preload="none"></audio>
       </div>
+
+      <!-- Studio Inspector Trigger -->
+      <button class="btn btn-outline btn-sm btn-studio-inspector" id="btn-toggle-studio-inspector" onclick="toggleStudioInspector()" data-tooltip-title="STUDIO INSPECTOR" data-tooltip-desc="Abre o painel Studio Inspector de camadas, Find Edges, clipes e parâmetros FX." data-shortcut="I">
+        <span>🔍 INSPECTOR [I]</span>
+      </button>
 
       <!-- Settings Modal Trigger -->
       <button class="btn btn-outline btn-sm" id="btn-show-settings" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
@@ -297,19 +302,13 @@
     <section class="top-zone">
       <!-- DUAL VIDEO MONITORS (PROGRAM & PREVIEW) -->
       <div class="monitors-container">
-        <!-- PROGRAM (AO VIVO NO BE) -->
+        <!-- PROGRAM (AO VIVO NO MASTER) -->
         <div class="screen-box program-box" id="program-screen-box">
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-live" id="badge-prg-status">PROGRAM (AO VIVO)</span>
               <button class="geom-pill pill-vert-mode" id="btn-prg-toggle-vertical" onclick="toggleVerticalMode()" title="Alternar Modo Vertical (9:16) / Padrão Horizontal (16:9)">9:16 VERTICAL</button>
-              <div class="geom-pills-group" title="Orientação e Enquadramento L0 (Gire 90° para clips 9:16 preencherem 16:9!)">
-                <button class="geom-pill active" id="btn-prg-rot-0" onclick="setLayerRotation('layer0', 0)">0°</button>
-                <button class="geom-pill" id="btn-prg-rot-ccw" onclick="setLayerRotation('layer0', -90)" title="Girar 90° Anti-Horário (9:16 vira 16:9)">↺ -90°</button>
-                <button class="geom-pill" id="btn-prg-rot-cw" onclick="setLayerRotation('layer0', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
-                <button class="geom-pill" id="btn-prg-fit-wings" onclick="setLayerFitMode('layer0', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
-                <button class="geom-pill" id="btn-prg-fit-mode" onclick="toggleLayerFitMode('layer0')" title="Alternar FIT / FILL">FIT</button>
-              </div>
+              <button class="geom-pill" id="btn-prg-open-insp" onclick="openStudioInspector('layer', 0)" title="Abrir Studio Inspector para L0 (Orientação, Fit e Enquadramento) [I]">📐 GEOM L0</button>
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prg-timecode">TC 00:01:24.18</div>
@@ -343,14 +342,8 @@
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-preview">PREVIEW (PRÓXIMO CUE)</span>
-              <div class="geom-pills-group" title="Orientação e Enquadramento L3 (Gire 90° para clips 9:16 preencherem 16:9!)">
-                <button class="geom-pill active" id="btn-prv-rot-0" onclick="setLayerRotation('layer3', 0)">0°</button>
-                <button class="geom-pill" id="btn-prv-rot-ccw" onclick="setLayerRotation('layer3', -90)" title="Girar 90° Anti-Horário (9:16 vira 16:9)">↺ -90°</button>
-                <button class="geom-pill" id="btn-prv-rot-cw" onclick="setLayerRotation('layer3', 90)" title="Girar 90° Horário (9:16 vira 16:9)">↻ +90°</button>
-                <button class="geom-pill" id="btn-prv-fit-wings" onclick="setLayerFitMode('layer3', 'wings')" title="Asas Espelhadas com Blur">WINGS</button>
-                <button class="geom-pill" id="btn-prv-fit-mode" onclick="toggleLayerFitMode('layer3')" title="Alternar FIT / FILL">FIT</button>
-                <button class="geom-pill" id="btn-prv-clip-tf" onclick="openPreviewClipTransform()" title="Transformação Geométrica Individual do Clipe em Cue (Rotação/Escala/Posição antes de ir pro Ar)" style="background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; color: #22d3ee; font-weight: 700;">📐 CLIPE</button>
-              </div>
+              <button class="geom-pill highlight-action" id="btn-prv-open-insp" onclick="openStudioInspector('layer', 3)" title="Abrir Studio Inspector para L3 Cue [I]">📐 GEOM L3</button>
+              <button class="geom-pill highlight-action" id="btn-prv-clip-insp" onclick="openStudioInspector('clip', appState.layers?.layer3?.clipId)" title="Transformação Geométrica Individual do Clipe em Cue">📐 CLIPE</button>
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prv-timecode">CUE IN 4 BARS</div>
@@ -1312,6 +1305,10 @@
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'cyberpunk_rain')">Cyberpunk Rain</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'hyperdrive_tunnel')">Hyperdrive Tunnel</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'needle_threads')">Needle Threads</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'subtle_mist')">Subtle Mist</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'vertical_spire')">Vertical Spire</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'chroma_echo')">Chroma Echo</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_stretch', 'solar_flare')">Solar Flare</button>
                 </div>
               </div>
 
@@ -1452,6 +1449,10 @@
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'center_melt')">Center Melt</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'neon_threading')">Neon Line Threading</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'diagonal_drift')">Diagonal Drift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'penumbra_shadows')">Penumbra Shadows</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'zen_minimal')">Zen Minimal</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'raster_scan')">Raster Scan</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('pixel_sorter', 'torrent_climax')">Torrent Climax</button>
                 </div>
               </div>
 
@@ -1583,6 +1584,10 @@
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'analog_aberration')">Analog Chromatic Aberration</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'security_cam')">Security Cam Tape</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'broken_vcr')">Broken VCR Head</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'oscilloscope_tube')">Oscilloscope Tube</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'magnetic_drift')">Magnetic Drift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'subliminal_flicker')">Subliminal Flicker</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('bad_tv', 'ghost_signal')">Ghost Signal</button>
                 </div>
               </div>
 
@@ -1676,6 +1681,10 @@
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'glitch_shading')">Glitch Shading Block</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'wireframe_grid')">Wireframe Cyber Grid</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'ghost_operator')">Ghost Operator</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'ikeda_binary')">Ikeda Binary</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'runic_sigils')">Runic Sigils</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'vector_crosshairs')">Vector Crosshairs</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('rxxr', 'sub_density')">Sub Density</button>
                 </div>
               </div>
 
@@ -1766,6 +1775,10 @@
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'laser_topo')">Laser Topography</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'concentric_holo')">Concentric Holographic</button>
                   <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'binary_shift')">Binary Grid Shift</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'nonotak_lattices')">Nonotak Lattices</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'micro_topography')">Micro Topography</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'seismic_pulse')">Seismic Pulse</button>
+                  <button class="fx-preset-chip" onclick="loadPluginPreset('modulation', 'aurora_dispersion')">Aurora Dispersion</button>
                 </div>
               </div>
 
@@ -3450,7 +3463,25 @@
     <!-- Floating HUD Macro State & Presets Toast -->
     <div id="hud-macro-toast" class="hud-macro-toast"></div>
 
-
+    <!-- STUDIO INSPECTOR RETRACTABLE DRAWER (DAVINCI RESOLVE / AFTER EFFECTS STYLE) -->
+    <aside id="studio-inspector-drawer" class="studio-inspector-drawer hidden">
+      <div class="inspector-header">
+        <div class="inspector-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+          <span>STUDIO INSPECTOR</span>
+          <span class="inspector-badge" id="inspector-target-badge">L2 FIND EDGES</span>
+        </div>
+        <div class="inspector-tabs">
+          <button class="insp-tab-btn active" id="insp-tab-layer" data-tab="layer" onclick="switchInspectorTab('layer')">CAMADA</button>
+          <button class="insp-tab-btn" id="insp-tab-clip" data-tab="clip" onclick="switchInspectorTab('clip')">CLIPE</button>
+          <button class="insp-tab-btn" id="insp-tab-fx" data-tab="fx" onclick="switchInspectorTab('fx')">FX & COLOR</button>
+        </div>
+        <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
+      </div>
+      <div class="inspector-body" id="inspector-body-content">
+        <!-- Rendered dynamically via renderStudioInspector() -->
+      </div>
+    </aside>
 
     <!-- MIDI Controller Hub -->
     <script src="midi.js"></script>
