@@ -1,23 +1,13 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 16:45:05 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 17:37:57 BRT
 
 ---
 
 ## Outubro de 2026
 
-### 🐛 Correções
-- `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
-- `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
-- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
-- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
-- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
-- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
-- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
-- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
-- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
-
 ### ✨ Novos Recursos
+- `5e91eff` **(fx-engine)** implement master fx bypass toggle, clean autopilot baseline and human-in-the-loop manual fx lock
 - `a21e5b7` **(timeline)** implement pro arrangement timeline with dynamic rhythm scaling and forward predictability
 - `75fa793` **(inspector)** unify studio inspector for layers and mattes with per-matte engine, follow selection mode and pin toggle
 - `3e8893b` **(engine)** transition flash elimination, granular autopilot pool, line-in p2 & permanent bpm hud
@@ -38,6 +28,17 @@
 - `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
+
+### 🐛 Correções
+- `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
+- `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
+- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
+- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
+- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
+- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
+- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
+- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
+- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
 
 ### 📚 Documentação
 - `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs

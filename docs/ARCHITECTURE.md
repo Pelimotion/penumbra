@@ -1,6 +1,6 @@
 # 🎛️ PENUMBRA SYSTEM · ARQUITETURA TÉCNICA
 
-> Auto-gerado por `scripts/update_docs.js` · 10/10/2026, 16:45:05 BRT
+> Auto-gerado por `scripts/update_docs.js` · 10/10/2026, 17:37:57 BRT
 
 ---
 
