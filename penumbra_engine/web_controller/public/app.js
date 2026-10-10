@@ -269,8 +269,30 @@ const MediaProvider = {
     MediaProvider.localFilesMap.clear();
     MediaProvider.localFilesByName.clear();
     const clips = [];
-    
-    // Check if there is already a local manifest
+
+    // Auto-index local backend files if running on localhost
+    await MediaProvider.initLocalFilesAutoIndex();
+
+    // 1. If no dirHandle is passed (e.g. localhost direct server connection)
+    if (!dirHandle) {
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        try {
+          const res = await fetch('/api/manifest');
+          if (res.ok) {
+            const serverClips = await res.json();
+            if (Array.isArray(serverClips) && serverClips.length > 0) {
+              console.log(`[Media Nexus] Conectado diretamente ao acervo do servidor local (${serverClips.length} clipes).`);
+              return serverClips;
+            }
+          }
+        } catch (e) {
+          console.warn('[Media Nexus] Falha ao consultar /api/manifest:', e);
+        }
+      }
+      return [];
+    }
+
+    // 2. Check if there is already a local manifest in the directory
     async function getLocalManifest(handle) {
       try {
         const fileHandle = await handle.getFileHandle('media_manifest.json');
@@ -281,156 +303,94 @@ const MediaProvider = {
       }
     }
 
-    // Recursive folder scan to populate localFilesMap
+    const localManifest = await getLocalManifest(dirHandle);
+
+    // 3. Robust recursive folder scan ignoring hidden/system files
+    const IGNORED_NAMES = new Set(['.git', '.ds_store', 'node_modules', 'cdn_build', '.agents', 'dist', 'build']);
+    const VALID_EXTS = new Set(['mp4', 'mov', 'webm', 'm4v', 'mkv', 'avi', 'mp3', 'wav', 'json']);
+
     async function scanDir(handle, currentPath = '') {
-      for await (const entry of handle.values()) {
-        const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
-        if (entry.kind === 'file') {
-          const ext = entry.name.split('.').pop().toLowerCase();
-          if (['mp4', 'mov', 'webm', 'json'].includes(ext)) {
-            const file = await entry.getFile();
-            MediaProvider.localFilesMap.set(entryPath, file);
-            MediaProvider.localFilesByName.set(entry.name.toLowerCase().trim(), {
-              file,
-              path: entryPath,
-              filename: entry.name,
-              size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
-              isServer: false
-            });
-            
-            if (ext === 'json') {
-              if (entry.name !== 'media_manifest.json') {
-                clips.push({
-                  id: `local_model_${entry.name}`,
+      try {
+        for await (const entry of handle.values()) {
+          const lowerName = (entry.name || '').toLowerCase().trim();
+          if (!lowerName || IGNORED_NAMES.has(lowerName) || lowerName.startsWith('.')) continue;
+
+          const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+          if (entry.kind === 'file') {
+            const ext = lowerName.split('.').pop();
+            if (VALID_EXTS.has(ext)) {
+              try {
+                const file = await entry.getFile();
+                MediaProvider.localFilesMap.set(entryPath, file);
+                MediaProvider.localFilesByName.set(lowerName, {
+                  file,
+                  path: entryPath,
                   filename: entry.name,
-                  type: 'model',
-                  relative_path: entryPath,
-                  category: 'MODEL 3D',
-                  is_local: true
+                  size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
+                  isServer: false
                 });
+
+                if (ext === 'json') {
+                  if (entry.name !== 'media_manifest.json') {
+                    clips.push({
+                      id: `local_model_${entry.name}`,
+                      filename: entry.name,
+                      type: 'model',
+                      relative_path: entryPath,
+                      category: 'MODEL 3D',
+                      is_local: true
+                    });
+                  }
+                } else {
+                  clips.push({
+                    id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    filename: entry.name,
+                    folder: currentPath || 'ROOT',
+                    relative_path: entryPath,
+                    absolute_path: entryPath,
+                    width: 1920, height: 1080, duration: 10.0, fps: 60.0,
+                    codec: ext,
+                    category: currentPath.split('/')[0].toUpperCase() || 'LOCAL POOL',
+                    suggested_layer: 0,
+                    thumbnail: '',
+                    is_local: true
+                  });
+                }
+              } catch (fileErr) {
+                console.warn(`[Media Nexus] Falha ao ler arquivo ${entry.name}:`, fileErr);
               }
-            } else {
-              clips.push({
-                id: `local_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
-                filename: entry.name,
-                folder: currentPath || 'ROOT',
-                relative_path: entryPath,
-                absolute_path: entryPath,
-                width: 1920, height: 1080, duration: 10.0, fps: 60.0,
-                codec: ext,
-                category: currentPath.split('/')[0].toUpperCase() || 'UNCATEGORIZED',
-                suggested_layer: 0,
-                thumbnail: '', 
-                is_local: true
-              });
             }
+          } else if (entry.kind === 'directory') {
+            await scanDir(entry, entryPath);
           }
-        } else if (entry.kind === 'directory') {
-          await scanDir(entry, entryPath);
         }
+      } catch (dirErr) {
+        console.warn(`[Media Nexus] Falha ao iterar pasta ${currentPath}:`, dirErr);
       }
     }
-    
+
     await scanDir(dirHandle);
 
-    // AUTO INSTALLER LOGIC (OTA)
-    if (clips.length === 0) {
-      if (confirm('📦 PASTA VAZIA DETECTADA!\\nDeseja instalar a Biblioteca Completa do Gigantera (Mídias, Modelos 3D e Executável Offline) direto da nuvem CDN nesta pasta?')) {
-        console.log('[Media Nexus] Iniciando Instalação OTA...');
-        const CDN_BASE = 'https://gigantera-penumbra.b-cdn.net';
-        
-        const manifestRes = await fetch(`${CDN_BASE}/media_manifest.json`);
-        const manifestData = await manifestRes.json();
-        
-        const progressDiv = document.createElement('div');
-        progressDiv.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;padding:30px;border:1px solid #00f0ff;color:#fff;z-index:99999;font-family:monospace;text-align:center;border-radius:8px;box-shadow: 0 0 40px rgba(0,240,255,0.2);';
-        progressDiv.innerHTML = `<h3>📥 INSTALANDO GIGANTERA OFFLINE</h3><p id="ota-status" style="margin:20px 0;">Preparando download de ${manifestData.length} itens...</p><progress id="ota-bar" value="0" max="100" style="width:100%;height:20px;"></progress>`;
-        document.body.appendChild(progressDiv);
-
-        const downloadQueue = [
-          { remote: 'media_manifest.json', local: 'media_manifest.json' },
-          { remote: 'Penumbra_Portable.html', local: 'Penumbra_Offline_Executable.html' }
-        ];
-
-        for (const item of manifestData) {
-          if (item.relative_path) downloadQueue.push({ remote: item.relative_path, local: item.relative_path });
-          if (item.thumbnail) downloadQueue.push({ remote: item.thumbnail, local: item.thumbnail });
-          if (item.preview_anim) downloadQueue.push({ remote: item.preview_anim, local: item.preview_anim });
-        }
-
-        async function ensureDirectory(baseHandle, pathStr) {
-          const parts = pathStr.split('/');
-          let currentHandle = baseHandle;
-          for (const part of parts) {
-            if (!part) continue;
-            currentHandle = await currentHandle.getDirectoryHandle(part, { create: true });
-          }
-          return currentHandle;
-        }
-
-        let doneCount = 0;
-        for (const fileItem of downloadQueue) {
-          document.getElementById('ota-status').textContent = `Baixando: ${fileItem.local}`;
-          try {
-            const res = await fetch(`${CDN_BASE}/${fileItem.remote}`);
-            if (res.ok) {
-              const blob = await res.blob();
-              const parts = fileItem.local.split('/');
-              const fileName = parts.pop();
-              const dirPath = parts.join('/');
-              
-              const targetDirHandle = dirPath ? await ensureDirectory(dirHandle, dirPath) : dirHandle;
-              const fileHandle = await targetDirHandle.getFileHandle(fileName, { create: true });
-              const writable = await fileHandle.createWritable();
-              await writable.write(blob);
-              await writable.close();
-            }
-          } catch (e) {
-            console.warn(`Falha no download OTA: ${fileItem.local}`, e);
-          }
-          doneCount++;
-          document.getElementById('ota-bar').value = (doneCount / downloadQueue.length) * 100;
-        }
-
-        progressDiv.innerHTML = `<h3>✅ INSTALAÇÃO CONCLUÍDA!</h3><p>O Penumbra Engine portátil e todas as mídias agora são nativas no seu HD.</p>`;
-        setTimeout(() => progressDiv.remove(), 4000);
-        
-        // Re-scan dynamically created files
-        MediaProvider.localFilesMap.clear();
-        clips.length = 0;
-        await scanDir(dirHandle);
-      }
-    }
-
-    const localManifest = await getLocalManifest(dirHandle);
-    
-    // Auto-Launch Portable HTML if present and we aren't already running in it
-    const isOfflineMode = window.location.protocol === 'blob:' || window.location.protocol === 'file:';
-    if (!isOfflineMode) {
-      try {
-        const execHandle = await dirHandle.getFileHandle('Penumbra_Offline_Executable.html');
-        const execFile = await execHandle.getFile();
-        const execUrl = URL.createObjectURL(execFile);
-        
-        const popup = window.open(execUrl, '_blank');
-        if (popup) {
-          document.body.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#050505; color:#00f0ff; font-family:monospace; text-align:center;">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              <h2 style="margin-top:20px; font-size:24px;">GIGANTERA OFFLINE INICIADO</h2>
-              <p style="color:#aaa; max-width:400px; line-height:1.6;">O motor portátil foi aberto em uma nova aba rodando diretamente do seu SSD com latência zero.<br><br>Por favor, acesse a nova aba.</p>
-            </div>
-          `;
-          return []; // Halt current app
-        }
-      } catch (e) {
-        // Not found, continue normally
-      }
-    }
-
-    if (localManifest && localManifest.length > 0) {
-      console.log('[Media Nexus] Usando media_manifest.json local otimizado.');
+    if (localManifest && Array.isArray(localManifest) && localManifest.length > 0) {
+      console.log(`[Media Nexus] Usando media_manifest.json local otimizado (${localManifest.length} clipes).`);
       return localManifest;
+    }
+
+    // 4. If 0 clips found via folder picker, fall back to localhost manifest if available
+    if (clips.length === 0) {
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        try {
+          const res = await fetch('/api/manifest');
+          if (res.ok) {
+            const serverClips = await res.json();
+            if (Array.isArray(serverClips) && serverClips.length > 0) {
+              console.log(`[Media Nexus] Pasta selecionada vazia; recuperados ${serverClips.length} clipes da biblioteca local do servidor.`);
+              return serverClips;
+            }
+          }
+        } catch (e) {}
+      }
+      console.warn('[Media Nexus] Nenhum arquivo compatível encontrado na pasta selecionada.');
     }
 
     return clips;
@@ -8554,15 +8514,30 @@ async function reconnectCloudSource() {
 }
 window.reconnectCloudSource = reconnectCloudSource;
 
-async function selectLocalDirectorySource() {
+async function selectLocalDirectorySource(forcePicker = false) {
   try {
-    const dirHandle = await window.showDirectoryPicker({ mode: 'read', startIn: 'videos' });
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    let dirHandle = null;
+
+    if (forcePicker || (!isLocalhost && typeof window.showDirectoryPicker === 'function')) {
+      if (typeof window.showDirectoryPicker === 'function') {
+        dirHandle = await window.showDirectoryPicker({ mode: 'read', startIn: 'videos' });
+      }
+    }
+
     closeStudioLauncher();
     const clips = await MediaProvider.initLocal(dirHandle);
     await loadMediaPool(clips);
     await loadMattesCatalog();
     updateSourceUI('local');
     localStorage.setItem('penumbra_media_source', 'local');
+    const chkRemember = document.getElementById('chk-nexus-remember-source');
+    if (chkRemember && chkRemember.checked) {
+      localStorage.setItem('penumbra_remember_source', 'true');
+    }
+    if (typeof showMacroToast === 'function') {
+      showMacroToast(`Unidade Local Ativa · ${clips ? clips.length : 0} clipes carregados`);
+    }
   } catch (err) {
     if (err.name !== 'AbortError') {
       console.warn('[Media Nexus] Seleção de diretório falhou:', err);
@@ -8772,7 +8747,13 @@ function bootstrapApp() {
         loadMattesCatalog();
         updateSourceUI('cdn');
       }).catch(err => {
-        console.warn('[Media Nexus] Falha ao autoconectar, abrindo Studio Launcher:', err);
+        console.warn('[Media Nexus] Falha ao autoconectar CDN, abrindo Studio Launcher:', err);
+        openStudioLauncher();
+      });
+    } else if (rememberSource && savedSource === 'local') {
+      console.log('[Media Nexus] Autoconectando ao Disco Local (preferência salva)...');
+      selectLocalDirectorySource(false).catch(err => {
+        console.warn('[Media Nexus] Falha ao autoconectar local, abrindo Studio Launcher:', err);
         openStudioLauncher();
       });
     } else {
