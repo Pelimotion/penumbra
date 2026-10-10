@@ -36,7 +36,11 @@
 ## 🤝 Handover para o Próximo Chat / Próxima Sessão
 1. **Branch de Trabalho:** Continuar exclusivamente na branch `feat/penumbra-collaborative-dev`.
 2. **Ambiente de Testes / Preview:** Utilizar `http://localhost:3000` ou o link de Preview gerado pela Vercel após cada push.
-3. **Hardware Twin & MIDI:** Central de 4 bancos (B1 Mixer, B2 Layer Focus, B3 Conductor, B4 Color Lab) e Soft Takeover totalmente operacionais em `midi.js`.
+3. **Hardware Twin & MIDI:**
+   - **M-Vave SMC-MIXER Dual Preset Engine:** Detecção automática e comutação instantânea entre **Banco 1 (Seta Esquerda ◄ - Faders & Encoders 1:1)** e **Banco 2 (Seta Direita ► - Matriz de 32 Botões Mute/Solo/Rec/Select + Transporte)**.
+   - **Navegação B1–B4 (4 Modos de Software):** B1 Master Live Mixer, B2 Layer Focus & Params, B3 Conductor Macros, B4 Color Lab.
+   - **Métodos de Seleção B1–B4:** Botão `[CYCLE]` do hardware, botões `SEL 6`/`SEL 7`/`SEL 8`, atalhos de teclado (`B`, `[`, `]`, `F1`–`F4`, `H`), e cliques diretos nos badges interativos do Header (`B1: MIXER` e `◄ HW1: FADERS`).
+   - **Soft Takeover:** Modos `pickup`, `scaling` e `direct` com indicadores visuais no twin.
 4. **Finalização de Tarefa:** Ao concluir novas features, disparar `gh pr create` para abrir PR limpa contra a `main`.
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
