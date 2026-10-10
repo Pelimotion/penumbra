@@ -1,9 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 00:30:00 BRT
+- **Última Atualização:** 10/10/2026, 01:20:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Vídeo em Nuvem (Anti-Freeze 60 FPS):** 🟢 RESOLVIDO (6 clipes nativos CDN adicionados ao topo, fallback resiliente, crossOrigin anonymous, sem telas congeladas)
+- **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
 - **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
 - **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
@@ -17,20 +19,20 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 9,736 | 382.4 KB |
-| `styles.css` | 8,759 | 169.6 KB |
-| `index.html` | 3,336 | 212.7 KB |
-| `Penumbra_Portable.html` | — | 841.3 KB |
+| `app.js` | 10,567 | 422.4 KB |
+| `styles.css` | 8,759 | 171.0 KB |
+| `index.html` | 3,341 | 213.3 KB |
+| `Penumbra_Portable.html` | — | 883.4 KB |
 
 ## 🎬 Media Pool
-- **Clipes no Manifesto:** 75 entradas
+- **Clipes no Manifesto:** 81 entradas (incluindo os 6 vídeos nativos da Bunny CDN)
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
 - **Branch:** `feat/penumbra-collaborative-dev`
-- **Último Commit:** `a87bbba` — docs(state): atualizar links de preview e handover
-- **Data:** 2026-10-09 23:13:57
-- **Total de Commits:** 42
+- **Último Commit:** `fd2f575` — fix(media-audio): fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
+- **Data:** 2026-10-10 01:11:14
+- **Total de Commits:** 43
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
