@@ -1,18 +1,18 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 04:04:48 BRT
+- **Última Atualização:** 10/10/2026, 10:25:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
-- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
+- **Eliminação de Flash em Transições:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
+- **Pool Granular de Autopilot (Pastas e Takes):** 🟢 ATIVO (Controle duplo de inclusão por pastas em Configurações/Tab 5 e por clipe nos cards com toggles `[⚡ AUTO]`/`[✕ MANUAL]`, filtros rápidos e ações em lote)
+- **Entrada de Linha (P2) & Microfone:** 🟢 ATIVO (Smart auto-detection de dispositivos P2/Line-in, filtros Biquad HPF 24Hz e LPF 16kHz, VU meter hardware-grade RMS/Peak dB e spectral flux BPM)
+- **BPM Permanente & Tap Tempo HUD:** 🟢 ATIVO (Capsule no cabeçalho com LED downbeat, pill no Master Control Bridge, Tap Tempo com média móvel ponderada, contador de toques e animação neon)
+- **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
-- **Estabilização da Barra Central:** 🟢 RESOLVIDO (Cápsula de 215px fixa, eliminação de jitter e tag estável `FORÇADO`)
-- **Microfone & Line-In Ao Vivo:** 🟢 ATIVO (Captura resiliente via `getUserMedia`, Preamp Gain slider 0.5x-4.0x, VU meter hardware-grade RMS/Peak dB com indicador de clip, spectral flux BPM counter, e CUE seguro 100% isolado do MP3)
-- **Painel Studio Inspector (🎭 MATTE):** 🟢 ATIVO (Controle paramétrico de máscaras: Geometria X/Y, escala anamórfica, rotação, vinheta procedural com roundness 0%-100%, feathering suave, auras concêntricas e dinâmica áudio-reativa, acionável via botão `⚙ INSP` nos cards)
-- **Matriz 3D Generativa & Estrela 13 Desacoplada (🌌 3D GEN):** 🟢 ATIVO (4 cenas: `ESPINHAÇO`, `OCEAN SUN`, `ESTRELA 13`, `HYBRID COSMOS`; 5 paletas de luxo; reatividade desacoplada com rotação da estrela no treble/air e kick explosivo no Z-depth do numeral 13 no sub/bass)
-- **Página MIDI Dedicada Banco 3 (BANK C · 3D MATRIX):** 🟢 ATIVO (Ciclo de 3 bancos A/B/C no hardware twin, 8 faders e 8 knobs mapeados para morph 3D, câmeras, kick Z, amplitude de onda, vinheta e preamp gain)
+- **Painel Studio Inspector (🎭 MATTE & 🌌 3D GEN):** 🟢 ATIVO (Controle de geometria, vinheta com roundness 0%-100%, 4 cenas 3D, 5 paletas de luxo e Estrela 13 desacoplada)
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -23,10 +23,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 11,938 | 491.7 KB |
-| `styles.css` | 9,994 | 193.8 KB |
-| `index.html` | 3,517 | 227.3 KB |
-| `Penumbra_Portable.html` | — | 1006.9 KB |
+| `app.js` | 13,251 | 553.0 KB |
+| `styles.css` | 10,877 | 213.0 KB |
+| `index.html` | 3,572 | 231.0 KB |
+| `Penumbra_Portable.html` | — | 1,126.4 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 81 entradas

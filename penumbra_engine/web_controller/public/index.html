@@ -275,6 +275,14 @@
         <div class="header-vu-clip-led" id="hdr-vu-clip" title="Alerta de Distorção / Clip"></div>
       </div>
 
+      <!-- Permanent High-Visibility Master BPM Capsule -->
+      <div class="header-bpm-capsule" id="header-permanent-bpm" title="Master Clock BPM (Live / Tap / Locked) · Clique para alternar trava [L]" onclick="toggleBpmLock()">
+        <span class="bpm-led-dot" id="bpm-clock-dot" title="Downbeat Pulse"></span>
+        <span class="bpm-num" id="permanent-bpm-val">124.0</span>
+        <span class="bpm-unit">BPM</span>
+        <span class="bpm-lock-indicator" id="hdr-bpm-lock-tag" style="display: none;" title="BPM Travado Manualmente">🔒</span>
+      </div>
+
       <!-- Headphone Audition Module -->
       <div class="audio-cue-box" title="Monitor de Áudio (CUE) · Teste e Pré-escuta">
         <button class="btn btn-cue" id="btn-audio-monitor">
@@ -402,6 +410,10 @@
           <button class="btn-strip-tap" id="btn-strip-tap" onclick="handleTapTempo()" title="Tap Tempo no ritmo da música [T]">
             TAP
           </button>
+          <div class="strip-bpm-pill" id="strip-bpm-display-pill" onclick="toggleBpmLock()" title="Master BPM Clock (Live / Tap / Locked) · Clique para alternar trava">
+            <span class="strip-bpm-num" id="strip-bpm-val">124.0</span>
+            <span class="strip-bpm-unit">BPM</span>
+          </div>
           <div class="phrase-clock-capsule" title="Relógio Musical · Compasso e Pulso de Beat">
             <div class="pulse-indicator" id="beat-pulse-orb" title="Pulso de Beat / Downbeat"></div>
             <span class="phrase-bar-badge" id="phrase-bar-display">BAR 01 / 16</span>
@@ -1132,6 +1144,15 @@
                     <option value="16" selected>Girar a cada 16 Bars</option>
                     <option value="32">Girar a cada 32 Bars</option>
                   </select>
+                </div>
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 9.5px; color: #00f0ff; letter-spacing: 0.5px;">POOL DE TAKES & PASTAS:</span>
+                    <button class="btn btn-outline btn-xs" onclick="switchTab('tab-media'); setAutopilotPoolViewFilter('AUTO_ONLY');" style="font-size: 9px; padding: 2px 6px;">GERENCIAR POOL ↗</button>
+                  </div>
+                  <div id="conductor-pool-summary-text" style="font-size: 10px; color: rgba(255,255,255,0.7);">
+                    Carregando pool de mídias...
+                  </div>
                 </div>
               </div>
               

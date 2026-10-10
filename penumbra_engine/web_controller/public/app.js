@@ -1124,15 +1124,19 @@ let currentAudioSource = { mode: 'test', device_name: 'MP3 Interno (01 REC-2024-
 const offscreenA = document.createElement('canvas');
 const offscreenB = document.createElement('canvas');
 const offscreenOverlay = document.createElement('canvas');
+const sobelCanvas = document.createElement('canvas');
 const offCtxA = offscreenA.getContext('2d');
 const offCtxB = offscreenB.getContext('2d');
 const offCtxOverlay = offscreenOverlay.getContext('2d');
+const sobelCtx = sobelCanvas.getContext('2d');
 offscreenA.width = 640;
 offscreenA.height = 360;
 offscreenB.width = 640;
 offscreenB.height = 360;
 offscreenOverlay.width = 640;
 offscreenOverlay.height = 360;
+sobelCanvas.width = 640;
+sobelCanvas.height = 360;
 
 // Dual Persistent Broadcast Buses (Bus A = Program Master, Bus B = Preview Cue)
 const busCanvasA = document.createElement('canvas');
@@ -2084,15 +2088,43 @@ let phraseBeatAccumulator = 0.0;
 let lastBeatTriggered = -1;
 let tapHistory = [];
 
+let tapCount = 0;
+let tapResetTimer = null;
+
+function updateAllBpmDisplays(val) {
+  const bpmNum = Number(val) || (appState && appState.bpm) || 124.0;
+  const formatted = bpmNum.toFixed(1);
+
+  const ids = [
+    'permanent-bpm-val',
+    'strip-bpm-val',
+    'tl-current-bpm',
+    'badge-bpm',
+    'input-manual-bpm'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'INPUT') {
+      if (document.activeElement !== el) el.value = formatted;
+    } else {
+      el.textContent = formatted;
+    }
+  });
+
+  const chipBpm = document.getElementById('chip-bpm');
+  if (chipBpm) chipBpm.textContent = `${formatted} BPM`;
+  const bpmDisplayEl = document.getElementById('bpm-display');
+  if (bpmDisplayEl) bpmDisplayEl.textContent = `${formatted} BPM`;
+}
+window.updateAllBpmDisplays = updateAllBpmDisplays;
+
 function setManualBpm(val) {
   const bpm = Math.max(40.0, Math.min(220.0, Number(val) || 124.0));
   appState.bpm = Math.round(bpm * 10) / 10.0;
   appState.bpm_manual_lock = true;
 
-  const inputEl = document.getElementById('input-manual-bpm');
-  if (inputEl) inputEl.value = appState.bpm.toFixed(1);
-  const badgeBpm = document.getElementById('badge-bpm');
-  if (badgeBpm) badgeBpm.textContent = appState.bpm.toFixed(1);
+  updateAllBpmDisplays(appState.bpm);
 
   const chipBpm = document.getElementById('chip-bpm');
   if (chipBpm) chipBpm.classList.add('manual-lock');
@@ -2101,6 +2133,8 @@ function setManualBpm(val) {
     lockTag.style.display = 'inline-block';
     lockTag.textContent = 'LOCK';
   }
+  const hdrLockTag = document.getElementById('hdr-bpm-lock-tag');
+  if (hdrLockTag) hdrLockTag.style.display = 'inline-block';
 
   sendAction('set_bpm', { value: appState.bpm, manual: true });
 }
@@ -2120,25 +2154,38 @@ function toggleBpmLock() {
   appState.bpm_manual_lock = !appState.bpm_manual_lock;
   const chipBpm = document.getElementById('chip-bpm');
   const lockTag = document.getElementById('bpm-lock-tag');
+  const hdrLockTag = document.getElementById('hdr-bpm-lock-tag');
   if (chipBpm) chipBpm.classList.toggle('manual-lock', appState.bpm_manual_lock);
   if (lockTag) {
     lockTag.style.display = appState.bpm_manual_lock ? 'inline-block' : 'none';
   }
+  if (hdrLockTag) {
+    hdrLockTag.style.display = appState.bpm_manual_lock ? 'inline-block' : 'none';
+  }
+  showMacroToast(appState.bpm_manual_lock ? '🔒 BPM Travado Manualmente' : '🔓 BPM em Detecção Automática');
 }
 window.toggleBpmLock = toggleBpmLock;
 
 function handleTapTempo() {
   const now = performance.now();
-  tapHistory = tapHistory.filter(t => (now - t) < 3000);
+  if (tapHistory.length > 0 && (now - tapHistory[tapHistory.length - 1]) > 2200) {
+    tapHistory = [];
+    tapCount = 0;
+  }
   tapHistory.push(now);
+  tapCount++;
 
-  const btns = [document.getElementById('btn-tap-tempo'), document.getElementById('btn-strip-tap')];
-  btns.forEach(b => {
+  const btnTap = document.getElementById('btn-strip-tap');
+  const hdrBpm = document.getElementById('header-permanent-bpm');
+  const stripPill = document.getElementById('strip-bpm-display-pill');
+  const tapBtns = [document.getElementById('btn-tap-tempo'), btnTap, hdrBpm, stripPill];
+
+  tapBtns.forEach(b => {
     if (b) {
       b.classList.remove('tap-flash');
       void b.offsetWidth;
       b.classList.add('tap-flash');
-      setTimeout(() => b.classList.remove('tap-flash'), 120);
+      setTimeout(() => b.classList.remove('tap-flash'), 150);
     }
   });
 
@@ -2147,12 +2194,34 @@ function handleTapTempo() {
     for (let i = 1; i < tapHistory.length; i++) {
       intervals.push(tapHistory[i] - tapHistory[i - 1]);
     }
-    const avgIntervalMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+    // Weighted moving average giving more importance to latest intervals
+    let avgIntervalMs = 0;
+    if (intervals.length <= 2) {
+      avgIntervalMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    } else {
+      const weights = intervals.map((_, idx) => 1.0 + (idx / intervals.length) * 0.5);
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      avgIntervalMs = intervals.reduce((sum, intv, idx) => sum + intv * weights[idx], 0) / totalWeight;
+    }
+
     const calculatedBpm = Math.round((60000.0 / avgIntervalMs) * 10) / 10.0;
     if (calculatedBpm >= 40 && calculatedBpm <= 220) {
       setManualBpm(calculatedBpm);
+      if (btnTap) btnTap.textContent = `TAP · ${calculatedBpm.toFixed(1)}`;
+      showMacroToast(`⏱ TAP TEMPO: ${calculatedBpm.toFixed(1)} BPM (Tap ${tapCount})`);
     }
+  } else {
+    if (btnTap) btnTap.textContent = `TAP [${tapCount}]`;
+    showMacroToast(`⏱ TAP TEMPO: Tap ${tapCount}...`);
   }
+
+  clearTimeout(tapResetTimer);
+  tapResetTimer = setTimeout(() => {
+    tapHistory = [];
+    tapCount = 0;
+    if (btnTap) btnTap.textContent = 'TAP';
+  }, 2200);
 }
 window.handleTapTempo = handleTapTempo;
 
@@ -3361,18 +3430,22 @@ function renderVisuals(time) {
         offCtxA.restore();
       }
 
-      // Draw offscreenA to busCanvasA with tonal grading
-      busCtxA.save();
-      busCtxA.globalAlpha = (appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
-      busCtxA.filter = getTonalFilterString(appState.tonal);
-      busCtxA.drawImage(offscreenA, 0, 0, w, h);
-      busCtxA.restore();
+      // Draw offscreenA to busCanvasA with tonal grading (bypassed if opacity is zero)
+      const baseAOpacity = (appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
+      if (baseAOpacity > 0.005) {
+        busCtxA.save();
+        busCtxA.globalAlpha = baseAOpacity;
+        busCtxA.filter = getTonalFilterString(appState.tonal);
+        busCtxA.drawImage(offscreenA, 0, 0, w, h);
+        busCtxA.restore();
+      }
 
       // Organic penumbra vignette removed
     }
 
     // LAYER 1: SELF-DOUBLE (Multiply/Screen blend, scale + audio pulse)
-    if (baseSource && appState.layers.layer1.active) {
+    const l1AOpacity = (appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+    if (baseSource && appState.layers.layer1.active && l1AOpacity > 0.005) {
       busCtxA.save();
       busCtxA.translate(w/2, h/2);
       const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
@@ -3380,17 +3453,18 @@ function renderVisuals(time) {
       busCtxA.translate(-w/2, -h/2);
       const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
       busCtxA.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
-      busCtxA.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
+      busCtxA.globalAlpha = l1AOpacity;
       drawFittedImage(busCtxA, baseSource, w, h, appState.layers.layer1.fit_mode || 'fit', appState.layers.layer1.rotation || 0);
       busCtxA.restore();
     }
 
     // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
     if (baseSource && appState.layers.layer2.active) {
-      const isL2Solo = !appState.layers.layer0.active && !appState.layers.layer1.active;
+      const isL2SoloA = (!appState.layers.layer0.active || (appState.layers.layer0.opacity !== undefined && appState.layers.layer0.opacity <= 0.01)) &&
+                        (!appState.layers.layer1.active || l1AOpacity <= 0.01);
       const l2 = appState.layers.layer2;
       busCtxA.save();
-      if (isL2Solo) {
+      if (isL2SoloA) {
         busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
         drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
       } else {
@@ -3420,6 +3494,11 @@ function renderVisuals(time) {
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
+      // Clamped Deck B Base Opacity: Deck B represents the incoming Base Video for transition.
+      // It must strictly adhere to the master base video opacity (layer0.opacity) to prevent flashes!
+      const masterBaseOpacity = (appState.layers.layer0 && appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
+      const deckBOpacity = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? Math.min(masterBaseOpacity, appState.layers.layer3.opacity) : masterBaseOpacity;
+
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
         offCtxB.fillStyle = '#050608';
@@ -3448,14 +3527,18 @@ function renderVisuals(time) {
           offCtxB.restore();
         }
 
-        busCtxB.save();
-        busCtxB.filter = getTonalFilterString(appState.tonal);
-        busCtxB.globalAlpha = (appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
-        busCtxB.drawImage(offscreenB, 0, 0, w, h);
-        busCtxB.restore();
+        // Only draw base video to Bus B if opacity is greater than 0.5% (avoids flash when base is 0)
+        if (deckBOpacity > 0.005) {
+          busCtxB.save();
+          busCtxB.filter = getTonalFilterString(appState.tonal);
+          busCtxB.globalAlpha = deckBOpacity;
+          busCtxB.drawImage(offscreenB, 0, 0, w, h);
+          busCtxB.restore();
+        }
 
         // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-        if (appState.layers.layer1.active) {
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        if (appState.layers.layer1.active && l1BOpacity > 0.005) {
           busCtxB.save();
           busCtxB.translate(w/2, h/2);
           const s = (appState.layers.layer1.scale || 1.12) + Math.sin(simTime * 0.3) * 0.008 + (sub * 0.02);
@@ -3463,7 +3546,7 @@ function renderVisuals(time) {
           busCtxB.translate(-w/2, -h/2);
           const b1 = (appState.layers.layer1.blend || 'multiply').toLowerCase();
           busCtxB.globalCompositeOperation = b1 === 'screen' ? 'screen' : 'multiply';
-          busCtxB.globalAlpha = appState.layers.layer1.opacity !== undefined ? appState.layers.layer1.opacity : 0.55;
+          busCtxB.globalAlpha = l1BOpacity;
           drawFittedImage(busCtxB, queuedSource, w, h, appState.layers.layer3.fit_mode || 'fill', appState.layers.layer3.rotation || 0);
           busCtxB.restore();
         }
@@ -3471,10 +3554,12 @@ function renderVisuals(time) {
 
       // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
       if (appState.layers.layer2.active) {
-        const isL2Solo = !appState.layers.layer3.active && !appState.layers.layer1.active;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
+                          (!appState.layers.layer1.active || l1BOpacity <= 0.01);
         const l2 = appState.layers.layer2;
         busCtxB.save();
-        if (isL2Solo) {
+        if (isL2SoloB) {
           busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
           drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
         } else {
@@ -3589,7 +3674,8 @@ function renderVisuals(time) {
       }
 
       // LAYER 4: ACCENT VIDEO (DROP / CLIMAX DIFFERENCE)
-      if ((appState.macro_state === 'DROP' || appState.drop_likelihood > 0.65) && appState.layers.layer4.active) {
+      const l4Opacity = (appState.layers.layer4 && appState.layers.layer4.opacity !== undefined) ? appState.layers.layer4.opacity : 0.25;
+      if (l4Opacity > 0.005 && (appState.macro_state === 'DROP' || appState.drop_likelihood > 0.65) && appState.layers.layer4.active) {
         const accentClip = allClips.find(c => c.id === appState.layers.layer4.clipId) || allClips[2] || allClips[0];
         const isAccentGen = accentClip && (accentClip.is_generative || accentClip.id === 'clip_gen_plexus_spine');
         const videoL4Ready = playerL4 && playerL4.readyState >= 2;
@@ -3615,7 +3701,7 @@ function renderVisuals(time) {
 
           prgCtx.save();
           prgCtx.globalCompositeOperation = 'difference';
-          prgCtx.globalAlpha = Math.min(0.35, (appState.layers.layer4.opacity || 0.25) * (0.6 + bass * 0.4));
+          prgCtx.globalAlpha = Math.min(0.35, l4Opacity * (0.6 + bass * 0.4));
           drawBusToProgram(prgCtx, offscreenB, pw, ph, isVert);
           prgCtx.restore();
         }
@@ -3720,8 +3806,12 @@ function renderVisuals(time) {
 // Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
 function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
   if (!baseSource) return;
-  offCtxB.clearRect(0, 0, w, h);
-  offCtxB.save();
+  if (sobelCanvas.width !== w || sobelCanvas.height !== h) {
+    sobelCanvas.width = w;
+    sobelCanvas.height = h;
+  }
+  sobelCtx.clearRect(0, 0, w, h);
+  sobelCtx.save();
 
   const l2 = (appState.layers && appState.layers.layer2) || {};
   const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
@@ -3729,14 +3819,14 @@ function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) 
   const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
   const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
 
-  // 1. Grayscale de alto contraste
-  offCtxB.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(offCtxB, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+  // 1. Grayscale de alto contraste no buffer dedicado do Sobel
+  sobelCtx.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
+  drawFittedImage(sobelCtx, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
 
   // 2. Extração de contornos por gradiente espacial de diferença
-  offCtxB.globalCompositeOperation = 'difference';
-  offCtxB.drawImage(offscreenB, edgeWidth, edgeWidth);
-  offCtxB.restore();
+  sobelCtx.globalCompositeOperation = 'difference';
+  sobelCtx.drawImage(sobelCanvas, edgeWidth, edgeWidth);
+  sobelCtx.restore();
 
   // 3. Elevação de luminância e renderização com brancos vívidos
   ctx.save();
@@ -3744,17 +3834,17 @@ function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) 
     // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
     ctx.globalCompositeOperation = 'source-over';
     ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
-    ctx.drawImage(offscreenB, 0, 0, w, h);
+    ctx.drawImage(sobelCanvas, 0, 0, w, h);
     // Realce luminoso para chalk/neon orgânico sem clipping digital
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = 0.65;
-    ctx.drawImage(offscreenB, 0, 0, w, h);
+    ctx.drawImage(sobelCanvas, 0, 0, w, h);
   } else {
     // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
     const blendMode = (l2.blend || 'Screen').toLowerCase();
     ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
     ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
-    ctx.drawImage(offscreenB, 0, 0, w, h);
+    ctx.drawImage(sobelCanvas, 0, 0, w, h);
   }
   ctx.restore();
 }
@@ -5820,13 +5910,207 @@ function setAutopilotMattePolicy(policy) {
 }
 window.setAutopilotMattePolicy = setAutopilotMattePolicy;
 
+// ============================================================================
+// AUTOPILOT POOL ARCHITECTURE (Granular Folders & Takes Gating Engine)
+// Industry benchmark: Resolume Arena 7, Ableton Live 12 follow actions, disguise
+// ============================================================================
+if (!appState.autopilot_pool) {
+  let storedAp = null;
+  try {
+    const raw = localStorage.getItem('penumbra_autopilot_pool');
+    if (raw) storedAp = JSON.parse(raw);
+  } catch (e) {}
+  appState.autopilot_pool = {
+    active_folders: (storedAp && Array.isArray(storedAp.active_folders)) ? storedAp.active_folders : [],
+    excluded_clips: (storedAp && Array.isArray(storedAp.excluded_clips)) ? storedAp.excluded_clips : [],
+    view_filter: 'ALL'
+  };
+}
+
+function saveAutopilotPoolState() {
+  try {
+    localStorage.setItem('penumbra_autopilot_pool', JSON.stringify({
+      active_folders: appState.autopilot_pool.active_folders,
+      excluded_clips: appState.autopilot_pool.excluded_clips
+    }));
+    if (typeof UserProfileManager !== 'undefined' && UserProfileManager.profile) {
+      UserProfileManager.profile.autopilot_pool = appState.autopilot_pool;
+      UserProfileManager.saveDebounced();
+    }
+  } catch (e) {}
+}
+
+function isClipEligibleForAutopilot(clip) {
+  if (!clip || !clip.id) return false;
+  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [] };
+  // 1. Excluded individual clip takes check
+  if (pool.excluded_clips && pool.excluded_clips.includes(clip.id)) {
+    return false;
+  }
+  // 2. Folder-level gating check (if any active folders are designated)
+  if (pool.active_folders && pool.active_folders.length > 0) {
+    const folder = getClipFolder(clip);
+    if (!pool.active_folders.includes(folder)) {
+      return false;
+    }
+  }
+  return true;
+}
+window.isClipEligibleForAutopilot = isClipEligibleForAutopilot;
+
+function toggleClipAutopilot(clipId, event) {
+  if (event) event.stopPropagation();
+  if (!clipId) return;
+  const pool = appState.autopilot_pool;
+  const isExcluded = pool.excluded_clips.includes(clipId);
+  if (isExcluded) {
+    pool.excluded_clips = pool.excluded_clips.filter(id => id !== clipId);
+  } else {
+    pool.excluded_clips.push(clipId);
+  }
+  saveAutopilotPoolState();
+  updateAutopilotPoolUI();
+
+  // Re-render the specific card or all cards
+  const card = document.querySelector(`.media-card[data-clip-id="${clipId}"]`);
+  const clip = (allClips || []).find(c => c.id === clipId);
+  if (card && clip) {
+    const isNowAuto = isClipEligibleForAutopilot(clip);
+    const apBtn = card.querySelector('.btn-action-ap');
+    if (apBtn) {
+      apBtn.className = `btn-card-action btn-action-ap ${isNowAuto ? 'is-auto-active' : 'is-auto-excluded'}`;
+      apBtn.innerHTML = `
+        <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+        <span>${isNowAuto ? 'AUTO' : 'MANUAL'}</span>
+      `;
+      apBtn.title = isNowAuto ? 'Take ativo no Autopilot · Clique para excluir da rotação' : 'Take excluído do Autopilot · Apenas disparo manual';
+    }
+    const thumbContainer = card.querySelector('.media-card-thumb');
+    if (thumbContainer) {
+      const existingManual = thumbContainer.querySelector('.thumb-manual-indicator');
+      const existingAuto = thumbContainer.querySelector('.thumb-auto-indicator');
+      if (existingManual) existingManual.remove();
+      if (existingAuto) existingAuto.remove();
+      const badge = document.createElement('span');
+      badge.className = isNowAuto ? 'thumb-auto-indicator' : 'thumb-manual-indicator';
+      badge.textContent = isNowAuto ? '⚡ AUTO' : '✕ MANUAL';
+      badge.title = isNowAuto ? 'Elegível para o Autopilot' : 'Excluído do Autopilot · Somente manual';
+      thumbContainer.appendChild(badge);
+    }
+    card.classList.toggle('is-autopilot-excluded', !isNowAuto);
+  } else {
+    if (typeof renderMediaCards === 'function') renderMediaCards();
+  }
+
+  const clipObj = (allClips || []).find(c => c.id === clipId);
+  const title = clipObj ? (clipObj.display_title || clipObj.filename) : clipId;
+  const statusMsg = isExcluded ? `⚡ Take ativado no Autopilot: "${title}"` : `✕ Take restrito a disparo manual: "${title}"`;
+  showMacroToast(statusMsg);
+}
+window.toggleClipAutopilot = toggleClipAutopilot;
+
+function toggleAutopilotFolder(folderName, isChecked) {
+  const pool = appState.autopilot_pool;
+  if (isChecked) {
+    if (!pool.active_folders.includes(folderName)) {
+      pool.active_folders.push(folderName);
+    }
+  } else {
+    pool.active_folders = pool.active_folders.filter(f => f !== folderName);
+  }
+  saveAutopilotPoolState();
+  updateAutopilotPoolUI();
+  if (typeof renderMediaCards === 'function') renderMediaCards();
+  showMacroToast(isChecked ? `📁 Pasta "${folderName}" adicionada ao Autopilot` : `📁 Pasta "${folderName}" removida do Autopilot`);
+}
+window.toggleAutopilotFolder = toggleAutopilotFolder;
+
+function setAllClipsAutopilot(mode) {
+  const pool = appState.autopilot_pool;
+  if (mode === 'all') {
+    pool.excluded_clips = [];
+    pool.active_folders = [];
+    showMacroToast('✓ Todos os takes incluídos no Autopilot');
+  } else if (mode === 'none') {
+    pool.excluded_clips = (allClips || []).map(c => c.id);
+    showMacroToast('✕ Todos os takes restritos a manual (Autopilot zerado)');
+  } else if (mode === 'invert') {
+    const allIds = (allClips || []).map(c => c.id);
+    const newExcluded = allIds.filter(id => !pool.excluded_clips.includes(id));
+    pool.excluded_clips = newExcluded;
+    showMacroToast('🔄 Seleção do Autopilot invertida');
+  } else if (mode === 'current_folder') {
+    if (activeFolderFilter && activeFolderFilter !== 'ALL') {
+      pool.active_folders = [activeFolderFilter];
+      const folderClips = (allClips || []).filter(c => getClipFolder(c) === activeFolderFilter).map(c => c.id);
+      pool.excluded_clips = pool.excluded_clips.filter(id => !folderClips.includes(id));
+      showMacroToast(`📁 Apenas a pasta "${activeFolderFilter}" ativa no Autopilot`);
+    }
+  }
+  saveAutopilotPoolState();
+  updateAutopilotPoolUI();
+  if (typeof renderMediaCards === 'function') renderMediaCards();
+}
+window.setAllClipsAutopilot = setAllClipsAutopilot;
+
+function setAutopilotPoolViewFilter(mode) {
+  appState.autopilot_pool.view_filter = mode;
+  document.querySelectorAll('.ap-pool-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === mode);
+  });
+  if (typeof renderMediaCards === 'function') renderMediaCards();
+}
+window.setAutopilotPoolViewFilter = setAutopilotPoolViewFilter;
+
+function updateAutopilotPoolUI() {
+  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [] };
+  const total = (allClips || []).length;
+  let eligibleCount = 0;
+  (allClips || []).forEach(c => {
+    if (isClipEligibleForAutopilot(c)) eligibleCount++;
+  });
+
+  const countEl = document.getElementById('ap-pool-count');
+  const totalEl = document.getElementById('ap-total-count');
+  const badgeApCount = document.getElementById('badge-autopilot-pool-summary');
+  const apCardCount = document.getElementById('conductor-pool-summary-text');
+  if (countEl) countEl.textContent = eligibleCount;
+  if (totalEl) totalEl.textContent = total;
+  if (badgeApCount) badgeApCount.textContent = `${eligibleCount}/${total} TAKES NO AUTOPILOT`;
+  if (apCardCount) apCardCount.textContent = `${eligibleCount} de ${total} takes elegíveis (${pool.active_folders.length ? pool.active_folders.length + ' pastas filtradas' : 'todas as pastas'})`;
+
+  // Render or update folder checkboxes in Settings
+  const apFoldersList = document.getElementById('autopilot-folders-list');
+  if (apFoldersList) {
+    const folderCounts = {};
+    (allClips || []).forEach(c => {
+      const f = getClipFolder(c);
+      folderCounts[f] = (folderCounts[f] || 0) + 1;
+    });
+    const folders = Object.keys(folderCounts).sort();
+    const activeFolders = pool.active_folders.length > 0 ? pool.active_folders : folders;
+
+    apFoldersList.innerHTML = folders.map(f => `
+      <label class="cfg-check-item">
+        <input type="checkbox" onchange="toggleAutopilotFolder('${f}', this.checked)" ${activeFolders.includes(f) ? 'checked' : ''}>
+        <span>${f} <small style="color: rgba(0,240,255,0.7); font-size: 10px;">(${folderCounts[f]} takes)</small></span>
+      </label>
+    `).join('');
+  }
+}
+window.updateAutopilotPoolUI = updateAutopilotPoolUI;
+
 function advanceSmartQueue(targetState = null) {
   if (!allClips || allClips.length === 0) return;
 
   const stateToUse = targetState || appState.macro_state || 'GROOVE';
+  // Filter clips strictly according to Autopilot Pool (Folders & Takes)
+  const eligibleClips = allClips.filter(c => isClipEligibleForAutopilot(c));
+  const poolToUse = eligibleClips.length > 0 ? eligibleClips : allClips;
+
   // Select next clip considering musical state and strict anti-repetition FIFO
-  const available = allClips.filter(c => !playedClipsHistory.includes(c.id));
-  const candidatePool = available.length > 0 ? available : allClips;
+  const available = poolToUse.filter(c => !playedClipsHistory.includes(c.id));
+  const candidatePool = available.length > 0 ? available : poolToUse;
 
   // Context-aware selection based on macro state
   let filteredCandidates = candidatePool;
@@ -6933,64 +7217,92 @@ function renderLibraryBreadcrumbs() {
   });
   const folders = Object.keys(folderCounts).sort();
 
+  const pool = appState.autopilot_pool || { active_folders: [], excluded_clips: [], view_filter: 'ALL' };
+  const totalClips = (allClips || []).length;
+  let eligibleCount = 0;
+  (allClips || []).forEach(c => {
+    if (isClipEligibleForAutopilot(c)) eligibleCount++;
+  });
+  const excludedCount = totalClips - eligibleCount;
+  const curFilter = pool.view_filter || 'ALL';
+
+  const poolToolbarHtml = `
+    <div class="autopilot-pool-toolbar" id="autopilot-pool-toolbar">
+      <div class="ap-pool-summary-group">
+        <span class="ap-pool-icon">⚡</span>
+        <span class="ap-pool-title">POOL AUTOPILOT:</span>
+        <span class="ap-pool-stats"><strong id="ap-pool-count">${eligibleCount}</strong>/<span id="ap-total-count">${totalClips}</span> Takes</span>
+      </div>
+      <div class="ap-pool-filter-group">
+        <button class="ap-pool-filter-btn ${curFilter === 'ALL' ? 'active' : ''}" data-filter="ALL" onclick="setAutopilotPoolViewFilter('ALL')" title="Exibir todo o catálogo">TODOS</button>
+        <button class="ap-pool-filter-btn ${curFilter === 'AUTO_ONLY' ? 'active' : ''}" data-filter="AUTO_ONLY" onclick="setAutopilotPoolViewFilter('AUTO_ONLY')" title="Exibir apenas takes ativos no Autopilot">⚡ NO AUTO (${eligibleCount})</button>
+        <button class="ap-pool-filter-btn ${curFilter === 'MANUAL_ONLY' ? 'active' : ''}" data-filter="MANUAL_ONLY" onclick="setAutopilotPoolViewFilter('MANUAL_ONLY')" title="Exibir apenas takes restritos a disparo manual">✕ MANUAIS (${excludedCount})</button>
+      </div>
+      <div class="ap-pool-bulk-actions">
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('all')" title="Incluir todos os takes no Autopilot">✓ TUDO AUTO</button>
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('none')" title="Excluir todos os takes do Autopilot (zerar rotação)">✕ ZERAR POOL</button>
+        <button class="btn-ap-bulk" onclick="setAllClipsAutopilot('invert')" title="Inverter takes selecionados para o Autopilot">🔄 INVERTER</button>
+        ${isFiltered ? `<button class="btn-ap-bulk btn-ap-bulk-folder" onclick="setAllClipsAutopilot('current_folder')" title="Ativar apenas takes da pasta atual no Autopilot">📁 SÓ "${activeFolderFilter}"</button>` : ''}
+      </div>
+    </div>
+  `;
+
   if (!isFiltered) {
     nav.innerHTML = `
-      <div class="lib-breadcrumb-trail">
-        <button class="breadcrumb-root-btn active" onclick="setFolderFilter('ALL')" title="Exibindo todas as pastas">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          <span>TODAS AS PASTAS</span>
-          <span class="breadcrumb-bin-count">(${allClips ? allClips.length : 0})</span>
-        </button>
-      </div>
-      <div class="lib-breadcrumb-pills">
-        ${folders.map(f => `
-          <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Filtrar por esta pasta: ${f}">
-            <span>${f}</span>
-            <span class="bin-pill-num">${folderCounts[f]}</span>
+      <div class="lib-breadcrumb-row">
+        <div class="lib-breadcrumb-trail">
+          <button class="breadcrumb-root-btn active" onclick="setFolderFilter('ALL')" title="Exibindo todas as pastas">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>TODAS AS PASTAS</span>
+            <span class="breadcrumb-bin-count">(${allClips ? allClips.length : 0})</span>
           </button>
-        `).join('')}
-      </div>
-    `;
-  } else {
-    const curCount = folderCounts[activeFolderFilter] || 0;
-    nav.innerHTML = `
-      <div class="lib-breadcrumb-trail">
-        <button class="breadcrumb-root-btn" onclick="setFolderFilter('ALL')" title="Voltar a todas as pastas">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          <span>TODAS AS PASTAS</span>
-        </button>
-        <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current-bin">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          <span>${activeFolderFilter}</span>
-          <span class="breadcrumb-bin-count">(${curCount})</span>
-        </span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <button class="btn-bin-return-all" onclick="setFolderFilter('ALL')" title="Sair desta pasta e exibir todo o acervo">
-          <span>◂ VER TODAS AS PASTAS [✕]</span>
-        </button>
+        </div>
         <div class="lib-breadcrumb-pills">
-          ${folders.filter(f => f !== activeFolderFilter).slice(0, 5).map(f => `
-            <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Trocar para pasta: ${f}">
+          ${folders.map(f => `
+            <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Filtrar por esta pasta: ${f}">
               <span>${f}</span>
               <span class="bin-pill-num">${folderCounts[f]}</span>
             </button>
           `).join('')}
         </div>
       </div>
+      ${poolToolbarHtml}
+    `;
+  } else {
+    const curCount = folderCounts[activeFolderFilter] || 0;
+    nav.innerHTML = `
+      <div class="lib-breadcrumb-row">
+        <div class="lib-breadcrumb-trail">
+          <button class="breadcrumb-root-btn" onclick="setFolderFilter('ALL')" title="Voltar a todas as pastas">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>TODAS AS PASTAS</span>
+          </button>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-current-bin">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>${activeFolderFilter}</span>
+            <span class="breadcrumb-bin-count">(${curCount})</span>
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn-bin-return-all" onclick="setFolderFilter('ALL')" title="Sair desta pasta e exibir todo o acervo">
+            <span>◂ TODAS AS PASTAS [✕]</span>
+          </button>
+          <div class="lib-breadcrumb-pills">
+            ${folders.filter(f => f !== activeFolderFilter).slice(0, 5).map(f => `
+              <button class="bin-quick-pill" onclick="setFolderFilter('${f}')" title="Trocar para pasta: ${f}">
+                <span>${f}</span>
+                <span class="bin-pill-num">${folderCounts[f]}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      ${poolToolbarHtml}
     `;
   }
 }
 window.renderLibraryBreadcrumbs = renderLibraryBreadcrumbs;
-
-window.toggleAutopilotFolder = function(folder, isActive) {
-  let active = appState.autopilot_active_folders || [...Array.from(new Set(allClips.map(c => getClipFolder(c))))];
-  if (isActive && !active.includes(folder)) active.push(folder);
-  if (!isActive && active.includes(folder)) active = active.filter(f => f !== folder);
-  appState.autopilot_active_folders = active;
-  sendAction('set_autopilot_folders', { active_folders: active });
-};
 
 // ============================================================================
 // CENTRALIZED USER PROFILE & ZERO-WASTE LOCAL CACHE MANAGER
@@ -7879,7 +8191,9 @@ function createMediaCardElement(clip) {
   const isInCue = (appState.layers?.layer3?.clipId === clip.id);
   const isSelected = (studioInspectorState && studioInspectorState.targetClipId === clip.id);
   
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isSelected ? 'is-selected' : ''} source-${clipSource}`;
+  const isAutoEligible = isClipEligibleForAutopilot(clip);
+  card.dataset.clipId = clip.id;
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${clipSource}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
@@ -7929,6 +8243,7 @@ function createMediaCardElement(clip) {
       ${srcBadgeHtml}
       ${isOnAir ? '<span class="thumb-air-indicator">● NO AR</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
+      ${isAutoEligible ? '<span class="thumb-auto-indicator" title="Ativo no Autopilot">⚡ AUTO</span>' : '<span class="thumb-manual-indicator" title="Excluído do Autopilot · Apenas disparo manual">✕ MANUAL</span>'}
       <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
       <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
     </div>
@@ -7953,6 +8268,10 @@ function createMediaCardElement(clip) {
         <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
+        </button>
+        <button class="btn-card-action btn-action-ap ${isAutoEligible ? 'is-auto-active' : 'is-auto-excluded'}" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="${isAutoEligible ? 'Take ativo no Autopilot · Clique para excluir da rotação' : 'Take excluído do Autopilot · Apenas disparo manual'}">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+          <span>${isAutoEligible ? 'AUTO' : 'MANUAL'}</span>
         </button>
         <button class="btn-card-action btn-action-l5" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
         ${actionBtnHtml}
@@ -8533,6 +8852,8 @@ function renderMediaCards() {
     container.appendChild(relinkBanner);
   }
 
+  updateAutopilotPoolUI();
+
   const filtered = allClips.filter(c => {
     const projText = (c.project || '').toLowerCase();
     const folderText = (c.project_folder || '').toLowerCase();
@@ -8556,6 +8877,13 @@ function renderMediaCards() {
       if (activeSourceFilter === 'cdn' && src !== 'cdn') return false;
       if (activeSourceFilter === 'local' && (src !== 'local' && src !== 'downloaded' && !c.has_local_match)) return false;
       if (activeSourceFilter === 'stream' && (src !== 'stream' && src !== 'youtube')) return false;
+    }
+
+    // Filter by Autopilot Pool View Filter ('ALL' | 'AUTO_ONLY' | 'MANUAL_ONLY')
+    if (appState.autopilot_pool && appState.autopilot_pool.view_filter && appState.autopilot_pool.view_filter !== 'ALL') {
+      const isAuto = isClipEligibleForAutopilot(c);
+      if (appState.autopilot_pool.view_filter === 'AUTO_ONLY' && !isAuto) return false;
+      if (appState.autopilot_pool.view_filter === 'MANUAL_ONLY' && isAuto) return false;
     }
 
     return true;
@@ -8766,7 +9094,29 @@ const PenumbraWebAudio = {
     this.stopMicrophone();
 
     try {
-      showMacroToast('Solicitando microfone/linha...');
+      showMacroToast(mode === 'p2' ? 'Conectando entrada de Linha (P2)...' : 'Solicitando microfone...');
+
+      // Auto-detecção inteligente de dispositivo para P2 (Line In) ou Microfone
+      if (!this.selectedDeviceId && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        try {
+          const devs = await navigator.mediaDevices.enumerateDevices();
+          const inputs = devs.filter(d => d.kind === 'audioinput');
+          if (mode === 'p2') {
+            const p2Dev = inputs.find(d => {
+              const lbl = (d.label || '').toLowerCase();
+              return lbl.includes('line') || lbl.includes('external') || lbl.includes('entrada') || lbl.includes('p2') || lbl.includes('built-in input');
+            });
+            if (p2Dev) this.selectedDeviceId = p2Dev.deviceId;
+          } else if (mode === 'mic') {
+            const micDev = inputs.find(d => {
+              const lbl = (d.label || '').toLowerCase();
+              return lbl.includes('microphone') || lbl.includes('microfone') || lbl.includes('built-in mic');
+            });
+            if (micDev) this.selectedDeviceId = micDev.deviceId;
+          }
+        } catch (e) {}
+      }
+
       let stream = null;
       // Cascade de compatibilidade resiliente de captura
       try {
@@ -8991,17 +9341,15 @@ const PenumbraWebAudio = {
             this.detectedBpm = this.detectedBpm ? (this.detectedBpm * 0.65 + rawBpm * 0.35) : rawBpm;
             if (!appState.bpm_manual_lock) {
               appState.bpm = Math.round(this.detectedBpm * 10) / 10.0;
-              const chipBpm = document.getElementById('chip-bpm');
-              const inputBpm = document.getElementById('input-bpm');
-              const badgeBpm = document.getElementById('badge-bpm');
-              const bpmDisplayEl = document.getElementById('bpm-display');
-              const formattedBpm = appState.bpm.toFixed(1);
-              if (chipBpm) chipBpm.textContent = `${formattedBpm} BPM`;
-              if (inputBpm && document.activeElement !== inputBpm) inputBpm.value = formattedBpm;
-              if (badgeBpm) badgeBpm.textContent = formattedBpm;
-              if (bpmDisplayEl) bpmDisplayEl.textContent = `${formattedBpm} BPM`;
+              updateAllBpmDisplays(appState.bpm);
             }
           }
+        }
+
+        const clockDot = document.getElementById('bpm-clock-dot');
+        if (clockDot) {
+          clockDot.classList.add('flash');
+          setTimeout(() => clockDot.classList.remove('flash'), 100);
         }
 
         if (beatOrb) {

@@ -10594,5 +10594,284 @@ body.resizing-workspace-active .top-zone {
   cursor: pointer;
 }
 
+/* ============================================================================
+   PERMANENT HIGH-VISIBILITY BPM DISPLAYS & TAP TEMPO HUD
+   ============================================================================ */
+.header-bpm-capsule {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(3, 8, 16, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.32);
+  border-radius: 4px;
+  padding: 2px 8px;
+  height: 22px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.12), inset 0 0 6px rgba(0, 240, 255, 0.04);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-bpm-capsule:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+
+.bpm-led-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+  transition: transform 0.08s ease, background-color 0.08s ease;
+}
+
+.bpm-led-dot.flash {
+  transform: scale(1.6);
+  background: #ffffff;
+  box-shadow: 0 0 12px #00f0ff;
+}
+
+.bpm-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.bpm-unit {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 1px;
+}
+
+.bpm-lock-indicator {
+  font-size: 9px;
+  color: #f59e0b;
+}
+
+/* Central Bridge Permanent BPM Pill */
+.strip-bpm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 4px;
+  padding: 2px 7px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.14s ease;
+}
+
+.strip-bpm-pill:hover {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.strip-bpm-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #00f0ff;
+}
+
+.strip-bpm-unit {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Interactive Tap Tempo Flash Pulse Animation */
+.tap-flash {
+  background: rgba(0, 240, 255, 0.45) !important;
+  border-color: #00f0ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.9) !important;
+  transform: scale(0.97);
+}
+
+/* ============================================================================
+   AUTOPILOT POOL MANAGER TOOLBAR & MEDIA CARD CONTROLS
+   ============================================================================ */
+.autopilot-pool-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(6, 11, 20, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 6px 0 10px 0;
+  backdrop-filter: blur(8px);
+}
+
+.ap-pool-summary-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.ap-pool-icon {
+  color: #00f0ff;
+  font-size: 11px;
+}
+
+.ap-pool-title {
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.ap-pool-stats {
+  color: #e2e8f0;
+}
+
+.ap-pool-stats strong {
+  color: #00f0ff;
+  font-size: 11px;
+}
+
+.ap-pool-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ap-pool-filter-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ap-pool-filter-btn:hover {
+  background: rgba(0, 240, 255, 0.08);
+  color: #ffffff;
+}
+
+.ap-pool-filter-btn.active {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+}
+
+.ap-pool-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-ap-bulk {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 8.5px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.btn-ap-bulk:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.btn-ap-bulk-folder {
+  border-color: rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+}
+
+/* Card Button & Badges */
+.btn-action-ap {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-action-ap.is-auto-active {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+}
+
+.btn-action-ap.is-auto-active:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+.btn-action-ap.is-auto-excluded {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #64748b;
+}
+
+.btn-action-ap.is-auto-excluded:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.thumb-auto-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 2px;
+  z-index: 2;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.thumb-manual-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+  font-size: 7.5px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  z-index: 2;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.media-card.is-autopilot-excluded {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.media-card.is-autopilot-excluded:hover {
+  opacity: 1.0;
+}
+
 
 
