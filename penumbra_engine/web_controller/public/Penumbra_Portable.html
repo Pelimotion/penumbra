@@ -9277,114 +9277,219 @@ body.resizing-workspace-active .top-zone {
 }
 
 /* ============================================================================
-   PRO TIMELINE TRANSFORM INSPECTOR & LAYER 5 ARCHITECTURE
+   PRO TIMELINE STUDIO INSPECTOR BRIDGE & TRACK SELECTION ARCHITECTURE
    ============================================================================ */
-.tl-transform-inspector {
+.tl-inspector-bridge {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
   background: rgba(8, 12, 18, 0.96);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 14px;
+  padding: 3px 10px;
   font-family: var(--font-mono);
   font-size: 9px;
   min-height: 28px;
   flex-wrap: nowrap;
-  overflow-x: auto;
 }
 
-.tl-tf-layer-pills {
+.tl-insp-pills {
   display: flex;
   align-items: center;
   gap: 3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding-right: 8px;
 }
 
-.tl-tf-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text-dim);
+.tl-insp-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
   font-size: 8.5px;
-  font-weight: 700;
-  padding: 2px 6px;
+  font-weight: 800;
+  padding: 3px 7px;
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.12s ease;
   white-space: nowrap;
 }
 
-.tl-tf-pill:hover {
+.tl-insp-pill:hover {
   background: rgba(0, 240, 255, 0.15);
   color: #fff;
+  border-color: rgba(0, 240, 255, 0.4);
 }
 
-.tl-tf-pill.active {
+.tl-insp-pill.active {
   background: rgba(0, 240, 255, 0.22);
   border-color: var(--cyan);
   color: var(--cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
 }
 
-.tl-tf-control-item {
-  display: flex;
+.btn-tl-open-inspector {
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #fff;
+  font-size: 8.5px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.tl-tf-lbl {
-  color: #718096;
-  font-weight: 700;
-  font-size: 8px;
-  letter-spacing: 0.5px;
+.btn-tl-open-inspector:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
 
-.tl-tf-slider {
-  width: 58px;
-  height: 4px;
-  accent-color: var(--cyan);
+.btn-tl-open-inspector strong {
+  color: var(--cyan);
+  font-weight: 900;
+}
+
+.btn-tl-open-inspector .tl-insp-shortcut {
+  color: #64748b;
+  font-size: 7.5px;
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+/* Timeline Tracks Sidebar Selection */
+.tl-track-header {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tl-track-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tl-track-header.is-selected-track {
+  background: rgba(0, 240, 255, 0.15) !important;
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+
+/* Matte Card Inspection Selection */
+.matte-card {
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
 }
 
-.tl-tf-num-input {
-  width: 44px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
+.matte-card.is-inspect-selected,
+.library-card-matte.is-inspect-selected {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+  background: rgba(0, 240, 255, 0.06) !important;
+}
+
+/* Inspector Pin Toggle Button */
+.insp-pin-btn {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--cyan);
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  text-align: right;
-}
-
-.tl-tf-num-input:focus {
-  outline: none;
-  border-color: var(--cyan);
-}
-
-.tl-tf-val {
-  color: #00f0ff;
-  min-width: 32px;
-  font-weight: 700;
-}
-
-.tl-tf-btn-reset {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #a0aec0;
-  font-size: 8px;
+  font-size: 7.5px;
+  font-weight: 800;
   padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.tl-tf-btn-reset:hover {
-  background: rgba(255, 42, 85, 0.2);
-  border-color: #ff2a55;
-  color: #ff2a55;
+.insp-pin-btn:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--cyan);
 }
+
+.insp-pin-btn.pinned {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45) !important;
+}
+
+/* Matte Header Card inside Studio Inspector */
+.insp-matte-header-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.insp-matte-thumb-preview {
+  width: 56px;
+  height: 40px;
+  object-fit: contain;
+  background: #000;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.insp-matte-meta-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.insp-matte-meta-name {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insp-matte-meta-sub {
+  font-size: 8px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.insp-routes-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.btn-insp-route {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-insp-route:hover {
+  color: #fff;
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.btn-insp-route.assigned {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  font-weight: 900;
+}
+
 
 /* Track L5 Overlay Styling */
 .tl-track-header.track-l5 {
@@ -11536,77 +11641,53 @@ body.resizing-workspace-active .top-zone {
             <span class="tl-metric-tag">BPM: <strong id="tl-current-bpm" class="text-white">128.0</strong></span>
           </div>
 
-          <!-- Individual Layer / Clip Transform Inspector -->
-          <div class="tl-transform-inspector" id="tl-transform-inspector">
-            <div class="tl-tf-title">INSPECTOR:</div>
-            <div class="tl-tf-layers">
-              <button class="tl-tf-pill active" data-layer="layer0" onclick="selectTimelineLayer('layer0')">L0</button>
-              <button class="tl-tf-pill" data-layer="layer1" onclick="selectTimelineLayer('layer1')">L1</button>
-              <button class="tl-tf-pill" data-layer="layer2" onclick="selectTimelineLayer('layer2')">L2</button>
-              <button class="tl-tf-pill" data-layer="layer3" onclick="selectTimelineLayer('layer3')">L3</button>
-              <button class="tl-tf-pill" data-layer="layer4" onclick="selectTimelineLayer('layer4')">L4</button>
-              <button class="tl-tf-pill" data-layer="layer5" onclick="selectTimelineLayer('layer5')">L5</button>
+          <!-- Studio Inspector Timeline Integration Bridge -->
+          <div class="tl-inspector-bridge" id="tl-inspector-bridge">
+            <div class="tl-insp-pills">
+              <button class="tl-insp-pill active" data-layer="0" onclick="openStudioInspector('layer', 0)" title="Inspecionar Camada L0 Base Master no Studio Inspector [I]">L0</button>
+              <button class="tl-insp-pill" data-layer="1" onclick="openStudioInspector('layer', 1)" title="Inspecionar Camada L1 Pulse Reflex no Studio Inspector [I]">L1</button>
+              <button class="tl-insp-pill" data-layer="2" onclick="openStudioInspector('layer', 2)" title="Inspecionar Camada L2 Sobel Find Edges no Studio Inspector [I]">L2 EDGES</button>
+              <button class="tl-insp-pill" data-layer="3" onclick="openStudioInspector('layer', 3)" title="Inspecionar Camada L3 Cue Bus B no Studio Inspector [I]">L3 CUE</button>
+              <button class="tl-insp-pill" data-layer="4" onclick="openStudioInspector('layer', 4)" title="Inspecionar Camada L4 Difference Accent no Studio Inspector [I]">L4 ACCENT</button>
+              <button class="tl-insp-pill" data-layer="5" onclick="openStudioInspector('layer', 5)" title="Inspecionar Camada L5 Overlay Deck no Studio Inspector [I]">L5 OVERLAY</button>
             </div>
-            <div class="tl-tf-group">
-              <span class="tl-tf-label">ZOOM:</span>
-              <input type="range" min="20" max="300" value="100" class="tl-tf-slider" id="tl-tf-scale-slider" oninput="setLayerScale(activeTimelineSelectedLayer, this.value/100); document.getElementById('tl-tf-scale-val').textContent=this.value+'%'">
-              <span class="tl-tf-val" id="tl-tf-scale-val">100%</span>
-            </div>
-            <div class="tl-tf-group">
-              <span class="tl-tf-label">X:</span>
-              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posx-input" onchange="setLayerPosition(activeTimelineSelectedLayer, this.value, undefined)">
-              <span class="tl-tf-label">Y:</span>
-              <input type="number" value="0" step="5" class="tl-tf-input" id="tl-tf-posy-input" onchange="setLayerPosition(activeTimelineSelectedLayer, undefined, this.value)">
-            </div>
-            <div class="tl-tf-group">
-              <span class="tl-tf-label">BLEND:</span>
-              <select class="tl-tf-select" id="tl-tf-blend-select" onchange="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].blend = this.value; }">
-                <option value="Normal">Normal</option>
-                <option value="Multiply">Multiply</option>
-                <option value="Screen">Screen</option>
-                <option value="Overlay">Overlay</option>
-                <option value="Soft Light">Soft Light</option>
-                <option value="Difference">Difference</option>
-                <option value="Color Dodge">Color Dodge</option>
-              </select>
-            </div>
-            <div class="tl-tf-group">
-              <span class="tl-tf-label">OPAC:</span>
-              <input type="range" min="0" max="100" value="100" class="tl-tf-slider" id="tl-tf-opac-slider" oninput="if(appState.layers[activeTimelineSelectedLayer]){ appState.layers[activeTimelineSelectedLayer].opacity = this.value/100; document.getElementById('tl-tf-opac-val').textContent=this.value+'%'; }">
-              <span class="tl-tf-val" id="tl-tf-opac-val">100%</span>
-            </div>
-            <button class="btn btn-outline btn-xs" onclick="resetLayerTransform(activeTimelineSelectedLayer)" title="Resetar escala e posição da camada">↺ RESET</button>
+            <button class="btn-tl-open-inspector" id="btn-tl-open-inspector" onclick="openStudioInspector('layer', activeTimelineSelectedLayer.replace('layer',''))" title="Abrir Studio Inspector para esta camada [Atalho: I]">
+              <span class="tl-insp-icon">🔍</span>
+              <span class="tl-insp-lbl">INSPETOR DE CAMADA:</span>
+              <strong id="tl-insp-active-tag">L0 MASTER</strong>
+              <span class="tl-insp-shortcut">[I]</span>
+            </button>
           </div>
         </div>
 
         <div class="pro-timeline-arrangement-body">
           <div class="timeline-tracks-sidebar">
-            <div class="tl-track-header track-master">
+            <div class="tl-track-header track-master" onclick="openStudioInspector('layer', 0)" title="Clique para Inspecionar L0 Master [I]">
               <span class="track-tag">PGM</span>
               <span class="track-name">L0 MASTER</span>
               <span class="track-vol" id="lbl-tl-track-l0">100%</span>
             </div>
-            <div class="tl-track-header track-l1">
+            <div class="tl-track-header track-l1" onclick="openStudioInspector('layer', 1)" title="Clique para Inspecionar L1 Pulse Reflex [I]">
               <span class="track-tag">L1</span>
               <span class="track-name">PULSE REFLEX</span>
               <span class="track-vol" id="lbl-tl-track-l1">80%</span>
             </div>
-            <div class="tl-track-header track-l2">
+            <div class="tl-track-header track-l2" onclick="openStudioInspector('layer', 2)" title="Clique para Inspecionar L2 Sobel Find Edges [I]">
               <span class="track-tag">L2</span>
               <span class="track-name">SOBEL EDGE</span>
               <span class="track-vol" id="lbl-tl-track-l2">60%</span>
             </div>
-            <div class="tl-track-header track-cue">
+            <div class="tl-track-header track-cue" onclick="openStudioInspector('layer', 3)" title="Clique para Inspecionar L3 Cue Bus B [I]">
               <span class="track-tag">PRV</span>
               <span class="track-name">L3 CUE BUS B</span>
               <span class="track-vol" id="lbl-tl-track-l3">100%</span>
             </div>
-            <div class="tl-track-header track-l5">
+            <div class="tl-track-header track-l5" onclick="openStudioInspector('layer', 5)" title="Clique para Inspecionar L5 Overlay Deck [I]">
               <span class="track-tag">L5</span>
               <span class="track-name">OVERLAY DECK</span>
               <span class="track-vol" id="lbl-tl-track-l5">100%</span>
             </div>
-            <div class="tl-track-header track-fx">
+            <div class="tl-track-header track-fx" onclick="openStudioInspector('master', null, 'advanced')" title="Clique para Inspecionar Plugins After Effects FX [I]">
               <span class="track-tag">FX</span>
               <span class="track-name">AFTER EFFECTS</span>
               <span class="track-vol" id="lbl-tl-track-fx">ACT</span>
@@ -14417,6 +14498,7 @@ body.resizing-workspace-active .top-zone {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
             <span>STUDIO INSPECTOR</span>
           </div>
+          <button class="insp-pin-btn" id="insp-pin-btn" onclick="toggleInspectorPin()" title="Travar/Destravar Inspeção (Modo Seguir Seleção vs Modo Fixado)"><span id="insp-pin-icon">⚡ SEGUIR</span></button>
           <span class="inspector-target-pill" id="inspector-target-badge">CLIPE: CUE</span>
           <button class="insp-close-btn" onclick="toggleStudioInspector()" title="Fechar Inspector (Atalho: I)">✕</button>
         </div>
@@ -18751,34 +18833,77 @@ window.refreshMacroStateBadges = refreshMacroStateBadges;
 let activeTimelineSelectedLayer = 'layer0';
 
 function selectTimelineLayer(layerId) {
-  activeTimelineSelectedLayer = layerId;
-  document.querySelectorAll('.tl-tf-pill').forEach(pill => {
-    pill.classList.toggle('active', pill.dataset.layer === layerId);
-  });
+  const normId = (typeof layerId === 'number' || !String(layerId).startsWith('layer')) ? `layer${layerId}` : String(layerId);
+  activeTimelineSelectedLayer = normId;
+  const lIdx = Number(normId.replace('layer', ''));
+  openStudioInspector('layer', lIdx, null, false);
   updateTimelineTransformInspector();
 }
 window.selectTimelineLayer = selectTimelineLayer;
 
 function updateTimelineTransformInspector() {
-  const l = appState.layers[activeTimelineSelectedLayer];
-  if (!l) return;
-  const sliderScale = document.getElementById('tl-tf-scale-slider');
-  const valScale = document.getElementById('tl-tf-scale-val');
-  const inputPosX = document.getElementById('tl-tf-posx-input');
-  const inputPosY = document.getElementById('tl-tf-posy-input');
-  const selBlend = document.getElementById('tl-tf-blend-select');
-  const sliderOpac = document.getElementById('tl-tf-opac-slider');
-  const valOpac = document.getElementById('tl-tf-opac-val');
-
-  if (sliderScale) sliderScale.value = Math.round((l.scale || 1.0) * 100);
-  if (valScale) valScale.textContent = `${Math.round((l.scale || 1.0) * 100)}%`;
-  if (inputPosX && document.activeElement !== inputPosX) inputPosX.value = l.pos_x || 0;
-  if (inputPosY && document.activeElement !== inputPosY) inputPosY.value = l.pos_y || 0;
-  if (selBlend) selBlend.value = l.blend || 'Normal';
-  if (sliderOpac) sliderOpac.value = Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100);
-  if (valOpac) valOpac.textContent = `${Math.round((l.opacity !== undefined ? l.opacity : 1.0) * 100)}%`;
+  const normId = String(activeTimelineSelectedLayer || 'layer0');
+  const lIdx = normId.replace('layer', '');
+  const layerNames = ['L0 MASTER', 'L1 PULSE', 'L2 EDGES', 'L3 CUE', 'L4 ACCENT', 'L5 OVERLAY'];
+  const tag = document.getElementById('tl-insp-active-tag');
+  if (tag) tag.textContent = layerNames[Number(lIdx)] || `L${lIdx}`;
+  
+  document.querySelectorAll('.tl-insp-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.layer === lIdx);
+  });
+  
+  // Highlight active track on timeline sidebar
+  document.querySelectorAll('.tl-track-header').forEach(th => {
+    th.classList.remove('is-selected-track');
+  });
+  const trackMap = {
+    '0': '.track-master',
+    '1': '.track-l1',
+    '2': '.track-l2',
+    '3': '.track-cue',
+    '5': '.track-l5'
+  };
+  if (trackMap[lIdx]) {
+    const el = document.querySelector(trackMap[lIdx]);
+    if (el) el.classList.add('is-selected-track');
+  }
 }
 window.updateTimelineTransformInspector = updateTimelineTransformInspector;
+
+function nudgeLayerPosition(layerId, dx, dy) {
+  if (!appState.layers[layerId]) return;
+  const curX = appState.layers[layerId].pos_x || 0;
+  const curY = appState.layers[layerId].pos_y || 0;
+  appState.layers[layerId].pos_x = Math.round(curX + dx);
+  appState.layers[layerId].pos_y = Math.round(curY + dy);
+  renderStudioInspector();
+  updateTimelineTransformInspector();
+}
+window.nudgeLayerPosition = nudgeLayerPosition;
+
+function centerLayerPosition(layerId) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].pos_x = 0;
+  appState.layers[layerId].pos_y = 0;
+  renderStudioInspector();
+  updateTimelineTransformInspector();
+}
+window.centerLayerPosition = centerLayerPosition;
+
+function resetLayerTransform(layerId) {
+  if (!appState.layers[layerId]) return;
+  appState.layers[layerId].pos_x = 0;
+  appState.layers[layerId].pos_y = 0;
+  appState.layers[layerId].scale = 1.0;
+  appState.layers[layerId].rotation = 0;
+  appState.layers[layerId].fit_mode = 'fill';
+  renderStudioInspector();
+  updateTimelineTransformInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[LAYER] Geometria da camada ${layerId.replace('layer', 'L').toUpperCase()} resetada`);
+  }
+}
+window.resetLayerTransform = resetLayerTransform;
 
 // Transformação Geométrica Individual do Clipe via Studio Inspector (Padrão DaVinci Resolve)
 function openClipTransformModal(clipId) {
@@ -18876,11 +19001,13 @@ function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
   ctx.restore();
 }
 
-function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false) {
+function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false, matteKey = null) {
   if (!matteImg) return;
-  const def = deform || { wiggle_scale: 0.04, wiggle_pos: 8, wiggle_rot: 0, speed: 4.0, sync_bpm: true };
-  const mt = (appState.matte && appState.matte.transform) || { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
-  const vig = (appState.matte && appState.matte.vignette) || {};
+  const mKey = matteKey || (matteImg.dataset && matteImg.dataset.src) || (matteImg.src ? matteImg.src.split('/').pop() : '') || '';
+  const cfg = (typeof getMatteConfig === 'function' && mKey) ? getMatteConfig(mKey) : (appState.matte || {});
+  const def = deform || cfg.deform || (appState.matte && appState.matte.deform) || { wiggle_scale: 0.04, wiggle_pos: 8, wiggle_rot: 0, speed: 4.0, sync_bpm: true };
+  const mt = cfg.transform || (appState.matte && appState.matte.transform) || { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
+  const vig = cfg.vignette || (appState.matte && appState.matte.vignette) || {};
   const bpm = appState.bpm || 120;
   const bps = bpm / 60.0;
   
@@ -18922,12 +19049,12 @@ function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false) {
   ctx.scale(wScaleX, wScaleY);
   ctx.translate(-w / 2, -h / 2);
   
-  const isInv = invert || appState.matte?.invert;
+  const isInv = invert || Boolean(cfg.invert) || Boolean(appState.matte?.invert);
   if (isInv) {
     ctx.filter = 'invert(100%)';
   }
   
-  const isVigMatte = (matteImg.src && matteImg.src.includes('vignette')) || vig.enabled;
+  const isVigMatte = (matteImg.src && (matteImg.src.includes('vignette') || matteImg.src.includes('vinheta'))) || vig.enabled;
   if (isVigMatte && vig.enabled) {
     const pulseBand = vig.audio_band === 'sub' ? (appState.bands?.sub || 0) : (appState.bands?.bass || 0);
     drawProceduralVignette(ctx, w, h, vig, pulseBand);
@@ -20347,7 +20474,7 @@ function renderVisuals(time) {
       if (matteL0 && appState.layers.layer0.matte !== 'none') {
         offCtxA.save();
         offCtxA.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(offCtxA, matteL0, w, h, simTime, appState.matte?.deform, appState.layers.layer0.matte_invert);
+        drawDeformedMatte(offCtxA, matteL0, w, h, simTime, appState.matte?.deform, appState.layers.layer0.matte_invert, appState.layers.layer0.matte);
         offCtxA.restore();
       }
 
@@ -20444,7 +20571,7 @@ function renderVisuals(time) {
         if (matteL3 && appState.layers.layer3.matte !== 'none') {
           offCtxB.save();
           offCtxB.globalCompositeOperation = 'destination-in';
-          drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert);
+          drawDeformedMatte(offCtxB, matteL3, w, h, simTime, appState.matte?.deform, appState.layers.layer3.matte_invert, appState.layers.layer3.matte);
           offCtxB.restore();
         }
 
@@ -20616,7 +20743,7 @@ function renderVisuals(time) {
           if (matteL4 && appState.layers.layer4.matte !== 'none') {
             offCtxB.save();
             offCtxB.globalCompositeOperation = 'destination-in';
-            drawDeformedMatte(offCtxB, matteL4, w, h, simTime, appState.matte?.deform, appState.layers.layer4.matte_invert);
+            drawDeformedMatte(offCtxB, matteL4, w, h, simTime, appState.matte?.deform, appState.layers.layer4.matte_invert, appState.layers.layer4.matte);
             offCtxB.restore();
           }
 
@@ -20654,7 +20781,7 @@ function renderVisuals(time) {
           if (matteL5 && l5.matte !== 'none') {
             offCtxOverlay.save();
             offCtxOverlay.globalCompositeOperation = 'destination-in';
-            drawDeformedMatte(offCtxOverlay, matteL5, w, h, simTime, appState.matte?.deform, l5.matte_invert);
+            drawDeformedMatte(offCtxOverlay, matteL5, w, h, simTime, appState.matte?.deform, l5.matte_invert, l5.matte);
             offCtxOverlay.restore();
           }
 
@@ -20682,7 +20809,7 @@ function renderVisuals(time) {
       if (masterMatteImg) {
         prgCtx.save();
         prgCtx.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, false);
+        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, false, appState.master_matte);
         prgCtx.restore();
       }
     }
@@ -23405,12 +23532,194 @@ function renderQueueCards() {
     ctx.font = '8px monospace';
     ctx.fillText(item.matte || 'DEFAULT MATTE', x + clipW/2, y + clipH/2 + 16);
   });
+  if (typeof initTimelineCanvasInteraction === 'function') initTimelineCanvasInteraction();
 }
+
+function initTimelineCanvasInteraction() {
+  const canvas = document.getElementById('timeline-canvas');
+  if (!canvas || canvas.dataset.hasInspectorClick) return;
+  canvas.dataset.hasInspectorClick = 'true';
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    if (rect.height >= 120) {
+      // Pro Arrangement View (6 tracks: L0, L1, L2, L3, L5, FX)
+      const rulerH = 22;
+      if (clickY < rulerH) return;
+      const tracksH = rect.height - rulerH;
+      const trackH = tracksH / 6;
+      const trackIdx = Math.floor((clickY - rulerH) / trackH);
+
+      const trackMap = [
+        { type: 'layer', id: 0 },
+        { type: 'layer', id: 1 },
+        { type: 'layer', id: 2 },
+        { type: 'layer', id: 3 },
+        { type: 'layer', id: 5 },
+        { type: 'master', id: null, subtab: 'advanced' }
+      ];
+
+      const tgt = trackMap[trackIdx];
+      if (tgt) {
+        openStudioInspector(tgt.type, tgt.id, tgt.subtab || 'transform');
+      }
+    } else {
+      // Queue cards view
+      if (!queueList || queueList.length === 0) return;
+      const clipW = 140;
+      const gap = 12;
+      const startX = 20;
+      const clipH = 78;
+      const startY = (canvas.height - clipH) / 2;
+
+      const idx = Math.floor((clickX - startX) / (clipW + gap));
+      if (idx >= 0 && idx < queueList.length) {
+        const item = queueList[idx];
+        if (item) {
+          if (clickY >= (startY + clipH - 24) && item.matte && item.matte !== 'none') {
+            openStudioInspector('matte', item.matte);
+          } else if (item.id) {
+            openStudioInspector('clip', item.id);
+          }
+        }
+      }
+    }
+  });
+}
+window.initTimelineCanvasInteraction = initTimelineCanvasInteraction;
 
 // ============================================================================
 // 9.1 MATTE CATALOG & PROCEDURAL LIBRARY BROWSER
 // ============================================================================
 const MATTE_SVG_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='68' viewBox='0 0 120 68'><rect width='120' height='68' fill='%2310131a'/><rect x='28' y='12' width='64' height='44' rx='4' fill='%2300f0ff' fill-opacity='0.18' stroke='%2300f0ff' stroke-width='1.5'/><text x='60' y='38' fill='%2300f0ff' font-size='9' font-weight='bold' font-family='sans-serif' text-anchor='middle'>ALPHA MATTE</text></svg>";
+
+function getMatteName(mattePath) {
+  if (!mattePath || mattePath === 'none') return 'SEM MÁSCARA (FULL FRAME)';
+  const found = (typeof allMattes !== 'undefined' ? allMattes : []).find(m => m.path === mattePath || m.filename === mattePath);
+  if (found && (found.name || found.filename)) return found.name || found.filename.replace('.png', '').replace(/_/g, ' ');
+  return mattePath.split('/').pop().replace('.png', '').replace(/_/g, ' ');
+}
+window.getMatteName = getMatteName;
+
+function getMatteConfig(mattePath) {
+  if (!mattePath || mattePath === 'none') return null;
+  if (!appState.mattes_config) appState.mattes_config = {};
+  if (!appState.mattes_config[mattePath]) {
+    const isVig = mattePath.toLowerCase().includes('vignette') || mattePath.toLowerCase().includes('vinheta');
+    appState.mattes_config[mattePath] = {
+      path: mattePath,
+      name: getMatteName(mattePath),
+      transform: {
+        pos_x: 0,
+        pos_y: 0,
+        scale: 1.0,
+        scale_x: 1.0,
+        scale_y: 1.0,
+        rotation: 0
+      },
+      vignette: {
+        enabled: isVig,
+        roundness: 0.65,
+        feather: 0.38,
+        inner_radius: 0.42,
+        outer_radius: 0.95,
+        aspect_ratio: '16:9',
+        audio_pulse: 0.15,
+        audio_band: 'bass'
+      },
+      deform: {
+        speed: 4.0,
+        wiggle_pos: 8,
+        wiggle_scale: 0.04,
+        wiggle_rot: 0,
+        sync_bpm: true
+      },
+      invert: false
+    };
+  }
+  return appState.mattes_config[mattePath];
+}
+window.getMatteConfig = getMatteConfig;
+
+function setMatteConfig(mattePath, updates) {
+  const cfg = getMatteConfig(mattePath);
+  if (!cfg) return;
+  if (updates.transform) Object.assign(cfg.transform, updates.transform);
+  if (updates.vignette) Object.assign(cfg.vignette, updates.vignette);
+  if (updates.deform) Object.assign(cfg.deform, updates.deform);
+  if (updates.invert !== undefined) cfg.invert = updates.invert;
+  syncActiveMatteToAppState(mattePath);
+  if (typeof saveUserProfileDebounced === 'function') saveUserProfileDebounced();
+}
+window.setMatteConfig = setMatteConfig;
+
+function syncActiveMatteToAppState(mattePath) {
+  const cfg = getMatteConfig(mattePath);
+  if (!cfg) return;
+  const tgt = appState.matte_target_layer || 'layer3';
+  const isUsedByTarget = (appState.layers[tgt]?.matte === mattePath) || (tgt === 'master' && appState.master_matte === mattePath);
+  if (isUsedByTarget || !appState.matte || !appState.matte.transform) {
+    if (!appState.matte) appState.matte = {};
+    appState.matte.active_path = mattePath;
+    appState.matte.transform = Object.assign({}, cfg.transform);
+    appState.matte.vignette = Object.assign({}, cfg.vignette);
+    appState.matte.deform = Object.assign({}, cfg.deform);
+    appState.matte.invert = Boolean(cfg.invert);
+  }
+}
+window.syncActiveMatteToAppState = syncActiveMatteToAppState;
+
+function assignMatteToLayer(mattePath, layerId) {
+  if (layerId === 'master') {
+    appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
+  } else if (appState.layers[layerId]) {
+    appState.layers[layerId].matte = (appState.layers[layerId].matte === mattePath) ? 'none' : mattePath;
+    const selId = layerId.replace('layer', 'l') + '-matte';
+    const sel = document.getElementById(selId);
+    if (sel) sel.value = appState.layers[layerId].matte;
+  }
+  syncActiveMatteToAppState(mattePath);
+  renderMattesCards();
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
+    showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
+  }
+}
+window.assignMatteToLayer = assignMatteToLayer;
+
+function nudgeMattePosition(mattePath, dx, dy) {
+  const cfg = getMatteConfig(mattePath);
+  if (!cfg) return;
+  cfg.transform.pos_x = Math.max(-100, Math.min(100, Math.round((cfg.transform.pos_x || 0) + dx)));
+  cfg.transform.pos_y = Math.max(-100, Math.min(100, Math.round((cfg.transform.pos_y || 0) + dy)));
+  syncActiveMatteToAppState(mattePath);
+  renderStudioInspector();
+}
+window.nudgeMattePosition = nudgeMattePosition;
+
+function centerMattePosition(mattePath) {
+  const cfg = getMatteConfig(mattePath);
+  if (!cfg) return;
+  cfg.transform.pos_x = 0;
+  cfg.transform.pos_y = 0;
+  syncActiveMatteToAppState(mattePath);
+  renderStudioInspector();
+}
+window.centerMattePosition = centerMattePosition;
+
+function resetMatteTransform(mattePath) {
+  const cfg = getMatteConfig(mattePath);
+  if (!cfg) return;
+  cfg.transform = { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
+  syncActiveMatteToAppState(mattePath);
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') showMacroToast(`Geometria Resetada: ${getMatteName(mattePath)}`);
+}
+window.resetMatteTransform = resetMatteTransform;
 
 function getMatteThumbUrl(matte) {
   if (!matte) return '';
@@ -23557,7 +23866,8 @@ function renderMattesCards() {
   filtered.forEach(matte => {
     const card = document.createElement('div');
     const isSelected = appState.layers[targetL]?.matte === matte.path;
-    card.className = `matte-card ${isSelected ? 'selected' : ''}`;
+    const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === matte.path);
+    card.className = `matte-card ${isSelected ? 'selected' : ''} ${isInspecting ? 'is-inspect-selected' : ''}`;
     card.dataset.path = matte.path;
 
     // Check which layers currently use this matte
@@ -23567,6 +23877,8 @@ function renderMattesCards() {
     if (appState.layers.layer2?.matte?.includes(matte.filename)) activeLayers.push('L2');
     if (appState.layers.layer3?.matte?.includes(matte.filename)) activeLayers.push('L3');
     if (appState.layers.layer4?.matte?.includes(matte.filename)) activeLayers.push('L4');
+    if (appState.layers.layer5?.matte?.includes(matte.filename)) activeLayers.push('L5');
+    if (appState.master_matte?.includes(matte.filename)) activeLayers.push('MASTER');
 
     const pillsHtml = activeLayers.map(l => `<span class="matte-active-pill">${l}</span>`).join('');
     const mName = matte.name || matte.filename?.replace('.png', '').replace(/_/g, ' ') || 'Máscara Recorte';
@@ -23595,31 +23907,19 @@ function renderMattesCards() {
       </div>
     `;
 
-    // Click card: if already selected, toggle off (remove); otherwise assign to active target layer!
-    card.addEventListener('click', () => {
+    // Click card: selects and inspects this specific matte in the Studio Inspector!
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      document.querySelectorAll('.matte-card').forEach(c => c.classList.remove('is-inspect-selected'));
+      card.classList.add('is-inspect-selected');
+      openStudioInspector('matte', matte.path);
+    });
+
+    // Double click card: assign/toggle on current target layer
+    card.addEventListener('dblclick', (e) => {
+      if (e.target.closest('button')) return;
       const tgt = appState.matte_target_layer || 'layer3';
-      
-      if (tgt === 'master') {
-        if (appState.master_matte === matte.path) {
-          appState.master_matte = 'none';
-        } else {
-          appState.master_matte = matte.path;
-        }
-      } else {
-        if (appState.layers[tgt]?.matte === matte.path) {
-          clearCurrentTargetMatte();
-          return;
-        } else {
-          appState.layers[tgt].matte = matte.path;
-          const selId = tgt.replace('layer', 'l') + '-matte';
-          const sel = document.getElementById(selId);
-          if (sel) sel.value = matte.path;
-          sendAction('set_layer_matte', { layer: tgt, matte: matte.path });
-        }
-      }
-      updateMatteRibbonActiveStatus();
-      renderMattesCards();
-      updateUI();
+      assignMatteToLayer(matte.path, tgt);
     });
 
     // Quick route buttons
@@ -25379,12 +25679,13 @@ window.selectLibraryAssetType = selectLibraryAssetType;
 
 function createMatteCardForLibrary(matte) {
   const card = document.createElement('div');
-  card.className = 'library-card-matte';
+  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === mPath);
+  card.className = `library-card-matte ${isInspecting ? 'is-inspect-selected' : ''}`;
   const targetL = appState.matte_target_layer || 'layer3';
 
   const mName = matte.name || matte.filename?.replace('.png', '').replace(/_/g, ' ') || 'Máscara Recorte';
   const mDesc = matte.description || matte.category || 'Recorte alpha de camada';
-  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
   const mCat = matte.category || 'MATTE';
   const thumbUrl = getMatteThumbUrl(matte);
 
@@ -25398,15 +25699,17 @@ function createMatteCardForLibrary(matte) {
       <div class="library-card-desc" title="${mDesc}">${mDesc}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer0', '${mPath}')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer1', '${mPath}')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
-      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); onLayerMatteChange('layer3', '${mPath}')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); editMatteParameters('${mPath}', '${mName}')" title="Editar parâmetros e cinemática no Módulo 3">PARÂMETROS</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer0')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer1')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer3')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); openStudioInspector('matte', '${mPath}');" title="Editar parâmetros no Studio Inspector">⚙ INSP</button>
     </div>
   `;
 
   card.addEventListener('click', () => {
-    editMatteParameters(mPath, mName);
+    document.querySelectorAll('.library-card-matte').forEach(c => c.classList.remove('is-inspect-selected'));
+    card.classList.add('is-inspect-selected');
+    openStudioInspector('matte', mPath);
   });
 
   return card;
@@ -25479,23 +25782,10 @@ function createPresetCardForLibrary(presetId, presetInfo) {
 // ASSET PARAMETER EDIT NAVIGATION & QUICK INSPECTOR METHODS
 // ============================================================================
 function editMatteParameters(mattePath, matteName) {
-  if (typeof setDockViewMode === 'function') setDockViewMode('modules');
-  switchTab('tab-mattes');
-  
-  const targetL = appState.matte_target_layer || 'layer3';
-  onLayerMatteChange(targetL, mattePath);
-
-  if (typeof switchMatteSub === 'function') switchMatteSub('kinematics');
-
-  const kinGrid = document.querySelector('#subview-kinematics .kinematics-dock-grid');
-  if (kinGrid) {
-    kinGrid.classList.remove('highlight-focus-ring');
-    void kinGrid.offsetWidth;
-    kinGrid.classList.add('highlight-focus-ring');
+  openStudioInspector('matte', mattePath);
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[MATTE] Inspecionando "${matteName || getMatteName(mattePath)}" no Studio Inspector`);
   }
-
-  showMacroToast(`[MATTE] Editando parâmetros de "${matteName}" no Módulo 3`);
-  openQuickInspector('matte', { path: mattePath, name: matteName });
 }
 window.editMatteParameters = editMatteParameters;
 
@@ -29010,12 +29300,26 @@ window.clearPreferencesSearch = clearPreferencesSearch;
 // ============================================================================
 const studioInspectorState = {
   isOpen: false,
-  targetType: 'clip', // 'clip', 'layer', 'master'
+  isPinned: false, // Modo Seguir Seleção vs Modo Fixado
+  targetType: 'clip', // 'clip', 'layer', 'matte', '3d', 'master'
   activeSubtab: 'transform', // 'transform', 'color', 'advanced'
-  targetLayer: 2,     // 0, 1, 2, 3, 4, 5
-  targetClipId: null
+  targetLayer: 0,     // 0, 1, 2, 3, 4, 5
+  targetClipId: null,
+  targetMattePath: null
 };
 window.studioInspectorState = studioInspectorState;
+
+function toggleInspectorPin() {
+  studioInspectorState.isPinned = !studioInspectorState.isPinned;
+  const btn = document.getElementById('insp-pin-btn');
+  const icon = document.getElementById('insp-pin-icon');
+  if (btn) btn.classList.toggle('pinned', studioInspectorState.isPinned);
+  if (icon) icon.textContent = studioInspectorState.isPinned ? '📌 FIXADO' : '⚡ SEGUIR';
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(studioInspectorState.isPinned ? '📌 Inspector FIXADO no item atual' : '⚡ Inspector SEGUINDO seleção do workspace');
+  }
+}
+window.toggleInspectorPin = toggleInspectorPin;
 
 function toggleStudioInspector() {
   const drawer = document.getElementById('studio-inspector-drawer');
@@ -29035,17 +29339,33 @@ function toggleStudioInspector() {
 }
 window.toggleStudioInspector = toggleStudioInspector;
 
-function openStudioInspector(context = 'clip', id = null, subtab = null) {
+function openStudioInspector(context = 'clip', id = null, subtab = null, forceOpen = true) {
   const drawer = document.getElementById('studio-inspector-drawer');
   if (!drawer) return;
 
+  if (studioInspectorState.isPinned && !forceOpen && context !== studioInspectorState.targetType) {
+    // Se o inspetor estiver fixado e a chamada for seleção de fundo, não desvia
+    return;
+  }
+
   if (context === 'layer') {
     studioInspectorState.targetType = 'layer';
-    studioInspectorState.targetLayer = (id !== undefined && id !== null) ? Number(id) : (studioInspectorState.targetLayer !== undefined ? studioInspectorState.targetLayer : 2);
+    let lIdx = 0;
+    if (typeof id === 'string' && id.startsWith('layer')) {
+      lIdx = Number(id.replace('layer', ''));
+    } else if (id !== null && id !== undefined) {
+      lIdx = Number(id);
+    }
+    studioInspectorState.targetLayer = isNaN(lIdx) ? 0 : lIdx;
+    activeTimelineSelectedLayer = `layer${studioInspectorState.targetLayer}`;
     if (subtab) studioInspectorState.activeSubtab = subtab;
   } else if (context === 'clip') {
     studioInspectorState.targetType = 'clip';
-    studioInspectorState.targetClipId = id || studioInspectorState.targetClipId || (appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId || (typeof allClips !== 'undefined' && allClips[0]?.id));
+    if (id) {
+      studioInspectorState.targetClipId = id;
+    } else if (!studioInspectorState.targetClipId) {
+      studioInspectorState.targetClipId = appState.layers?.layer3?.clipId || appState.layers?.layer0?.clipId || (typeof allClips !== 'undefined' && allClips[0]?.id);
+    }
     if (subtab) studioInspectorState.activeSubtab = subtab;
   } else if (context === 'master' || context === 'fx') {
     studioInspectorState.targetType = 'master';
@@ -29058,10 +29378,15 @@ function openStudioInspector(context = 'clip', id = null, subtab = null) {
     }
   } else if (context === 'matte') {
     studioInspectorState.targetType = 'matte';
-    studioInspectorState.activeSubtab = subtab || 'transform';
+    if (id) {
+      studioInspectorState.targetMattePath = id;
+    } else if (!studioInspectorState.targetMattePath) {
+      studioInspectorState.targetMattePath = appState.layers?.layer3?.matte || appState.master_matte || (allMattes && allMattes[0]?.path) || 'mattes/01_Organic_Portal.png';
+    }
+    if (subtab) studioInspectorState.activeSubtab = subtab;
   } else if (context === '3d' || context === 'gen3d') {
     studioInspectorState.targetType = '3d';
-    studioInspectorState.activeSubtab = subtab || 'transform';
+    if (subtab) studioInspectorState.activeSubtab = subtab;
   }
 
   studioInspectorState.isOpen = true;
@@ -29074,6 +29399,7 @@ function openStudioInspector(context = 'clip', id = null, subtab = null) {
   if (btn2) btn2.classList.add('active');
 
   renderStudioInspector();
+  if (typeof updateTimelineTransformInspector === 'function') updateTimelineTransformInspector();
 }
 window.openStudioInspector = openStudioInspector;
 
@@ -29081,6 +29407,8 @@ function switchInspectorTarget(type) {
   studioInspectorState.targetType = type;
   if (type === 'master' && studioInspectorState.activeSubtab === 'transform') {
     studioInspectorState.activeSubtab = 'color';
+  } else if (type === 'matte' && !studioInspectorState.targetMattePath) {
+    studioInspectorState.targetMattePath = appState.layers?.layer3?.matte || appState.master_matte || (typeof allMattes !== 'undefined' && allMattes[0]?.path) || 'cat_b_soft/matte_b_penumbra_vignette.png';
   }
   renderStudioInspector();
 }
@@ -29195,6 +29523,12 @@ function renderStudioInspector() {
   if (btn3d) btn3d.classList.toggle('active', targetType === '3d');
   if (btnMaster) btnMaster.classList.toggle('active', targetType === 'master');
 
+  // Synchronize pin toggle button
+  const pinBtn = document.getElementById('insp-pin-btn');
+  const pinIcon = document.getElementById('insp-pin-icon');
+  if (pinBtn) pinBtn.classList.toggle('pinned', Boolean(studioInspectorState.isPinned));
+  if (pinIcon) pinIcon.textContent = studioInspectorState.isPinned ? '📌 FIXADO' : '⚡ SEGUIR';
+
   // Synchronize subtab buttons
   const btnSubTrans = document.getElementById('insp-subtab-transform');
   const btnSubColor = document.getElementById('insp-subtab-color');
@@ -29223,13 +29557,17 @@ function renderStudioInspector() {
     const tn = getClipTonal(targetClipId);
     const clipTitle = clip.display_title || clip.filename || clip.name || targetClipId;
 
-    if (badge) badge.textContent = `CLIPE: ${clipTitle.slice(0, 16)}`;
-
     // Common header for Clip
+    const isSelectedFromPool = (targetClipId !== baseClipId && targetClipId !== cueClipId);
     html += `
       <div class="insp-section">
         <div class="insp-sec-title">CLIPE EM FOCO</div>
         <div class="insp-pills-row">
+          ${isSelectedFromPool ? `
+            <button class="insp-layer-pill active" title="Clipe selecionado no Media Pool">
+              🎬 SELECIONADO (${clipTitle.slice(0, 10)})
+            </button>
+          ` : ''}
           <button class="insp-layer-pill ${targetClipId === baseClipId ? 'active' : ''}" onclick="setInspectorClip('${baseClipId}')">
             PGM A (AO VIVO)
           </button>
@@ -29237,7 +29575,21 @@ function renderStudioInspector() {
             CUE B (PRÓXIMO)
           </button>
         </div>
-        <div class="insp-clip-name-box" title="${clipTitle}">${clipTitle}</div>
+        <div class="insp-clip-name-box" title="${clipTitle}">
+          <strong>${clipTitle}</strong>
+          ${(targetClipId === baseClipId) ? '<span class="text-cyan">[NO AR · PGM A]</span>' : (targetClipId === cueClipId) ? '<span class="text-emerald">[EM CUE · BUS B]</span>' : '<span style="color:#f59e0b;">[MEDIA POOL]</span>'}
+        </div>
+        <div class="insp-routes-strip" style="margin-top:6px;">
+          <button class="btn-insp-route ${targetClipId === baseClipId ? 'assigned' : ''}" onclick="routeClipToBus('${targetClipId}', 'A'); renderStudioInspector();" title="Disparar no Program Master A">
+            ▶ DISPARAR NO PGM A
+          </button>
+          <button class="btn-insp-route ${targetClipId === cueClipId ? 'assigned' : ''}" onclick="routeClipToBus('${targetClipId}', 'B'); renderStudioInspector();" title="Armar no Preview Cue B">
+            ● ARMAR NO CUE B
+          </button>
+          <button class="btn-insp-route" onclick="if(window.routeClipToLayer){ routeClipToLayer('${targetClipId}', 'layer5'); } else if(appState.layers.layer5){ appState.layers.layer5.clipId = '${targetClipId}'; } renderStudioInspector();" title="Enviar para Overlay L5">
+            ▲ ENVIAR PARA L5
+          </button>
+        </div>
       </div>
     `;
 
@@ -29552,6 +29904,8 @@ function renderStudioInspector() {
       const rot = layer.rotation || 0;
       const fit = layer.fit_mode || 'fill';
       const sc = layer.scale !== undefined ? layer.scale : 1.0;
+      const px = layer.pos_x || 0;
+      const py = layer.pos_y || 0;
 
       html += `
         <div class="insp-section">
@@ -29581,6 +29935,43 @@ function renderStudioInspector() {
               <span class="insp-val-disp" id="disp-layer-sc">${sc.toFixed(2)}x</span>
             </div>
             <input type="range" min="50" max="250" value="${Math.round(sc * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setLayerScale('${lKey}', v); document.getElementById('disp-layer-sc').textContent = v.toFixed(2) + 'x';">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO X (HORIZONTAL)</span>
+              <span class="insp-val-disp" id="disp-layer-posx">${px} px</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-600" max="600" value="${px}" class="insp-range" id="rng-layer-posx" oninput="const v = Number(this.value); appState.layers['${lKey}'].pos_x = v; document.getElementById('disp-layer-posx').textContent = v + ' px'; document.getElementById('inp-layer-posx').value = v; updateTimelineTransformInspector();">
+              <input type="number" value="${px}" step="5" class="insp-num-input" id="inp-layer-posx" onchange="const v = Number(this.value); appState.layers['${lKey}'].pos_x = v; document.getElementById('disp-layer-posx').textContent = v + ' px'; document.getElementById('rng-layer-posx').value = v; updateTimelineTransformInspector();">
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>POSIÇÃO Y (VERTICAL)</span>
+              <span class="insp-val-disp" id="disp-layer-posy">${py} px</span>
+            </div>
+            <div class="insp-flex-input-row">
+              <input type="range" min="-600" max="600" value="${py}" class="insp-range" id="rng-layer-posy" oninput="const v = Number(this.value); appState.layers['${lKey}'].pos_y = v; document.getElementById('disp-layer-posy').textContent = v + ' px'; document.getElementById('inp-layer-posy').value = v; updateTimelineTransformInspector();">
+              <input type="number" value="${py}" step="5" class="insp-num-input" id="inp-layer-posy" onchange="const v = Number(this.value); appState.layers['${lKey}'].pos_y = v; document.getElementById('disp-layer-posy').textContent = v + ' px'; document.getElementById('rng-layer-posy').value = v; updateTimelineTransformInspector();">
+            </div>
+          </div>
+
+          <!-- NUDGE PAD -->
+          <div class="insp-nudge-pad" style="margin-top: 6px;">
+            <button class="insp-btn-nudge" onclick="nudgeLayerPosition('${lKey}', -10, 0)" title="Mover 10px para esquerda">◄ -10px X</button>
+            <button class="insp-btn-nudge" onclick="nudgeLayerPosition('${lKey}', 0, -10)" title="Mover 10px para cima">▲ -10px Y</button>
+            <button class="insp-btn-nudge" onclick="centerLayerPosition('${lKey}')" title="Resetar centro para (0, 0)">[0, 0] CENTRO</button>
+            <button class="insp-btn-nudge" onclick="nudgeLayerPosition('${lKey}', 0, 10)" title="Mover 10px para baixo">▼ +10px Y</button>
+            <button class="insp-btn-nudge" onclick="nudgeLayerPosition('${lKey}', 10, 0)" title="Mover 10px para direita">► +10px X</button>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button class="insp-btn-danger-outline" onclick="resetLayerTransform('${lKey}');">
+              ↺ RESETAR GEOMETRIA DA CAMADA
+            </button>
           </div>
         </div>
       `;
@@ -29665,6 +30056,14 @@ function renderStudioInspector() {
               `).join('')}
             </select>
           </div>
+
+          ${(layer.matte && layer.matte !== 'none') ? `
+            <div style="margin-top: 8px;">
+              <button class="insp-btn-pill active" onclick="openStudioInspector('matte', '${layer.matte}')" style="width:100%; justify-content:center; padding:5px 8px;">
+                🔍 INSPECIONAR PARÂMETROS DESTA MÁSCARA [MATTE INSP]
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
     }
@@ -29784,46 +30183,71 @@ function renderStudioInspector() {
 
     container.innerHTML = html;
   } else if (targetType === 'matte') {
-    if (badge) badge.textContent = '🎭 MÁSCARAS & VINHETA';
-    const mConfig = appState.matte || {};
+    const targetMattePath = studioInspectorState.targetMattePath || appState.layers?.layer3?.matte || appState.master_matte || (allMattes && allMattes[0]?.path) || 'cat_b_soft/matte_b_penumbra_vignette.png';
+    const mConfig = getMatteConfig(targetMattePath) || (appState.matte || {});
     const tf = mConfig.transform || { pos_x: 0, pos_y: 0, scale: 1.0, scale_x: 1.0, scale_y: 1.0, rotation: 0 };
     const vig = mConfig.vignette || { enabled: false, roundness: 0.65, feather: 0.38, inner_radius: 0.42, outer_radius: 0.95, aspect_ratio: '16:9', audio_pulse: 0.15, audio_band: 'bass' };
     const def = mConfig.deform || { speed: 4.0, wiggle_pos: 8, wiggle_scale: 0.04, wiggle_rot: 0, sync_bpm: true };
-    const activeMatteName = mConfig.active_path || mConfig.name || 'matte_b_penumbra_vignette.png';
+    const activeMatteName = mConfig.name || getMatteName(targetMattePath);
+    const thumbUrl = getMatteThumbUrl({ path: targetMattePath });
+    if (badge) badge.textContent = `🎭 MATTE: ${activeMatteName.slice(0, 16)}`;
+
+    // Layers currently using this matte
+    const activeLayers = [];
+    if (appState.layers?.layer0?.matte === targetMattePath) activeLayers.push('L0');
+    if (appState.layers?.layer1?.matte === targetMattePath) activeLayers.push('L1');
+    if (appState.layers?.layer2?.matte === targetMattePath) activeLayers.push('L2');
+    if (appState.layers?.layer3?.matte === targetMattePath) activeLayers.push('L3');
+    if (appState.layers?.layer4?.matte === targetMattePath) activeLayers.push('L4');
+    if (appState.layers?.layer5?.matte === targetMattePath) activeLayers.push('L5');
+    if (appState.master_matte === targetMattePath) activeLayers.push('MASTER');
 
     html += `
       <!-- MATTE SELECTION & DESTINATION LAYER -->
-      <div class="insp-section">
-        <div class="insp-sec-title">MÁSCARA ATIVA & ROTEAMENTO</div>
+      <div class="insp-section insp-highlight-card">
+        <div class="insp-matte-header-card">
+          <div class="insp-matte-thumb" style="width:58px; height:38px; border-radius:4px; overflow:hidden; border:1px solid rgba(0,240,255,0.3); background:#000; flex-shrink:0;">
+            <img src="${thumbUrl}" alt="${activeMatteName}" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='${MATTE_SVG_FALLBACK}';">
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:10.5px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${activeMatteName}">${activeMatteName}</div>
+            <div style="font-size:8.5px; color:rgba(255,255,255,0.6); display:flex; gap:4px; align-items:center; margin-top:2px;">
+              <span>EM USO:</span>
+              ${activeLayers.length > 0 ? activeLayers.map(l => `<span class="matte-active-pill" style="font-size:8px;">${l}</span>`).join('') : '<span style="color:var(--text-muted); font-size:8px;">STANDBY (NENHUMA)</span>'}
+            </div>
+          </div>
+        </div>
+
         <div class="insp-control-row">
           <div class="insp-label-val">
-            <span>SELETOR DE MÁSCARA</span>
-            <span class="insp-val-disp">${activeMatteName.replace('.png', '').slice(0, 20)}</span>
+            <span>TROCAR MÁSCARA EM FOCO</span>
+            <span class="insp-val-disp text-cyan">${targetMattePath.split('/').pop().replace('.png', '').slice(0, 16)}</span>
           </div>
-          <select class="insp-select" onchange="setGlobalMatteAsset(this.value); renderStudioInspector();">
-            <option value="none">NENHUMA (DESATIVADA)</option>
+          <select class="insp-select" onchange="openStudioInspector('matte', this.value); renderStudioInspector();">
             ${(typeof allMattes !== 'undefined' ? allMattes : []).map(m => `
-              <option value="${m.path || m.filename}" ${(activeMatteName.includes(m.filename || m.path)) ? 'selected' : ''}>
+              <option value="${m.path || m.filename}" ${(targetMattePath === (m.path || m.filename)) ? 'selected' : ''}>
                 ${m.name || m.filename}
               </option>
             `).join('')}
           </select>
         </div>
 
-        <div class="insp-control-row">
-          <span class="insp-label">CAMADA DE DESTINO</span>
+        <div class="insp-control-row" style="margin-top:6px;">
+          <span class="insp-label">ATRIBUIR / VINCULAR À CAMADA</span>
           <div class="insp-pills-row">
-            ${['layer0', 'layer3', 'layer4', 'master'].map(tgt => `
-              <button class="insp-btn-pill ${(appState.matte_target_layer || 'layer3') === tgt ? 'active' : ''}" onclick="appState.matte_target_layer = '${tgt}'; renderStudioInspector();">
-                ${tgt === 'layer0' ? 'L0 PGM' : tgt === 'layer3' ? 'L3 CUE' : tgt === 'layer4' ? 'L4 DROP' : 'MASTER'}
-              </button>
-            `).join('')}
+            <button class="insp-btn-pill ${activeLayers.includes('L0') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer0')" title="Vincular a L0 (PGM)">+ L0</button>
+            <button class="insp-btn-pill ${activeLayers.includes('L1') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer1')" title="Vincular a L1">+ L1</button>
+            <button class="insp-btn-pill ${activeLayers.includes('L2') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer2')" title="Vincular a L2">+ L2</button>
+            <button class="insp-btn-pill ${activeLayers.includes('L3') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer3')" title="Vincular a L3 (CUE)">+ L3</button>
+            <button class="insp-btn-pill ${activeLayers.includes('L4') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer4')" title="Vincular a L4">+ L4</button>
+            <button class="insp-btn-pill ${activeLayers.includes('L5') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'layer5')" title="Vincular a L5 (OVERLAY)">+ L5</button>
+            <button class="insp-btn-pill ${activeLayers.includes('MASTER') ? 'active' : ''}" onclick="assignMatteToLayer('${targetMattePath}', 'master')" title="Vincular ao Master">+ MASTER</button>
           </div>
         </div>
 
         <div class="insp-row-between" style="margin-top: 8px;">
           <span class="insp-label">INVERTER RECORTE (ALPHA INVERT)</span>
-          <button class="insp-btn-toggle ${mConfig.invert ? 'active' : ''}" onclick="appState.matte.invert = !appState.matte.invert; renderStudioInspector();">
+          <button class="insp-btn-toggle ${mConfig.invert ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { invert: !${Boolean(mConfig.invert)} }); renderStudioInspector();">
             ${mConfig.invert ? 'INVERTIDO: SIM' : 'INVERTER: NÃO'}
           </button>
         </div>
@@ -29848,8 +30272,8 @@ function renderStudioInspector() {
               <span class="insp-val-disp" id="disp-matte-posx">${px} %</span>
             </div>
             <div class="insp-flex-input-row">
-              <input type="range" min="-100" max="100" value="${px}" class="insp-range" oninput="appState.matte.transform.pos_x = Number(this.value); document.getElementById('disp-matte-posx').textContent = this.value + ' %';">
-              <button class="insp-btn-pill" onclick="appState.matte.transform.pos_x = 0; renderStudioInspector();">0</button>
+              <input type="range" min="-100" max="100" value="${px}" class="insp-range" id="rng-matte-posx" oninput="const v = Number(this.value); setMatteConfig('${targetMattePath}', { transform: { pos_x: v } }); document.getElementById('disp-matte-posx').textContent = v + ' %'; document.getElementById('inp-matte-posx').value = v;">
+              <input type="number" value="${px}" step="2" class="insp-num-input" id="inp-matte-posx" onchange="const v = Number(this.value); setMatteConfig('${targetMattePath}', { transform: { pos_x: v } }); document.getElementById('disp-matte-posx').textContent = v + ' %'; document.getElementById('rng-matte-posx').value = v;">
             </div>
           </div>
 
@@ -29859,17 +30283,26 @@ function renderStudioInspector() {
               <span class="insp-val-disp" id="disp-matte-posy">${py} %</span>
             </div>
             <div class="insp-flex-input-row">
-              <input type="range" min="-100" max="100" value="${py}" class="insp-range" oninput="appState.matte.transform.pos_y = Number(this.value); document.getElementById('disp-matte-posy').textContent = this.value + ' %';">
-              <button class="insp-btn-pill" onclick="appState.matte.transform.pos_y = 0; renderStudioInspector();">0</button>
+              <input type="range" min="-100" max="100" value="${py}" class="insp-range" id="rng-matte-posy" oninput="const v = Number(this.value); setMatteConfig('${targetMattePath}', { transform: { pos_y: v } }); document.getElementById('disp-matte-posy').textContent = v + ' %'; document.getElementById('inp-matte-posy').value = v;">
+              <input type="number" value="${py}" step="2" class="insp-num-input" id="inp-matte-posy" onchange="const v = Number(this.value); setMatteConfig('${targetMattePath}', { transform: { pos_y: v } }); document.getElementById('disp-matte-posy').textContent = v + ' %'; document.getElementById('rng-matte-posy').value = v;">
             </div>
           </div>
 
-          <div class="insp-control-row">
+          <!-- NUDGE PAD -->
+          <div class="insp-nudge-pad" style="margin-top: 6px;">
+            <button class="insp-btn-nudge" onclick="nudgeMattePosition('${targetMattePath}', -5, 0)" title="Mover 5% para esquerda">◄ -5% X</button>
+            <button class="insp-btn-nudge" onclick="nudgeMattePosition('${targetMattePath}', 0, -5)" title="Mover 5% para cima">▲ -5% Y</button>
+            <button class="insp-btn-nudge" onclick="centerMattePosition('${targetMattePath}')" title="Resetar centro para (0, 0)">[0, 0] CENTRO</button>
+            <button class="insp-btn-nudge" onclick="nudgeMattePosition('${targetMattePath}', 0, 5)" title="Mover 5% para baixo">▼ +5% Y</button>
+            <button class="insp-btn-nudge" onclick="nudgeMattePosition('${targetMattePath}', 5, 0)" title="Mover 5% para direita">► +5% X</button>
+          </div>
+
+          <div class="insp-control-row" style="margin-top: 8px;">
             <div class="insp-label-val">
               <span>ESCALA UNIFORME</span>
               <span class="insp-val-disp" id="disp-matte-sc">${sc.toFixed(2)}x</span>
             </div>
-            <input type="range" min="20" max="300" value="${Math.round(sc * 100)}" class="insp-range" oninput="appState.matte.transform.scale = this.value / 100.0; document.getElementById('disp-matte-sc').textContent = (this.value / 100.0).toFixed(2) + 'x';">
+            <input type="range" min="20" max="300" value="${Math.round(sc * 100)}" class="insp-range" oninput="const v = this.value / 100.0; setMatteConfig('${targetMattePath}', { transform: { scale: v } }); document.getElementById('disp-matte-sc').textContent = v.toFixed(2) + 'x';">
           </div>
 
           <div class="insp-control-row">
@@ -29878,9 +30311,9 @@ function renderStudioInspector() {
               <span class="insp-val-disp">${scX.toFixed(2)}x / ${scY.toFixed(2)}x</span>
             </div>
             <div class="insp-pills-row">
-              <button class="insp-btn-pill ${scX === 1.0 && scY === 1.0 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.0; appState.matte.transform.scale_y = 1.0; renderStudioInspector();">1:1</button>
-              <button class="insp-btn-pill ${scX === 1.33 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.33; appState.matte.transform.scale_y = 1.0; renderStudioInspector();">WIDE X (1.33x)</button>
-              <button class="insp-btn-pill ${scY === 1.33 ? 'active' : ''}" onclick="appState.matte.transform.scale_x = 1.0; appState.matte.transform.scale_y = 1.33; renderStudioInspector();">TALL Y (1.33x)</button>
+              <button class="insp-btn-pill ${scX === 1.0 && scY === 1.0 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { transform: { scale_x: 1.0, scale_y: 1.0 } }); renderStudioInspector();">1:1</button>
+              <button class="insp-btn-pill ${scX === 1.33 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { transform: { scale_x: 1.33, scale_y: 1.0 } }); renderStudioInspector();">WIDE X (1.33x)</button>
+              <button class="insp-btn-pill ${scY === 1.33 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { transform: { scale_x: 1.0, scale_y: 1.33 } }); renderStudioInspector();">TALL Y (1.33x)</button>
             </div>
           </div>
 
@@ -29890,11 +30323,17 @@ function renderStudioInspector() {
               <span class="insp-val-disp" id="disp-matte-rot">${rot}°</span>
             </div>
             <div class="insp-flex-input-row">
-              <input type="range" min="-180" max="180" value="${rot}" class="insp-range" oninput="appState.matte.transform.rotation = Number(this.value); document.getElementById('disp-matte-rot').textContent = this.value + '°';">
-              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 0; renderStudioInspector();">0°</button>
-              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 90; renderStudioInspector();">90°</button>
-              <button class="insp-btn-pill" onclick="appState.matte.transform.rotation = 180; renderStudioInspector();">180°</button>
+              <input type="range" min="-180" max="180" value="${rot}" class="insp-range" oninput="const v = Number(this.value); setMatteConfig('${targetMattePath}', { transform: { rotation: v } }); document.getElementById('disp-matte-rot').textContent = v + '°';">
+              <button class="insp-btn-pill" onclick="setMatteConfig('${targetMattePath}', { transform: { rotation: 0 } }); renderStudioInspector();">0°</button>
+              <button class="insp-btn-pill" onclick="setMatteConfig('${targetMattePath}', { transform: { rotation: 90 } }); renderStudioInspector();">90°</button>
+              <button class="insp-btn-pill" onclick="setMatteConfig('${targetMattePath}', { transform: { rotation: 180 } }); renderStudioInspector();">180°</button>
             </div>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button class="insp-btn-danger-outline" onclick="resetMatteTransform('${targetMattePath}');">
+              ↺ RESETAR GEOMETRIA DA MÁSCARA
+            </button>
           </div>
         </div>
       `;
@@ -29913,7 +30352,7 @@ function renderStudioInspector() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20"></path></svg>
               VINHETA PROCEDURAL DINÂMICA
             </div>
-            <button class="insp-btn-toggle ${isVigOn ? 'active' : ''}" onclick="appState.matte.vignette.enabled = !appState.matte.vignette.enabled; renderStudioInspector();">
+            <button class="insp-btn-toggle ${isVigOn ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { vignette: { enabled: !${Boolean(vig.enabled)} } }); renderStudioInspector();">
               ${isVigOn ? 'ATIVO' : 'DESATIVADO'}
             </button>
           </div>
@@ -29924,11 +30363,11 @@ function renderStudioInspector() {
               <span>ARREDONDAMENTO DAS BORDAS (ROUNDNESS)</span>
               <span class="insp-val-disp text-cyan" id="disp-vig-round">${roundPct}%</span>
             </div>
-            <input type="range" min="0" max="100" value="${roundPct}" class="insp-range" oninput="appState.matte.vignette.roundness = this.value / 100.0; document.getElementById('disp-vig-round').textContent = this.value + '%';">
+            <input type="range" min="0" max="100" value="${roundPct}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { vignette: { roundness: this.value / 100.0 } }); document.getElementById('disp-vig-round').textContent = this.value + '%';">
             <div class="insp-pills-row" style="margin-top:4px;">
-              <button class="insp-btn-pill ${roundPct === 0 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 0; renderStudioInspector();">0% (RETÂNGULO PURO)</button>
-              <button class="insp-btn-pill ${roundPct === 65 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 0.65; renderStudioInspector();">65% (ARREDONDADO)</button>
-              <button class="insp-btn-pill ${roundPct === 100 ? 'active' : ''}" onclick="appState.matte.vignette.roundness = 1.0; renderStudioInspector();">100% (ELIPSE / CÍRCULO)</button>
+              <button class="insp-btn-pill ${roundPct === 0 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { vignette: { roundness: 0 } }); renderStudioInspector();">0% (RETÂNGULO PURO)</button>
+              <button class="insp-btn-pill ${roundPct === 65 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { vignette: { roundness: 0.65 } }); renderStudioInspector();">65% (ARREDONDADO)</button>
+              <button class="insp-btn-pill ${roundPct === 100 ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { vignette: { roundness: 1.0 } }); renderStudioInspector();">100% (ELIPSE / CÍRCULO)</button>
             </div>
           </div>
 
@@ -29937,7 +30376,7 @@ function renderStudioInspector() {
               <span>SUAVIDADE DE BORDA (FEATHER / FALLOFF)</span>
               <span class="insp-val-disp text-cyan" id="disp-vig-feather">${featherPct}%</span>
             </div>
-            <input type="range" min="5" max="95" value="${featherPct}" class="insp-range" oninput="appState.matte.vignette.feather = this.value / 100.0; document.getElementById('disp-vig-feather').textContent = this.value + '%';">
+            <input type="range" min="5" max="95" value="${featherPct}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { vignette: { feather: this.value / 100.0 } }); document.getElementById('disp-vig-feather').textContent = this.value + '%';">
           </div>
 
           <div class="insp-control-row">
@@ -29945,7 +30384,7 @@ function renderStudioInspector() {
               <span>RAIO INTERNO (AURA CENTRAL LIVRE)</span>
               <span class="insp-val-disp" id="disp-vig-inrad">${inRadPct}%</span>
             </div>
-            <input type="range" min="10" max="85" value="${inRadPct}" class="insp-range" oninput="appState.matte.vignette.inner_radius = this.value / 100.0; document.getElementById('disp-vig-inrad').textContent = this.value + '%';">
+            <input type="range" min="10" max="85" value="${inRadPct}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { vignette: { inner_radius: this.value / 100.0 } }); document.getElementById('disp-vig-inrad').textContent = this.value + '%';">
           </div>
 
           <div class="insp-control-row">
@@ -29953,7 +30392,7 @@ function renderStudioInspector() {
               <span>RAIO EXTERNO (ALCANCE DA PENUMBRA)</span>
               <span class="insp-val-disp" id="disp-vig-outrad">${outRadPct}%</span>
             </div>
-            <input type="range" min="50" max="150" value="${outRadPct}" class="insp-range" oninput="appState.matte.vignette.outer_radius = this.value / 100.0; document.getElementById('disp-vig-outrad').textContent = this.value + '%';">
+            <input type="range" min="50" max="150" value="${outRadPct}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { vignette: { outer_radius: this.value / 100.0 } }); document.getElementById('disp-vig-outrad').textContent = this.value + '%';">
           </div>
 
           <div class="insp-control-row">
@@ -29961,7 +30400,7 @@ function renderStudioInspector() {
               <span>RESPIRAÇÃO ÁUDIO-REATIVA (PULSE BEAT)</span>
               <span class="insp-val-disp text-cyan" id="disp-vig-pulse">${pulsePct}%</span>
             </div>
-            <input type="range" min="0" max="50" value="${pulsePct}" class="insp-range" oninput="appState.matte.vignette.audio_pulse = this.value / 100.0; document.getElementById('disp-vig-pulse').textContent = this.value + '%';">
+            <input type="range" min="0" max="50" value="${pulsePct}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { vignette: { audio_pulse: this.value / 100.0 } }); document.getElementById('disp-vig-pulse').textContent = this.value + '%';">
           </div>
         </div>
       `;
@@ -29975,7 +30414,7 @@ function renderStudioInspector() {
               <span>AMPLITUDE DE WIGGLE (POSIÇÃO)</span>
               <span class="insp-val-disp">${def.wiggle_pos || 8} px</span>
             </div>
-            <input type="range" min="0" max="40" value="${def.wiggle_pos || 8}" class="insp-range" oninput="appState.matte.deform.wiggle_pos = Number(this.value);">
+            <input type="range" min="0" max="40" value="${def.wiggle_pos || 8}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { deform: { wiggle_pos: Number(this.value) } });">
           </div>
 
           <div class="insp-control-row">
@@ -29983,12 +30422,12 @@ function renderStudioInspector() {
               <span>VELOCIDADE (PERÍODO EM BEATS)</span>
               <span class="insp-val-disp">${def.speed || 4} Beats</span>
             </div>
-            <input type="range" min="1" max="16" value="${def.speed || 4}" class="insp-range" oninput="appState.matte.deform.speed = Number(this.value);">
+            <input type="range" min="1" max="16" value="${def.speed || 4}" class="insp-range" oninput="setMatteConfig('${targetMattePath}', { deform: { speed: Number(this.value) } });">
           </div>
 
           <div class="insp-row-between" style="margin-top: 10px;">
             <span class="insp-label">SINCRONIZAR COM O BPM MASTER</span>
-            <button class="insp-btn-toggle ${def.sync_bpm ? 'active' : ''}" onclick="appState.matte.deform.sync_bpm = !appState.matte.deform.sync_bpm; renderStudioInspector();">
+            <button class="insp-btn-toggle ${def.sync_bpm ? 'active' : ''}" onclick="setMatteConfig('${targetMattePath}', { deform: { sync_bpm: !${Boolean(def.sync_bpm)} } }); renderStudioInspector();">
               ${def.sync_bpm ? 'SYNC ON' : 'LIVRE'}
             </button>
           </div>

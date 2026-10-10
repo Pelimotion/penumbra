@@ -9261,114 +9261,219 @@ body.resizing-workspace-active .top-zone {
 }
 
 /* ============================================================================
-   PRO TIMELINE TRANSFORM INSPECTOR & LAYER 5 ARCHITECTURE
+   PRO TIMELINE STUDIO INSPECTOR BRIDGE & TRACK SELECTION ARCHITECTURE
    ============================================================================ */
-.tl-transform-inspector {
+.tl-inspector-bridge {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
   background: rgba(8, 12, 18, 0.96);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 14px;
+  padding: 3px 10px;
   font-family: var(--font-mono);
   font-size: 9px;
   min-height: 28px;
   flex-wrap: nowrap;
-  overflow-x: auto;
 }
 
-.tl-tf-layer-pills {
+.tl-insp-pills {
   display: flex;
   align-items: center;
   gap: 3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding-right: 8px;
 }
 
-.tl-tf-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text-dim);
+.tl-insp-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
   font-size: 8.5px;
-  font-weight: 700;
-  padding: 2px 6px;
+  font-weight: 800;
+  padding: 3px 7px;
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.12s ease;
   white-space: nowrap;
 }
 
-.tl-tf-pill:hover {
+.tl-insp-pill:hover {
   background: rgba(0, 240, 255, 0.15);
   color: #fff;
+  border-color: rgba(0, 240, 255, 0.4);
 }
 
-.tl-tf-pill.active {
+.tl-insp-pill.active {
   background: rgba(0, 240, 255, 0.22);
   border-color: var(--cyan);
   color: var(--cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
 }
 
-.tl-tf-control-item {
-  display: flex;
+.btn-tl-open-inspector {
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #fff;
+  font-size: 8.5px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.tl-tf-lbl {
-  color: #718096;
-  font-weight: 700;
-  font-size: 8px;
-  letter-spacing: 0.5px;
+.btn-tl-open-inspector:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
 
-.tl-tf-slider {
-  width: 58px;
-  height: 4px;
-  accent-color: var(--cyan);
+.btn-tl-open-inspector strong {
+  color: var(--cyan);
+  font-weight: 900;
+}
+
+.btn-tl-open-inspector .tl-insp-shortcut {
+  color: #64748b;
+  font-size: 7.5px;
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+/* Timeline Tracks Sidebar Selection */
+.tl-track-header {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tl-track-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tl-track-header.is-selected-track {
+  background: rgba(0, 240, 255, 0.15) !important;
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+
+/* Matte Card Inspection Selection */
+.matte-card {
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
 }
 
-.tl-tf-num-input {
-  width: 44px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
+.matte-card.is-inspect-selected,
+.library-card-matte.is-inspect-selected {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+  background: rgba(0, 240, 255, 0.06) !important;
+}
+
+/* Inspector Pin Toggle Button */
+.insp-pin-btn {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--cyan);
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  text-align: right;
-}
-
-.tl-tf-num-input:focus {
-  outline: none;
-  border-color: var(--cyan);
-}
-
-.tl-tf-val {
-  color: #00f0ff;
-  min-width: 32px;
-  font-weight: 700;
-}
-
-.tl-tf-btn-reset {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #a0aec0;
-  font-size: 8px;
+  font-size: 7.5px;
+  font-weight: 800;
   padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.tl-tf-btn-reset:hover {
-  background: rgba(255, 42, 85, 0.2);
-  border-color: #ff2a55;
-  color: #ff2a55;
+.insp-pin-btn:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--cyan);
 }
+
+.insp-pin-btn.pinned {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45) !important;
+}
+
+/* Matte Header Card inside Studio Inspector */
+.insp-matte-header-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.insp-matte-thumb-preview {
+  width: 56px;
+  height: 40px;
+  object-fit: contain;
+  background: #000;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.insp-matte-meta-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.insp-matte-meta-name {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insp-matte-meta-sub {
+  font-size: 8px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.insp-routes-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.btn-insp-route {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-insp-route:hover {
+  color: #fff;
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.btn-insp-route.assigned {
+  background: rgba(0, 240, 255, 0.22);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  font-weight: 900;
+}
+
 
 /* Track L5 Overlay Styling */
 .tl-track-header.track-l5 {

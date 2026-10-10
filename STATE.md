@@ -1,9 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 10:25:00 BRT
+- **Última Atualização:** 10/10/2026, 11:05:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Studio Inspector Unificado (Padrão DaVinci/Resolume):** 🟢 ATIVO (Eliminação da barra comprimida da timeline, nova `.tl-inspector-bridge`, controles de Pos X/Y, Nudge Pad, Escala e Reset integrados no drawer lateral)
+- **Motor Per-Matte & Inspeção Desacoplada:** 🟢 ATIVO (Inspeção imediata ao clicar em qualquer máscara ou clipe na biblioteca/Media Pool sem alterar camadas ao vivo, motor isolado `mattes_config`, modo Pin `[⚡ SEGUIR]`/`[📌 FIXADO]`)
 - **Eliminação de Flash em Transições:** 🟢 RESOLVIDO (Bypass de Deck B em opacidade 0, Sobel Solo puro sem composite vazando, e buffer isolado `sobelCanvas`)
 - **Pool Granular de Autopilot (Pastas e Takes):** 🟢 ATIVO (Controle duplo de inclusão por pastas em Configurações/Tab 5 e por clipe nos cards com toggles `[⚡ AUTO]`/`[✕ MANUAL]`, filtros rápidos e ações em lote)
 - **Entrada de Linha (P2) & Microfone:** 🟢 ATIVO (Smart auto-detection de dispositivos P2/Line-in, filtros Biquad HPF 24Hz e LPF 16kHz, VU meter hardware-grade RMS/Peak dB e spectral flux BPM)
@@ -12,7 +14,6 @@
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
-- **Painel Studio Inspector (🎭 MATTE & 🌌 3D GEN):** 🟢 ATIVO (Controle de geometria, vinheta com roundness 0%-100%, 4 cenas 3D, 5 paletas de luxo e Estrela 13 desacoplada)
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -23,10 +24,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 13,251 | 553.0 KB |
-| `styles.css` | 10,877 | 213.0 KB |
-| `index.html` | 3,572 | 231.0 KB |
-| `Penumbra_Portable.html` | — | 1,126.4 KB |
+| `app.js` | 13,607 | 587.1 KB |
+| `styles.css` | 10,982 | 220.3 KB |
+| `index.html` | 3,550 | 236.2 KB |
+| `Penumbra_Portable.html` | — | 1,135.0 KB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 81 entradas
