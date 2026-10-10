@@ -70,3 +70,18 @@
 - **Painel de Controle:** `http://localhost:3000` (MacBook / iPad)
 - **Decodificação de Vídeo:** HTML5 Hardware Accelerated MP4/MOV Streaming (30 FPS padrão)
 - **Grading Tonal & Sobel:** Ativo (Gamma 0.85, Pretos -5%, Médios 1.0, Sobel Mix 22%)
+
+## Atualizações de Vanguarda · Resolução de Telão HDMI & Splitters
+- **Saída de Projeção HDMI / Popout Clean Feed (macOS Friendly):**
+  - Implementado `openPopoutWindow` com resolução relativa dinâmica, eliminando o erro 404 em produção (`gigantera.xyz/penumbra`).
+  - Adicionado rewrite reverso no `vercel.json` de produção para `/popout.html`.
+  - Modo `🖥️ MODO PROJETOR (BORDERLESS)` em `popout.html`: Dimensiona e posiciona a janela para preencher 100% do projetor sem invocar os Spaces nativos do macOS, impedindo que a tela do MacBook fique preta!
+  - Suporte à Window Management API (`getScreenDetails()`) e modal de instruções para gerenciamento de Spaces no macOS.
+- **Central de Ingestão Desobstruída & Retorno Imediato:**
+  - Drawer overlay flutuante com z-index elevado, evitando esmagamento do grid de cartões de vídeo.
+  - Botão de alto contraste `VOLTAR AO MEDIA POOL [ESC]` e atalho `ESC` global.
+  - Botão da barra de ferramentas atualiza dinamicamente entre `+ INGESTÃO` e `✕ FECHAR INGESTÃO`.
+- **Redimensionamento Fluido de Módulos e Sessões:**
+  - Splitter Vertical (`#workspace-splitter`): Ajustado `flex: 0 0 auto` na `.top-zone`, eliminando compressão por flexbox shrink e garantindo arraste suave com Pointer Capture.
+  - Splitter Lateral de Bins (`#library-sidebar-splitter`): Novo divisor vertical permitindo redimensionar a barra de pastas/bins de 150px a 480px, com duplo-clique para redefinir e persistência em `UserProfileManager`.
+

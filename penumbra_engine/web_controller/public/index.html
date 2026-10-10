@@ -313,7 +313,7 @@
             <div class="screen-actions-right">
               <div class="timecode-display" id="prg-timecode">TC 00:01:24.18</div>
               <button class="btn-screen-action" id="btn-prg-focus" onclick="toggleProgramFocus()" title="Modo Foco no Program (>35% da tela, Preview compacto)">FOCO PGM</button>
-              <button class="btn-screen-action" id="btn-prg-popout" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')" title="Destacar em Janela Flutuante (Segundo Monitor)">DESTACAR</button>
+              <button class="btn-screen-action" id="btn-prg-popout" onclick="openPopoutWindow('program')" title="Destacar em Janela Flutuante (Segundo Monitor / Projetor)">DESTACAR</button>
               <button class="btn-screen-action" id="btn-prg-expand" onclick="window.openTheater && window.openTheater('program')" title="Expandir em Modo Cinema">EXPANDIR</button>
             </div>
           </div>
@@ -352,7 +352,7 @@
             </div>
             <div class="screen-actions-right">
               <div class="timecode-display" id="prv-timecode">CUE IN 4 BARS</div>
-              <button class="btn-screen-action highlight-action" id="btn-prv-popout" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')" title="Destacar Preview em Janela Flutuante (Segundo Monitor)">DESTACAR</button>
+              <button class="btn-screen-action highlight-action" id="btn-prv-popout" onclick="openPopoutWindow('preview')" title="Destacar Preview em Janela Flutuante (Segundo Monitor)">DESTACAR</button>
               <button class="btn-screen-action highlight-action" id="btn-prv-expand" onclick="window.openTheater && window.openTheater('preview')" title="Expandir Preview em Tela Grande (Modo Cinema)">EXPANDIR</button>
             </div>
           </div>
@@ -1778,7 +1778,11 @@
                   <span>3. YOUTUBE & WEB STREAMS</span>
                 </button>
               </div>
-              <button class="mid-close-btn" onclick="toggleMediaIngestDeck(false)" title="Fechar Central de Ingestão (ESC)">✕</button>
+              <button class="mid-return-pool-btn" id="btn-mid-return-pool" onclick="toggleMediaIngestDeck(false)" title="Fechar Central de Ingestão e Voltar ao Media Pool (Atalho: ESC)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>VOLTAR AO MEDIA POOL</span>
+                <kbd>ESC</kbd>
+              </button>
             </div>
           </div>
 
@@ -2025,6 +2029,11 @@
               </div>
             </div>
           </aside>
+
+          <!-- VERTICAL SPLITTER FOR BINS SIDEBAR -->
+          <div class="library-sidebar-splitter" id="library-sidebar-splitter" title="Arraste para redimensionar barra lateral de Bins (Duplo clique para 220px)">
+            <div class="sb-splitter-line"></div>
+          </div>
 
           <!-- RIGHT MAIN PANEL: COMPACT TOOLBAR + ASSET GRID -->
           <section class="library-main-panel">
@@ -2313,8 +2322,7 @@
             <span class="theater-clip-name" id="theater-clip-name">Metallic_spine_sculpture_moving...</span>
           </div>
           <div class="theater-controls-group">
-            <div class="timecode-display" id="theater-timecode">TC 00:01:24.18</div>
-            <button class="btn btn-outline btn-xs" id="btn-theater-popout" onclick="window.open('/popout.html?view='+(window.activeTheaterFeed||'preview'),'PenumbraPopout','width=1280,height=760'); window.closeTheater && window.closeTheater();">◱ DESTACAR JANELA</button>
+            <button class="btn btn-outline btn-xs" id="btn-theater-popout" onclick="openPopoutWindow(window.activeTheaterFeed || 'preview'); window.closeTheater && window.closeTheater();">◱ DESTACAR JANELA</button>
             <button class="btn btn-danger btn-xs" id="btn-theater-close" onclick="window.closeTheater && window.closeTheater()">✕ FECHAR (ESC)</button>
           </div>
         </div>
@@ -2624,14 +2632,14 @@
                     <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast.</span>
                   </div>
                   <div class="prop-control" style="display: flex; gap: 6px;">
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=program','PenumbraProgram','width=1280,height=760')">◱ PROGRAM NO TELÃO</button>
-                    <button class="btn btn-outline btn-xs" onclick="window.open('/popout.html?view=preview','PenumbraPreview','width=1280,height=760')">◱ PREVIEW CUE</button>
+                    <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('program')">◱ PROGRAM NO TELÃO</button>
+                    <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('preview')">◱ PREVIEW CUE</button>
                   </div>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Recomendações Mac + Telão</span>
-                    <span class="prop-desc">Use Tela Estendida no macOS (nunca espelhamento) e force 1080p 60Hz.</span>
+                    <span class="prop-title">Recomendações Mac + Telão / Projetor</span>
+                    <span class="prop-desc">Use Tela Estendida no macOS. Dica: Na janela destacada, use "MODO PROJETOR (BORDERLESS)" para nunca apagar a tela do seu MacBook!</span>
                   </div>
                 </div>
               </div>

@@ -7512,13 +7512,28 @@ function setupEvents() {
     
     const isVisible = deck.style.display !== 'none';
     const newState = forceState !== undefined ? Boolean(forceState) : !isVisible;
+    const sidebarBtn = document.getElementById('btn-sidebar-ingest');
     
     deck.style.display = newState ? 'block' : 'none';
-    if (mainBtn) mainBtn.classList.toggle('active', newState);
+    if (mainBtn) {
+      mainBtn.classList.toggle('active', newState);
+      mainBtn.classList.toggle('active-ingest', newState);
+      const span = mainBtn.querySelector('span');
+      if (span) span.textContent = newState ? '✕ FECHAR INGESTÃO' : '+ INGESTÃO';
+    }
+    if (sidebarBtn) {
+      sidebarBtn.classList.toggle('active-ingest', newState);
+      const span = sidebarBtn.querySelector('span');
+      if (span) span.textContent = newState ? '✕ FECHAR' : '+ NOVA INGESTÃO';
+    }
     
     if (newState) {
       window.switchIngestMode(currentIngestMode);
       updateIngestStats();
+      if (currentIngestMode === 'stream') {
+        const inp = document.getElementById('input-mid-yt-url');
+        if (inp) setTimeout(() => inp.focus(), 60);
+      }
     }
   };
 
@@ -7947,6 +7962,20 @@ function setupEvents() {
     });
   }
 
+  // Global Pop-out window launcher (Resolves relative URL safely in production/subpaths)
+  window.openPopoutWindow = function(feed) {
+    const currentUrl = window.location.href.split('?')[0].split('#')[0];
+    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+    const targetFeed = feed || 'program';
+    const popoutUrl = `${baseUrl}popout.html?view=${encodeURIComponent(targetFeed)}`;
+    const winName = `Penumbra${targetFeed.toUpperCase()}Popout`;
+    const win = window.open(popoutUrl, winName, 'width=1280,height=760,menubar=no,toolbar=no,location=no,status=no,resizable=yes');
+    if (win && !win.closed) {
+      try { win.focus(); } catch (_) {}
+    }
+    return win;
+  };
+
   // Expand & Pop-out Monitor Controls (Preview & Program)
   const btnPrvExpand = document.getElementById('btn-prv-expand');
   if (btnPrvExpand) btnPrvExpand.addEventListener('click', () => openTheater('preview'));
@@ -7956,15 +7985,17 @@ function setupEvents() {
 
   const btnPrvPopout = document.getElementById('btn-prv-popout');
   if (btnPrvPopout) {
-    btnPrvPopout.addEventListener('click', () => {
-      window.open('/popout.html?view=preview', 'PenumbraPreviewPopout', 'width=1280,height=760,menubar=no,toolbar=no,location=no,status=no');
+    btnPrvPopout.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.openPopoutWindow('preview');
     });
   }
 
   const btnPrgPopout = document.getElementById('btn-prg-popout');
   if (btnPrgPopout) {
-    btnPrgPopout.addEventListener('click', () => {
-      window.open('/popout.html?view=program', 'PenumbraProgramPopout', 'width=1280,height=760,menubar=no,toolbar=no,location=no,status=no');
+    btnPrgPopout.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.openPopoutWindow('program');
     });
   }
 
@@ -7975,7 +8006,7 @@ function setupEvents() {
     btnTheaterPopout.addEventListener('click', () => {
       const feed = activeTheaterFeed || 'preview';
       closeTheater();
-      window.open(`/popout.html?view=${feed}`, `Penumbra${feed.toUpperCase()}Popout`, 'width=1280,height=760,menubar=no,toolbar=no,location=no,status=no');
+      window.openPopoutWindow(feed);
     });
   }
 
@@ -8778,6 +8809,7 @@ function bootstrapApp() {
   setupEvents();
   setupProFaders();
   if (typeof initWorkspaceSplitter === 'function') initWorkspaceSplitter();
+  if (typeof initLibrarySidebarSplitter === 'function') initLibrarySidebarSplitter();
   if (typeof initDockViewModes === 'function') initDockViewModes();
   if (typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
   applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
@@ -9092,7 +9124,12 @@ function initKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
     if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
-      if (e.key === 'Escape') activeEl.blur();
+      if (e.key === 'Escape') {
+        activeEl.blur();
+        if (typeof window.toggleMediaIngestDeck === 'function') {
+          window.toggleMediaIngestDeck(false);
+        }
+      }
       return;
     }
 
@@ -9464,8 +9501,9 @@ function initWorkspaceSplitter() {
   // Restore saved height from UserProfileManager
   if (typeof UserProfileManager !== 'undefined') {
     const savedH = UserProfileManager.getSetting('workspace_top_height', null);
-    if (savedH && typeof savedH === 'number' && savedH >= 160 && savedH <= window.innerHeight * 0.75) {
+    if (savedH && typeof savedH === 'number' && savedH >= 140 && savedH <= window.innerHeight * 0.72) {
       topZone.style.height = `${savedH}px`;
+      topZone.style.flexBasis = `${savedH}px`;
     }
   }
 
@@ -9479,6 +9517,7 @@ function initWorkspaceSplitter() {
     startHeight = topZone.getBoundingClientRect().height;
     splitter.classList.add('is-dragging');
     document.body.classList.add('resizing-workspace-active');
+    try { splitter.setPointerCapture(e.pointerId); } catch (_) {}
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
     e.preventDefault();
@@ -9487,20 +9526,22 @@ function initWorkspaceSplitter() {
   const onPointerMove = (e) => {
     if (!isDragging) return;
     const deltaY = e.clientY - startY;
-    const minH = 160;
-    const maxH = Math.max(minH, window.innerHeight - 180);
+    const minH = 140;
+    const maxH = Math.max(minH, window.innerHeight - 200);
     const newHeight = Math.min(Math.max(startHeight + deltaY, minH), maxH);
     topZone.style.height = `${newHeight}px`;
+    topZone.style.flexBasis = `${newHeight}px`;
     if (typeof renderQueueCards === 'function') {
       renderQueueCards();
     }
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e) => {
     if (!isDragging) return;
     isDragging = false;
     splitter.classList.remove('is-dragging');
     document.body.classList.remove('resizing-workspace-active');
+    try { if (e && e.pointerId) splitter.releasePointerCapture(e.pointerId); } catch (_) {}
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
 
@@ -9519,6 +9560,7 @@ function initWorkspaceSplitter() {
   splitter.addEventListener('dblclick', () => {
     const defH = Math.round(window.innerHeight * 0.32);
     topZone.style.height = `${defH}px`;
+    topZone.style.flexBasis = `${defH}px`;
     if (typeof UserProfileManager !== 'undefined') {
       UserProfileManager.setSetting('workspace_top_height', defH);
     }
@@ -9528,6 +9570,78 @@ function initWorkspaceSplitter() {
   });
 }
 window.initWorkspaceSplitter = initWorkspaceSplitter;
+
+// ============================================================================
+// LIBRARY BINS SIDEBAR RESIZE SPLITTER
+// ============================================================================
+function initLibrarySidebarSplitter() {
+  const splitter = document.getElementById('library-sidebar-splitter');
+  const sidebar = document.getElementById('library-sidebar');
+  if (!splitter || !sidebar) return;
+
+  // Restore saved width from UserProfileManager
+  if (typeof UserProfileManager !== 'undefined') {
+    const savedW = UserProfileManager.getSetting('library_sidebar_width', null);
+    if (savedW && typeof savedW === 'number' && savedW >= 150 && savedW <= 480) {
+      sidebar.style.width = `${savedW}px`;
+      sidebar.style.flexBasis = `${savedW}px`;
+    }
+  }
+
+  let isDragging = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  const onPointerDown = (e) => {
+    if (sidebar.classList.contains('is-collapsed')) return;
+    isDragging = true;
+    startX = e.clientX;
+    startWidth = sidebar.getBoundingClientRect().width;
+    splitter.classList.add('is-dragging');
+    document.body.style.cursor = 'col-resize';
+    try { splitter.setPointerCapture(e.pointerId); } catch (_) {}
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    const minW = 150;
+    const maxW = 460;
+    const newWidth = Math.min(Math.max(startWidth + deltaX, minW), maxW);
+    sidebar.style.width = `${newWidth}px`;
+    sidebar.style.flexBasis = `${newWidth}px`;
+  };
+
+  const onPointerUp = (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    splitter.classList.remove('is-dragging');
+    document.body.style.cursor = '';
+    try { if (e && e.pointerId) splitter.releasePointerCapture(e.pointerId); } catch (_) {}
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+
+    const finalW = Math.round(sidebar.getBoundingClientRect().width);
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('library_sidebar_width', finalW);
+    }
+  };
+
+  splitter.addEventListener('pointerdown', onPointerDown);
+
+  // Double-click resets default 220px width
+  splitter.addEventListener('dblclick', () => {
+    sidebar.style.width = '220px';
+    sidebar.style.flexBasis = '220px';
+    if (typeof UserProfileManager !== 'undefined') {
+      UserProfileManager.setSetting('library_sidebar_width', 220);
+    }
+  });
+}
+window.initLibrarySidebarSplitter = initLibrarySidebarSplitter;
 
 // ============================================================================
 // DOCK VIEW MODES: MÓDULOS & ASSETS vs PRO TIMELINE (ZERO SPACE COMPETITION)
