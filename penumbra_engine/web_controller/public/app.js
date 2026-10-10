@@ -679,28 +679,14 @@ const MediaProvider = {
       return clip.stream_url;
     }
 
-    // 3.5. Direct CDN URL or verified native CDN video clip
-    if (clip && clip.cdn_url) return clip.cdn_url;
-    if (relPath.startsWith('videos/video-') || (clip && clip.is_cdn_native)) {
-      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
-      return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
-    }
-
-    // 4. Direct external HTTP URL
-    if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
-      if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
-        return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
+    // 3.5. Local server streaming if on localhost and server running
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      if (relPath && !relPath.startsWith('http') && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
+        return `/api/raw-video?path=${encodeURIComponent(relPath)}`;
       }
-      return relPath;
     }
 
-    // 5. Local downloaded files (media_pool/downloads)
-    if (relPath.startsWith('downloads/') || (clip && clip.is_downloaded)) {
-      const cleanDown = relPath.startsWith('/') ? relPath : `/${relPath}`;
-      return cleanDown;
-    }
-
-    // 6. Standalone File System Access API & Local Ingested Files (Available in any mode)
+    // 4. Standalone File System Access API & Local Ingested Files (Available in any mode)
     if (MediaProvider.localFilesMap.has(relPath)) {
       const f = MediaProvider.localFilesMap.get(relPath);
       if (f instanceof File) return URL.createObjectURL(f);
@@ -710,14 +696,21 @@ const MediaProvider = {
       if (k.endsWith(baseName) && (v instanceof File)) return URL.createObjectURL(v);
     }
 
-    // 7. Local server streaming if on localhost and server running
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      if (relPath && !relPath.startsWith('http') && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
-        return `/api/raw-video?path=${encodeURIComponent(relPath)}`;
+    // 5. Direct external HTTP URL
+    if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
+      if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
+        return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
       }
+      return relPath;
     }
 
-    // Se for arquivo explicitamente local do usuário que está desconectado, tenta reconexão inteligente
+    // 6. Local downloaded files (media_pool/downloads)
+    if (relPath.startsWith('downloads/') || (clip && clip.is_downloaded)) {
+      const cleanDown = relPath.startsWith('/') ? relPath : `/${relPath}`;
+      return cleanDown;
+    }
+
+    // 7. Se for arquivo explicitamente local do usuário que está desconectado, tenta reconexão inteligente
     if (clip && (clip.is_local || clip.id.startsWith('local_') || relPath.startsWith('LOCAL_') || relPath.startsWith('EXTRA_'))) {
       if (MediaProvider.localFilesByName.has(normName)) {
         const item = MediaProvider.localFilesByName.get(normName);
@@ -728,26 +721,13 @@ const MediaProvider = {
       return '';
     }
 
-    // 8. Bunny Edge CDN (Universal reliable streaming fallback - GUARANTEES CLIPS NEVER BLACK OR FROZEN)
-    const cdnFallbackLoops = [
-      'https://gigantera-penumbra.b-cdn.net/videos/video-01-kinetic-spine.mp4',
-      'https://gigantera-penumbra.b-cdn.net/videos/video-02-stipples-simulation.mp4',
-      'https://gigantera-penumbra.b-cdn.net/videos/video-03-metallic-spine.mp4',
-      'https://gigantera-penumbra.b-cdn.net/videos/video-04-mapping-led.mp4',
-      'https://gigantera-penumbra.b-cdn.net/videos/video-05-onda-padroes.mp4',
-      'https://gigantera-penumbra.b-cdn.net/videos/video-06-cores-spectrum.mp4'
-    ];
-    // Se estiver em modo CDN/Nuvem e o clipe bruto do SSD não foi enviado para a CDN (para não dar 404 e congelar a tela):
-    if (relPath.includes('Espinhac') || relPath.includes('Pipeline') || (clip && !clip.is_cdn_native && !clip.is_downloaded)) {
-      let hash = 0;
-      const str = (clip && (clip.id || clip.filename)) || relPath;
-      for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      const idx = Math.abs(hash) % cdnFallbackLoops.length;
-      return cdnFallbackLoops[idx];
+    // 8. Se estiver em nuvem/remoto, busca o arquivo Gigantera legítimo no storage da CDN
+    if (relPath && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
+      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
+      return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
     }
 
-    const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
-    return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
+    return '';
   },
 
   getThumbUrl: (clip) => {
@@ -1147,7 +1127,7 @@ function openTheater(feed = 'preview') {
   if (theaterBadge) {
     if (feed === 'program') {
       theaterBadge.className = 'badge badge-live';
-      theaterBadge.textContent = 'PROGRAM (AO VIVO NO BÊ)';
+      theaterBadge.textContent = 'PROGRAM (AO VIVO)';
     } else {
       theaterBadge.className = 'badge badge-preview';
       theaterBadge.textContent = 'PREVIEW (EXPANDIDO)';
@@ -1177,8 +1157,7 @@ function initWebSocket() {
 
   ws.onopen = () => {
     console.log('[*] Connected to Penumbra Web Server.');
-    const chip = document.getElementById('chip-ndi');
-    if (chip) chip.classList.add('live');
+    if (typeof updateNetworkOutputUI === 'function') updateNetworkOutputUI();
   };
 
   ws.onmessage = (event) => {
@@ -1340,14 +1319,7 @@ function attachPlayerErrorHandler(player, label) {
   if (player && !player._hasErrHandler) {
     player._hasErrHandler = true;
     player.addEventListener('error', () => {
-      console.warn(`[Player ${label}] Vídeo indisponível ou erro de rede. Recuperando via stream CDN:`, player.src);
-      const fallback = 'https://gigantera-penumbra.b-cdn.net/videos/video-01-kinetic-spine.mp4';
-      if (!player.src.includes('video-01-kinetic-spine.mp4')) {
-        player.dataset.activeSrc = fallback;
-        player.src = fallback;
-        player.load();
-        player.play().catch(() => {});
-      }
+      console.warn(`[Player ${label}] Falha ao decodificar sinal de vídeo (${player.src}).`);
     });
   }
 }
@@ -3064,17 +3036,42 @@ function toggleProjectorCompensation(checked = null) {
 }
 window.toggleProjectorCompensation = toggleProjectorCompensation;
 
-function toggleNetworkOutput(isOn) {
-  appState.network_output_enabled = isOn;
-  document.querySelectorAll('#group-cfg-network .conductor-btn').forEach(btn => {
-    btn.classList.toggle('active', (btn.dataset.net === 'on') === isOn);
-  });
+function updateNetworkOutputUI() {
+  const isNetOn = !!appState.network_output_enabled;
+  const chip = document.getElementById('chip-ndi');
+  if (chip) {
+    chip.classList.toggle('live', isNetOn);
+    const dot = chip.querySelector('.dot');
+    const label = chip.querySelector('.label');
+    if (dot) dot.classList.toggle('live', isNetOn);
+    if (label) label.textContent = isNetOn ? 'NDI: PENUMBRA_LIVE' : 'TRANSMISSÃO: STANDBY (HDMI)';
+  }
   const ndiDisplay = document.getElementById('status-ndi-display');
   if (ndiDisplay) {
-    ndiDisplay.textContent = isOn ? 'NDI & MADMAPPER ON' : 'OFFLINE (HDMI ONLY)';
-    ndiDisplay.style.color = isOn ? 'var(--emerald)' : 'var(--text-muted)';
+    ndiDisplay.textContent = isNetOn ? 'NDI & TRANSMISSÃO ATIVA' : 'DESATIVADO (SÓ HDMI LOCAL)';
+    ndiDisplay.style.color = isNetOn ? 'var(--emerald)' : 'var(--text-muted)';
   }
-  console.log(`[NETWORK] Saídas de rede: ${isOn ? 'LIGADO' : 'DESLIGADO (SÓ HDMI)'}`);
+  document.querySelectorAll('#group-cfg-network .conductor-btn').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.net === 'on') === isNetOn);
+  });
+}
+window.updateNetworkOutputUI = updateNetworkOutputUI;
+
+function toggleNetworkOutput(isOn) {
+  appState.network_output_enabled = isOn;
+  updateNetworkOutputUI();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(JSON.stringify({
+        type: 'set_config',
+        key: 'network_output_enabled',
+        value: isOn
+      }));
+    } catch (e) {
+      console.warn('[NETWORK] Erro ao sincronizar estado NDI via WebSocket:', e);
+    }
+  }
+  console.log(`[NETWORK] Transmissão de sinal em rede: ${isOn ? 'ATIVADA' : 'DESATIVADA (SÓ HDMI LOCAL)'}`);
 }
 window.toggleNetworkOutput = toggleNetworkOutput;
 
@@ -9947,6 +9944,7 @@ window.selectLocalDirectorySource = selectLocalDirectorySource;
 // ============================================================================
 function bootstrapApp() {
   initWebSocket();
+  if (typeof updateNetworkOutputUI === 'function') updateNetworkOutputUI();
 
   const nexusModal = document.getElementById('media-nexus-modal');
   if (nexusModal) {

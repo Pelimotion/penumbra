@@ -40,34 +40,60 @@
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     }
 
-    /* Clean Feed Auto-Hide in Projector Mode */
+    /* Clean Projector Feed Mode: 100% PURE VIDEO, ZERO HUD, ZERO STRIPS, ZERO BORDERS */
     body.clean-feed-mode .popout-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      transform: translateY(-92%);
-      opacity: 0.15;
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-100%) !important;
+      visibility: hidden !important;
     }
-    body.clean-feed-mode .popout-header:hover,
-    body.clean-feed-mode .popout-header:focus-within {
-      transform: translateY(0);
-      opacity: 1;
+    body.clean-feed-mode .clean-feed-trigger {
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+    body.clean-feed-mode .overlay-hud {
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+    body.clean-feed-mode,
+    body.clean-feed-mode * {
+      cursor: none !important;
     }
 
     .clean-feed-trigger {
       display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 6px;
-      background: linear-gradient(180deg, rgba(0, 240, 255, 0.4), transparent);
-      z-index: 60;
-      cursor: pointer;
     }
-    body.clean-feed-mode .clean-feed-trigger {
-      display: block;
+
+    .hud-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background: rgba(10, 15, 24, 0.94);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 16px rgba(0, 240, 255, 0.25);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+    }
+    .hud-toast.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
     }
 
     .header-left {
@@ -157,13 +183,14 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      cursor: crosshair;
+      cursor: pointer;
     }
     canvas {
       width: 100%;
       height: 100%;
       display: block;
       object-fit: contain;
+      cursor: pointer;
     }
 
     /* OVERLAY HUD */
@@ -178,7 +205,9 @@
       transition: opacity 0.3s ease;
     }
     body.clean-feed-mode .overlay-hud {
-      opacity: 0;
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
     .hud-tag {
       background: rgba(0, 0, 0, 0.85);
@@ -255,7 +284,8 @@
   </style>
 </head>
 <body>
-  <div class="clean-feed-trigger" id="clean-feed-trigger" title="Mova o mouse aqui ou pressione ESC para exibir os controles"></div>
+  <!-- TOAST FEEDBACK FLUTUANTE -->
+  <div class="hud-toast" id="hud-toast" aria-live="polite"></div>
 
   <header class="popout-header" id="popout-header">
     <div class="header-left">
@@ -265,17 +295,17 @@
     <div class="header-right">
       <span class="timecode" id="feed-tc">TC 00:00:00.00</span>
       <button class="btn-action" id="btn-toggle-rotate" style="display: none;" title="Rotacionar sinal 90° para projetores instalados na vertical">⤾ PROJETOR 90°: ATIVO</button>
-      <button class="btn-action btn-accent" id="btn-borderless-projector" title="Modo Telão/Projetor Borderless (Recomendado Mac: Não apaga a tela do MacBook!)">🖥️ MODO PROJETOR (BORDERLESS)</button>
+      <button class="btn-action btn-accent" id="btn-borderless-projector" title="Modo Telão/Projetor Borderless (Clique na tela ou pressione H para alternar)">🖥️ MODO PROJETOR (BORDERLESS)</button>
       <button class="btn-action" id="btn-native-fullscreen" title="Tela Cheia Nativa do Navegador">⛶ NATIVO</button>
       <button class="btn-action" id="btn-mac-help" title="Instruções para Mac e Projetor HDMI">💡 AJUDA MAC</button>
     </div>
   </header>
 
-  <main class="viewport-box" id="viewport-box">
+  <main class="viewport-box" id="viewport-box" title="Clique para alternar o modo Projeção Limpa (Atalho: H ou Esc)">
     <canvas id="popout-canvas" width="1920" height="1080"></canvas>
     <div class="overlay-hud">
       <span class="hud-tag" id="hud-mode">FEED DIRETO // ULTRA LOW LATENCY</span>
-      <span class="hud-tag" id="hud-status">JANELA CONECTADA</span>
+      <span class="hud-tag" id="hud-status">JANELA CONECTADA · CLIQUE PARA MODO LIMPO [H]</span>
     </div>
   </main>
 
@@ -286,7 +316,7 @@
       <p>No macOS, ao abrir qualquer janela em <strong>Tela Cheia nativa</strong> num projetor ou segundo monitor HDMI, o sistema pode escurecer o display principal do MacBook por padrão de gerenciamento de Spaces.</p>
       <p><strong>Soluções recomendadas pelo Penumbra Engine:</strong></p>
       <ol>
-        <li><strong>Melhor Opção (Sem mexer no Mac):</strong> Use o botão <code>🖥️ MODO PROJETOR (BORDERLESS)</code> no topo. Ele expande a janela para preencher 100% do projetor sem criar um Space nativo. Sua tela do MacBook permanece 100% ativa e interativa!</li>
+        <li><strong>Projeção Limpa Direta (Recomendado):</strong> Basta <strong>clicar no vídeo</strong> ou usar o botão <code>🖥️ MODO PROJETOR (BORDERLESS)</code>. A janela fica 100% limpa, sem cursor e sem barras. Para voltar o HUD a qualquer momento, pressione <code>H</code> ou <code>ESC</code>.</li>
         <li><strong>Se preferir Tela Cheia nativa:</strong> No seu Mac, acesse <strong>Ajustes do Sistema > Mesa e Dock</strong>, role até o final até <em>Missão de Controle</em> e <strong>ATIVE</strong> a opção <code>As telas têm Spaces separados</code> (Displays have separate Spaces). Depois encerre e reabra a sessão do usuário.</li>
       </ol>
       <div class="modal-footer">
@@ -312,20 +342,35 @@
     const viewportBox = document.getElementById('viewport-box');
     
     let rotateCompensate = true; // Auto-active for physical projector 90 deg mount
-    let isBorderlessProjector = false;
+    let isCleanFeed = false;
+    let toastTimeout = null;
+
+    // Toast de feedback visual elegante (desaparece completamente)
+    function showFeedbackToast(msg, durationMs = 2000) {
+      const toast = document.getElementById('hud-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, durationMs);
+    }
 
     // View mode config
     if (viewMode === 'program') {
-      feedBadge.textContent = 'PROGRAM (AO VIVO NO BÊ)';
+      feedBadge.textContent = 'PROGRAM (SAÍDA PROJETOR)';
       feedBadge.className = 'badge badge-live';
-      document.title = 'PENUMBRA · PROGRAM AO VIVO (SAÍDA PROJETOR)';
+      document.title = 'PENUMBRA · SAÍDA PROGRAM (PROJETOR)';
       if (btnToggleRotate) {
         btnToggleRotate.style.display = 'inline-flex';
-        btnToggleRotate.addEventListener('click', () => {
+        btnToggleRotate.addEventListener('click', (e) => {
+          e.stopPropagation();
           rotateCompensate = !rotateCompensate;
           btnToggleRotate.textContent = rotateCompensate ? '⤾ PROJETOR 90°: ATIVO' : '⬍ NATIVO RETO (9:16)';
           btnToggleRotate.style.borderColor = rotateCompensate ? '#00ff88' : '#00f0ff';
           btnToggleRotate.style.color = rotateCompensate ? '#00ff88' : '#00f0ff';
+          showFeedbackToast(rotateCompensate ? 'ROTAÇÃO 90° ATIVA (PROJETOR FÍSICO)' : 'MODO RETO (9:16)');
         });
       }
     } else {
@@ -335,21 +380,39 @@
     }
 
     // Modal Help
-    btnMacHelp.addEventListener('click', () => {
+    btnMacHelp.addEventListener('click', (e) => {
+      e.stopPropagation();
       macHelpModal.classList.add('open');
     });
     macHelpModal.addEventListener('click', (e) => {
       if (e.target === macHelpModal) macHelpModal.classList.remove('open');
     });
 
-    // 1. MODO PROJETOR BORDERLESS (VANGUARD / MAC MULTI-DISPLAY FRIENDLY)
-    async function toggleBorderlessProjectorMode() {
-      isBorderlessProjector = !isBorderlessProjector;
-      if (isBorderlessProjector) {
+    // CONTROLE DE MODO LIMPO / PURE PROJECTOR FEED
+    function setCleanMode(active, showToast = true) {
+      isCleanFeed = !!active;
+      if (isCleanFeed) {
         document.body.classList.add('clean-feed-mode');
         btnBorderless.classList.add('active');
-        btnBorderless.textContent = '🖥️ SAIR PROJETOR (ESC)';
+        btnBorderless.textContent = '🖥️ SAIR PROJETOR (ESC / H)';
+        if (showToast) showFeedbackToast('PROJEÇÃO LIMPA · PRESSIONE [H] OU ESC PARA CONTROLES');
+      } else {
+        document.body.classList.remove('clean-feed-mode');
+        btnBorderless.classList.remove('active');
+        btnBorderless.textContent = '🖥️ MODO PROJETOR (BORDERLESS)';
+        if (showToast) showFeedbackToast('CONTROLES ATIVOS · CLIQUE NA TELA PARA MODO LIMPO');
+      }
+    }
 
+    function toggleCleanMode() {
+      setCleanMode(!isCleanFeed);
+    }
+
+    // 1. MODO PROJETOR BORDERLESS (VANGUARD / MAC MULTI-DISPLAY FRIENDLY)
+    async function toggleBorderlessProjectorMode() {
+      const target = !isCleanFeed;
+      setCleanMode(target);
+      if (target) {
         // Tenta usar Window Management API se disponível para ajustar ao monitor atual
         try {
           if ('getScreenDetails' in window) {
@@ -364,25 +427,27 @@
         } catch (e) {
           window.resizeTo(screen.availWidth, screen.availHeight);
         }
-      } else {
-        document.body.classList.remove('clean-feed-mode');
-        btnBorderless.classList.remove('active');
-        btnBorderless.textContent = '🖥️ MODO PROJETOR (BORDERLESS)';
       }
     }
 
-    btnBorderless.addEventListener('click', toggleBorderlessProjectorMode);
-
-    // Double click to toggle clean feed
-    viewportBox.addEventListener('dblclick', () => {
+    btnBorderless.addEventListener('click', (e) => {
+      e.stopPropagation();
       toggleBorderlessProjectorMode();
     });
 
+    // CLIQUE ÚNICO OU DUPLO NA TELA: Alterna Projeção Limpa
+    viewportBox.addEventListener('click', (e) => {
+      if (e.target.closest('.mac-help-modal') || e.target.closest('.popout-header')) return;
+      toggleCleanMode();
+    });
+
     // 2. TELA CHEIA NATIVA (COM DETECÇÃO E RESGATE)
-    btnNativeFs.addEventListener('click', () => {
+    btnNativeFs.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().then(() => {
           btnNativeFs.classList.add('active');
+          setCleanMode(true);
         }).catch(err => {
           console.warn('[Popout] Falha no fullscreen nativo:', err);
           // Fallback automático para o modo borderless
@@ -391,33 +456,52 @@
       } else {
         document.exitFullscreen().then(() => {
           btnNativeFs.classList.remove('active');
+          setCleanMode(false);
         }).catch(() => {});
       }
     });
 
     document.addEventListener('fullscreenchange', () => {
       if (document.fullscreenElement) {
-        document.body.classList.add('clean-feed-mode');
+        setCleanMode(true);
         btnNativeFs.classList.add('active');
       } else {
-        if (!isBorderlessProjector) {
-          document.body.classList.remove('clean-feed-mode');
-        }
+        setCleanMode(false);
         btnNativeFs.classList.remove('active');
       }
     });
 
-    // Tecla ESC restaura modo normal
+    // TECLAS DE ATALHO ERGONÔMICAS:
+    // 'H' -> Alterna HUD on/off (Projeção Limpa)
+    // 'ESC' -> Restaura HUD / Sai do modo limpo
+    // 'F' -> Alterna Fullscreen
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (isBorderlessProjector) {
-          toggleBorderlessProjectorMode();
-        }
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        toggleCleanMode();
+      } else if (e.key === 'Escape') {
         if (macHelpModal.classList.contains('open')) {
           macHelpModal.classList.remove('open');
+          return;
+        }
+        if (isCleanFeed) {
+          setCleanMode(false);
         }
       } else if (e.key === 'f' || e.key === 'F') {
-        toggleBorderlessProjectorMode();
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => {
+            setCleanMode(true);
+          }).catch(() => {
+            toggleBorderlessProjectorMode();
+          });
+        } else {
+          document.exitFullscreen().then(() => {
+            setCleanMode(false);
+          }).catch(() => {});
+        }
       }
     });
 

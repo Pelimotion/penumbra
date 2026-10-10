@@ -76,7 +76,7 @@ def update_state_md():
 
 ## Conexões & Roteamento
 - **Entrada de Áudio:** RCA mesa DJ → Adaptador P2 blindado → MacBook Built-in Audio / UMC22
-- **Saída de Vídeo:** MacBook Felipe → NDI (Gigabit Ethernet / Wi-Fi) → MacBook Bê (MadMapper)
+- **Saída de Vídeo:** MacBook Felipe → Projeção Direta HDMI (Projetor Físico) · Transmissão NDI opcional desativada por padrão
 - **Painel de Controle:** `http://localhost:3000` (MacBook / iPad)
 """
     with open(STATE_FILE, "w", encoding="utf-8") as f:
