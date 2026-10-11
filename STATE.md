@@ -1,9 +1,13 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 04:58:00 BRT
+- **Última Atualização:** 11/10/2026, 05:15:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & OPERACIONAL (Cockpit Local & Popout Dual-Screen)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Continuidade Cinematográfica de Macro Status:** 🟢 ATIVO (Mudança de status altera estritamente estilo/mattes/fx/cinemática sem cortar o clipe de base; troca de take delegada à cadência de frase rítmica ou botão TAKE)
+- **Engine de Ping-Pong / Seamless Bounce 60 FPS:** 🟢 ATIVO (Controle bi-direcional inteligente nos players L0, L3 e L5 com scrubbing reverso suave na volta e playback contínuo na ida, eliminando cortes bruscos de loop)
+- **Cápsulas de Máscara no Mixer (Padrão Pro):** 🟢 ATIVO (Pílulas legíveis com nome amigável da máscara, atalho instantâneo `[🎛️ MATTES ↗]` apontando para a Tab 3 com foco na camada e botões rápidos `[INV]` e `[✕]`)
+- **Alinhamento Vertical Pixel-Perfect na Timeline Pro:** 🟢 CORRIGIDO (Corner Header de 26px adicionado à sidebar, nivelando milimetricamente os 7 headers com a régua e tracks do canvas)
 - **Multi-Formato & Aspect Ratios (Zero Crop):** 🟢 ATIVO (6 formatos nativos: 16:9, 9:16, 1:1, 4:5, 4:3, 21:9 com barramentos reconfiguráveis, Aspect Fit com bordas pretas puras `#000000`, Fill e Wings)
 - **Roteamento de Projetor HDMI Vertical:** 🟢 ATIVO (Seleção no menu: ⬍ Nativo Horizontal Centralizado vs ⤾ Rotação 90° CCW para projetores montados fisicamente deitados)
 - **L2 Find Edges / Sobel Contours:** 🟢 CORRIGIDO (Opacidade linear real com zero absoluto, gate de pretos eliminando névoa leitosa, suporte a blend modes Lighten/Screen/Overlay e matriz de rotação da camada)

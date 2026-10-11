@@ -7,6 +7,10 @@
 ## Outubro de 2026
 
 ### 🚀 Novidades & Features
+- **(autopilot-decoupling)** Desacoplamento estrito entre Macro Status musical (`INTRO`, `GROOVE`, `BUILD`, `DROP`, `BREAK`) e troca de clipes de vídeo: a mudança de status agora orquestra a roupagem cênica (estilo, máscaras, cinematics, shaders FX e accent drops) sem interromper ou cortar o take/vídeo principal que está no ar.
+- **(mixer-pingpong)** Engine de Ping-Pong contínuo a 60 FPS bidirecional para players HTML5 (L0, L3, L5): interpolação suave na reversão e no avanço com bounce nos extremos, eliminando o salto/corte brusco nativo do final do arquivo de vídeo.
+- **(mixer-mattes-ux)** Cápsulas de Máscara Profissionais nos Channel Strips do Mixer: substituição dos seletores limitados por badges com nome legível da máscara ativa, atalho `[MATTES ↗]` que navega diretamente para a Tab 3 e foca a camada, além de toggles rápidos `[INV]` e limpeza instantânea `[✕]`.
+- **(timeline-alignment)** Alinhamento vertical pixel-perfect da Timeline Pro: equalização métrica com espaçador de régua `.tl-ruler-corner-header` (26px), alinhando perfeitamente os tracks da barra lateral às lanes e clipes desenhados no canvas.
 - **(aspect-ratios)** Suporte multi-formato (16:9, 9:16, 1:1, 4:5, 4:3, 21:9) com barramentos dinâmicos, enquadramento padrão sem cortes (Aspect Fit, Fill, Wings) e seletor no modal de configurações e Studio Inspector
 - **(projector-routing)** Roteamento HDMI para telão: seleção entre saída nativa horizontal centralizada e compensação com rotação de 90° CCW para projetores montados fisicamente na vertical
 - **(macos-keepalive)** Web Worker heartbeat timer contínuo a 60 FPS e MediaSession API para reprodução sem congelamento na janela destacada (pop-out) ao trocar de app ou Spaces no macOS
