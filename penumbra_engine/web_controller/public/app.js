@@ -1305,9 +1305,15 @@ function initWebSocket() {
         if (incoming.layers) {
           for (const [lid, lprops] of Object.entries(incoming.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fit')
               };
@@ -1342,9 +1348,15 @@ function initWebSocket() {
         if (incomingData.layers) {
           for (const [lid, lprops] of Object.entries(incomingData.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fill')
               };
@@ -9723,6 +9735,7 @@ function createMediaCardElement(clip) {
       e.stopPropagation();
       appState.layers.layer4.clipId = clip.id;
       appState.layers.layer4.name = clip.filename;
+      appState.layers.layer4._assignedAt = Date.now();
       sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
@@ -9735,6 +9748,7 @@ function createMediaCardElement(clip) {
       e.stopPropagation();
       appState.layers.layer5.clipId = clip.id;
       appState.layers.layer5.name = clip.filename;
+      appState.layers.layer5._assignedAt = Date.now();
       sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
@@ -12691,6 +12705,7 @@ function routeClipToBus(clipId, bus) {
   if (bus === 'A') {
     appState.layers.layer0.clipId = clip.id;
     appState.layers.layer0.name = clipName;
+    appState.layers.layer0._assignedAt = Date.now();
     appState.layers.layer0.fit_mode = 'fill';
     appState.layers.layer0.matte = 'none';
     updateUI();
@@ -12700,6 +12715,7 @@ function routeClipToBus(clipId, bus) {
   } else {
     appState.layers.layer3.clipId = clip.id;
     appState.layers.layer3.name = clipName;
+    appState.layers.layer3._assignedAt = Date.now();
     appState.layers.layer3.fit_mode = 'fill';
     appState.layers.layer3.matte = 'none';
     updateUI();

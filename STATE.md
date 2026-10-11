@@ -1,9 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 18:50:00 BRT
+- **Última Atualização:** 11/10/2026, 19:20:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
-- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 13.9s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States sem refatorar produção)
+- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 24s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States)
+- **Pisca/Rebote em Deck A (Telemetry Race Condition):** 🟢 RESOLVIDO (Implementada Guarda de Autoridade Temporal de 1500ms `_assignedAt` rejeitando rollbacks de telemetria obsoleta do servidor)
+- **Arquitetura & Vanguarda 3D (2026):** 🟢 SURVEY COMPLETO ENTREGUE (`proposals/penumbra_3d_state_of_the_art_survey.md`: Three.js r186, WebGPU Compute Particles, Shaders Modifiers, Chiaroscuro e GaussianSplat nativo)
 - **Ergonomia iPad & Carga Cognitiva P1:** 🟢 AUDITADO & PROPOSTA DUAL-MODE ENTREGUE (Audit em 168 targets tácteis, proposta `proposals/ipad_dual_mode_cockpit.html` com Modo LIVE >= 48px e zero-hover)
 - **Medição Científica de Output Visual P3:** 🟢 AUDITADO (ITU-R BT.709 Luma Spectrum nos 5 estados, 0.00% estouro de branco, benchmark térmico comprovando 1280x720 a 2.2ms por frame na GPU)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)

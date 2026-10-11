@@ -112,19 +112,21 @@ async function runVisualRegression(options = {}) {
 
     for (const state of MACRO_STATES) {
       try {
-        const btn = await page.$(`.state-btn[data-state="${state}"]`);
-        if (btn) {
-          await btn.click();
-          await page.waitForTimeout(300); // Aguarda shader e blend estabilizarem
-        }
+        await page.evaluate((targetState) => {
+          const btn = document.querySelector(`.state-btn[data-state="${targetState}"]`);
+          if (btn) btn.click();
+        }, state);
+        await page.waitForTimeout(300); // Aguarda shader e blend estabilizarem
 
-        const prgCanvas = await page.$('#program-canvas');
-        if (!prgCanvas) throw new Error('#program-canvas não encontrado');
+        const dataUrl = await page.evaluate(() => {
+          const c = document.getElementById('program-canvas');
+          return c ? c.toDataURL('image/png') : null;
+        });
+        if (!dataUrl) throw new Error('#program-canvas não encontrado');
 
         const filename = `output_${state}.png`;
         const filePath = path.join(BASELINES_OUTPUT_DIR, filename);
-
-        const currentBuffer = await prgCanvas.screenshot();
+        const currentBuffer = Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
         let status = 'RECORDED';
         let diffPct = 0;
 
