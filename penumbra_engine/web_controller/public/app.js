@@ -3847,19 +3847,21 @@ function renderVisuals(time) {
     const videoL0Ready = playerL0 && playerL0.readyState >= 2;
     const baseSource = isBaseGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL0Ready ? playerL0 : getClipImage(baseClip));
 
+    // Clip & Layer Transforms for Deck A (acessíveis globalmente para Layer 0 e Layer 2 Sobel)
+    const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+    const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
+    const l0 = appState.layers.layer0;
+    const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
+    const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
+    const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
+    const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
+
     if (baseSource && appState.layers.layer0.active) {
       offCtxA.clearRect(0, 0, w, h);
       offCtxA.fillStyle = '#050608';
       offCtxA.fillRect(0, 0, w, h);
 
       // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
-      const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
-      const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
-      const l0 = appState.layers.layer0;
-      const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
-      const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
-      const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
-      const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
       const tnFilter0 = getClipTonalFilterString(clipTn0);
       offCtxA.save();
       if (tnFilter0 !== 'none') offCtxA.filter = tnFilter0;
@@ -3974,19 +3976,21 @@ function renderVisuals(time) {
       const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
       const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
 
+      // Clip & Layer Transforms for Deck B (acessíveis globalmente para Layer 3 e Layer 2 Sobel no Bus B)
+      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+      const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
+      const l3 = appState.layers.layer3;
+      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
         offCtxB.fillStyle = '#050608';
         offCtxB.fillRect(0, 0, w, h);
 
         // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
-        const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
-        const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
-        const l3 = appState.layers.layer3;
-        const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
-        const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
-        const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
-        const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
         const tnFilter3 = getClipTonalFilterString(clipTn3);
         offCtxB.save();
         if (tnFilter3 !== 'none') offCtxB.filter = tnFilter3;

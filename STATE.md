@@ -1,15 +1,16 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 08:55:00 BRT
-- **Status do Sistema:** 🟢 AO VIVO & RESILIENTE (P0s Concluídos: GPU Context Loss Handlers, Set Recovery, ESC Fix & 59.02 FPS Sustentados)
+- **Última Atualização:** 11/10/2026, 09:15:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & 100% OPERACIONAL (Sinal de Program e Preview Ativo, ReferenceError totalRot0 Corrigido, 60 FPS Estável)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Sinal de Vídeo Program & Preview Cue:** 🟢 TOTALMENTE RESTABELECIDO (Hoisting dos transforms de clipe e camada para o escopo global dos barramentos A e B, eliminando quebra de render loop na camada Sobel)
 - **Resiliência GPU & Canvas:** 🟢 ATIVO (Handlers `contextlost` + `contextrestored` para os 7 buffers de canvas contra falhas de cabo HDMI/GPU)
 - **Auto-Recovery de Live Set:** 🟢 ATIVO (`sessionStorage` serializando camadas A/B/L5, opacidades, blends e crossfader com restauração em bootstrap)
 - **Idempotência & Atalhos de Teclado:** 🟢 RESOLVIDO (Guarda contra duplo registro, Escape universal com desfoque de inputs/diálogos órfãos, vírgula `,` para configurações e `B`/`Shift+B` para Blackout imediato)
 - **Arranger Timeline Throttled (Zero Thrashing):** 🟢 RESOLVIDO (Cache de bounding rect + taxa de 30 FPS no arranger secundário, eliminando layout thrashing e cravando 59.02 FPS médios, p95=16.80ms)
 - **Acessibilidade & WCAG:** 🟢 APROVADO (Zero violações axe-core; contraste de botão de fechamento > 5.2:1)
-- **Web MIDI Resiliente:** 🟢 ATIVO (Captura suave de permissão Web MIDI com suporte plug-and-play ao controlador M-Vave SMC-MIXER)
+- **Web MIDI Resiliente:** 🟢 ATIVO (Captura suave de permissão Web MIDI com suporte plug-and-play ao controlador M-Vave SMC-MIXER conectado)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
