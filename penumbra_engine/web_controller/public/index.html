@@ -253,6 +253,7 @@
         <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
         <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Dual-Bank (◄ Bank A: Mix & Takes / ► Bank B: FX & Mattes) · [Atalho: H]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">◄ BANK A (MIX)</span>
         <span class="midi-bank-badge" id="chip-midi-bank" title="Banco Ativo · Clique para alternar [Atalho: [ ou ]]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">BANK A</span>
+        <a href="/mixer_guide.html" target="_blank" onclick="event.stopPropagation();" title="Abrir Manual Técnico Visual do SMC-MIXER (Desenho dos Knobs/Faders e Modos)" style="display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-decoration: none; margin-left: 4px; transition: all 0.2s;">MANUAL HW ↗</a>
       </div>
     </div>
 
@@ -368,7 +369,7 @@
         </div>
 
         <!-- PREVIEW (CUE / PRÓXIMO ESTADO) -->
-        <div class="screen-box preview-box">
+        <div class="screen-box preview-box" id="preview-screen-box">
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-preview">PREVIEW (PRÓXIMO CUE)</span>
@@ -871,10 +872,12 @@
               <button class="btn-inv" id="l2-matte-inv" onclick="toggleLayerMatteInvert('layer2')" title="Inverter Máscara">INV</button>
             </div>
             <div class="ch-blend-slot">
-              <select class="pro-select" id="l2-blend" onchange="onLayerBlendChange('layer2', this.value)">
+              <select class="pro-select" id="l2-blend" onchange="onLayerBlendChange('layer2', this.value)" title="Modo de Mesclagem do Find Edges (Sobel)">
                 <option value="Screen" selected>SCREEN</option>
-                <option value="Add">ADD</option>
+                <option value="Lighten">LIGHTEN (PURO)</option>
                 <option value="Overlay">OVERLAY</option>
+                <option value="Difference">DIFFERENCE</option>
+                <option value="Source-Over">CUTOUT (SÓ BORDAS)</option>
               </select>
             </div>
             <div class="ch-fader-slot">
@@ -2787,35 +2790,64 @@
               </div>
             </div>
 
-            <!-- PANEL 3: SAÍDA & TELÃO HDMI -->
+            <!-- PANEL 3: SAÍDA & TELÃO HDMI (PRO RESOLUTION & GEOMETRY) -->
             <div class="settings-tab-panel" id="settings-panel-output">
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
-                  <span>FORMATO MASTER & GEOMETRIA DO PROGRAM</span>
-                  <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
+                  <span>RESOLUÇÃO & ASPECT RATIO MASTER (COMPOSIÇÃO DE VÍDEO)</span>
+                  <span class="cfg-badge text-emerald" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Orientação da Imagem Master</span>
-                    <span class="prop-desc">Alterna entre monitor horizontal padrão e preview vertical (totens LED / 9:16).</span>
+                    <span class="prop-title">Proporção da Imagem Master</span>
+                    <span class="prop-desc">Define a geometria e os barramentos de renderização de toda a engine. Os vídeos nativos nessa proporção são exibidos a 100% sem nenhum corte.</span>
                   </div>
                   <div class="prop-control">
-                    <div class="conductor-btn-group">
-                      <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">HORIZONTAL (16:9)</button>
-                      <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">VERTICAL (9:16)</button>
+                    <div class="conductor-btn-group" id="group-cfg-aspect-ratio" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <button class="conductor-btn active" id="btn-cfg-aspect-16-9" onclick="setAspectRatio('16:9')">16:9 HORIZONTAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-9-16" onclick="setAspectRatio('9:16')">9:16 VERTICAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-1-1" onclick="setAspectRatio('1:1')">1:1 QUADRADO</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-4-5" onclick="setAspectRatio('4:5')">4:5 SOCIAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-4-3" onclick="setAspectRatio('4:3')">4:3 RETRÔ</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-21-9" onclick="setAspectRatio('21:9')">21:9 ULTRAWIDE</button>
                     </div>
                   </div>
                 </div>
+
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Compensação de Projetor Físico a 90°</span>
-                    <span class="prop-desc">Gira o feixe HDMI para projetores montados fisicamente deitados/na vertical.</span>
+                    <span class="prop-title">Enquadramento Padrão de Vídeos com Proporção Diferente</span>
+                    <span class="prop-desc">Como a engine trata mídias que diferem do aspect ratio master: Fit (preserva 100% da imagem com bordas pretas), Fill (preenche tela cheia) ou Wings (broadcast espelhado com blur).</span>
                   </div>
                   <div class="prop-control">
-                    <label class="cfg-switch">
-                      <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
-                      <span class="cfg-switch-slider"></span>
-                    </label>
+                    <div class="conductor-btn-group" id="group-cfg-fit-fallback">
+                      <button class="conductor-btn active" id="btn-cfg-fit-mode-fit" onclick="setDefaultFitMode('fit')">FIT (ZERO CORTES)</button>
+                      <button class="conductor-btn" id="btn-cfg-fit-mode-fill" onclick="setDefaultFitMode('fill')">FILL (PREENCHER)</button>
+                      <button class="conductor-btn" id="btn-cfg-fit-mode-wings" onclick="setDefaultFitMode('wings')">WINGS (BROADCAST)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>ROTEAMENTO PARA TELÃO / PROJETOR HDMI</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-proj-comp-badge">NATIVO HORIZONTAL (CENTRO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Modo de Saída para Telão Externo</span>
+                    <span class="prop-desc">Escolha como o sinal em modo vertical é entregue na saída de vídeo / janela destacada:</span>
+                  </div>
+                  <div class="prop-control" style="width: 100%; max-width: 440px;">
+                    <div class="conductor-btn-group" style="display: flex; width: 100%;">
+                      <button class="conductor-btn active" id="btn-cfg-proj-straight" onclick="toggleProjectorCompensation(false)" style="flex: 1; text-align: center;" title="Telão comum na horizontal: vídeo vertical fica em pé no centro da tela com bordas pretas limpas e zero cortes">
+                        ⬍ NATIVO HORIZ (CENTRO)
+                      </button>
+                      <button class="conductor-btn" id="btn-cfg-proj-rotated" onclick="toggleProjectorCompensation(true)" style="flex: 1; text-align: center;" title="Projetor ou monitor montado de lado / 90°: gira o feixe HDMI 90° para projetar vertical no espaço físico">
+                        ⤾ GIRAR 90° (PROJETOR FÍSICO)
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2827,17 +2859,17 @@
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
                     <span class="prop-title">Janelas Destacadas em Tempo Real</span>
-                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast.</span>
+                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast de 60 FPS contínua.</span>
                   </div>
                   <div class="prop-control" style="display: flex; gap: 6px;">
-                    <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('program')">◱ PROGRAM NO TELÃO</button>
+                    <button class="btn btn-primary btn-xs" onclick="openPopoutWindow('program')">◱ PROGRAM NO TELÃO</button>
                     <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('preview')">◱ PREVIEW CUE</button>
                   </div>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Recomendações Mac + Telão / Projetor</span>
-                    <span class="prop-desc">Use Tela Estendida no macOS. Dica: Na janela destacada, use "MODO PROJETOR (BORDERLESS)" para nunca apagar a tela do seu MacBook!</span>
+                    <span class="prop-title">Dica Mac Multi-Monitor & Segundo Display</span>
+                    <span class="prop-desc">No macOS, arraste a janela destacada para o projetor. Pressione <code>H</code> para ativar a Projeção Limpa sem bordas e sem cursor. Graças ao motor Anti-Freeze Worker, você pode alternar livremente entre janelas e apps no MacBook enquanto o vídeo continua fluindo a 60 FPS no projetor!</span>
                   </div>
                 </div>
               </div>

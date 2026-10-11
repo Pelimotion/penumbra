@@ -1,19 +1,17 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 17:41:16 BRT
-- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
-- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
+- **Última Atualização:** 11/10/2026, 04:58:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & OPERACIONAL (Cockpit Local & Popout Dual-Screen)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Multi-Formato & Aspect Ratios (Zero Crop):** 🟢 ATIVO (6 formatos nativos: 16:9, 9:16, 1:1, 4:5, 4:3, 21:9 com barramentos reconfiguráveis, Aspect Fit com bordas pretas puras `#000000`, Fill e Wings)
+- **Roteamento de Projetor HDMI Vertical:** 🟢 ATIVO (Seleção no menu: ⬍ Nativo Horizontal Centralizado vs ⤾ Rotação 90° CCW para projetores montados fisicamente deitados)
+- **L2 Find Edges / Sobel Contours:** 🟢 CORRIGIDO (Opacidade linear real com zero absoluto, gate de pretos eliminando névoa leitosa, suporte a blend modes Lighten/Screen/Overlay e matriz de rotação da camada)
+- **Background Multi-Display Keep-Alive (macOS Anti-Freeze):** 🟢 ATIVO (Web Worker Ticker a 60 FPS contínuo + MediaSession playback para pop-out e cockpit rodarem a 60 FPS mesmo em background ou trocando de Space no Mac)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
 - **Gêmeo MIDI & Click-to-Map:** 🟢 ATIVO (Modo `LIVE CONTROL` vs `🎯 CLICK TO MAP`, mapeamento visual direto e 4 Presets de Fábrica Pro)
-- **Estabilização da Barra Central:** 🟢 RESOLVIDO (Cápsula de 215px fixa, eliminação de jitter e tag estável `FORÇADO`)
-- **Persistência de Áudio Mic/P2:** 🟢 CORRIGIDO (Estado `audio_source` persistido no backend e protegido no frontend contra sobrescrita de telemetria)
-- **Vídeo em Nuvem (Anti-Freeze 60 FPS):** 🟢 RESOLVIDO (6 clipes nativos CDN adicionados ao topo, fallback resiliente, crossOrigin anonymous, sem telas congeladas)
-- **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
-- **Biblioteca de Mattes & Master Mask:** 🟢 CORRIGIDA (Atribuição direta de máscara na MASTER via Tab 3 sem erros, inversão real do canal Alpha com cache dual normal/invertido e botões INV do Mixer reposicionados em flexbox sem sobreposição de painel)
-- **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
 ## Pipeline de Processos
@@ -25,9 +23,9 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 14,235 | 602.3 KB |
-| `styles.css` | 11,228 | 220.6 KB |
-| `index.html` | 3,581 | 233.5 KB |
+| `app.js` | 14,292 | 605.1 KB |
+| `styles.css` | 11,252 | 220.9 KB |
+| `index.html` | 3,582 | 234.0 KB |
 | `Penumbra_Portable.html` | — | 1.1 MB |
 
 ## 🎬 Media Pool
@@ -35,10 +33,10 @@
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
-- **Branch:** `main`
-- **Último Commit:** `31787ef` — chore: record post-commit state hash [skip ci]
-- **Data:** 2026-10-10 17:41:16
-- **Total de Commits:** 59
+- **Branch:** `fix/matte-master-and-inversion`
+- **Último Commit:** `64f069d` — fix(mattes): fix master matte assignment, real alpha channel inversion, and mixer flexbox layout
+- **Data:** 2026-10-10 18:49:21
+- **Total de Commits:** 60
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.

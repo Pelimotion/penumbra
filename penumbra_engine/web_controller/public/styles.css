@@ -6348,19 +6348,24 @@ body.resizing-workspace-active .top-zone {
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.35);
 }
 
-.program-box.mode-vertical {
+.program-box.mode-vertical,
+.program-box[data-aspect-ratio="9:16"],
+.program-box[data-aspect-ratio="4:5"] {
   border-color: rgba(0, 255, 136, 0.6);
   box-shadow: 0 0 24px rgba(0, 255, 136, 0.12);
 }
 
-.program-box.mode-vertical .viewport-wrapper {
+.program-box.mode-vertical .viewport-wrapper,
+.program-box[data-aspect-ratio="9:16"] .viewport-wrapper,
+.program-box[data-aspect-ratio="4:5"] .viewport-wrapper {
   background: #020305;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.program-box.mode-vertical #program-canvas {
+.program-box.mode-vertical #program-canvas,
+.program-box[data-aspect-ratio="9:16"] #program-canvas {
   aspect-ratio: 9 / 16;
   height: 100%;
   width: auto;
@@ -6370,6 +6375,73 @@ body.resizing-workspace-active .top-zone {
   border-radius: 4px;
   box-shadow: 0 0 25px rgba(0, 255, 136, 0.18), inset 0 0 15px rgba(0, 0, 0, 0.8);
 }
+
+/* PREVIEW BOX VERTICAL & CUSTOM RATIO STYLING */
+.preview-box.mode-vertical,
+.preview-box[data-aspect-ratio="9:16"],
+.preview-box[data-aspect-ratio="4:5"] {
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.12);
+}
+
+.preview-box.mode-vertical .viewport-wrapper,
+.preview-box[data-aspect-ratio="9:16"] .viewport-wrapper,
+.preview-box[data-aspect-ratio="4:5"] .viewport-wrapper {
+  background: #020305;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-box.mode-vertical #preview-canvas,
+.preview-box[data-aspect-ratio="9:16"] #preview-canvas {
+  aspect-ratio: 9 / 16;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.18), inset 0 0 15px rgba(0, 0, 0, 0.8);
+}
+
+/* OUTROS ASPECT RATIOS (1:1, 4:5, 4:3, 21:9) */
+.program-box[data-aspect-ratio="1:1"] #program-canvas,
+.preview-box[data-aspect-ratio="1:1"] #preview-canvas {
+  aspect-ratio: 1 / 1;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="4:5"] #program-canvas,
+.preview-box[data-aspect-ratio="4:5"] #preview-canvas {
+  aspect-ratio: 4 / 5;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="4:3"] #program-canvas,
+.preview-box[data-aspect-ratio="4:3"] #preview-canvas {
+  aspect-ratio: 4 / 3;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="21:9"] #program-canvas,
+.preview-box[data-aspect-ratio="21:9"] #preview-canvas {
+  aspect-ratio: 21 / 9;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 
 /* ==========================================================================
    ADVANCED TWO-COLUMN PRO PREFERENCES MODAL

@@ -895,9 +895,11 @@ let appState = {
   manual_forced_bars: 0,
   active_macro_preset: null,
   last_take_total_bar: 0,
+  aspectRatio: '16:9',
+  aspect_fit_mode: 'fit',
   vertical_mode: false,
   vertical_projection: false,
-  projector_compensation: true,
+  projector_compensation: false,
   audio_gain: 1.0,
   fps_limit: 30,
   network_output_enabled: false,
@@ -1562,22 +1564,30 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   const srcH = source.videoHeight || source.naturalHeight || targetH;
   if (!srcW || !srcH) return null;
 
-  // 1. MIRROR WINGS MODE: broadcast standard for vertical 9:16 videos on 16:9 screens
-  if (mode === 'wings' && srcH > srcW && (!rotation || rotation === 0)) {
-    // Background: zoomed and blurred to fill full 16:9 canvas
+  // 1. MIRROR WINGS MODE: broadcast standard for mismatched aspect ratios (vertical on horizontal & vice-versa)
+  const isRatioMismatch = Math.abs((srcW / srcH) - (targetW / targetH)) > 0.05;
+  if (mode === 'wings' && isRatioMismatch && (!rotation || rotation === 0)) {
+    // Background: zoomed and blurred to fill full target canvas
     ctx.save();
-    ctx.filter = 'blur(18px) brightness(35%) saturate(130%)';
+    ctx.filter = 'blur(20px) brightness(35%) saturate(130%)';
     const bgScale = Math.max(targetW / srcW, targetH / srcH);
     const bgW = srcW * bgScale;
     const bgH = srcH * bgScale;
     ctx.drawImage(source, (targetW - bgW) / 2, (targetH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: crisp centered 9:16 with soft drop shadow & transform
+    // Foreground: crisp centered aspect-fit with soft drop shadow & transform (ZERO CROP)
     const fgRatio = srcW / srcH;
-    const fgH = targetH;
-    const fgW = targetH * fgRatio;
+    let fgW, fgH;
+    if (fgRatio > targetW / targetH) {
+      fgW = targetW;
+      fgH = targetW / fgRatio;
+    } else {
+      fgH = targetH;
+      fgW = targetH * fgRatio;
+    }
     const fgX = (targetW - fgW) / 2;
+    const fgY = (targetH - fgH) / 2;
     ctx.save();
     ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
     if (scale && scale !== 1.0) ctx.scale(scale, scale);
@@ -1587,7 +1597,7 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.shadowBlur = 20;
     ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
     ctx.restore();
-    return { x: fgX, y: 0, w: fgW, h: fgH };
+    return { x: fgX, y: fgY, w: fgW, h: fgH };
   }
 
   // 2. ROTATION, SCALE, TRANSLATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
@@ -3330,38 +3340,79 @@ function updateGeometryUI() {
   });
 }
 
-function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
-  if (!srcCanvas) return;
-  if (!isVert) {
-    ctx.drawImage(srcCanvas, 0, 0, pw, ph);
-  } else {
-    // Upright portrait 9:16 aspect fill (no side rotation, straight preview!)
-    const srcW = srcCanvas.width;
-    const srcH = srcCanvas.height;
-    const targetRatio = pw / ph; // 360/640 = 0.5625
-    const srcRatio = srcW / srcH; // 1280/720 = 1.7778
-    let sx = 0, sy = 0, sWidth = srcW, sHeight = srcH;
-    if (srcRatio > targetRatio) {
-      sWidth = srcH * targetRatio;
-      sx = (srcW - sWidth) / 2;
-    } else {
-      sHeight = srcW / targetRatio;
-      sy = (srcH - sHeight) / 2;
-    }
-    ctx.drawImage(srcCanvas, sx, sy, sWidth, sHeight, 0, 0, pw, ph);
+function getAspectRatioDimensions(ratioStr) {
+  switch (ratioStr) {
+    case '9:16':
+      return { w: 360, h: 640, isVertical: true, ratio: 9 / 16, label: '9:16 VERTICAL' };
+    case '1:1':
+      return { w: 480, h: 480, isVertical: false, ratio: 1 / 1, label: '1:1 QUADRADO' };
+    case '4:5':
+      return { w: 384, h: 480, isVertical: true, ratio: 4 / 5, label: '4:5 SOCIAL' };
+    case '4:3':
+      return { w: 480, h: 360, isVertical: false, ratio: 4 / 3, label: '4:3 RETRÔ' };
+    case '21:9':
+      return { w: 640, h: 274, isVertical: false, ratio: 21 / 9, label: '21:9 ULTRAWIDE' };
+    case '16:9':
+    default:
+      return { w: 640, h: 360, isVertical: false, ratio: 16 / 9, label: '16:9 HORIZONTAL' };
   }
+}
+window.getAspectRatioDimensions = getAspectRatioDimensions;
+
+function setAspectRatio(ratio) {
+  const cfg = getAspectRatioDimensions(ratio);
+  appState.aspectRatio = ratio;
+  appState.vertical_mode = cfg.isVertical;
+  appState.vertical_projection = cfg.isVertical;
+
+  const canvases = [busCanvasA, busCanvasB, offscreenA, offscreenB, sobelCanvas, handoverCanvas, rotSnapshotCanvas];
+  canvases.forEach(c => {
+    if (c) {
+      c.width = cfg.w;
+      c.height = cfg.h;
+    }
+  });
+
+  if (prgCanvas) {
+    prgCanvas.width = cfg.w;
+    prgCanvas.height = cfg.h;
+  }
+  if (prvCanvas) {
+    prvCanvas.width = cfg.w;
+    prvCanvas.height = cfg.h;
+  }
+
+  updateUI();
+  if (typeof renderStudioInspector === 'function') renderStudioInspector();
+  console.log(`[PENUMBRA ENGINE] Aspect Ratio Master alterado para: ${cfg.label} (${cfg.w}×${cfg.h})`);
+}
+window.setAspectRatio = setAspectRatio;
+
+function setDefaultFitMode(mode) {
+  appState.aspect_fit_mode = mode;
+  appState.fit_mode = mode;
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lid => {
+    if (appState.layers && appState.layers[lid]) appState.layers[lid].fit_mode = mode;
+  });
+  updateUI();
+  console.log(`[PENUMBRA ENGINE] Modo de Enquadramento Padrão definido para: ${mode.toUpperCase()}`);
+}
+window.setDefaultFitMode = setDefaultFitMode;
+
+function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
+  if (!srcCanvas || !ctx) return;
+  // Transferência direta 1:1 já que os barramentos operam nativamente na geometria do Program
+  ctx.drawImage(srcCanvas, 0, 0, pw, ph);
 }
 
 function toggleVerticalMode(forceValue = null) {
+  let targetVal;
   if (forceValue !== null) {
-    appState.vertical_mode = Boolean(forceValue);
+    targetVal = Boolean(forceValue);
   } else {
-    appState.vertical_mode = !appState.vertical_mode;
+    targetVal = !(appState.aspectRatio === '9:16' || appState.vertical_mode);
   }
-  appState.vertical_projection = appState.vertical_mode;
-  
-  updateUI();
-  console.log(`[PENUMBRA ENGINE] Modo Vertical (9:16) ${appState.vertical_mode ? 'ATIVADO' : 'DESATIVADO'}`);
+  setAspectRatio(targetVal ? '9:16' : '16:9');
 }
 window.toggleVerticalMode = toggleVerticalMode;
 
@@ -3372,6 +3423,7 @@ function toggleProjectorCompensation(checked = null) {
     appState.projector_compensation = !appState.projector_compensation;
   }
   updateUI();
+  console.log(`[PENUMBRA ENGINE] Compensação de Saída de Projetor 90°: ${appState.projector_compensation ? 'LIGADO (ROTACIONADO 90°)' : 'DESLIGADO (NATIVO RETO NO CENTRO)'}`);
 }
 window.toggleProjectorCompensation = toggleProjectorCompensation;
 
@@ -3414,10 +3466,51 @@ function toggleNetworkOutput(isOn) {
 }
 window.toggleNetworkOutput = toggleNetworkOutput;
 
+let lastEngineTick = performance.now();
+let keepAliveWorkerInstance = null;
+
+function initBackgroundKeepAlive() {
+  if (keepAliveWorkerInstance) return;
+  try {
+    const workerScript = `
+      var timer = null;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(function() {
+            self.postMessage('tick');
+          }, 1000 / 60);
+        } else if (e.data === 'stop') {
+          if (timer) clearInterval(timer);
+          timer = null;
+        }
+      };
+    `;
+    const blob = new Blob([workerScript], { type: 'application/javascript' });
+    keepAliveWorkerInstance = new Worker(URL.createObjectURL(blob));
+    keepAliveWorkerInstance.onmessage = function() {
+      const now = performance.now();
+      // Se a aba do navegador perdeu o foco, ficou oculta ou o RAF foi suspenso pelo macOS:
+      if (document.hidden || !document.hasFocus() || (now - lastEngineTick > 25)) {
+        renderVisuals(now);
+      }
+    };
+    keepAliveWorkerInstance.postMessage('start');
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
+    console.log('[PENUMBRA ENGINE] Background Anti-Freeze Worker ativo (60 FPS contínuo no Mac).');
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao inicializar keep-alive worker:', err);
+  }
+}
+window.initBackgroundKeepAlive = initBackgroundKeepAlive;
+
 function renderVisuals(time) {
   const targetFps = appState.fps_limit || 60;
   const fpsInterval = 1000 / targetFps;
   const now = time || performance.now();
+  lastEngineTick = now;
   
   if (!lastFrameTime) lastFrameTime = now;
   const elapsed = now - lastFrameTime;
@@ -3522,6 +3615,28 @@ function renderVisuals(time) {
   if (prgPlayhead) prgPlayhead.style.width = `${clipLoopProgress}%`;
   if (prvPlayhead) prvPlayhead.style.width = `${((clipLoopProgress + 40) % 100)}%`;
 
+  // Dynamic Bus Sizing according to Master Aspect Ratio
+  const aspectConfig = getAspectRatioDimensions(appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9'));
+  const targetBusW = aspectConfig.w;
+  const targetBusH = aspectConfig.h;
+
+  if (busCanvasA.width !== targetBusW || busCanvasA.height !== targetBusH) {
+    busCanvasA.width = targetBusW;
+    busCanvasA.height = targetBusH;
+    busCanvasB.width = targetBusW;
+    busCanvasB.height = targetBusH;
+    offscreenA.width = targetBusW;
+    offscreenA.height = targetBusH;
+    offscreenB.width = targetBusW;
+    offscreenB.height = targetBusH;
+    sobelCanvas.width = targetBusW;
+    sobelCanvas.height = targetBusH;
+    handoverCanvas.width = targetBusW;
+    handoverCanvas.height = targetBusH;
+    rotSnapshotCanvas.width = targetBusW;
+    rotSnapshotCanvas.height = targetBusH;
+  }
+
   const w = busCanvasA.width;
   const h = busCanvasA.height;
 
@@ -3617,20 +3732,26 @@ function renderVisuals(time) {
       busCtxA.restore();
     }
 
-    // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
-    if (baseSource && appState.layers.layer2.active) {
+    // LAYER 2: EDGE TRACE (Sobel Contours / Find Edges) - Desaparece no zero e blend profissional
+    const l2 = appState.layers.layer2;
+    const l2Opacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+    if (baseSource && l2 && l2.active && l2Opacity > 0.005) {
       const isL2SoloA = (!appState.layers.layer0.active || (appState.layers.layer0.opacity !== undefined && appState.layers.layer0.opacity <= 0.01)) &&
                         (!appState.layers.layer1.active || l1AOpacity <= 0.01);
-      const l2 = appState.layers.layer2;
+      const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+      const finalL2Alpha = isL2SoloA ? l2Opacity : Math.min(1.0, l2Opacity * edgeMix * (0.85 + air * 0.3));
+
+      const tf0 = {
+        rotation: totalRot0,
+        scale: totalScale0,
+        pos_x: totalPosX0,
+        pos_y: totalPosY0,
+        flip_h: clipTf0.flip_h,
+        flip_v: clipTf0.flip_v
+      };
+
       busCtxA.save();
-      if (isL2SoloA) {
-        busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-      } else {
-        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-        busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-      }
+      drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloA, finalL2Alpha, tf0, l2.blend || 'Screen', l2.matte, l2.matte_invert);
       busCtxA.restore();
     }
 
@@ -3711,21 +3832,27 @@ function renderVisuals(time) {
         }
       }
 
-      // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
-      if (appState.layers.layer2.active) {
+      // LAYER 2 on Bus B: EDGE TRACE SOBEL
+      const l2 = appState.layers.layer2;
+      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+      if (queuedSource && l2 && l2.active && l2BOpacity > 0.005) {
         const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
         const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
                           (!appState.layers.layer1.active || l1BOpacity <= 0.01);
-        const l2 = appState.layers.layer2;
+        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+        const finalL2AlphaB = isL2SoloB ? l2BOpacity : Math.min(1.0, l2BOpacity * edgeMix * (0.85 + air * 0.3));
+
+        const tf3 = {
+          rotation: totalRot3,
+          scale: totalScale3,
+          pos_x: totalPosX3,
+          pos_y: totalPosY3,
+          flip_h: clipTf3.flip_h,
+          flip_v: clipTf3.flip_v
+        };
+
         busCtxB.save();
-        if (isL2SoloB) {
-          busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-        } else {
-          const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-          busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-        }
+        drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloB, finalL2AlphaB, tf3, l2.blend || 'Screen', l2.matte, l2.matte_invert);
         busCtxB.restore();
       }
 
@@ -3740,6 +3867,10 @@ function renderVisuals(time) {
   // 3. RENDER PREVIEW CANVAS (Shows Bus B / Cue in real time)
   // --------------------------------------------------------------------------
   if (prvCtx && prvCanvas) {
+    if (prvCanvas.width !== targetBusW || prvCanvas.height !== targetBusH) {
+      prvCanvas.width = targetBusW;
+      prvCanvas.height = targetBusH;
+    }
     prvCtx.fillStyle = '#050608';
     prvCtx.fillRect(0, 0, prvCanvas.width, prvCanvas.height);
     prvCtx.drawImage(busCanvasB, 0, 0, prvCanvas.width, prvCanvas.height);
@@ -3762,12 +3893,9 @@ function renderVisuals(time) {
   // 4. RENDER PROGRAM CANVAS (EQUAL-POWER DISSOLVE MASTER)
   // --------------------------------------------------------------------------
   if (prgCtx && prgCanvas) {
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
-    const targetPw = isVert ? 360 : 640;
-    const targetPh = isVert ? 640 : 360;
-    if (prgCanvas.width !== targetPw || prgCanvas.height !== targetPh) {
-      prgCanvas.width = targetPw;
-      prgCanvas.height = targetPh;
+    if (prgCanvas.width !== targetBusW || prgCanvas.height !== targetBusH) {
+      prgCanvas.width = targetBusW;
+      prgCanvas.height = targetBusH;
     }
 
     const pw = prgCanvas.width;
@@ -3967,47 +4095,86 @@ function renderVisuals(time) {
   requestAnimationFrame(renderVisuals);
 }
 
-// Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
-function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
-  if (!baseSource) return;
+// Hardware-Accelerated High-Definition Edge Trace (Find Edges / Sobel Contours)
+function drawSobelContours(ctx, source, w, h, t, threshold, isSolo, alpha = 1.0, transform = null, blend = 'Screen', matteId = null, matteInv = false) {
+  if (!source || alpha <= 0.005) return;
   if (sobelCanvas.width !== w || sobelCanvas.height !== h) {
     sobelCanvas.width = w;
     sobelCanvas.height = h;
   }
-  sobelCtx.clearRect(0, 0, w, h);
-  sobelCtx.save();
-
+  
   const l2 = (appState.layers && appState.layers.layer2) || {};
   const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
-  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.8);
-  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
-  const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
+  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.5);
+  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || 0.28);
+  
+  // Extrai parâmetros de transformação para alinhar perfeitamente com a cena em movimento
+  const rot = transform ? (transform.rotation || 0) : (l2.rotation || 0);
+  const scale = transform ? (transform.scale || 1.0) : (l2.scale || 1.0);
+  const posX = transform ? (transform.pos_x || 0) : (l2.pos_x || 0);
+  const posY = transform ? (transform.pos_y || 0) : (l2.pos_y || 0);
+  const flipH = transform ? Boolean(transform.flip_h) : false;
+  const flipV = transform ? Boolean(transform.flip_v) : false;
+  const fitMode = l2.fit_mode || appState.aspect_fit_mode || 'fit';
 
-  // 1. Grayscale de alto contraste no buffer dedicado do Sobel
-  sobelCtx.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(sobelCtx, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+  // 1. Renderiza a fonte em grayscale de alto contraste no sobelCanvas
+  sobelCtx.clearRect(0, 0, w, h);
+  sobelCtx.save();
+  const contrastBoost = Math.round(180 + (1.0 - thresh) * 200);
+  sobelCtx.filter = `grayscale(100%) contrast(${contrastBoost}%)`;
+  drawFittedImage(sobelCtx, source, w, h, fitMode, rot, scale, posX, posY, flipH, flipV);
 
-  // 2. Extração de contornos por gradiente espacial de diferença
+  // 2. Extração espacial de diferença (bordas nítidas)
   sobelCtx.globalCompositeOperation = 'difference';
   sobelCtx.drawImage(sobelCanvas, edgeWidth, edgeWidth);
   sobelCtx.restore();
 
-  // 3. Elevação de luminância e renderização com brancos vívidos
+  // 3. Gate de Ruído / Corte de Nível Preto Puro:
+  // Garante que o fundo seja estritamente #000000 e NUNCA gere névoa leitosa sobre outras camadas!
+  sobelCtx.save();
+  sobelCtx.globalCompositeOperation = 'color-dodge';
+  sobelCtx.filter = `contrast(${200 + Math.round(thresh * 100)}%) brightness(${Math.round(lumBoost * 110)}%)`;
+  sobelCtx.drawImage(sobelCanvas, 0, 0);
+  sobelCtx.restore();
+
+  // 4. Aplicação de Máscara Matte (se configurada para L2)
+  if (matteId && matteId !== 'none') {
+    const matteImg = getMatteImage(matteId, matteInv);
+    if (matteImg) {
+      sobelCtx.save();
+      sobelCtx.globalCompositeOperation = 'destination-in';
+      drawDeformedMatte(sobelCtx, matteImg, w, h, t, appState.matte?.deform, matteInv, matteId);
+      sobelCtx.restore();
+    }
+  }
+
+  // 5. Composição no barramento de destino
   ctx.save();
+  const clampedAlpha = Math.max(0.0, Math.min(1.0, alpha));
+  ctx.globalAlpha = clampedAlpha;
+  
   if (isSolo) {
-    // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
+    // MODO SOLO: Fundo negro puro, contornos brancos destacados e chalk neon suave
     ctx.globalCompositeOperation = 'source-over';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
-    // Realce luminoso para chalk/neon orgânico sem clipping digital
+    // Realce luminoso orgânico proporcional ao fader (desaparece no zero!)
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.65;
+    ctx.globalAlpha = clampedAlpha * 0.45;
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   } else {
-    // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
-    const blendMode = (l2.blend || 'Screen').toLowerCase();
-    ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
+    // MODO COMPOSTO: Mistura profissional sem lavar os tons escuros da camada base
+    const b = (blend || l2.blend || 'Screen').toLowerCase();
+    if (b === 'lighten') {
+      ctx.globalCompositeOperation = 'lighten';
+    } else if (b === 'overlay') {
+      ctx.globalCompositeOperation = 'overlay';
+    } else if (b === 'difference') {
+      ctx.globalCompositeOperation = 'difference';
+    } else if (b === 'source-over' || b === 'cutout') {
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      ctx.globalCompositeOperation = 'screen';
+    }
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   }
   ctx.restore();
@@ -7669,22 +7836,67 @@ function updateUI() {
     const fG = document.getElementById('fader-gamma');
     if (fG && document.activeElement !== fG) fG.value = Math.round(g * 100);
 
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
+    const currentAspect = appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9');
+    const isVert = (currentAspect === '9:16' || currentAspect === '4:5' || Boolean(appState.vertical_mode || appState.vertical_projection));
 
-    // Sync Program Monitor Box styling and badge
+    // Sync Program Monitor Box styling, aspect ratio attribute and badge
     const prgScreenBox = document.getElementById('program-screen-box');
-    if (prgScreenBox) prgScreenBox.classList.toggle('mode-vertical', isVert);
+    if (prgScreenBox) {
+      prgScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prgScreenBox.classList.toggle('mode-vertical', isVert);
+    }
+    const prvScreenBox = document.getElementById('preview-screen-box');
+    if (prvScreenBox) {
+      prvScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prvScreenBox.classList.toggle('mode-vertical', isVert);
+    }
 
     const badgePrg = document.getElementById('badge-prg-status');
-    if (badgePrg) badgePrg.textContent = isVert ? 'PROGRAM (MODO VERTICAL 9:16)' : 'PROGRAM (AO VIVO)';
+    if (badgePrg) {
+      badgePrg.textContent = isVert ? `PROGRAM (MODO VERTICAL ${currentAspect})` : `PROGRAM (${currentAspect} AO VIVO)`;
+    }
 
     const btnPrgVert = document.getElementById('btn-prg-toggle-vertical');
     if (btnPrgVert) btnPrgVert.classList.toggle('active', isVert);
 
-    // Sync Settings Modal controls
+    // Sync Master Aspect Ratio buttons in Settings
+    const aspectKeys = ['16:9', '9:16', '1:1', '4:5', '4:3', '21:9'];
+    aspectKeys.forEach(arKey => {
+      const btnId = 'btn-cfg-aspect-' + arKey.replace(':', '-');
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.toggle('active', currentAspect === arKey);
+    });
+
+    const lblCfgMasterAspect = document.getElementById('lbl-cfg-master-aspect-badge');
+    if (lblCfgMasterAspect) {
+      lblCfgMasterAspect.textContent = `${currentAspect} ${currentAspect === '9:16' ? '(VERTICAL)' : (currentAspect === '16:9' ? '(HORIZONTAL)' : '')}`;
+      lblCfgMasterAspect.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge text-cyan';
+    }
+
+    // Sync Default Fit Mode buttons
+    const curFit = appState.aspect_fit_mode || 'fit';
+    ['fit', 'fill', 'wings'].forEach(m => {
+      const b = document.getElementById('btn-cfg-fit-mode-' + m);
+      if (b) b.classList.toggle('active', curFit === m);
+    });
+
+    // Sync Projector Routing / Compensation buttons & badge
+    const isProjComp = Boolean(appState.projector_compensation);
+    const btnStraight = document.getElementById('btn-cfg-proj-straight');
+    const btnRotated = document.getElementById('btn-cfg-proj-rotated');
+    if (btnStraight) btnStraight.classList.toggle('active', !isProjComp);
+    if (btnRotated) btnRotated.classList.toggle('active', isProjComp);
+
+    const lblProjBadge = document.getElementById('lbl-cfg-proj-comp-badge');
+    if (lblProjBadge) {
+      lblProjBadge.textContent = isProjComp ? 'COMPENSAÇÃO 90° CCW (PROJETOR FÍSICO)' : 'NATIVO HORIZONTAL (CENTRO)';
+      lblProjBadge.className = isProjComp ? 'cfg-badge text-amber' : 'cfg-badge text-cyan';
+    }
+
+    // Legacy fallback bindings
     const lblCfgVert = document.getElementById('lbl-cfg-vert-status');
     if (lblCfgVert) {
-      lblCfgVert.textContent = isVert ? 'MODO VERTICAL 9:16 (ATIVO)' : 'HORIZONTAL 16:9';
+      lblCfgVert.textContent = isVert ? `MODO VERTICAL ${currentAspect} (ATIVO)` : 'HORIZONTAL 16:9';
       lblCfgVert.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge';
     }
 
@@ -7694,7 +7906,7 @@ function updateUI() {
     if (btnCfgModeVert) btnCfgModeVert.classList.toggle('active', isVert);
 
     const chkProjComp = document.getElementById('chk-cfg-proj-comp');
-    if (chkProjComp) chkProjComp.checked = Boolean(appState.projector_compensation);
+    if (chkProjComp) chkProjComp.checked = isProjComp;
 
     const btnVert = document.getElementById('btn-toggle-vertical-proj');
     if (btnVert) {
@@ -12011,6 +12223,7 @@ function bootstrapApp() {
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
   updateFxUI();
+  initBackgroundKeepAlive();
   renderVisuals();
   updateUI();
   updateSourceUI(activeMediaSource);
@@ -13567,7 +13780,7 @@ function renderStudioInspector() {
             <span class="insp-val-disp">${layer.blend || 'Normal'}</span>
           </div>
           <select class="insp-select" onchange="onLayerBlendChange('${lKey}', this.value); renderStudioInspector();">
-            ${['Normal', 'Screen', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
+            ${['Normal', 'Screen', 'Lighten', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
               <option value="${b}" ${(layer.blend || 'Normal').toLowerCase() === b.toLowerCase() ? 'selected' : ''}>${b}</option>
             `).join('')}
           </select>
@@ -13749,16 +13962,39 @@ function renderStudioInspector() {
     const tonal = appState.tonal || {};
 
     if (subtab === 'transform') {
+      const curAspect = appState.aspectRatio || '16:9';
+      const curFit = appState.aspect_fit_mode || 'fit';
+      const isProjComp = Boolean(appState.projector_compensation);
+
       html += `
         <div class="insp-section">
-          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI)</div>
+          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI / POP-OUT)</div>
           <div class="insp-control-row">
-            <span class="insp-label">ASPECT RATIO DA TRANSMISSÃO</span>
+            <span class="insp-label">PROPORÇÃO DA IMAGEM MASTER</span>
+            <div class="insp-pills-row" style="flex-wrap: wrap;">
+              <button class="insp-btn-pill ${curAspect === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZ</button>
+              <button class="insp-btn-pill ${curAspect === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERT</button>
+              <button class="insp-btn-pill ${curAspect === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 SQUARE</button>
+              <button class="insp-btn-pill ${curAspect === '4:5' ? 'active' : ''}" onclick="setAspectRatio('4:5'); renderStudioInspector();">4:5 SOCIAL</button>
+              <button class="insp-btn-pill ${curAspect === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curAspect === '21:9' ? 'active' : ''}" onclick="setAspectRatio('21:9'); renderStudioInspector();">21:9 ULTRA</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ENQUADRAMENTO DE VÍDEOS DE PROPORÇÃO DIFERENTE</span>
             <div class="insp-pills-row">
-              <button class="insp-btn-pill ${appState.aspectRatio === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZONTAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERTICAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 QUADRADO</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curFit === 'fit' ? 'active' : ''}" onclick="setDefaultFitMode('fit'); renderStudioInspector();" title="Preserva 100% da imagem com bordas pretas puras #000000">FIT (ZERO CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'fill' ? 'active' : ''}" onclick="setDefaultFitMode('fill'); renderStudioInspector();" title="Preenche a tela toda sem bordas pretas">FILL (CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'wings' ? 'active' : ''}" onclick="setDefaultFitMode('wings'); renderStudioInspector();" title="Preenchimento broadcast com asas espelhadas e desfoque suave">WINGS (BROADCAST)</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ROTEAMENTO DE PROJETOR / TELÃO HDMI</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${!isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(false); renderStudioInspector();" title="Telão comum na horizontal: vídeo vertical fica centralizado">⬍ NATIVO HORIZ</button>
+              <button class="insp-btn-pill ${isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(true); renderStudioInspector();" title="Projetor ou tela montada fisicamente em pé: gira saída 90° CCW">⤾ GIRAR 90° PROJETOR</button>
             </div>
           </div>
         </div>
