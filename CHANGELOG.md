@@ -1,25 +1,13 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 11/10/2026, 04:22:48 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 11/10/2026, 06:26:45 BRT
 
 ---
 
 ## Outubro de 2026
 
-### 🚀 Novidades & Features
-- **(autopilot-decoupling)** Desacoplamento estrito entre Macro Status musical (`INTRO`, `GROOVE`, `BUILD`, `DROP`, `BREAK`) e troca de clipes de vídeo: a mudança de status agora orquestra a roupagem cênica (estilo, máscaras, cinematics, shaders FX e accent drops) sem interromper ou cortar o take/vídeo principal que está no ar.
-- **(mixer-pingpong)** Engine de Ping-Pong contínuo a 60 FPS bidirecional para players HTML5 (L0, L3, L5): interpolação suave na reversão e no avanço com bounce nos extremos, eliminando o salto/corte brusco nativo do final do arquivo de vídeo.
-- **(mixer-mattes-ux)** Cápsulas de Máscara Profissionais nos Channel Strips do Mixer: substituição dos seletores limitados por badges com nome legível da máscara ativa, atalho `[MATTES ↗]` que navega diretamente para a Tab 3 e foca a camada, além de toggles rápidos `[INV]` e limpeza instantânea `[✕]`.
-- **(timeline-alignment)** Alinhamento vertical pixel-perfect da Timeline Pro: equalização métrica com espaçador de régua `.tl-ruler-corner-header` (26px), alinhando perfeitamente os tracks da barra lateral às lanes e clipes desenhados no canvas.
-- **(aspect-ratios)** Suporte multi-formato (16:9, 9:16, 1:1, 4:5, 4:3, 21:9) com barramentos dinâmicos, enquadramento padrão sem cortes (Aspect Fit, Fill, Wings) e seletor no modal de configurações e Studio Inspector
-- **(projector-routing)** Roteamento HDMI para telão: seleção entre saída nativa horizontal centralizada e compensação com rotação de 90° CCW para projetores montados fisicamente na vertical
-- **(macos-keepalive)** Web Worker heartbeat timer contínuo a 60 FPS e MediaSession API para reprodução sem congelamento na janela destacada (pop-out) ao trocar de app ou Spaces no macOS
-
 ### 🐛 Correções
-- **(render-loop-isvert)** Correção de `ReferenceError: isVert is not defined` no compositor de `renderVisuals`, restaurando imediatamente a exibição a 60 FPS nos monitores Program e Preview.
-- **(cue-deck-b-signal)** Preservação do sinal do clipe em Deck B no barramento de Preview / CUE (eliminando a exibição isolada de contornos Sobel quando o fader de entrada estava em zero) e renomeação do canal L3 para `DECK B · CUE BUS (PREVIEW)`.
-- **(matte-layer-fallback)** Fallback seguro de `layerId` em `assignMatteToLayer` prevenindo exceção de `replace` ao interagir rapidamente com os cards da biblioteca de máscaras.
-- **(find-edges-sobel)** Correção do bug da camada L2 (Find Edges): opacidade linear com desaparecimento absoluto no 0, gate de luminância eliminando névoa leitosa sobre outras camadas, modos de mesclagem (Lighten, Screen, Overlay) e alinhamento de transformações
+- `0e745ce` **(render-cue)** resolve renderVisuals isVert reference error, guarantee Deck B Cue signal and fix matte layerId fallback
 - `64f069d` **(mattes)** fix master matte assignment, real alpha channel inversion, and mixer flexbox layout
 - `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
 - `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
@@ -31,38 +19,9 @@
 - `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
 - `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
 
-### 🔧 Manutenção
-- `31787ef` record post-commit state hash [skip ci]
-- `8acad70` Merge pull request #1 from Pelimotion/feat/collab-branch-pr-governance
-- `5c02002` auto-deploy + auto-docs on every commit (post-commit hook + update_docs.js)
-- `7095a42` Set default FPS to 30 and Network Outputs to OFF
-- `397dd4b` Enhance CDN Sync with Recursive IN/OUT Structure, Model Injection, and Secure PIN Unlock
-- `038e719` Implement Bunny CDN Sync Script & Animated Hover Previews (Zero-Server Architecture)
-- `0862376` Fix Vercel deployments: add root vercel.json for rewrites and restore relative HTML paths
-- `318204c` Fix routing: Use absolute /penumbra/ paths to prevent trailing slash 404s
-- `ccbf1c6` Fix absolute path in spine points fetch for Vercel subdirectory hosting
-- `cbd65d9` Fix standalone 404 errors: dummy favicon.ico and mock mattes catalog for zero-server architecture
-- `2762f6a` Update favicon to geometric SVG tetrapod without background
-- `484d97e` Implement Phase 2: Standalone VJ Architecture & Media Nexus Modal
-- `8b58c52` Implement HARS Architecture and CORS
-- `12cf409` Add tetrapod favicon
-- `fbcfa9d` Initial commit of Penumbra Engine
-
-### 📚 Documentação
-- `f7cfaeb` sync architecture, state, and changelog for next session
-- `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
-- `1ee13ab` **(architecture)** sync technical architecture, state, graphify and knowledge base for next session
-- `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
-- `a87bbba` **(state)** atualizar links de preview e handover
-- `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
-- `332f9d5` **(handover)** register ADR-38, update system state and establish feat/penumbra-collaborative-dev branch
-- `306937c` **(governance)** implement PR-first collaborative git flow and conflict prevention rule
-- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
-- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
-- `f1a6951` add ADR-0013 and update changelog for source orchestration
-- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
-
 ### ✨ Novos Recursos
+- `e820ce3` **(autopilot-mixer-timeline)** decouple status takes, 60fps ping-pong engine, mixer mattes UX and timeline vertical alignment
+- `8b83a55` **(orchestration)** multi-aspect vertical modes, projector routing, L2 sobel fix and macos background keep-alive
 - `5e91eff` **(fx-engine)** implement master fx bypass toggle, clean autopilot baseline and human-in-the-loop manual fx lock
 - `a21e5b7` **(timeline)** implement pro arrangement timeline with dynamic rhythm scaling and forward predictability
 - `75fa793` **(inspector)** unify studio inspector for layers and mattes with per-matte engine, follow selection mode and pin toggle
@@ -84,6 +43,34 @@
 - `4cae205` **(ui)** Complete Professional UI/UX Overhaul & Offline PIN Auth
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
+
+### 🔧 Manutenção
+- `31787ef` record post-commit state hash [skip ci]
+- `8acad70` Merge pull request #1 from Pelimotion/feat/collab-branch-pr-governance
+- `5c02002` auto-deploy + auto-docs on every commit (post-commit hook + update_docs.js)
+- `7095a42` Set default FPS to 30 and Network Outputs to OFF
+- `397dd4b` Enhance CDN Sync with Recursive IN/OUT Structure, Model Injection, and Secure PIN Unlock
+- `038e719` Implement Bunny CDN Sync Script & Animated Hover Previews (Zero-Server Architecture)
+- `0862376` Fix Vercel deployments: add root vercel.json for rewrites and restore relative HTML paths
+- `318204c` Fix routing: Use absolute /penumbra/ paths to prevent trailing slash 404s
+- `ccbf1c6` Fix absolute path in spine points fetch for Vercel subdirectory hosting
+- `cbd65d9` Fix standalone 404 errors: dummy favicon.ico and mock mattes catalog for zero-server architecture
+- `2762f6a` Update favicon to geometric SVG tetrapod without background
+- `484d97e` Implement Phase 2: Standalone VJ Architecture & Media Nexus Modal
+
+### 📚 Documentação
+- `f7cfaeb` sync architecture, state, and changelog for next session
+- `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
+- `1ee13ab` **(architecture)** sync technical architecture, state, graphify and knowledge base for next session
+- `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
+- `a87bbba` **(state)** atualizar links de preview e handover
+- `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
+- `332f9d5` **(handover)** register ADR-38, update system state and establish feat/penumbra-collaborative-dev branch
+- `306937c` **(governance)** implement PR-first collaborative git flow and conflict prevention rule
+- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
+- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
+- `f1a6951` add ADR-0013 and update changelog for source orchestration
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
 
 ### 🔄 Outros
 - `59149e4` **(vercel)** configure buildCommand and outputDirectory for automated static deployment
