@@ -39,14 +39,15 @@
 | `Penumbra_Portable.html` | — | 1.2 MB |
 
 ## 🎬 Media Pool
-- **Clipes no Manifesto:** 75 entradas
+- **Clipes no Manifesto:** 83 entradas (74 vídeos locais/CDN + 9 cenas procedurais 3D de vanguarda)
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
 - **Branch:** `feat/vj-engine-p0-quickwins-resilience`
-- **Último Commit:** `d646643` — docs(governance): update STATE.md with commit 8b1eb78
-- **Data:** 2026-10-11 09:18:17
-- **Total de Commits:** 68
+- **Último Commit:** `60ce10a` — fix(media-manifest): sync 9 generative 3d scenes to root media_pool manifest
+- **Deploy Vercel Produção:** `https://penumbra-xi.vercel.app`
+- **Deploy Vercel Preview:** `https://penumbra-czp1qn8x9-pelimotionart-6049s-projects.vercel.app`
+- **Deploy Bunny Edge CDN:** `https://gigantera-penumbra.b-cdn.net`
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
