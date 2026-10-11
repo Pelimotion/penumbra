@@ -1159,6 +1159,83 @@ handoverCanvas.width = 640;
 handoverCanvas.height = 360;
 let hasHandoverFrame = false;
 
+// ----------------------------------------------------------------------------
+// CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
+// ----------------------------------------------------------------------------
+[prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
+  if (!cv) return;
+  cv.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    console.warn('[PENUMBRA ENGINE] Canvas Context Lost detectado! Prevenindo encerramento e aguardando restauração...');
+  });
+  cv.addEventListener('contextrestored', () => {
+    console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
+    lastFrameTime = 0;
+    requestAnimationFrame(renderVisuals);
+  });
+});
+
+// ----------------------------------------------------------------------------
+// LIVE SET SESSION PERSISTENCE & AUTO-RECOVERY (ANTI-CRASH STAGE RESILIENCE)
+// ----------------------------------------------------------------------------
+function saveLiveSetSession() {
+  try {
+    if (!appState || !appState.layers) return;
+    const sessionSnapshot = {
+      timestamp: Date.now(),
+      macro_state: appState.macro_state,
+      bpm: appState.bpm,
+      crossfader: crossfader ? Number(crossfader.value) : 0,
+      aspectRatio: appState.aspectRatio,
+      vertical_mode: Boolean(appState.vertical_mode),
+      blackout: Boolean(appState.blackout),
+      layers: {
+        layer0: { ...appState.layers.layer0 },
+        layer1: { ...appState.layers.layer1 },
+        layer2: { ...appState.layers.layer2 },
+        layer3: { ...appState.layers.layer3 },
+        layer4: { ...appState.layers.layer4 },
+        layer5: { ...appState.layers.layer5 }
+      }
+    };
+    sessionStorage.setItem('penumbra_live_set_session', JSON.stringify(sessionSnapshot));
+  } catch (err) {}
+}
+
+function restoreLiveSetSession() {
+  try {
+    const raw = sessionStorage.getItem('penumbra_live_set_session');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.layers) return false;
+    if (Date.now() - (data.timestamp || 0) > 12 * 3600 * 1000) return false;
+
+    if (data.macro_state) appState.macro_state = data.macro_state;
+    if (data.bpm) appState.bpm = data.bpm;
+    if (data.aspectRatio) appState.aspectRatio = data.aspectRatio;
+    if (data.vertical_mode !== undefined) appState.vertical_mode = data.vertical_mode;
+    if (data.blackout !== undefined) appState.blackout = data.blackout;
+
+    for (const [lid, ldata] of Object.entries(data.layers)) {
+      if (appState.layers[lid]) {
+        appState.layers[lid] = { ...appState.layers[lid], ...ldata };
+      }
+    }
+
+    if (crossfader && data.crossfader !== undefined) {
+      crossfader.value = data.crossfader;
+    }
+    console.log('[PENUMBRA ENGINE] Set operacional restaurado com sucesso a partir de sessionStorage.');
+    return true;
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao restaurar sessão de set:', err);
+    return false;
+  }
+}
+window.saveLiveSetSession = saveLiveSetSession;
+window.restoreLiveSetSession = restoreLiveSetSession;
+
+
 // Theater / Expanded Modal Elements
 const theaterModal = document.getElementById('theater-modal');
 const theaterCanvas = document.getElementById('theater-canvas');
@@ -6888,6 +6965,7 @@ function executeTakeCommit() {
   updateUI();
   updateGeometryUI();
   syncVideoSources();
+  if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
 function executeHardCut() {
@@ -6934,14 +7012,29 @@ function renderQueueCards() {
   renderProTimeline();
 }
 
+let cachedTimelineRect = null;
+let lastTimelineRenderTick = 0;
+window.addEventListener('resize', () => { cachedTimelineRect = null; });
+window.invalidateTimelineRect = () => { cachedTimelineRect = null; };
+
 function renderProTimeline() {
   const canvas = document.getElementById('timeline-canvas');
   if (!canvas) return;
+
+  const now = performance.now();
+  // Throttle timeline arranger to ~30 FPS so master video compositing has full 60 FPS priority
+  if (now - lastTimelineRenderTick < 32) return;
+  lastTimelineRenderTick = now;
+
   const ctx = canvas.getContext('2d');
   
-  // Set real canvas resolution based on device pixel ratio to ensure razor-sharp rendering
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return;
+  // Use cached bounding rect to eliminate synchronous getBoundingClientRect layout thrashing at 60 FPS
+  if (!cachedTimelineRect || cachedTimelineRect.width <= 0) {
+    cachedTimelineRect = canvas.getBoundingClientRect();
+  }
+  const rect = cachedTimelineRect;
+  if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
   const dpr = window.devicePixelRatio || 1;
   const targetW = Math.floor(rect.width * dpr);
   const targetH = Math.floor(rect.height * dpr);
@@ -12011,10 +12104,16 @@ window.openStudioLauncher = openStudioLauncher;
 function closeStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');
   if (!nexusModal) return;
+  if (document.activeElement && nexusModal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   nexusModal.classList.add('dialog-closing');
   setTimeout(() => {
     try { nexusModal.close(); } catch (e) { nexusModal.removeAttribute('open'); }
     nexusModal.classList.remove('dialog-closing');
+    if (document.activeElement && nexusModal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }, 240);
 }
 window.closeStudioLauncher = closeStudioLauncher;
@@ -12346,7 +12445,10 @@ function bootstrapApp() {
     }
   }
 
-  applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  const hasRestoredLiveSet = typeof restoreLiveSetSession === 'function' ? restoreLiveSetSession() : false;
+  if (!hasRestoredLiveSet) {
+    applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  }
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
   updateFxUI();
@@ -12354,6 +12456,11 @@ function bootstrapApp() {
   renderVisuals();
   updateUI();
   updateSourceUI(activeMediaSource);
+
+  // Periodically persist live set state for anti-crash resilience
+  setInterval(() => {
+    if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
+  }, 3500);
 
   window.addEventListener('resize', () => {
     if (typeof renderQueueCards === 'function') renderQueueCards();
@@ -12601,6 +12708,9 @@ function openSettingsModal() {
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.classList.remove('active');
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) {
+    document.activeElement.blur();
+  }
 }
 
 window.openSettingsModal = openSettingsModal;
@@ -12663,15 +12773,28 @@ function rescanMediaWithFeedback() {
 }
 window.rescanMediaWithFeedback = rescanMediaWithFeedback;
 
+let isKeyboardShortcutsInitialized = false;
+
 function initKeyboardShortcuts() {
+  if (isKeyboardShortcutsInitialized) return;
+  isKeyboardShortcutsInitialized = true;
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+    const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
+    // Se o elemento ativo for órfão ou estiver em diálogo/container invisível, desfoca para liberar os atalhos
+    if (isTextInput && activeEl.offsetParent === null && activeEl !== document.body) {
+      activeEl.blur();
+    } else if (isTextInput) {
       if (e.key === 'Escape') {
         activeEl.blur();
+        closeSettingsModal();
+        closeShortcutsModal();
+        closeTheater();
         if (typeof window.toggleMediaIngestDeck === 'function') {
           window.toggleMediaIngestDeck(false);
         }
+        return;
       }
       return;
     }
@@ -12726,8 +12849,11 @@ function initKeyboardShortcuts() {
     }
     if (key === 'b' || key === 'B') {
       e.preventDefault();
-      if (focusedClipId) {
+      if (focusedClipId && !e.shiftKey) {
         routeClipToBus(focusedClipId, 'B');
+      } else {
+        const btnBlackout = document.getElementById('btn-blackout');
+        if (btnBlackout) btnBlackout.click();
       }
       return;
     }
@@ -12769,6 +12895,18 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       const btnBlackout = document.getElementById('btn-blackout');
       if (btnBlackout) btnBlackout.click();
+      return;
+    }
+
+    // , (Comma): Toggle Preferences & System Settings Modal
+    if (key === ',' || e.code === 'Comma') {
+      e.preventDefault();
+      const modal = document.getElementById('settings-modal');
+      if (modal && modal.classList.contains('active')) {
+        closeSettingsModal();
+      } else {
+        openSettingsModal();
+      }
       return;
     }
 
@@ -12826,6 +12964,7 @@ function initKeyboardShortcuts() {
         toggleStudioInspector();
         return;
       }
+      closeSettingsModal();
       closeShortcutsModal();
       closeTheater();
       if (typeof window.toggleMediaIngestDeck === 'function') {
@@ -13209,6 +13348,7 @@ function setDockViewMode(mode) {
   const lblQuick = document.getElementById('lbl-quick-switch-text');
 
   if (mode === 'timeline') {
+    if (typeof window.invalidateTimelineRect === 'function') window.invalidateTimelineRect();
     if (btnModules) btnModules.classList.remove('active');
     if (btnTimeline) btnTimeline.classList.add('active');
     if (viewModules) viewModules.style.display = 'none';

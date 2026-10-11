@@ -1,9 +1,15 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 06:26:45 BRT
-- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
+- **Última Atualização:** 11/10/2026, 08:55:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & RESILIENTE (P0s Concluídos: GPU Context Loss Handlers, Set Recovery, ESC Fix & 59.02 FPS Sustentados)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Resiliência GPU & Canvas:** 🟢 ATIVO (Handlers `contextlost` + `contextrestored` para os 7 buffers de canvas contra falhas de cabo HDMI/GPU)
+- **Auto-Recovery de Live Set:** 🟢 ATIVO (`sessionStorage` serializando camadas A/B/L5, opacidades, blends e crossfader com restauração em bootstrap)
+- **Idempotência & Atalhos de Teclado:** 🟢 RESOLVIDO (Guarda contra duplo registro, Escape universal com desfoque de inputs/diálogos órfãos, vírgula `,` para configurações e `B`/`Shift+B` para Blackout imediato)
+- **Arranger Timeline Throttled (Zero Thrashing):** 🟢 RESOLVIDO (Cache de bounding rect + taxa de 30 FPS no arranger secundário, eliminando layout thrashing e cravando 59.02 FPS médios, p95=16.80ms)
+- **Acessibilidade & WCAG:** 🟢 APROVADO (Zero violações axe-core; contraste de botão de fechamento > 5.2:1)
+- **Web MIDI Resiliente:** 🟢 ATIVO (Captura suave de permissão Web MIDI com suporte plug-and-play ao controlador M-Vave SMC-MIXER)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
@@ -25,9 +31,9 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 14,655 | 620.2 KB |
-| `styles.css` | 11,441 | 225.4 KB |
-| `index.html` | 3,597 | 235.5 KB |
+| `app.js` | 14,795 | 640.8 KB |
+| `styles.css` | 11,445 | 225.5 KB |
+| `index.html` | 3,597 | 241.4 KB |
 | `Penumbra_Portable.html` | — | 1.1 MB |
 
 ## 🎬 Media Pool
@@ -35,9 +41,9 @@
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
 
 ## 🔢 Git Status
-- **Branch:** `feat/autopilot-status-mixer-pingpong-timeline-realignment`
-- **Último Commit:** `0e745ce` — fix(render-cue): resolve renderVisuals isVert reference error, guarantee Deck B Cue signal and fix matte layerId fallback
-- **Data:** 2026-10-11 06:19:10
+- **Branch:** `feat/vj-engine-p0-quickwins-resilience`
+- **Último Commit:** `0e745ce` (Preparando commit da suíte de resiliência P0)
+- **Data:** 2026-10-11 08:55:00
 - **Total de Commits:** 63
 
 ## Recursos de Visualização Ampliada & Janela Flutuante

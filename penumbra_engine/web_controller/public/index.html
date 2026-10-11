@@ -88,7 +88,7 @@
             </div>
             <div class="nsb-cat-selector">
               <span class="nsb-sub-lbl">CATEGORIA:</span>
-              <select id="select-nexus-yt-cat" class="nsb-mini-select">
+              <select id="select-nexus-yt-cat" class="nsb-mini-select" aria-label="Categoria de Ingestão de Mídia">
                 <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
                 <option value="MINIMAL">MINIMAL</option>
                 <option value="ABSTRACT">ABSTRACT</option>
@@ -305,7 +305,7 @@
       </button>
 
       <!-- Settings Modal Trigger -->
-      <button class="btn btn-outline btn-sm" id="btn-show-settings" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
+      <button class="btn btn-outline btn-sm" id="btn-show-settings" onclick="window.openSettingsModal && window.openSettingsModal()" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
 
@@ -2552,7 +2552,7 @@
             <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
             <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
-          <button class="btn btn-danger btn-xs" id="btn-settings-close">FECHAR (ESC)</button>
+          <button class="btn btn-danger btn-xs" id="btn-settings-close" onclick="window.closeSettingsModal && window.closeSettingsModal()">FECHAR (ESC)</button>
         </div>
 
         <!-- Pro Two-Column Layout -->
@@ -3589,7 +3589,7 @@
 
     <!-- MIDI Controller Hub -->
     <script src="midi.js"></script>
-    <script src="app.js?t=20261009_studio_pro"></script>
+    <script src="app.js?t=20261011_resilience_p0"></script>
   </body>
 </html>
 

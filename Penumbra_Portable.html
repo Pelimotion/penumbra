@@ -427,6 +427,19 @@ html, body.penumbra-app {
   box-shadow: 0 0 10px var(--crimson-glow);
 }
 
+#btn-settings-close, #btn-shortcuts-close, #btn-theater-close {
+  background: rgba(255, 68, 102, 0.22);
+  border: 1px solid rgba(255, 68, 102, 0.65);
+  color: #ff7588;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+#btn-settings-close:hover, #btn-shortcuts-close:hover, #btn-theater-close:hover {
+  background: #ff2a55;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 42, 85, 0.6);
+}
+
 .btn-primary {
   background: var(--cyan);
   color: #06080b;
@@ -1862,8 +1875,41 @@ body.resizing-workspace-active .top-zone {
   flex-direction: column;
 }
 
+.tl-ruler-corner-header {
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  background: #06090e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.tl-ruler-corner-header .tl-corner-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-dim, #94a3b8);
+}
+
+.tl-ruler-corner-header .tl-corner-count {
+  font-size: 7.5px;
+  font-weight: 700;
+  color: var(--cyan, #00f0ff);
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
 .tl-track-header {
   flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4582,22 +4628,106 @@ body.resizing-workspace-active .top-zone {
   font-weight: 700;
 }
 
+.ch-matte-capsule {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 170px;
+  max-width: 280px;
+  background: rgba(10, 14, 22, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.ch-matte-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+
+.ch-matte-badge:hover {
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.ch-matte-badge .ch-slot-icon {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--cyan);
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 1px 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ch-matte-name {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+
+.ch-matte-capsule.has-matte .ch-matte-name {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.ch-matte-capsule .btn-browse-matte {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ch-matte-capsule .btn-browse-matte:hover {
+  background: var(--cyan);
+  color: #000;
+}
+
+.ch-matte-capsule .btn-clear-matte {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ch-matte-capsule .btn-clear-matte:hover {
+  background: rgba(255, 51, 68, 0.2);
+  border-color: rgba(255, 51, 68, 0.5);
+  color: #ff3344;
+}
+
 .ch-matte-slot {
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 1 1 auto;
   min-width: 180px;
-}
-
-.ch-slot-icon {
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-.btn-clear-matte,
-.btn-browse-matte {
-  flex-shrink: 0;
 }
 
 .btn-inv {
@@ -6364,19 +6494,24 @@ body.resizing-workspace-active .top-zone {
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.35);
 }
 
-.program-box.mode-vertical {
+.program-box.mode-vertical,
+.program-box[data-aspect-ratio="9:16"],
+.program-box[data-aspect-ratio="4:5"] {
   border-color: rgba(0, 255, 136, 0.6);
   box-shadow: 0 0 24px rgba(0, 255, 136, 0.12);
 }
 
-.program-box.mode-vertical .viewport-wrapper {
+.program-box.mode-vertical .viewport-wrapper,
+.program-box[data-aspect-ratio="9:16"] .viewport-wrapper,
+.program-box[data-aspect-ratio="4:5"] .viewport-wrapper {
   background: #020305;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.program-box.mode-vertical #program-canvas {
+.program-box.mode-vertical #program-canvas,
+.program-box[data-aspect-ratio="9:16"] #program-canvas {
   aspect-ratio: 9 / 16;
   height: 100%;
   width: auto;
@@ -6386,6 +6521,73 @@ body.resizing-workspace-active .top-zone {
   border-radius: 4px;
   box-shadow: 0 0 25px rgba(0, 255, 136, 0.18), inset 0 0 15px rgba(0, 0, 0, 0.8);
 }
+
+/* PREVIEW BOX VERTICAL & CUSTOM RATIO STYLING */
+.preview-box.mode-vertical,
+.preview-box[data-aspect-ratio="9:16"],
+.preview-box[data-aspect-ratio="4:5"] {
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.12);
+}
+
+.preview-box.mode-vertical .viewport-wrapper,
+.preview-box[data-aspect-ratio="9:16"] .viewport-wrapper,
+.preview-box[data-aspect-ratio="4:5"] .viewport-wrapper {
+  background: #020305;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-box.mode-vertical #preview-canvas,
+.preview-box[data-aspect-ratio="9:16"] #preview-canvas {
+  aspect-ratio: 9 / 16;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.18), inset 0 0 15px rgba(0, 0, 0, 0.8);
+}
+
+/* OUTROS ASPECT RATIOS (1:1, 4:5, 4:3, 21:9) */
+.program-box[data-aspect-ratio="1:1"] #program-canvas,
+.preview-box[data-aspect-ratio="1:1"] #preview-canvas {
+  aspect-ratio: 1 / 1;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="4:5"] #program-canvas,
+.preview-box[data-aspect-ratio="4:5"] #preview-canvas {
+  aspect-ratio: 4 / 5;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="4:3"] #program-canvas,
+.preview-box[data-aspect-ratio="4:3"] #preview-canvas {
+  aspect-ratio: 4 / 3;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.program-box[data-aspect-ratio="21:9"] #program-canvas,
+.preview-box[data-aspect-ratio="21:9"] #preview-canvas {
+  aspect-ratio: 21 / 9;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 
 /* ==========================================================================
    ADVANCED TWO-COLUMN PRO PREFERENCES MODAL
@@ -11341,7 +11543,7 @@ body.resizing-workspace-active .top-zone {
             </div>
             <div class="nsb-cat-selector">
               <span class="nsb-sub-lbl">CATEGORIA:</span>
-              <select id="select-nexus-yt-cat" class="nsb-mini-select">
+              <select id="select-nexus-yt-cat" class="nsb-mini-select" aria-label="Categoria de Ingestão de Mídia">
                 <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
                 <option value="MINIMAL">MINIMAL</option>
                 <option value="ABSTRACT">ABSTRACT</option>
@@ -11506,6 +11708,7 @@ body.resizing-workspace-active .top-zone {
         <span class="label" id="chip-midi-label">MIDI: PROCURANDO...</span>
         <span class="midi-hw-bank-badge hw1" id="chip-midi-hw-bank" title="Modo Dual-Bank (◄ Bank A: Mix & Takes / ► Bank B: FX & Mattes) · [Atalho: H]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">◄ BANK A (MIX)</span>
         <span class="midi-bank-badge" id="chip-midi-bank" title="Banco Ativo · Clique para alternar [Atalho: [ ou ]]" onclick="event.stopPropagation(); window.penumbraMidi && window.penumbraMidi.toggleBank()">BANK A</span>
+        <a href="/mixer_guide.html" target="_blank" onclick="event.stopPropagation();" title="Abrir Manual Técnico Visual do SMC-MIXER (Desenho dos Knobs/Faders e Modos)" style="display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-decoration: none; margin-left: 4px; transition: all 0.2s;">MANUAL HW ↗</a>
       </div>
     </div>
 
@@ -11557,7 +11760,7 @@ body.resizing-workspace-active .top-zone {
       </button>
 
       <!-- Settings Modal Trigger -->
-      <button class="btn btn-outline btn-sm" id="btn-show-settings" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
+      <button class="btn btn-outline btn-sm" id="btn-show-settings" onclick="window.openSettingsModal && window.openSettingsModal()" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
 
@@ -11621,7 +11824,7 @@ body.resizing-workspace-active .top-zone {
         </div>
 
         <!-- PREVIEW (CUE / PRÓXIMO ESTADO) -->
-        <div class="screen-box preview-box">
+        <div class="screen-box preview-box" id="preview-screen-box">
           <div class="screen-top-bar">
             <div class="badge-group">
               <span class="badge badge-preview">PREVIEW (PRÓXIMO CUE)</span>
@@ -11957,6 +12160,10 @@ body.resizing-workspace-active .top-zone {
 
         <div class="pro-timeline-arrangement-body">
           <div class="timeline-tracks-sidebar">
+            <div class="tl-ruler-corner-header" title="Canais do Arranger (Alinhamento 1:1 com a Régua de Compassos)">
+              <span class="tl-corner-label">TRACKS</span>
+              <span class="tl-corner-count">7 CANAIS</span>
+            </div>
             <div class="tl-track-header track-master" onclick="openStudioInspector('layer', 0)" title="Clique para Inspecionar L0 Master [I]">
               <span class="track-tag">PGM</span>
               <span class="track-name">L0 MASTER</span>
@@ -12029,20 +12236,15 @@ body.resizing-workspace-active .top-zone {
               <input type="range" class="pro-slider" style="flex:1" id="l0-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer0', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l0-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l0-matte" onchange="onLayerMatteChange('layer0', this.value)" title="Máscara Própria de L0">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png" selected>Matte B: Vignette Penumbra</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: Metade Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas Tempo</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer0', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer0')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l0-matte-inv" onclick="toggleLayerMatteInvert('layer0')" title="Inverter Preto/Branco da Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer0">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer0')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l0-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer0')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer0', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l0-matte-inv" onclick="toggleLayerMatteInvert('layer0')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l0-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l0-blend" onchange="onLayerBlendChange('layer0', this.value)">
@@ -12072,17 +12274,15 @@ body.resizing-workspace-active .top-zone {
               <button class="ch-pill-rot" id="l1-rot-cw" onclick="setLayerRotation('layer1', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l1-fit-wings" onclick="setLayerFitMode('layer1', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l1-matte" onchange="onLayerMatteChange('layer1', this.value)" title="Máscara Própria de L1">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Suave</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Radial</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: Metade Esquerda</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer1', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer1')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l1-matte-inv" onclick="toggleLayerMatteInvert('layer1')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer1">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer1')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l1-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer1')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer1', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l1-matte-inv" onclick="toggleLayerMatteInvert('layer1')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l1-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l1-blend" onchange="onLayerBlendChange('layer1', this.value)">
@@ -12112,22 +12312,23 @@ body.resizing-workspace-active .top-zone {
               <button class="ch-pill-rot" id="l2-rot-cw" onclick="setLayerRotation('layer2', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l2-fit-wings" onclick="setLayerFitMode('layer2', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l2-matte" onchange="onLayerMatteChange('layer2', this.value)" title="Máscara Própria de L2">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Central</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer2', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer2')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l2-matte-inv" onclick="toggleLayerMatteInvert('layer2')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer2">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer2')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l2-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer2')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer2', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l2-matte-inv" onclick="toggleLayerMatteInvert('layer2')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l2-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
-              <select class="pro-select" id="l2-blend" onchange="onLayerBlendChange('layer2', this.value)">
+              <select class="pro-select" id="l2-blend" onchange="onLayerBlendChange('layer2', this.value)" title="Modo de Mesclagem do Find Edges (Sobel)">
                 <option value="Screen" selected>SCREEN</option>
-                <option value="Add">ADD</option>
+                <option value="Lighten">LIGHTEN (PURO)</option>
                 <option value="Overlay">OVERLAY</option>
+                <option value="Difference">DIFFERENCE</option>
+                <option value="Source-Over">CUTOUT (SÓ BORDAS)</option>
               </select>
             </div>
             <div class="ch-fader-slot">
@@ -12141,7 +12342,7 @@ body.resizing-workspace-active .top-zone {
             <div class="ch-header">
               <button class="btn-solo active" id="btn-toggle-l3" onclick="toggleLayerActive('layer3')">L3</button>
               <div class="ch-meta">
-                <span class="ch-name">CUE OVERLAY (PREVIEW B)</span>
+                <span class="ch-name">DECK B · CUE BUS (PREVIEW)</span>
                 <span class="ch-clip-name" id="l3-sub-text">Metallic_spine...</span>
               </div>
             </div>
@@ -12157,20 +12358,15 @@ body.resizing-workspace-active .top-zone {
               <input type="range" class="pro-slider" style="flex:1" id="l3-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer3', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l3-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l3-matte" onchange="onLayerMatteChange('layer3', this.value)" title="Máscara Própria de L3 (Transfere ao PGM no TAKE!)">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_a_solids/matte_a_half_left.png" selected>Matte A: 50% Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas Tempo</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Central</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer3', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer3')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l3-matte-inv" onclick="toggleLayerMatteInvert('layer3')" title="Inverter Preto/Branco da Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer3">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer3')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l3-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer3')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer3', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l3-matte-inv" onclick="toggleLayerMatteInvert('layer3')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l3-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l3-blend" onchange="onLayerBlendChange('layer3', this.value)">
@@ -12181,8 +12377,8 @@ body.resizing-workspace-active .top-zone {
               </select>
             </div>
             <div class="ch-fader-slot">
-              <input type="range" class="pro-slider ch-slider" id="l3-opacity" min="0" max="100" value="40" oninput="onLayerOpacityChange('layer3', this.value)">
-              <span class="ch-val" id="lbl-l3-opacity">40%</span>
+              <input type="range" class="pro-slider ch-slider" id="l3-opacity" min="0" max="100" value="100" oninput="onLayerOpacityChange('layer3', this.value)">
+              <span class="ch-val" id="lbl-l3-opacity">100%</span>
             </div>
           </div>
 
@@ -12201,17 +12397,15 @@ body.resizing-workspace-active .top-zone {
               <button class="ch-pill-rot" id="l4-rot-cw" onclick="setLayerRotation('layer4', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l4-fit-wings" onclick="setLayerFitMode('layer4', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l4-matte" onchange="onLayerMatteChange('layer4', this.value)" title="Máscara Própria de L4">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png" selected>Matte C: Persianas Drop</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Caótico</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Abertura Radial</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer4', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer4')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l4-matte-inv" onclick="toggleLayerMatteInvert('layer4')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer4">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer4')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l4-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer4')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer4', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l4-matte-inv" onclick="toggleLayerMatteInvert('layer4')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l4-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l4-blend" onchange="onLayerBlendChange('layer4', this.value)">
@@ -12246,20 +12440,15 @@ body.resizing-workspace-active .top-zone {
               <input type="range" class="pro-slider" style="flex:1" id="l5-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer5', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l5-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l5-matte" onchange="onLayerMatteChange('layer5', this.value)" title="Máscara Própria de L5">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: 50% Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Radial</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer5">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer5')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l5-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l5-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l5-blend" onchange="onLayerBlendChange('layer5', this.value)">
@@ -13818,7 +14007,7 @@ body.resizing-workspace-active .top-zone {
             <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
             <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
-          <button class="btn btn-danger btn-xs" id="btn-settings-close">FECHAR (ESC)</button>
+          <button class="btn btn-danger btn-xs" id="btn-settings-close" onclick="window.closeSettingsModal && window.closeSettingsModal()">FECHAR (ESC)</button>
         </div>
 
         <!-- Pro Two-Column Layout -->
@@ -14040,35 +14229,64 @@ body.resizing-workspace-active .top-zone {
               </div>
             </div>
 
-            <!-- PANEL 3: SAÍDA & TELÃO HDMI -->
+            <!-- PANEL 3: SAÍDA & TELÃO HDMI (PRO RESOLUTION & GEOMETRY) -->
             <div class="settings-tab-panel" id="settings-panel-output">
               <div class="cfg-group-card">
                 <div class="cfg-group-header">
-                  <span>FORMATO MASTER & GEOMETRIA DO PROGRAM</span>
-                  <span class="cfg-badge" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
+                  <span>RESOLUÇÃO & ASPECT RATIO MASTER (COMPOSIÇÃO DE VÍDEO)</span>
+                  <span class="cfg-badge text-emerald" id="lbl-cfg-vert-status">HORIZONTAL 16:9</span>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Orientação da Imagem Master</span>
-                    <span class="prop-desc">Alterna entre monitor horizontal padrão e preview vertical (totens LED / 9:16).</span>
+                    <span class="prop-title">Proporção da Imagem Master</span>
+                    <span class="prop-desc">Define a geometria e os barramentos de renderização de toda a engine. Os vídeos nativos nessa proporção são exibidos a 100% sem nenhum corte.</span>
                   </div>
                   <div class="prop-control">
-                    <div class="conductor-btn-group">
-                      <button class="conductor-btn active" id="btn-cfg-mode-horiz" onclick="toggleVerticalMode(false)">HORIZONTAL (16:9)</button>
-                      <button class="conductor-btn" id="btn-cfg-mode-vert" onclick="toggleVerticalMode(true)">VERTICAL (9:16)</button>
+                    <div class="conductor-btn-group" id="group-cfg-aspect-ratio" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <button class="conductor-btn active" id="btn-cfg-aspect-16-9" onclick="setAspectRatio('16:9')">16:9 HORIZONTAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-9-16" onclick="setAspectRatio('9:16')">9:16 VERTICAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-1-1" onclick="setAspectRatio('1:1')">1:1 QUADRADO</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-4-5" onclick="setAspectRatio('4:5')">4:5 SOCIAL</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-4-3" onclick="setAspectRatio('4:3')">4:3 RETRÔ</button>
+                      <button class="conductor-btn" id="btn-cfg-aspect-21-9" onclick="setAspectRatio('21:9')">21:9 ULTRAWIDE</button>
                     </div>
                   </div>
                 </div>
+
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Compensação de Projetor Físico a 90°</span>
-                    <span class="prop-desc">Gira o feixe HDMI para projetores montados fisicamente deitados/na vertical.</span>
+                    <span class="prop-title">Enquadramento Padrão de Vídeos com Proporção Diferente</span>
+                    <span class="prop-desc">Como a engine trata mídias que diferem do aspect ratio master: Fit (preserva 100% da imagem com bordas pretas), Fill (preenche tela cheia) ou Wings (broadcast espelhado com blur).</span>
                   </div>
                   <div class="prop-control">
-                    <label class="cfg-switch">
-                      <input type="checkbox" id="chk-cfg-proj-comp" checked onchange="toggleProjectorCompensation(this.checked)">
-                      <span class="cfg-switch-slider"></span>
-                    </label>
+                    <div class="conductor-btn-group" id="group-cfg-fit-fallback">
+                      <button class="conductor-btn active" id="btn-cfg-fit-mode-fit" onclick="setDefaultFitMode('fit')">FIT (ZERO CORTES)</button>
+                      <button class="conductor-btn" id="btn-cfg-fit-mode-fill" onclick="setDefaultFitMode('fill')">FILL (PREENCHER)</button>
+                      <button class="conductor-btn" id="btn-cfg-fit-mode-wings" onclick="setDefaultFitMode('wings')">WINGS (BROADCAST)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cfg-group-card">
+                <div class="cfg-group-header">
+                  <span>ROTEAMENTO PARA TELÃO / PROJETOR HDMI</span>
+                  <span class="cfg-badge text-cyan" id="lbl-cfg-proj-comp-badge">NATIVO HORIZONTAL (CENTRO)</span>
+                </div>
+                <div class="cfg-prop-row">
+                  <div class="prop-meta">
+                    <span class="prop-title">Modo de Saída para Telão Externo</span>
+                    <span class="prop-desc">Escolha como o sinal em modo vertical é entregue na saída de vídeo / janela destacada:</span>
+                  </div>
+                  <div class="prop-control" style="width: 100%; max-width: 440px;">
+                    <div class="conductor-btn-group" style="display: flex; width: 100%;">
+                      <button class="conductor-btn active" id="btn-cfg-proj-straight" onclick="toggleProjectorCompensation(false)" style="flex: 1; text-align: center;" title="Telão comum na horizontal: vídeo vertical fica em pé no centro da tela com bordas pretas limpas e zero cortes">
+                        ⬍ NATIVO HORIZ (CENTRO)
+                      </button>
+                      <button class="conductor-btn" id="btn-cfg-proj-rotated" onclick="toggleProjectorCompensation(true)" style="flex: 1; text-align: center;" title="Projetor ou monitor montado de lado / 90°: gira o feixe HDMI 90° para projetar vertical no espaço físico">
+                        ⤾ GIRAR 90° (PROJETOR FÍSICO)
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -14080,17 +14298,17 @@ body.resizing-workspace-active .top-zone {
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
                     <span class="prop-title">Janelas Destacadas em Tempo Real</span>
-                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast.</span>
+                    <span class="prop-desc">Envie o sinal para um segundo monitor ou projetor com sincronia Broadcast de 60 FPS contínua.</span>
                   </div>
                   <div class="prop-control" style="display: flex; gap: 6px;">
-                    <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('program')">◱ PROGRAM NO TELÃO</button>
+                    <button class="btn btn-primary btn-xs" onclick="openPopoutWindow('program')">◱ PROGRAM NO TELÃO</button>
                     <button class="btn btn-outline btn-xs" onclick="openPopoutWindow('preview')">◱ PREVIEW CUE</button>
                   </div>
                 </div>
                 <div class="cfg-prop-row">
                   <div class="prop-meta">
-                    <span class="prop-title">Recomendações Mac + Telão / Projetor</span>
-                    <span class="prop-desc">Use Tela Estendida no macOS. Dica: Na janela destacada, use "MODO PROJETOR (BORDERLESS)" para nunca apagar a tela do seu MacBook!</span>
+                    <span class="prop-title">Dica Mac Multi-Monitor & Segundo Display</span>
+                    <span class="prop-desc">No macOS, arraste a janela destacada para o projetor. Pressione <code>H</code> para ativar a Projeção Limpa sem bordas e sem cursor. Graças ao motor Anti-Freeze Worker, você pode alternar livremente entre janelas e apps no MacBook enquanto o vídeo continua fluindo a 60 FPS no projetor!</span>
                   </div>
                 </div>
               </div>
@@ -14948,8 +15166,8 @@ class PenumbraMidiHub {
         this.midiAccess.onstatechange = this.onStateChange.bind(this);
         this.scanDevices();
       } catch (e2) {
-        console.error("[PENUMBRA MIDI] Erro fatal ao acessar Web MIDI:", e2);
-        this.activeTelemetry.deviceName = 'Acesso Negado';
+        console.warn("[PENUMBRA MIDI] Permissão Web MIDI aguardando autorização do operador:", (e2 && e2.message) || e2);
+        this.activeTelemetry.deviceName = 'Aguardando Permissão MIDI';
         this.notifyUI();
       }
     }
@@ -18198,9 +18416,11 @@ let appState = {
   manual_forced_bars: 0,
   active_macro_preset: null,
   last_take_total_bar: 0,
+  aspectRatio: '16:9',
+  aspect_fit_mode: 'fit',
   vertical_mode: false,
   vertical_projection: false,
-  projector_compensation: true,
+  projector_compensation: false,
   audio_gain: 1.0,
   fps_limit: 30,
   network_output_enabled: false,
@@ -18459,6 +18679,83 @@ const handoverCtx = handoverCanvas.getContext('2d');
 handoverCanvas.width = 640;
 handoverCanvas.height = 360;
 let hasHandoverFrame = false;
+
+// ----------------------------------------------------------------------------
+// CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
+// ----------------------------------------------------------------------------
+[prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
+  if (!cv) return;
+  cv.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    console.warn('[PENUMBRA ENGINE] Canvas Context Lost detectado! Prevenindo encerramento e aguardando restauração...');
+  });
+  cv.addEventListener('contextrestored', () => {
+    console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
+    lastFrameTime = 0;
+    requestAnimationFrame(renderVisuals);
+  });
+});
+
+// ----------------------------------------------------------------------------
+// LIVE SET SESSION PERSISTENCE & AUTO-RECOVERY (ANTI-CRASH STAGE RESILIENCE)
+// ----------------------------------------------------------------------------
+function saveLiveSetSession() {
+  try {
+    if (!appState || !appState.layers) return;
+    const sessionSnapshot = {
+      timestamp: Date.now(),
+      macro_state: appState.macro_state,
+      bpm: appState.bpm,
+      crossfader: crossfader ? Number(crossfader.value) : 0,
+      aspectRatio: appState.aspectRatio,
+      vertical_mode: Boolean(appState.vertical_mode),
+      blackout: Boolean(appState.blackout),
+      layers: {
+        layer0: { ...appState.layers.layer0 },
+        layer1: { ...appState.layers.layer1 },
+        layer2: { ...appState.layers.layer2 },
+        layer3: { ...appState.layers.layer3 },
+        layer4: { ...appState.layers.layer4 },
+        layer5: { ...appState.layers.layer5 }
+      }
+    };
+    sessionStorage.setItem('penumbra_live_set_session', JSON.stringify(sessionSnapshot));
+  } catch (err) {}
+}
+
+function restoreLiveSetSession() {
+  try {
+    const raw = sessionStorage.getItem('penumbra_live_set_session');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.layers) return false;
+    if (Date.now() - (data.timestamp || 0) > 12 * 3600 * 1000) return false;
+
+    if (data.macro_state) appState.macro_state = data.macro_state;
+    if (data.bpm) appState.bpm = data.bpm;
+    if (data.aspectRatio) appState.aspectRatio = data.aspectRatio;
+    if (data.vertical_mode !== undefined) appState.vertical_mode = data.vertical_mode;
+    if (data.blackout !== undefined) appState.blackout = data.blackout;
+
+    for (const [lid, ldata] of Object.entries(data.layers)) {
+      if (appState.layers[lid]) {
+        appState.layers[lid] = { ...appState.layers[lid], ...ldata };
+      }
+    }
+
+    if (crossfader && data.crossfader !== undefined) {
+      crossfader.value = data.crossfader;
+    }
+    console.log('[PENUMBRA ENGINE] Set operacional restaurado com sucesso a partir de sessionStorage.');
+    return true;
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao restaurar sessão de set:', err);
+    return false;
+  }
+}
+window.saveLiveSetSession = saveLiveSetSession;
+window.restoreLiveSetSession = restoreLiveSetSession;
+
 
 // Theater / Expanded Modal Elements
 const theaterModal = document.getElementById('theater-modal');
@@ -18865,22 +19162,30 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   const srcH = source.videoHeight || source.naturalHeight || targetH;
   if (!srcW || !srcH) return null;
 
-  // 1. MIRROR WINGS MODE: broadcast standard for vertical 9:16 videos on 16:9 screens
-  if (mode === 'wings' && srcH > srcW && (!rotation || rotation === 0)) {
-    // Background: zoomed and blurred to fill full 16:9 canvas
+  // 1. MIRROR WINGS MODE: broadcast standard for mismatched aspect ratios (vertical on horizontal & vice-versa)
+  const isRatioMismatch = Math.abs((srcW / srcH) - (targetW / targetH)) > 0.05;
+  if (mode === 'wings' && isRatioMismatch && (!rotation || rotation === 0)) {
+    // Background: zoomed and blurred to fill full target canvas
     ctx.save();
-    ctx.filter = 'blur(18px) brightness(35%) saturate(130%)';
+    ctx.filter = 'blur(20px) brightness(35%) saturate(130%)';
     const bgScale = Math.max(targetW / srcW, targetH / srcH);
     const bgW = srcW * bgScale;
     const bgH = srcH * bgScale;
     ctx.drawImage(source, (targetW - bgW) / 2, (targetH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: crisp centered 9:16 with soft drop shadow & transform
+    // Foreground: crisp centered aspect-fit with soft drop shadow & transform (ZERO CROP)
     const fgRatio = srcW / srcH;
-    const fgH = targetH;
-    const fgW = targetH * fgRatio;
+    let fgW, fgH;
+    if (fgRatio > targetW / targetH) {
+      fgW = targetW;
+      fgH = targetW / fgRatio;
+    } else {
+      fgH = targetH;
+      fgW = targetH * fgRatio;
+    }
     const fgX = (targetW - fgW) / 2;
+    const fgY = (targetH - fgH) / 2;
     ctx.save();
     ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
     if (scale && scale !== 1.0) ctx.scale(scale, scale);
@@ -18890,7 +19195,7 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.shadowBlur = 20;
     ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
     ctx.restore();
-    return { x: fgX, y: 0, w: fgW, h: fgH };
+    return { x: fgX, y: fgY, w: fgW, h: fgH };
   }
 
   // 2. ROTATION, SCALE, TRANSLATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
@@ -20079,39 +20384,40 @@ window.selectSpecificMacroPreset = selectSpecificMacroPreset;
 
 function adaptAutopilotToForcedState(state, specificPresetIdx = null) {
   const targetIdx = specificPresetIdx !== null ? specificPresetIdx : (appState.macro_preset_indices[state] || 0);
+  // Aplica estritamente a estética, cinemática, máscaras e FX do macro preset sobre o vídeo atual em reprodução
   applyMacroPreset(state, targetIdx, true);
-
-  const totalBars = appState.phrase?.total_bars || 1;
 
   if (state === 'DROP') {
     appState.drop_likelihood = 0.98;
     appState.buildup_likelihood = 0.20;
 
-    if (appState.autopilot_rules && appState.autopilot_rules.auto_drop_take) {
-      appState.last_take_total_bar = totalBars;
-      if (appState.layers.layer4) {
-        appState.layers.layer4.active = true;
-        appState.layers.layer4.opacity = 0.90;
-      }
-      // Immediate impact transition
-      startAutoTransition(0.3);
+    // No DROP: Ativa Accent Climax (Layer 4 Difference) para impacto visual imediato sobre a textura do vídeo atual
+    if (appState.layers.layer4 && !appState.layers.layer4.locked) {
+      appState.layers.layer4.active = true;
+      appState.layers.layer4.opacity = 0.85;
+    }
+    // Efeito de impacto cênico no Program Monitor sem cortar o vídeo
+    const prgBox = document.querySelector('.program-box') || document.getElementById('program-screen-box');
+    if (prgBox) {
+      prgBox.classList.remove('take-flash');
+      void prgBox.offsetWidth;
+      prgBox.classList.add('take-flash');
+      setTimeout(() => prgBox.classList.remove('take-flash'), 400);
     }
   } else if (state === 'BUILD') {
     appState.buildup_likelihood = 0.88;
     appState.drop_likelihood = 0.15;
+    // Prepara e arma o próximo candidato adequado no Deck B (Preview Cue), sem cortar o vídeo atual de L0
     advanceSmartQueue('DROP');
   } else if (state === 'BREAK') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(3.5);
   } else if (state === 'GROOVE') {
     appState.buildup_likelihood = 0.25;
     appState.drop_likelihood = 0.10;
-    startAutoTransition(1.5);
   } else if (state === 'INTRO') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(2.5);
   }
 }
 window.adaptAutopilotToForcedState = adaptAutopilotToForcedState;
@@ -20346,8 +20652,85 @@ function startProgramRotationDissolve(oldDeg, newDeg) {
 }
 
 // ============================================================================
-// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS
+// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS (WORLD-CLASS SEAMLESS BOUNCE)
 // ============================================================================
+const layerPingPongStates = {
+  layer0: { direction: 1 },
+  layer3: { direction: 1 },
+  layer5: { direction: 1 }
+};
+
+function processLayerPingPong(player, layerId, dt) {
+  if (!player || !player.duration || isNaN(player.duration) || player.duration <= 0.2) return;
+  const layer = appState.layers[layerId];
+  if (!layer) return;
+
+  const isPingPong = Boolean(layer.pingPong);
+  const isPaused = Boolean(layer.paused);
+  const speed = Math.max(0.1, Number(layer.speed || 1.0));
+
+  if (isPaused) {
+    if (!player.paused) player.pause();
+    return;
+  }
+
+  if (isPingPong) {
+    // Modo Ping-Pong: desativa loop padrão para impedir o corte brusco para o frame 0
+    if (player.loop) player.loop = false;
+
+    let pp = layerPingPongStates[layerId];
+    if (!pp) {
+      pp = { direction: 1 };
+      layerPingPongStates[layerId] = pp;
+    }
+
+    const duration = player.duration;
+    const curTime = player.currentTime;
+
+    if (pp.direction === 1) {
+      // 1. Fase Ida: toca para frente na velocidade configurada
+      if (Math.abs(player.playbackRate - speed) > 0.01) {
+        try { player.playbackRate = speed; } catch (e) {}
+      }
+      if (player.paused && !player.ended && player.readyState >= 2) {
+        player.play().catch(() => {});
+      }
+
+      // Ao alcançar o final do vídeo (ou disparar evento ended): inverte para rebobinar suavemente
+      if (curTime >= duration - 0.10 || player.ended) {
+        pp.direction = -1;
+        player.pause();
+      }
+    } else {
+      // 2. Fase Volta: rebobina suavemente a 60 FPS decrementando currentTime
+      if (!player.paused) player.pause();
+      const step = Math.max(0.005, dt * speed);
+      const newTime = Math.max(0, curTime - step);
+      player.currentTime = newTime;
+
+      // Ao alcançar o início do clipe: inverte de volta para frente sem corte brusco
+      if (newTime <= 0.08) {
+        pp.direction = 1;
+        player.currentTime = 0.05;
+        player.play().catch(() => {});
+      }
+    }
+  } else {
+    // Loop Contínuo Normal (Forward 360°)
+    if (!player.loop) player.loop = true;
+    if (Math.abs(player.playbackRate - speed) > 0.01) {
+      try { player.playbackRate = speed; } catch (e) {}
+    }
+    if (player.paused && player.readyState >= 2) {
+      player.play().catch(() => {});
+    }
+    if (layerPingPongStates[layerId]) {
+      layerPingPongStates[layerId].direction = 1;
+    }
+  }
+}
+window.processLayerPingPong = processLayerPingPong;
+
 function toggleLayerPlayback(layerId) {
   if (appState.layers[layerId]) {
     const isPaused = appState.layers[layerId].paused || false;
@@ -20362,16 +20745,48 @@ function toggleLayerPingPong(layerId) {
     const isPingPong = appState.layers[layerId].pingPong || false;
     appState.layers[layerId].pingPong = !isPingPong;
     
-    const btn = document.getElementById(layerId === 'layer0' ? 'l0-pingpong' : 'l3-pingpong');
+    const lprefix = layerId.replace('layer', 'l');
+    const btn = document.getElementById(`${lprefix}-pingpong`);
     if (btn) btn.classList.toggle('active', !isPingPong);
     
+    showMacroToast(appState.layers[layerId].pingPong ? `⮂ Ping-Pong Ativo em ${layerId.toUpperCase()} (Ida e Volta Suave)` : `🔁 Loop Contínuo em ${layerId.toUpperCase()}`);
+    
     sendAction('set_layer_pingpong', { layer: layerId, enabled: !isPingPong });
+    updateUI();
   }
 }
+window.toggleLayerPingPong = toggleLayerPingPong;
+
+function updateMixerMattesUI() {
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lKey => {
+    const lprefix = lKey.replace('layer', 'l');
+    const layer = appState.layers[lKey];
+    if (!layer) return;
+
+    const lbl = document.getElementById(`lbl-${lprefix}-matte-name`);
+    const capsule = document.getElementById(`ch-matte-slot-${lKey}`);
+    const btnInv = document.getElementById(`${lprefix}-matte-inv`);
+    const isInv = Boolean(layer.matte_invert);
+
+    if (btnInv) btnInv.classList.toggle('active', isInv);
+
+    const mattePath = layer.matte;
+    if (mattePath && mattePath !== 'none') {
+      const foundMatte = (allMattes || []).find(m => m.path === mattePath || m.filename === mattePath.split('/').pop());
+      const name = foundMatte ? foundMatte.name : mattePath.split('/').pop().replace('.png', '').replace(/_/g, ' ');
+      if (lbl) lbl.textContent = (isInv ? '⚡ ' : '🔒 ') + name.toUpperCase();
+      if (capsule) capsule.classList.add('has-matte');
+    } else {
+      if (lbl) lbl.textContent = 'PASSTHROUGH (FULL FRAME)';
+      if (capsule) capsule.classList.remove('has-matte');
+    }
+  });
+}
+window.updateMixerMattesUI = updateMixerMattesUI;
 
 function setLayerSpeed(layerId, speedVal) {
   const speedNormalized = speedVal / 100.0;
-  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : 'lbl-l3-speed');
+  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : (layerId === 'layer5' ? 'lbl-l5-speed' : 'lbl-l3-speed'));
   if (lbl) lbl.textContent = speedNormalized.toFixed(1) + 'x';
   
   if (appState.layers[layerId]) {
@@ -20563,6 +20978,8 @@ function openMatteLibraryForLayer(layerId) {
   switchTab('tab-mattes');
   switchMatteSub('masks');
   setMatteTargetLayer(layerId);
+  const lName = (layerId === 'master') ? 'MASTER (GLOBAL)' : layerId.toUpperCase();
+  showMacroToast(`🎭 Foco em ${lName}: Escolha uma das 29 máscaras do catálogo abaixo`);
 }
 window.openMatteLibraryForLayer = openMatteLibraryForLayer;
 
@@ -20633,38 +21050,79 @@ function updateGeometryUI() {
   });
 }
 
-function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
-  if (!srcCanvas) return;
-  if (!isVert) {
-    ctx.drawImage(srcCanvas, 0, 0, pw, ph);
-  } else {
-    // Upright portrait 9:16 aspect fill (no side rotation, straight preview!)
-    const srcW = srcCanvas.width;
-    const srcH = srcCanvas.height;
-    const targetRatio = pw / ph; // 360/640 = 0.5625
-    const srcRatio = srcW / srcH; // 1280/720 = 1.7778
-    let sx = 0, sy = 0, sWidth = srcW, sHeight = srcH;
-    if (srcRatio > targetRatio) {
-      sWidth = srcH * targetRatio;
-      sx = (srcW - sWidth) / 2;
-    } else {
-      sHeight = srcW / targetRatio;
-      sy = (srcH - sHeight) / 2;
-    }
-    ctx.drawImage(srcCanvas, sx, sy, sWidth, sHeight, 0, 0, pw, ph);
+function getAspectRatioDimensions(ratioStr) {
+  switch (ratioStr) {
+    case '9:16':
+      return { w: 360, h: 640, isVertical: true, ratio: 9 / 16, label: '9:16 VERTICAL' };
+    case '1:1':
+      return { w: 480, h: 480, isVertical: false, ratio: 1 / 1, label: '1:1 QUADRADO' };
+    case '4:5':
+      return { w: 384, h: 480, isVertical: true, ratio: 4 / 5, label: '4:5 SOCIAL' };
+    case '4:3':
+      return { w: 480, h: 360, isVertical: false, ratio: 4 / 3, label: '4:3 RETRÔ' };
+    case '21:9':
+      return { w: 640, h: 274, isVertical: false, ratio: 21 / 9, label: '21:9 ULTRAWIDE' };
+    case '16:9':
+    default:
+      return { w: 640, h: 360, isVertical: false, ratio: 16 / 9, label: '16:9 HORIZONTAL' };
   }
+}
+window.getAspectRatioDimensions = getAspectRatioDimensions;
+
+function setAspectRatio(ratio) {
+  const cfg = getAspectRatioDimensions(ratio);
+  appState.aspectRatio = ratio;
+  appState.vertical_mode = cfg.isVertical;
+  appState.vertical_projection = cfg.isVertical;
+
+  const canvases = [busCanvasA, busCanvasB, offscreenA, offscreenB, sobelCanvas, handoverCanvas, rotSnapshotCanvas];
+  canvases.forEach(c => {
+    if (c) {
+      c.width = cfg.w;
+      c.height = cfg.h;
+    }
+  });
+
+  if (prgCanvas) {
+    prgCanvas.width = cfg.w;
+    prgCanvas.height = cfg.h;
+  }
+  if (prvCanvas) {
+    prvCanvas.width = cfg.w;
+    prvCanvas.height = cfg.h;
+  }
+
+  updateUI();
+  if (typeof renderStudioInspector === 'function') renderStudioInspector();
+  console.log(`[PENUMBRA ENGINE] Aspect Ratio Master alterado para: ${cfg.label} (${cfg.w}×${cfg.h})`);
+}
+window.setAspectRatio = setAspectRatio;
+
+function setDefaultFitMode(mode) {
+  appState.aspect_fit_mode = mode;
+  appState.fit_mode = mode;
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lid => {
+    if (appState.layers && appState.layers[lid]) appState.layers[lid].fit_mode = mode;
+  });
+  updateUI();
+  console.log(`[PENUMBRA ENGINE] Modo de Enquadramento Padrão definido para: ${mode.toUpperCase()}`);
+}
+window.setDefaultFitMode = setDefaultFitMode;
+
+function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
+  if (!srcCanvas || !ctx) return;
+  // Transferência direta 1:1 já que os barramentos operam nativamente na geometria do Program
+  ctx.drawImage(srcCanvas, 0, 0, pw, ph);
 }
 
 function toggleVerticalMode(forceValue = null) {
+  let targetVal;
   if (forceValue !== null) {
-    appState.vertical_mode = Boolean(forceValue);
+    targetVal = Boolean(forceValue);
   } else {
-    appState.vertical_mode = !appState.vertical_mode;
+    targetVal = !(appState.aspectRatio === '9:16' || appState.vertical_mode);
   }
-  appState.vertical_projection = appState.vertical_mode;
-  
-  updateUI();
-  console.log(`[PENUMBRA ENGINE] Modo Vertical (9:16) ${appState.vertical_mode ? 'ATIVADO' : 'DESATIVADO'}`);
+  setAspectRatio(targetVal ? '9:16' : '16:9');
 }
 window.toggleVerticalMode = toggleVerticalMode;
 
@@ -20675,6 +21133,7 @@ function toggleProjectorCompensation(checked = null) {
     appState.projector_compensation = !appState.projector_compensation;
   }
   updateUI();
+  console.log(`[PENUMBRA ENGINE] Compensação de Saída de Projetor 90°: ${appState.projector_compensation ? 'LIGADO (ROTACIONADO 90°)' : 'DESLIGADO (NATIVO RETO NO CENTRO)'}`);
 }
 window.toggleProjectorCompensation = toggleProjectorCompensation;
 
@@ -20717,10 +21176,51 @@ function toggleNetworkOutput(isOn) {
 }
 window.toggleNetworkOutput = toggleNetworkOutput;
 
+let lastEngineTick = performance.now();
+let keepAliveWorkerInstance = null;
+
+function initBackgroundKeepAlive() {
+  if (keepAliveWorkerInstance) return;
+  try {
+    const workerScript = `
+      var timer = null;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(function() {
+            self.postMessage('tick');
+          }, 1000 / 60);
+        } else if (e.data === 'stop') {
+          if (timer) clearInterval(timer);
+          timer = null;
+        }
+      };
+    `;
+    const blob = new Blob([workerScript], { type: 'application/javascript' });
+    keepAliveWorkerInstance = new Worker(URL.createObjectURL(blob));
+    keepAliveWorkerInstance.onmessage = function() {
+      const now = performance.now();
+      // Se a aba do navegador perdeu o foco, ficou oculta ou o RAF foi suspenso pelo macOS:
+      if (document.hidden || !document.hasFocus() || (now - lastEngineTick > 25)) {
+        renderVisuals(now);
+      }
+    };
+    keepAliveWorkerInstance.postMessage('start');
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
+    console.log('[PENUMBRA ENGINE] Background Anti-Freeze Worker ativo (60 FPS contínuo no Mac).');
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao inicializar keep-alive worker:', err);
+  }
+}
+window.initBackgroundKeepAlive = initBackgroundKeepAlive;
+
 function renderVisuals(time) {
   const targetFps = appState.fps_limit || 60;
   const fpsInterval = 1000 / targetFps;
   const now = time || performance.now();
+  lastEngineTick = now;
   
   if (!lastFrameTime) lastFrameTime = now;
   const elapsed = now - lastFrameTime;
@@ -20825,8 +21325,36 @@ function renderVisuals(time) {
   if (prgPlayhead) prgPlayhead.style.width = `${clipLoopProgress}%`;
   if (prvPlayhead) prvPlayhead.style.width = `${((clipLoopProgress + 40) % 100)}%`;
 
+  // Dynamic Bus Sizing according to Master Aspect Ratio
+  const aspectConfig = getAspectRatioDimensions(appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9'));
+  const targetBusW = aspectConfig.w;
+  const targetBusH = aspectConfig.h;
+  const isVert = Boolean(aspectConfig.isVertical || appState.vertical_mode || appState.vertical_projection);
+
+  if (busCanvasA.width !== targetBusW || busCanvasA.height !== targetBusH) {
+    busCanvasA.width = targetBusW;
+    busCanvasA.height = targetBusH;
+    busCanvasB.width = targetBusW;
+    busCanvasB.height = targetBusH;
+    offscreenA.width = targetBusW;
+    offscreenA.height = targetBusH;
+    offscreenB.width = targetBusW;
+    offscreenB.height = targetBusH;
+    sobelCanvas.width = targetBusW;
+    sobelCanvas.height = targetBusH;
+    handoverCanvas.width = targetBusW;
+    handoverCanvas.height = targetBusH;
+    rotSnapshotCanvas.width = targetBusW;
+    rotSnapshotCanvas.height = targetBusH;
+  }
+
   const w = busCanvasA.width;
   const h = busCanvasA.height;
+
+  // Process Real-Time Playback Dynamics & Ping-Pong Loops (Smooth 60 FPS Bounce)
+  if (playerL0) processLayerPingPong(playerL0, 'layer0', dt);
+  if (playerL3) processLayerPingPong(playerL3, 'layer3', dt);
+  if (playerL5) processLayerPingPong(playerL5, 'layer5', dt);
 
   // --------------------------------------------------------------------------
   // 1. RENDER DECK A INTO busCanvasA (MASTER BUS A)
@@ -20920,20 +21448,26 @@ function renderVisuals(time) {
       busCtxA.restore();
     }
 
-    // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
-    if (baseSource && appState.layers.layer2.active) {
+    // LAYER 2: EDGE TRACE (Sobel Contours / Find Edges) - Desaparece no zero e blend profissional
+    const l2 = appState.layers.layer2;
+    const l2Opacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+    if (baseSource && l2 && l2.active && l2Opacity > 0.005) {
       const isL2SoloA = (!appState.layers.layer0.active || (appState.layers.layer0.opacity !== undefined && appState.layers.layer0.opacity <= 0.01)) &&
                         (!appState.layers.layer1.active || l1AOpacity <= 0.01);
-      const l2 = appState.layers.layer2;
+      const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+      const finalL2Alpha = isL2SoloA ? l2Opacity : Math.min(1.0, l2Opacity * edgeMix * (0.85 + air * 0.3));
+
+      const tf0 = {
+        rotation: totalRot0,
+        scale: totalScale0,
+        pos_x: totalPosX0,
+        pos_y: totalPosY0,
+        flip_h: clipTf0.flip_h,
+        flip_v: clipTf0.flip_v
+      };
+
       busCtxA.save();
-      if (isL2SoloA) {
-        busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-      } else {
-        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-        busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-      }
+      drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloA, finalL2Alpha, tf0, l2.blend || 'Screen', l2.matte, l2.matte_invert);
       busCtxA.restore();
     }
 
@@ -20956,10 +21490,10 @@ function renderVisuals(time) {
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
-      // Clamped Deck B Base Opacity: Deck B represents the incoming Base Video for transition.
-      // It must strictly adhere to the master base video opacity (layer0.opacity) to prevent flashes!
-      const masterBaseOpacity = (appState.layers.layer0 && appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
-      const deckBOpacity = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? Math.min(masterBaseOpacity, appState.layers.layer3.opacity) : masterBaseOpacity;
+      // Deck B representa a mídia que está sendo pré-visualizada (CUE) e pronta para transição.
+      // No monitor Preview/CUE, o operador deve sempre ver o vídeo base com nitidez.
+      const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+      const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
 
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
@@ -20989,17 +21523,15 @@ function renderVisuals(time) {
           offCtxB.restore();
         }
 
-        // Only draw base video to Bus B if opacity is greater than 0.5% (avoids flash when base is 0)
-        if (deckBOpacity > 0.005) {
-          busCtxB.save();
-          busCtxB.filter = getTonalFilterString(appState.tonal);
-          busCtxB.globalAlpha = deckBOpacity;
-          busCtxB.drawImage(offscreenB, 0, 0, w, h);
-          busCtxB.restore();
-        }
+        // Always draw base video to Bus B
+        busCtxB.save();
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = deckBOpacity;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
+        busCtxB.restore();
 
         // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         if (appState.layers.layer1.active && l1BOpacity > 0.005) {
           busCtxB.save();
           busCtxB.translate(w/2, h/2);
@@ -21014,21 +21546,27 @@ function renderVisuals(time) {
         }
       }
 
-      // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
-      if (appState.layers.layer2.active) {
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+      // LAYER 2 on Bus B: EDGE TRACE SOBEL
+      const l2 = appState.layers.layer2;
+      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.0;
+      if (queuedSource && l2 && l2.active && l2BOpacity > 0.005) {
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
                           (!appState.layers.layer1.active || l1BOpacity <= 0.01);
-        const l2 = appState.layers.layer2;
+        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+        const finalL2AlphaB = isL2SoloB ? l2BOpacity : Math.min(1.0, l2BOpacity * edgeMix * (0.85 + air * 0.3));
+
+        const tf3 = {
+          rotation: totalRot3,
+          scale: totalScale3,
+          pos_x: totalPosX3,
+          pos_y: totalPosY3,
+          flip_h: clipTf3.flip_h,
+          flip_v: clipTf3.flip_v
+        };
+
         busCtxB.save();
-        if (isL2SoloB) {
-          busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-        } else {
-          const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-          busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-        }
+        drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloB, finalL2AlphaB, tf3, l2.blend || 'Screen', l2.matte, l2.matte_invert);
         busCtxB.restore();
       }
 
@@ -21043,6 +21581,10 @@ function renderVisuals(time) {
   // 3. RENDER PREVIEW CANVAS (Shows Bus B / Cue in real time)
   // --------------------------------------------------------------------------
   if (prvCtx && prvCanvas) {
+    if (prvCanvas.width !== targetBusW || prvCanvas.height !== targetBusH) {
+      prvCanvas.width = targetBusW;
+      prvCanvas.height = targetBusH;
+    }
     prvCtx.fillStyle = '#050608';
     prvCtx.fillRect(0, 0, prvCanvas.width, prvCanvas.height);
     prvCtx.drawImage(busCanvasB, 0, 0, prvCanvas.width, prvCanvas.height);
@@ -21065,12 +21607,9 @@ function renderVisuals(time) {
   // 4. RENDER PROGRAM CANVAS (EQUAL-POWER DISSOLVE MASTER)
   // --------------------------------------------------------------------------
   if (prgCtx && prgCanvas) {
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
-    const targetPw = isVert ? 360 : 640;
-    const targetPh = isVert ? 640 : 360;
-    if (prgCanvas.width !== targetPw || prgCanvas.height !== targetPh) {
-      prgCanvas.width = targetPw;
-      prgCanvas.height = targetPh;
+    if (prgCanvas.width !== targetBusW || prgCanvas.height !== targetBusH) {
+      prgCanvas.width = targetBusW;
+      prgCanvas.height = targetBusH;
     }
 
     const pw = prgCanvas.width;
@@ -21270,47 +21809,86 @@ function renderVisuals(time) {
   requestAnimationFrame(renderVisuals);
 }
 
-// Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
-function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
-  if (!baseSource) return;
+// Hardware-Accelerated High-Definition Edge Trace (Find Edges / Sobel Contours)
+function drawSobelContours(ctx, source, w, h, t, threshold, isSolo, alpha = 1.0, transform = null, blend = 'Screen', matteId = null, matteInv = false) {
+  if (!source || alpha <= 0.005) return;
   if (sobelCanvas.width !== w || sobelCanvas.height !== h) {
     sobelCanvas.width = w;
     sobelCanvas.height = h;
   }
-  sobelCtx.clearRect(0, 0, w, h);
-  sobelCtx.save();
-
+  
   const l2 = (appState.layers && appState.layers.layer2) || {};
   const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
-  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.8);
-  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
-  const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
+  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.5);
+  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || 0.28);
+  
+  // Extrai parâmetros de transformação para alinhar perfeitamente com a cena em movimento
+  const rot = transform ? (transform.rotation || 0) : (l2.rotation || 0);
+  const scale = transform ? (transform.scale || 1.0) : (l2.scale || 1.0);
+  const posX = transform ? (transform.pos_x || 0) : (l2.pos_x || 0);
+  const posY = transform ? (transform.pos_y || 0) : (l2.pos_y || 0);
+  const flipH = transform ? Boolean(transform.flip_h) : false;
+  const flipV = transform ? Boolean(transform.flip_v) : false;
+  const fitMode = l2.fit_mode || appState.aspect_fit_mode || 'fit';
 
-  // 1. Grayscale de alto contraste no buffer dedicado do Sobel
-  sobelCtx.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(sobelCtx, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+  // 1. Renderiza a fonte em grayscale de alto contraste no sobelCanvas
+  sobelCtx.clearRect(0, 0, w, h);
+  sobelCtx.save();
+  const contrastBoost = Math.round(180 + (1.0 - thresh) * 200);
+  sobelCtx.filter = `grayscale(100%) contrast(${contrastBoost}%)`;
+  drawFittedImage(sobelCtx, source, w, h, fitMode, rot, scale, posX, posY, flipH, flipV);
 
-  // 2. Extração de contornos por gradiente espacial de diferença
+  // 2. Extração espacial de diferença (bordas nítidas)
   sobelCtx.globalCompositeOperation = 'difference';
   sobelCtx.drawImage(sobelCanvas, edgeWidth, edgeWidth);
   sobelCtx.restore();
 
-  // 3. Elevação de luminância e renderização com brancos vívidos
+  // 3. Gate de Ruído / Corte de Nível Preto Puro:
+  // Garante que o fundo seja estritamente #000000 e NUNCA gere névoa leitosa sobre outras camadas!
+  sobelCtx.save();
+  sobelCtx.globalCompositeOperation = 'color-dodge';
+  sobelCtx.filter = `contrast(${200 + Math.round(thresh * 100)}%) brightness(${Math.round(lumBoost * 110)}%)`;
+  sobelCtx.drawImage(sobelCanvas, 0, 0);
+  sobelCtx.restore();
+
+  // 4. Aplicação de Máscara Matte (se configurada para L2)
+  if (matteId && matteId !== 'none') {
+    const matteImg = getMatteImage(matteId, matteInv);
+    if (matteImg) {
+      sobelCtx.save();
+      sobelCtx.globalCompositeOperation = 'destination-in';
+      drawDeformedMatte(sobelCtx, matteImg, w, h, t, appState.matte?.deform, matteInv, matteId);
+      sobelCtx.restore();
+    }
+  }
+
+  // 5. Composição no barramento de destino
   ctx.save();
+  const clampedAlpha = Math.max(0.0, Math.min(1.0, alpha));
+  ctx.globalAlpha = clampedAlpha;
+  
   if (isSolo) {
-    // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
+    // MODO SOLO: Fundo negro puro, contornos brancos destacados e chalk neon suave
     ctx.globalCompositeOperation = 'source-over';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
-    // Realce luminoso para chalk/neon orgânico sem clipping digital
+    // Realce luminoso orgânico proporcional ao fader (desaparece no zero!)
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.65;
+    ctx.globalAlpha = clampedAlpha * 0.45;
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   } else {
-    // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
-    const blendMode = (l2.blend || 'Screen').toLowerCase();
-    ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
+    // MODO COMPOSTO: Mistura profissional sem lavar os tons escuros da camada base
+    const b = (blend || l2.blend || 'Screen').toLowerCase();
+    if (b === 'lighten') {
+      ctx.globalCompositeOperation = 'lighten';
+    } else if (b === 'overlay') {
+      ctx.globalCompositeOperation = 'overlay';
+    } else if (b === 'difference') {
+      ctx.globalCompositeOperation = 'difference';
+    } else if (b === 'source-over' || b === 'cutout') {
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      ctx.globalCompositeOperation = 'screen';
+    }
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   }
   ctx.restore();
@@ -23913,6 +24491,7 @@ function executeTakeCommit() {
   updateUI();
   updateGeometryUI();
   syncVideoSources();
+  if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
 function executeHardCut() {
@@ -23959,14 +24538,29 @@ function renderQueueCards() {
   renderProTimeline();
 }
 
+let cachedTimelineRect = null;
+let lastTimelineRenderTick = 0;
+window.addEventListener('resize', () => { cachedTimelineRect = null; });
+window.invalidateTimelineRect = () => { cachedTimelineRect = null; };
+
 function renderProTimeline() {
   const canvas = document.getElementById('timeline-canvas');
   if (!canvas) return;
+
+  const now = performance.now();
+  // Throttle timeline arranger to ~30 FPS so master video compositing has full 60 FPS priority
+  if (now - lastTimelineRenderTick < 32) return;
+  lastTimelineRenderTick = now;
+
   const ctx = canvas.getContext('2d');
   
-  // Set real canvas resolution based on device pixel ratio to ensure razor-sharp rendering
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return;
+  // Use cached bounding rect to eliminate synchronous getBoundingClientRect layout thrashing at 60 FPS
+  if (!cachedTimelineRect || cachedTimelineRect.width <= 0) {
+    cachedTimelineRect = canvas.getBoundingClientRect();
+  }
+  const rect = cachedTimelineRect;
+  if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
   const dpr = window.devicePixelRatio || 1;
   const targetW = Math.floor(rect.width * dpr);
   const targetH = Math.floor(rect.height * dpr);
@@ -24639,6 +25233,7 @@ function syncActiveMatteToAppState(mattePath) {
 window.syncActiveMatteToAppState = syncActiveMatteToAppState;
 
 function assignMatteToLayer(mattePath, layerId) {
+  if (!layerId) layerId = appState.matte_target_layer || 'layer3';
   if (layerId === 'master') {
     appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
     sendAction('set_master_matte', { matte: appState.master_matte });
@@ -24654,8 +25249,9 @@ function assignMatteToLayer(mattePath, layerId) {
   renderMattesCards();
   renderStudioInspector();
   updateUI();
+  if (typeof updateMixerMattesUI === 'function') updateMixerMattesUI();
   if (typeof showMacroToast === 'function') {
-    const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
+    const lName = layerId === 'master' ? 'MASTER' : (layerId ? layerId.replace('layer', 'L').toUpperCase() : 'CAMADA');
     showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
   }
 }
@@ -24896,7 +25492,7 @@ function renderMattesCards() {
     card.querySelectorAll('.btn-route').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const targetLayer = btn.dataset.layer;
+        const targetLayer = btn.dataset.layer || appState.matte_target_layer || 'layer3';
         assignMatteToLayer(matte.path, targetLayer);
       });
     });
@@ -24924,6 +25520,15 @@ function updateUI() {
   refreshMacroStateBadges();
   updateMasterLockedMatteUI();
   updateTimelineTransformInspector();
+  updateMixerMattesUI();
+
+  // Sync ping-pong loop button states
+  ['layer0', 'layer3', 'layer5'].forEach(lKey => {
+    const pfx = lKey.replace('layer', 'l');
+    const btn = document.getElementById(`${pfx}-pingpong`);
+    if (btn) btn.classList.toggle('active', Boolean(appState.layers[lKey]?.pingPong));
+  });
+
   const badgePreset = document.getElementById('badge-macro-preset-name');
   if (badgePreset && appState.macro_state) {
     const p = appState.active_macro_preset || getActiveMacroPreset(appState.macro_state);
@@ -24977,22 +25582,67 @@ function updateUI() {
     const fG = document.getElementById('fader-gamma');
     if (fG && document.activeElement !== fG) fG.value = Math.round(g * 100);
 
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
+    const currentAspect = appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9');
+    const isVert = (currentAspect === '9:16' || currentAspect === '4:5' || Boolean(appState.vertical_mode || appState.vertical_projection));
 
-    // Sync Program Monitor Box styling and badge
+    // Sync Program Monitor Box styling, aspect ratio attribute and badge
     const prgScreenBox = document.getElementById('program-screen-box');
-    if (prgScreenBox) prgScreenBox.classList.toggle('mode-vertical', isVert);
+    if (prgScreenBox) {
+      prgScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prgScreenBox.classList.toggle('mode-vertical', isVert);
+    }
+    const prvScreenBox = document.getElementById('preview-screen-box');
+    if (prvScreenBox) {
+      prvScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prvScreenBox.classList.toggle('mode-vertical', isVert);
+    }
 
     const badgePrg = document.getElementById('badge-prg-status');
-    if (badgePrg) badgePrg.textContent = isVert ? 'PROGRAM (MODO VERTICAL 9:16)' : 'PROGRAM (AO VIVO)';
+    if (badgePrg) {
+      badgePrg.textContent = isVert ? `PROGRAM (MODO VERTICAL ${currentAspect})` : `PROGRAM (${currentAspect} AO VIVO)`;
+    }
 
     const btnPrgVert = document.getElementById('btn-prg-toggle-vertical');
     if (btnPrgVert) btnPrgVert.classList.toggle('active', isVert);
 
-    // Sync Settings Modal controls
+    // Sync Master Aspect Ratio buttons in Settings
+    const aspectKeys = ['16:9', '9:16', '1:1', '4:5', '4:3', '21:9'];
+    aspectKeys.forEach(arKey => {
+      const btnId = 'btn-cfg-aspect-' + arKey.replace(':', '-');
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.toggle('active', currentAspect === arKey);
+    });
+
+    const lblCfgMasterAspect = document.getElementById('lbl-cfg-master-aspect-badge');
+    if (lblCfgMasterAspect) {
+      lblCfgMasterAspect.textContent = `${currentAspect} ${currentAspect === '9:16' ? '(VERTICAL)' : (currentAspect === '16:9' ? '(HORIZONTAL)' : '')}`;
+      lblCfgMasterAspect.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge text-cyan';
+    }
+
+    // Sync Default Fit Mode buttons
+    const curFit = appState.aspect_fit_mode || 'fit';
+    ['fit', 'fill', 'wings'].forEach(m => {
+      const b = document.getElementById('btn-cfg-fit-mode-' + m);
+      if (b) b.classList.toggle('active', curFit === m);
+    });
+
+    // Sync Projector Routing / Compensation buttons & badge
+    const isProjComp = Boolean(appState.projector_compensation);
+    const btnStraight = document.getElementById('btn-cfg-proj-straight');
+    const btnRotated = document.getElementById('btn-cfg-proj-rotated');
+    if (btnStraight) btnStraight.classList.toggle('active', !isProjComp);
+    if (btnRotated) btnRotated.classList.toggle('active', isProjComp);
+
+    const lblProjBadge = document.getElementById('lbl-cfg-proj-comp-badge');
+    if (lblProjBadge) {
+      lblProjBadge.textContent = isProjComp ? 'COMPENSAÇÃO 90° CCW (PROJETOR FÍSICO)' : 'NATIVO HORIZONTAL (CENTRO)';
+      lblProjBadge.className = isProjComp ? 'cfg-badge text-amber' : 'cfg-badge text-cyan';
+    }
+
+    // Legacy fallback bindings
     const lblCfgVert = document.getElementById('lbl-cfg-vert-status');
     if (lblCfgVert) {
-      lblCfgVert.textContent = isVert ? 'MODO VERTICAL 9:16 (ATIVO)' : 'HORIZONTAL 16:9';
+      lblCfgVert.textContent = isVert ? `MODO VERTICAL ${currentAspect} (ATIVO)` : 'HORIZONTAL 16:9';
       lblCfgVert.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge';
     }
 
@@ -25002,7 +25652,7 @@ function updateUI() {
     if (btnCfgModeVert) btnCfgModeVert.classList.toggle('active', isVert);
 
     const chkProjComp = document.getElementById('chk-cfg-proj-comp');
-    if (chkProjComp) chkProjComp.checked = Boolean(appState.projector_compensation);
+    if (chkProjComp) chkProjComp.checked = isProjComp;
 
     const btnVert = document.getElementById('btn-toggle-vertical-proj');
     if (btnVert) {
@@ -28540,7 +29190,7 @@ function setupEvents() {
   });
 
   // Layer Opacity Sliders
-  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity'].forEach(id => {
+  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity', 'l5-opacity'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', (e) => {
@@ -28553,7 +29203,7 @@ function setupEvents() {
   });
 
   // Layer Blend Dropdowns
-  ['l1-blend', 'l3-blend', 'l4-blend'].forEach(id => {
+  ['l1-blend', 'l3-blend', 'l4-blend', 'l5-blend'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', (e) => {
@@ -28980,10 +29630,16 @@ window.openStudioLauncher = openStudioLauncher;
 function closeStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');
   if (!nexusModal) return;
+  if (document.activeElement && nexusModal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   nexusModal.classList.add('dialog-closing');
   setTimeout(() => {
     try { nexusModal.close(); } catch (e) { nexusModal.removeAttribute('open'); }
     nexusModal.classList.remove('dialog-closing');
+    if (document.activeElement && nexusModal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }, 240);
 }
 window.closeStudioLauncher = closeStudioLauncher;
@@ -29315,13 +29971,22 @@ function bootstrapApp() {
     }
   }
 
-  applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  const hasRestoredLiveSet = typeof restoreLiveSetSession === 'function' ? restoreLiveSetSession() : false;
+  if (!hasRestoredLiveSet) {
+    applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  }
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
   updateFxUI();
+  initBackgroundKeepAlive();
   renderVisuals();
   updateUI();
   updateSourceUI(activeMediaSource);
+
+  // Periodically persist live set state for anti-crash resilience
+  setInterval(() => {
+    if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
+  }, 3500);
 
   window.addEventListener('resize', () => {
     if (typeof renderQueueCards === 'function') renderQueueCards();
@@ -29569,6 +30234,9 @@ function openSettingsModal() {
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.classList.remove('active');
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) {
+    document.activeElement.blur();
+  }
 }
 
 window.openSettingsModal = openSettingsModal;
@@ -29631,15 +30299,28 @@ function rescanMediaWithFeedback() {
 }
 window.rescanMediaWithFeedback = rescanMediaWithFeedback;
 
+let isKeyboardShortcutsInitialized = false;
+
 function initKeyboardShortcuts() {
+  if (isKeyboardShortcutsInitialized) return;
+  isKeyboardShortcutsInitialized = true;
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+    const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
+    // Se o elemento ativo for órfão ou estiver em diálogo/container invisível, desfoca para liberar os atalhos
+    if (isTextInput && activeEl.offsetParent === null && activeEl !== document.body) {
+      activeEl.blur();
+    } else if (isTextInput) {
       if (e.key === 'Escape') {
         activeEl.blur();
+        closeSettingsModal();
+        closeShortcutsModal();
+        closeTheater();
         if (typeof window.toggleMediaIngestDeck === 'function') {
           window.toggleMediaIngestDeck(false);
         }
+        return;
       }
       return;
     }
@@ -29694,8 +30375,11 @@ function initKeyboardShortcuts() {
     }
     if (key === 'b' || key === 'B') {
       e.preventDefault();
-      if (focusedClipId) {
+      if (focusedClipId && !e.shiftKey) {
         routeClipToBus(focusedClipId, 'B');
+      } else {
+        const btnBlackout = document.getElementById('btn-blackout');
+        if (btnBlackout) btnBlackout.click();
       }
       return;
     }
@@ -29737,6 +30421,18 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       const btnBlackout = document.getElementById('btn-blackout');
       if (btnBlackout) btnBlackout.click();
+      return;
+    }
+
+    // , (Comma): Toggle Preferences & System Settings Modal
+    if (key === ',' || e.code === 'Comma') {
+      e.preventDefault();
+      const modal = document.getElementById('settings-modal');
+      if (modal && modal.classList.contains('active')) {
+        closeSettingsModal();
+      } else {
+        openSettingsModal();
+      }
       return;
     }
 
@@ -29794,6 +30490,7 @@ function initKeyboardShortcuts() {
         toggleStudioInspector();
         return;
       }
+      closeSettingsModal();
       closeShortcutsModal();
       closeTheater();
       if (typeof window.toggleMediaIngestDeck === 'function') {
@@ -30177,6 +30874,7 @@ function setDockViewMode(mode) {
   const lblQuick = document.getElementById('lbl-quick-switch-text');
 
   if (mode === 'timeline') {
+    if (typeof window.invalidateTimelineRect === 'function') window.invalidateTimelineRect();
     if (btnModules) btnModules.classList.remove('active');
     if (btnTimeline) btnTimeline.classList.add('active');
     if (viewModules) viewModules.style.display = 'none';
@@ -30875,7 +31573,7 @@ function renderStudioInspector() {
             <span class="insp-val-disp">${layer.blend || 'Normal'}</span>
           </div>
           <select class="insp-select" onchange="onLayerBlendChange('${lKey}', this.value); renderStudioInspector();">
-            ${['Normal', 'Screen', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
+            ${['Normal', 'Screen', 'Lighten', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
               <option value="${b}" ${(layer.blend || 'Normal').toLowerCase() === b.toLowerCase() ? 'selected' : ''}>${b}</option>
             `).join('')}
           </select>
@@ -31057,16 +31755,39 @@ function renderStudioInspector() {
     const tonal = appState.tonal || {};
 
     if (subtab === 'transform') {
+      const curAspect = appState.aspectRatio || '16:9';
+      const curFit = appState.aspect_fit_mode || 'fit';
+      const isProjComp = Boolean(appState.projector_compensation);
+
       html += `
         <div class="insp-section">
-          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI)</div>
+          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI / POP-OUT)</div>
           <div class="insp-control-row">
-            <span class="insp-label">ASPECT RATIO DA TRANSMISSÃO</span>
+            <span class="insp-label">PROPORÇÃO DA IMAGEM MASTER</span>
+            <div class="insp-pills-row" style="flex-wrap: wrap;">
+              <button class="insp-btn-pill ${curAspect === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZ</button>
+              <button class="insp-btn-pill ${curAspect === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERT</button>
+              <button class="insp-btn-pill ${curAspect === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 SQUARE</button>
+              <button class="insp-btn-pill ${curAspect === '4:5' ? 'active' : ''}" onclick="setAspectRatio('4:5'); renderStudioInspector();">4:5 SOCIAL</button>
+              <button class="insp-btn-pill ${curAspect === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curAspect === '21:9' ? 'active' : ''}" onclick="setAspectRatio('21:9'); renderStudioInspector();">21:9 ULTRA</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ENQUADRAMENTO DE VÍDEOS DE PROPORÇÃO DIFERENTE</span>
             <div class="insp-pills-row">
-              <button class="insp-btn-pill ${appState.aspectRatio === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZONTAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERTICAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 QUADRADO</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curFit === 'fit' ? 'active' : ''}" onclick="setDefaultFitMode('fit'); renderStudioInspector();" title="Preserva 100% da imagem com bordas pretas puras #000000">FIT (ZERO CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'fill' ? 'active' : ''}" onclick="setDefaultFitMode('fill'); renderStudioInspector();" title="Preenche a tela toda sem bordas pretas">FILL (CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'wings' ? 'active' : ''}" onclick="setDefaultFitMode('wings'); renderStudioInspector();" title="Preenchimento broadcast com asas espelhadas e desfoque suave">WINGS (BROADCAST)</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ROTEAMENTO DE PROJETOR / TELÃO HDMI</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${!isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(false); renderStudioInspector();" title="Telão comum na horizontal: vídeo vertical fica centralizado">⬍ NATIVO HORIZ</button>
+              <button class="insp-btn-pill ${isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(true); renderStudioInspector();" title="Projetor ou tela montada fisicamente em pé: gira saída 90° CCW">⤾ GIRAR 90° PROJETOR</button>
             </div>
           </div>
         </div>
