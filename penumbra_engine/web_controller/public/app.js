@@ -1355,10 +1355,15 @@ function initWebSocket() {
         if (incomingData.audio_source) {
           updateAudioSourceUI(incomingData.audio_source);
         }
+        const preservedLastTakeBar = appState.last_take_total_bar;
+        const preservedPhrase = appState.phrase;
         appState = { ...appState, ...incomingData };
+        if (preservedLastTakeBar !== undefined) appState.last_take_total_bar = preservedLastTakeBar;
+        if (preservedPhrase) appState.phrase = { ...preservedPhrase, ...(incomingData.phrase || {}) };
         window.appState = appState;
         updateMeters();
-        runAutopilotEngine();
+        // Governance: runAutopilotEngine() runs deterministically inside 60 FPS render loop beat tick,
+        // avoiding asynchronous race conditions from 40ms telemetry updates.
       } else if (msg.type === 'audio_source_status') {
         updateAudioSourceUI(msg.data);
       } else if (msg.type === 'manifest_updated') {
@@ -6324,6 +6329,7 @@ window.runFxAutopilotEngine = runFxAutopilotEngine;
 let lastAutopilotBar = 0;
 let lastAutopilotState = null;
 let lastDropTriggered = false;
+let lastAutopilotTakeTimestamp = 0;
 
 function runAutopilotEngine() {
   // Musical Autopilot for FX Engine
@@ -6332,6 +6338,7 @@ function runAutopilotEngine() {
   if (!appState.auto_mode) return;
 
   const p = appState.phrase;
+  if (!p) return;
   const currentBar = p.current_bar;
   const currentBeat = p.current_beat;
   const totalBars = p.total_bars || 1;
@@ -6363,12 +6370,18 @@ function runAutopilotEngine() {
   if (del.media) {
     const minBarsInterval = Math.max(8, Number(appState.autopilot_min_bars) || 16);
     const barsSinceLastTake = totalBars - (appState.last_take_total_bar || 0);
+    const nowMs = performance.now();
+    const bpmVal = Number(appState.bpm) || 124.0;
+    // Strict musical cooldown in milliseconds (at least 70% of phrase length)
+    const minTakeCooldownMs = Math.max(6000, (minBarsInterval * (240.0 / bpmVal) * 1000.0 * 0.70));
+    const timeSinceLastTake = nowMs - lastAutopilotTakeTimestamp;
     
-    // Auto Cycle on Downbeat
+    // Auto Cycle on Downbeat (Frase completa)
     if (currentBar === 1 && currentBeat === 1 && totalBars > 1) {
-      if (barsSinceLastTake >= minBarsInterval && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
+      if (barsSinceLastTake >= minBarsInterval && timeSinceLastTake >= minTakeCooldownMs && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
         lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         
         // Evolve matte policy if enabled
         if (del.mattes && appState.autopilot_matte_policy === 'evolve') {
@@ -6378,11 +6391,13 @@ function runAutopilotEngine() {
       }
     }
 
-    // Auto Drop Take (Hard Cut on Climax)
+    // Auto Drop Take (Hard Cut on Climax) - Strict guard to never cut if a take just occurred
     if (isEnteringDrop && currentBeat === 1 && !lastDropTriggered && !isAutoTransitioning) {
-      if (barsSinceLastTake >= 8) {
+      if (barsSinceLastTake >= Math.max(8, Math.floor(minBarsInterval / 2)) && timeSinceLastTake >= minTakeCooldownMs) {
         lastDropTriggered = true;
+        lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         executeTakeCommit();
       }
     } else if (appState.macro_state !== 'DROP') {
@@ -6945,17 +6960,24 @@ function executeTakeCommit() {
     if (stripA) stripA.textContent = `BASE: ${queuedName || queuedClipId}`;
 
     // 5. Send action to server & OSC
-    sendAction('trigger_take', { clipId: queuedClipId, name: queuedName });
+    sendAction('trigger_take', { 
+      clipId: queuedClipId, 
+      name: queuedName,
+      nextCueClipId: queueList[0]?.clipId,
+      nextCueName: queueList[0]?.name
+    });
     sendAction('cue_clip', { layer: 'layer0', clipId: queuedClipId, name: queuedName });
     sendAction('set_layer_rotation', { layer: 'layer0', rotation: queuedRotation || 0 });
     sendAction('set_layer_fit_mode', { layer: 'layer0', fit_mode: queuedFitMode || 'fill' });
     sendAction('set_crossfader', { value: 0 });
   }
 
-  // 5.5 Record safety bar count to prevent autopilot from rapid-cycling takes
+  // 5.5 Record safety bar count & timestamp to prevent autopilot from rapid-cycling takes
+  lastAutopilotTakeTimestamp = performance.now();
   if (appState.phrase) {
     appState.last_take_total_bar = appState.phrase.total_bars || 1;
     appState.phrase.last_take_bar = appState.phrase.total_bars || 1;
+    lastAutopilotBar = appState.phrase.total_bars || 1;
   }
 
   // 6. Advance smart queue to arm the NEXT clip into Preview Cue
@@ -6972,7 +6994,7 @@ function executeTakeCommit() {
   if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
-function executeHardCut() {
+function executeHardCut(isUserAction = false) {
   isAutoTransitioning = false;
   autoTransitionProgress = 0.0;
   const bar = document.getElementById('auto-take-bar');
@@ -6982,8 +7004,18 @@ function executeHardCut() {
   executeTakeCommit();
 }
 
-function startAutoTransition(duration = null) {
+function startAutoTransition(duration = null, isUserAction = false) {
   if (isAutoTransitioning) return;
+  const nowStart = performance.now();
+  // Se for automação e acabamos de comitar um take há menos de 3s, ignora disparo duplo
+  if (!isUserAction && (nowStart - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowStart;
+  if (appState.phrase) {
+    lastAutopilotBar = appState.phrase.total_bars || 1;
+    appState.last_take_total_bar = appState.phrase.total_bars || 1;
+  }
   if (isSyncBeatTransition) {
     currentTransitionDuration = (4.0 * 60.0) / (appState.bpm || 124.0); // 1 bar (4 beats)
   } else {
@@ -10978,7 +11010,7 @@ function setupEvents() {
 
   // Central M/E Transition Strip Controls
   const btnAutoTake = document.getElementById('btn-auto-take');
-  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition());
+  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition(null, true));
 
   const btnCutTake = document.getElementById('btn-cut-take');
   if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut());
@@ -11543,7 +11575,7 @@ function setupEvents() {
 
   // Take Button in Program Monitor
   const btnTake = document.getElementById('btn-cue-take');
-  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(); });
+  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(null, true); });
 
   // Pro Crossfader A/B Real-time Slider
   if (crossfader) {
@@ -11552,10 +11584,11 @@ function setupEvents() {
       sendAction('set_crossfader', { value: val });
     });
     crossfader.addEventListener('change', (e) => {
+      if (!e.isTrusted || isAutoTransitioning) return;
       const val = Number(e.target.value);
       if (val >= 98) {
         // Complete cut to B when fully crossfaded
-        executeTakeTransition();
+        executeTakeTransition(null, true);
       }
     });
   }
@@ -12808,7 +12841,7 @@ function initKeyboardShortcuts() {
     // SPACE: Auto Take (Smooth Transition)
     if (e.code === 'Space') {
       e.preventDefault();
-      startAutoTransition();
+      startAutoTransition(null, true);
       return;
     }
 
@@ -12822,7 +12855,7 @@ function initKeyboardShortcuts() {
     // ENTER: Hard Cut
     if (key === 'Enter') {
       e.preventDefault();
-      executeHardCut();
+      executeHardCut(true);
       return;
     }
 
@@ -12847,7 +12880,7 @@ function initKeyboardShortcuts() {
       if (focusedClipId) {
         routeClipToBus(focusedClipId, 'A');
       } else if (appState.layers.layer3.clipId) {
-        startAutoTransition();
+        startAutoTransition(null, true);
       }
       return;
     }

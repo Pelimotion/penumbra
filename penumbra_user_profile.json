@@ -1,7 +1,7 @@
 {
   "schema_version": "1.2.0",
   "app": "Penumbra System VJ Engine",
-  "last_saved": "2026-10-11T12:13:17.527Z",
+  "last_saved": "2026-10-11T14:29:43.350Z",
   "settings": {
     "media_source": "cdn",
     "remember_source": true,
@@ -31,7 +31,7 @@
       "hover_preview_delay_ms": 280
     },
     "library_active_asset_type": "all",
-    "dock_view_mode": "timeline",
+    "dock_view_mode": "modules",
     "library_sidebar_collapsed": true,
     "workspace_top_height": 140,
     "library_sidebar_width": 258,

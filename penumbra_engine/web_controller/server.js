@@ -1308,13 +1308,19 @@ wss.on('connection', (ws) => {
         sendOsc('/penumbra/master/matte_invert', currentState.master_matte_invert ? 1 : 0);
         broadcast({ type: 'state_updated', state: { master_matte_invert: currentState.master_matte_invert } });
       } else if (msg.action === 'trigger_take') {
-        // Swap Preview cue (L3) to Program Base (L0)
+        // Swap Preview cue (L3) to Program Base (L0) and arm next cue atomically
         const targetClipId = msg.clipId || currentState.layers.layer3.clipId;
         const targetName = msg.name || currentState.layers.layer3.name;
         if (targetClipId) {
           currentState.layers.layer0.clipId = targetClipId;
           currentState.layers.layer0.name = targetName;
+          if (msg.nextCueClipId && currentState.layers.layer3) {
+            currentState.layers.layer3.clipId = msg.nextCueClipId;
+            currentState.layers.layer3.name = msg.nextCueName || msg.nextCueClipId;
+          }
+          currentState.crossfader = 0;
           sendOsc('/penumbra/layer0/clipId', targetClipId);
+          sendOsc('/penumbra/crossfader', 0.0);
           sendOsc('/penumbra/take', 1.0);
         }
       } else if (msg.action === 'set_crossfader') {

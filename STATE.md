@@ -1,16 +1,10 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 09:15:00 BRT
-- **Status do Sistema:** 🟢 AO VIVO & 100% OPERACIONAL (Sinal de Program e Preview Ativo, ReferenceError totalRot0 Corrigido, 60 FPS Estável)
+- **Última Atualização:** 11/10/2026, 11:50:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
-- **Sinal de Vídeo Program & Preview Cue:** 🟢 TOTALMENTE RESTABELECIDO (Hoisting dos transforms de clipe e camada para o escopo global dos barramentos A e B, eliminando quebra de render loop na camada Sobel)
-- **Resiliência GPU & Canvas:** 🟢 ATIVO (Handlers `contextlost` + `contextrestored` para os 7 buffers de canvas contra falhas de cabo HDMI/GPU)
-- **Auto-Recovery de Live Set:** 🟢 ATIVO (`sessionStorage` serializando camadas A/B/L5, opacidades, blends e crossfader com restauração em bootstrap)
-- **Idempotência & Atalhos de Teclado:** 🟢 RESOLVIDO (Guarda contra duplo registro, Escape universal com desfoque de inputs/diálogos órfãos, vírgula `,` para configurações e `B`/`Shift+B` para Blackout imediato)
-- **Arranger Timeline Throttled (Zero Thrashing):** 🟢 RESOLVIDO (Cache de bounding rect + taxa de 30 FPS no arranger secundário, eliminando layout thrashing e cravando 59.02 FPS médios, p95=16.80ms)
-- **Acessibilidade & WCAG:** 🟢 APROVADO (Zero violações axe-core; contraste de botão de fechamento > 5.2:1)
-- **Web MIDI Resiliente:** 🟢 ATIVO (Captura suave de permissão Web MIDI com suporte plug-and-play ao controlador M-Vave SMC-MIXER conectado)
+- **Integridade do Autopilot (Anti-Double-Take):** 🟢 RESOLVIDO (Eliminado duplo disparo com cooldown musical determinístico, desacoplamento de telemetria WebSocket e guarda atômica `lastAutopilotTakeTimestamp`)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
@@ -32,10 +26,10 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 14,795 | 640.8 KB |
-| `styles.css` | 11,445 | 225.5 KB |
-| `index.html` | 3,597 | 241.4 KB |
-| `Penumbra_Portable.html` | — | 1.1 MB |
+| `app.js` | 14,831 | 627.5 KB |
+| `styles.css` | 11,453 | 225.8 KB |
+| `index.html` | 3,596 | 235.7 KB |
+| `Penumbra_Portable.html` | — | 1.2 MB |
 
 ## 🎬 Media Pool
 - **Clipes no Manifesto:** 75 entradas
@@ -43,9 +37,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `feat/vj-engine-p0-quickwins-resilience`
-- **Último Commit:** `8b1eb78` — fix(render-loop): hoist Deck A and Deck B clip transforms, resolve totalRot0 ReferenceError and restore Program/Preview signals
-- **Data:** 2026-10-11 09:16:53
-- **Total de Commits:** 65
+- **Último Commit:** `d646643` — docs(governance): update STATE.md with commit 8b1eb78
+- **Data:** 2026-10-11 09:18:17
+- **Total de Commits:** 68
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
