@@ -16,6 +16,9 @@
 - **(macos-keepalive)** Web Worker heartbeat timer contínuo a 60 FPS e MediaSession API para reprodução sem congelamento na janela destacada (pop-out) ao trocar de app ou Spaces no macOS
 
 ### 🐛 Correções
+- **(render-loop-isvert)** Correção de `ReferenceError: isVert is not defined` no compositor de `renderVisuals`, restaurando imediatamente a exibição a 60 FPS nos monitores Program e Preview.
+- **(cue-deck-b-signal)** Preservação do sinal do clipe em Deck B no barramento de Preview / CUE (eliminando a exibição isolada de contornos Sobel quando o fader de entrada estava em zero) e renomeação do canal L3 para `DECK B · CUE BUS (PREVIEW)`.
+- **(matte-layer-fallback)** Fallback seguro de `layerId` em `assignMatteToLayer` prevenindo exceção de `replace` ao interagir rapidamente com os cards da biblioteca de máscaras.
 - **(find-edges-sobel)** Correção do bug da camada L2 (Find Edges): opacidade linear com desaparecimento absoluto no 0, gate de luminância eliminando névoa leitosa sobre outras camadas, modos de mesclagem (Lighten, Screen, Overlay) e alinhamento de transformações
 - `64f069d` **(mattes)** fix master matte assignment, real alpha channel inversion, and mixer flexbox layout
 - `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync

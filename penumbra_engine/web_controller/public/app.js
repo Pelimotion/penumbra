@@ -3731,6 +3731,7 @@ function renderVisuals(time) {
   const aspectConfig = getAspectRatioDimensions(appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9'));
   const targetBusW = aspectConfig.w;
   const targetBusH = aspectConfig.h;
+  const isVert = Boolean(aspectConfig.isVertical || appState.vertical_mode || appState.vertical_projection);
 
   if (busCanvasA.width !== targetBusW || busCanvasA.height !== targetBusH) {
     busCanvasA.width = targetBusW;
@@ -3891,10 +3892,10 @@ function renderVisuals(time) {
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
-      // Clamped Deck B Base Opacity: Deck B represents the incoming Base Video for transition.
-      // It must strictly adhere to the master base video opacity (layer0.opacity) to prevent flashes!
-      const masterBaseOpacity = (appState.layers.layer0 && appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
-      const deckBOpacity = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? Math.min(masterBaseOpacity, appState.layers.layer3.opacity) : masterBaseOpacity;
+      // Deck B representa a mídia que está sendo pré-visualizada (CUE) e pronta para transição.
+      // No monitor Preview/CUE, o operador deve sempre ver o vídeo base com nitidez.
+      const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+      const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
 
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
@@ -3924,17 +3925,15 @@ function renderVisuals(time) {
           offCtxB.restore();
         }
 
-        // Only draw base video to Bus B if opacity is greater than 0.5% (avoids flash when base is 0)
-        if (deckBOpacity > 0.005) {
-          busCtxB.save();
-          busCtxB.filter = getTonalFilterString(appState.tonal);
-          busCtxB.globalAlpha = deckBOpacity;
-          busCtxB.drawImage(offscreenB, 0, 0, w, h);
-          busCtxB.restore();
-        }
+        // Always draw base video to Bus B
+        busCtxB.save();
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = deckBOpacity;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
+        busCtxB.restore();
 
         // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         if (appState.layers.layer1.active && l1BOpacity > 0.005) {
           busCtxB.save();
           busCtxB.translate(w/2, h/2);
@@ -3951,9 +3950,9 @@ function renderVisuals(time) {
 
       // LAYER 2 on Bus B: EDGE TRACE SOBEL
       const l2 = appState.layers.layer2;
-      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.0;
       if (queuedSource && l2 && l2.active && l2BOpacity > 0.005) {
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
                           (!appState.layers.layer1.active || l1BOpacity <= 0.01);
         const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
@@ -7615,6 +7614,7 @@ function syncActiveMatteToAppState(mattePath) {
 window.syncActiveMatteToAppState = syncActiveMatteToAppState;
 
 function assignMatteToLayer(mattePath, layerId) {
+  if (!layerId) layerId = appState.matte_target_layer || 'layer3';
   if (layerId === 'master') {
     appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
     sendAction('set_master_matte', { matte: appState.master_matte });
@@ -7630,8 +7630,9 @@ function assignMatteToLayer(mattePath, layerId) {
   renderMattesCards();
   renderStudioInspector();
   updateUI();
+  if (typeof updateMixerMattesUI === 'function') updateMixerMattesUI();
   if (typeof showMacroToast === 'function') {
-    const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
+    const lName = layerId === 'master' ? 'MASTER' : (layerId ? layerId.replace('layer', 'L').toUpperCase() : 'CAMADA');
     showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
   }
 }
@@ -7872,7 +7873,7 @@ function renderMattesCards() {
     card.querySelectorAll('.btn-route').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const targetLayer = btn.dataset.layer;
+        const targetLayer = btn.dataset.layer || appState.matte_target_layer || 'layer3';
         assignMatteToLayer(matte.path, targetLayer);
       });
     });
@@ -11570,7 +11571,7 @@ function setupEvents() {
   });
 
   // Layer Opacity Sliders
-  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity'].forEach(id => {
+  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity', 'l5-opacity'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', (e) => {
@@ -11583,7 +11584,7 @@ function setupEvents() {
   });
 
   // Layer Blend Dropdowns
-  ['l1-blend', 'l3-blend', 'l4-blend'].forEach(id => {
+  ['l1-blend', 'l3-blend', 'l4-blend', 'l5-blend'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', (e) => {

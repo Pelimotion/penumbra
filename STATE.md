@@ -1,9 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 05:15:00 BRT
+- **Última Atualização:** 11/10/2026, 06:17:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & OPERACIONAL (Cockpit Local & Popout Dual-Screen)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
+- **Render Loop 60 FPS Resiliente:** 🟢 CORRIGIDO (`isVert` devidamente escopado no topo de `renderVisuals`, eliminando ReferenceError e restaurando renderização instantânea do Program e Preview)
+- **Deck B / Cue Bus Signal Integrity:** 🟢 CORRIGIDO (O sinal do clipe em Deck B é sempre transmitido ao monitor de CUE com transparência base garantida, prevenindo que o preview fique restrito apenas às bordas Sobel)
 - **Continuidade Cinematográfica de Macro Status:** 🟢 ATIVO (Mudança de status altera estritamente estilo/mattes/fx/cinemática sem cortar o clipe de base; troca de take delegada à cadência de frase rítmica ou botão TAKE)
 - **Engine de Ping-Pong / Seamless Bounce 60 FPS:** 🟢 ATIVO (Controle bi-direcional inteligente nos players L0, L3 e L5 com scrubbing reverso suave na volta e playback contínuo na ida, eliminando cortes bruscos de loop)
 - **Cápsulas de Máscara no Mixer (Padrão Pro):** 🟢 ATIVO (Pílulas legíveis com nome amigável da máscara, atalho instantâneo `[🎛️ MATTES ↗]` apontando para a Tab 3 com foco na camada e botões rápidos `[INV]` e `[✕]`)
