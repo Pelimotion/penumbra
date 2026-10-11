@@ -1,11 +1,13 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 19:20:00 BRT
+- **Última Atualização:** 11/10/2026, 20:20:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
-- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 24s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States)
+- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 13.9s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States)
+- **Leveza & Performance (30 FPS Default):** 🟢 ATIVO (Padrão de fábrica a 30 FPS para manter o computador e a GPU ultra-frios e leves, preservando 100% das funções)
+- **3D Vanguarda & Categoria Oficial no Media Pool:** 🟢 ENTREGUE (9 Cenas procedurais 3D de vanguarda artística/marketing/videoarte: Mercury Blob Liquid Chrome, Brutalist Monolith 13, Nebula Stardust, Cyber Wireframe Lattice, Quantum Torus Flux, Plexus Marine Spine, Ocean Sun, Star 13 e Hybrid Cosmos; com isolamento de buffers offscreen por deck/layer, categoria oficial '3D' e botão de coleção dedicado na biblioteca)
+- **Execução Híbrida Local (SSD) vs Nuvem (CDN):** 🟢 100% RESILIENTE (74 vídeos no Bunny Edge CDN com reprodução instantânea na nuvem e reconexão silenciosa em 1 clique da pasta do SSD local via File System Access API + IndexedDB)
 - **Pisca/Rebote em Deck A (Telemetry Race Condition):** 🟢 RESOLVIDO (Implementada Guarda de Autoridade Temporal de 1500ms `_assignedAt` rejeitando rollbacks de telemetria obsoleta do servidor)
-- **Arquitetura & Vanguarda 3D (2026):** 🟢 SURVEY COMPLETO ENTREGUE (`proposals/penumbra_3d_state_of_the_art_survey.md`: Three.js r186, WebGPU Compute Particles, Shaders Modifiers, Chiaroscuro e GaussianSplat nativo)
 - **Ergonomia iPad & Carga Cognitiva P1:** 🟢 AUDITADO & PROPOSTA DUAL-MODE ENTREGUE (Audit em 168 targets tácteis, proposta `proposals/ipad_dual_mode_cockpit.html` com Modo LIVE >= 48px e zero-hover)
 - **Medição Científica de Output Visual P3:** 🟢 AUDITADO (ITU-R BT.709 Luma Spectrum nos 5 estados, 0.00% estouro de branco, benchmark térmico comprovando 1280x720 a 2.2ms por frame na GPU)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
