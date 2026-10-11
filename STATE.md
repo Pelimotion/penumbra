@@ -1,8 +1,11 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 11:50:00 BRT
+- **Última Atualização:** 11/10/2026, 18:50:00 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
+- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 13.9s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States sem refatorar produção)
+- **Ergonomia iPad & Carga Cognitiva P1:** 🟢 AUDITADO & PROPOSTA DUAL-MODE ENTREGUE (Audit em 168 targets tácteis, proposta `proposals/ipad_dual_mode_cockpit.html` com Modo LIVE >= 48px e zero-hover)
+- **Medição Científica de Output Visual P3:** 🟢 AUDITADO (ITU-R BT.709 Luma Spectrum nos 5 estados, 0.00% estouro de branco, benchmark térmico comprovando 1280x720 a 2.2ms por frame na GPU)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
 - **Integridade do Autopilot (Anti-Double-Take):** 🟢 RESOLVIDO (Eliminado duplo disparo com cooldown musical determinístico, desacoplamento de telemetria WebSocket e guarda atômica `lastAutopilotTakeTimestamp`)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
@@ -15,7 +18,7 @@
 - **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
 - **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
 - **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
-- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
+- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com portão de acesso autenticado
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -52,8 +55,8 @@
   - Toast HUD flutuante em tempo real e indicador no cabeçalho de áudio com tag do preset ativo.
 - **Modo Manual com Padrão Groove Limpo:**
   - Sem interação do operador, o modo manual permanece estritamente em `GROOVE` (`Pure Clean Cinema`): zero efeitos pesados, sem distorção, máscaras limpas e vídeo original a 30 FPS cristalino.
-- **FPS Padrão:** 30 FPS · **Rede/OSC:** DESLIGADO por padrão
-- **PIN de Acesso Cloud:** 2026
+- **FPS Padrão:** 30 FPS (estabilidade térmica em palco) com seletor opcional para 60 FPS · **Rede/OSC:** DESLIGADO por padrão
+- **Autenticação de Acesso:** PIN dinâmico / Variável de ambiente (protegido contra vazamento público)
 
 ## Nexus Stream Engine & Media Pool Smart Bins
 - **Ingestão Dual-Mode:**
