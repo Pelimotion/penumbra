@@ -43,9 +43,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `feat/vj-engine-p0-quickwins-resilience`
-- **Último Commit:** `d7e66e6` — fix(resilience): implement p0 critical fixes, canvas context loss protection, live set recovery, and 60fps layout stabilization
-- **Data:** 2026-10-11 08:57:58
-- **Total de Commits:** 64
+- **Último Commit:** `8b1eb78` — fix(render-loop): hoist Deck A and Deck B clip transforms, resolve totalRot0 ReferenceError and restore Program/Preview signals
+- **Data:** 2026-10-11 09:16:53
+- **Total de Commits:** 65
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
