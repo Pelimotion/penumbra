@@ -38,8 +38,11 @@
 ## 🔢 Git Status
 - **Branch:** `feat/3d-scenes-inspector-pro-vj-controls`
 - **Último Commit:** `feat: 3d decoupled staging, official pt star 13, new generative scenes and studio inspector overhaul`
-- **Data:** 2026-10-11
 - **Status:** Testes de preflight e smoke E2E 100% aprovados
+- **Pull Request (GitHub):** [#8](https://github.com/Pelimotion/penumbra/pull/8)
+- **Vercel Preview URL:** [penumbra-3d-preview.vercel.app](https://penumbra-3d-preview.vercel.app)
+- **Vercel Direct Preview:** [penumbra-k5ycx4lii-pelimotionart-6049s-projects.vercel.app](https://penumbra-k5ycx4lii-pelimotionart-6049s-projects.vercel.app)
+- **Vercel Branch Alias:** [penumbra-git-feat-3d-scenes-e6c067-pelimotionart-6049s-projects.vercel.app](https://penumbra-git-feat-3d-scenes-e6c067-pelimotionart-6049s-projects.vercel.app)
 
 ## 🌌 Sistema 3D Generativo & Studio Inspector Pro
 - **Identidade Estrela 13 Oficial do PT:**
