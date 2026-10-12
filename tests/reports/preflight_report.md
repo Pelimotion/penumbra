@@ -1,7 +1,7 @@
 # 🪐 PENUMBRA ENGINE · RELATÓRIO PREFLIGHT & SAFETY NET
 
-- **Data de Execução:** 11/10/2026, 20:19:18
-- **Duração Total:** 13.90s
+- **Data de Execução:** 11/10/2026, 22:05:13
+- **Duração Total:** 4.45s
 - **Status Geral:** 🟢 APROVADO (Zero Regressões)
 
 ## 1. Playwright Smoke E2E (Fluxo ao Vivo)
@@ -18,24 +18,7 @@
 | 7. Destacar Pop-out Window (popout.html) | 🟢 PASS | Pop-out canvas 100% ativo |
 
 ## 2. Regressão Visual de Viewports & Output
-**Status:** 🟢 PASSOU
-
-### Viewports Auditados (Cockpit UI):
-| Viewport | Dimensões | Status | Variação | Baseline |
-|---|---|---|---|---|
-| desktop_1920x1080 | 1920x1080 | PASS | 1.34% | `cockpit_desktop_1920x1080.png` |
-| macbook_1280x800 | 1280x800 | PASS | 0.77% | `cockpit_macbook_1280x800.png` |
-| ipad_1180x820 | 1180x820 | PASS | 0.61% | `cockpit_ipad_1180x820.png` |
-| ipad_1024x768 | 1024x768 | PASS | 0.64% | `cockpit_ipad_1024x768.png` |
-
-### Output Visual por Macro State (Program Canvas):
-| Estado Musical | Status | Arquivo Baseline |
-|---|---|---|
-| **INTRO** | PASS | `output_INTRO.png` |
-| **GROOVE** | PASS | `output_GROOVE.png` |
-| **BUILD** | PASS | `output_BUILD.png` |
-| **DROP** | PASS | `output_DROP.png` |
-| **BREAK** | PASS | `output_BREAK.png` |
+*(Ignorado)*
 
 ## 3. Diretriz do Workflow de UI
 > Toda e qualquer edição futura em `app.js`, `styles.css` ou `index.html` deve rodar obrigatoriamente `npm run preflight`. Se falhar, o deploy e merge são bloqueados.
