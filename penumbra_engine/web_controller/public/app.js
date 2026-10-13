@@ -46,7 +46,7 @@ function cdnAssetUrl(value) {
 // Determines if we are running locally, remotely controlling local, or fully cloud
 const HARS = {
   getMode: () => {
-    if (window.location.hostname === 'localhost') return 'local';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return 'local';
     if (window.location.hostname.includes('gigantera.xyz') || window.location.hostname.includes('vercel.app')) return 'cloud';
     return 'lan';
   },
@@ -55,8 +55,9 @@ const HARS = {
     const storedIP = localStorage.getItem('penumbra_lan_ip');
     if (mode === 'local') return '';
     if (mode === 'cloud' && storedIP) return `http://${storedIP}:3000`;
-    if (mode === 'cloud') return 'https://gigantera-penumbra.b-cdn.net'; // Vibe-Coding Zero-Server CDN
-    return ''; // LAN mode (accessed via IP) uses relative paths
+    // No cloud host (ex: gigantera.xyz ou vercel.app), manifestos e rotas estáticas residem na mesma origem
+    if (mode === 'cloud') return ''; 
+    return ''; // LAN mode usa caminhos relativos
   },
   getWsUrl: () => {
     const mode = HARS.getMode();
@@ -67,7 +68,18 @@ const HARS = {
     if (mode === 'cloud') return null; // No WS in pure CDN mode
     return `${protocol}//${window.location.host}`; // LAN mode
   },
-  resolveUrl: (path) => `${HARS.getApiBase()}${path}`
+  resolveUrl: (path) => {
+    const base = HARS.getApiBase();
+    if (base) {
+      const cleanPath = String(path || '').startsWith('/') ? path : `/${path}`;
+      return `${base.replace(/\/+$/, '')}${cleanPath}`;
+    }
+    const clean = String(path || '').replace(/^\/+/, '');
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/penumbra')) {
+      return `/penumbra/${clean}`;
+    }
+    return `/${clean}`;
+  }
 };
 
 // ============================================================================
@@ -360,6 +372,15 @@ window.PenumbraIDB = PenumbraIDB;
 // ============================================================================
 // 0.5 TRI-SOURCE MEDIA PROVIDER (STANDALONE VJ ARCHITECTURE)
 // ============================================================================
+function normalizeMediaFilename(name) {
+  if (!name) return '';
+  return String(name)
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 const MediaProvider = {
   mode: 'none', // 'local', 'cdn', 'youtube'
   localDirHandle: null,
@@ -372,7 +393,9 @@ const MediaProvider = {
     if (clip.has_local_match) return true;
     if (clip.relative_path && MediaProvider.localFilesMap.has(clip.relative_path)) return true;
     const norm = (clip.filename || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip.filename);
     if (norm && MediaProvider.localFilesByName.has(norm)) return true;
+    if (normClean && MediaProvider.localFilesByName.has(normClean)) return true;
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       if (clip.is_downloaded || (clip.relative_path && !clip.relative_path.startsWith('LOCAL_') && !clip.relative_path.startsWith('EXTRA_'))) return true;
     }
@@ -447,13 +470,15 @@ const MediaProvider = {
               try {
                 const file = await entry.getFile();
                 MediaProvider.localFilesMap.set(entryPath, file);
-                MediaProvider.localFilesByName.set(lowerName, {
+                const fileEntryData = {
                   file,
                   path: entryPath,
                   filename: entry.name,
                   size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
                   isServer: false
-                });
+                };
+                MediaProvider.localFilesByName.set(lowerName, fileEntryData);
+                MediaProvider.localFilesByName.set(normalizeMediaFilename(entry.name), fileEntryData);
 
                 if (ext === 'json') {
                   if (entry.name !== 'media_manifest.json') {
@@ -605,10 +630,22 @@ const MediaProvider = {
     let matchedCount = 0;
     allClips.forEach(clip => {
       const norm = (clip.filename || '').toLowerCase().trim();
-      const match = MediaProvider.localFilesByName.get(norm);
+      const normClean = normalizeMediaFilename(clip.filename);
+      const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+      const baseClean = normalizeMediaFilename(baseName);
+      const match = MediaProvider.localFilesByName.get(norm) ||
+                    MediaProvider.localFilesByName.get(normClean) ||
+                    (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                    (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
       if (match) {
         clip.has_local_match = true;
         clip.local_match_info = match;
+        clip.is_disconnected = false;
+        clip.needs_relink = false;
+        if (match.path) clip.relative_path = match.path;
+        if (match.file instanceof File) {
+          MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+        }
         matchedCount++;
       } else {
         clip.has_local_match = false;
@@ -638,7 +675,16 @@ const MediaProvider = {
         }
       } catch (e) {}
     }
-    // 1. Try Bunny Edge CDN
+    // 1. Try host origin manifest first (same-origin, zero CORS overhead)
+    try {
+      const originPath = typeof HARS !== 'undefined' ? HARS.resolveUrl('media_manifest.json') : '/media_manifest.json';
+      const resHost = await fetch(originPath);
+      if (resHost.ok) {
+        console.log('[MediaProvider] Loaded manifest from host origin');
+        return await resHost.json();
+      }
+    } catch(eHost) {}
+    // 2. Try Bunny Edge CDN
     try {
       const res = await fetch('https://gigantera-penumbra.b-cdn.net/media_manifest.json');
       if (res.ok) {
@@ -672,16 +718,19 @@ const MediaProvider = {
     const clip = typeof clipOrPath === 'object' ? clipOrPath : allClips.find(c => c.relative_path === clipOrPath || c.filename === clipOrPath || c.id === clipOrPath);
     const relPath = typeof clipOrPath === 'string' ? clipOrPath : (clip ? (clip.relative_path || clip.filename) : '');
     const normName = (clip?.filename || relPath.split('/').pop() || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip?.filename || relPath.split('/').pop() || '');
 
     // 0. Smart Deduplication: If file exists locally on SSD or via File System Access API
     const smartDedup = typeof UserProfileManager !== 'undefined' ? UserProfileManager.getSetting('smart_dedup_enabled', true) : true;
-    if (smartDedup && MediaProvider.localFilesByName.has(normName)) {
-      const match = MediaProvider.localFilesByName.get(normName);
-      if (match.file instanceof File) {
-        return URL.createObjectURL(match.file);
-      }
-      if (match.isServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        return `/api/raw-video?path=${encodeURIComponent(match.path || match.filename)}`;
+    if (smartDedup) {
+      const match = MediaProvider.localFilesByName.get(normName) || MediaProvider.localFilesByName.get(normClean);
+      if (match) {
+        if (match.file instanceof File) {
+          return URL.createObjectURL(match.file);
+        }
+        if (match.isServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          return `/api/raw-video?path=${encodeURIComponent(match.path || match.filename)}`;
+        }
       }
     }
 
@@ -1518,11 +1567,23 @@ function sendAction(action, payload = {}) {
 // ============================================================================
 // 4. HARDWARE VIDEO STREAMS & MATTE ASSET LOADERS
 // ============================================================================
+let lastVideoErrorToastTime = 0;
 function attachPlayerErrorHandler(player, label) {
   if (player && !player._hasErrHandler) {
     player._hasErrHandler = true;
     player.addEventListener('error', () => {
       console.warn(`[Player ${label}] Falha ao decodificar sinal de vídeo (${player.src}).`);
+      const now = Date.now();
+      if (now - lastVideoErrorToastTime > 8000) {
+        lastVideoErrorToastTime = now;
+        if (MediaProvider.localFilesByName.size === 0) {
+          if (typeof showHudMacroToast === 'function') {
+            showHudMacroToast('💾 Vídeos brutos no SSD. Clique em "CONECTAR PASTA SSD" para tocar direto do disco!', 6000);
+          } else if (typeof showMacroToast === 'function') {
+            showMacroToast('💾 Conecte a pasta do SSD para reproduzir do seu disco local');
+          }
+        }
+      }
     });
   }
 }
@@ -10108,13 +10169,15 @@ async function relinkWithDirectoryHandle(dirHandle, options = {}) {
             try {
               const file = await entry.getFile();
               MediaProvider.localFilesMap.set(entryPath, file);
-              MediaProvider.localFilesByName.set(lower, {
+              const fileObj = {
                 file,
                 path: entryPath,
                 filename: entry.name,
                 size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
                 isServer: false
-              });
+              };
+              MediaProvider.localFilesByName.set(lower, fileObj);
+              MediaProvider.localFilesByName.set(normalizeMediaFilename(entry.name), fileObj);
             } catch (fe) {}
           }
         } else if (entry.kind === 'directory') {
@@ -10127,18 +10190,22 @@ async function relinkWithDirectoryHandle(dirHandle, options = {}) {
 
     let relinkedCount = 0;
     allClips.forEach(clip => {
-      if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
-        const norm = (clip.filename || '').toLowerCase().trim();
-        const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
-        const match = MediaProvider.localFilesByName.get(norm) || (baseName ? MediaProvider.localFilesByName.get(baseName) : null);
-        if (match && match.file instanceof File) {
-          clip.is_disconnected = false;
-          clip.needs_relink = false;
-          clip.local_match_info = match;
-          if (match.path) clip.relative_path = match.path;
-          MediaProvider.localFilesMap.set(clip.relative_path, match.file);
-          relinkedCount++;
-        }
+      const norm = (clip.filename || '').toLowerCase().trim();
+      const normClean = normalizeMediaFilename(clip.filename);
+      const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+      const baseClean = normalizeMediaFilename(baseName);
+      const match = MediaProvider.localFilesByName.get(norm) ||
+                    MediaProvider.localFilesByName.get(normClean) ||
+                    (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                    (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
+      if (match && match.file instanceof File) {
+        clip.has_local_match = true;
+        clip.is_disconnected = false;
+        clip.needs_relink = false;
+        clip.local_match_info = match;
+        if (match.path) clip.relative_path = match.path;
+        MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+        relinkedCount++;
       }
     });
 
@@ -10165,26 +10232,37 @@ window.relinkWithFiles = async function(fileList) {
   let relinkedCount = 0;
   for (const file of Array.from(fileList)) {
     const norm = file.name.toLowerCase().trim();
+    const normClean = normalizeMediaFilename(file.name);
     const relPath = file.webkitRelativePath || file.name;
     MediaProvider.localFilesMap.set(relPath, file);
-    MediaProvider.localFilesByName.set(norm, {
+    const fileObj = {
       file,
       path: relPath,
       filename: file.name,
       size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
       isServer: false
-    });
+    };
+    MediaProvider.localFilesByName.set(norm, fileObj);
+    MediaProvider.localFilesByName.set(normClean, fileObj);
   }
 
   allClips.forEach(clip => {
-    if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
-      const norm = (clip.filename || '').toLowerCase().trim();
-      const match = MediaProvider.localFilesByName.get(norm);
-      if (match && match.file instanceof File) {
-        clip.is_disconnected = false;
-        clip.needs_relink = false;
-        relinkedCount++;
-      }
+    const norm = (clip.filename || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip.filename);
+    const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+    const baseClean = normalizeMediaFilename(baseName);
+    const match = MediaProvider.localFilesByName.get(norm) ||
+                  MediaProvider.localFilesByName.get(normClean) ||
+                  (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                  (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
+    if (match && match.file instanceof File) {
+      clip.has_local_match = true;
+      clip.is_disconnected = false;
+      clip.needs_relink = false;
+      clip.local_match_info = match;
+      if (match.path) clip.relative_path = match.path;
+      MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+      relinkedCount++;
     }
   });
 
@@ -11358,25 +11436,50 @@ function renderMediaCards() {
   }
 
   // 4. CLIPS & ALL VIEW
-  const unlinkedClips = allClips.filter(c => (c.is_local || c.id.startsWith('local_')) && (c.is_disconnected || !MediaProvider.isLocalFileConnected(c)));
-  if (unlinkedClips.length > 0 && activeLibraryAssetType !== 'mattes' && activeLibraryAssetType !== 'fx' && activeLibraryAssetType !== 'presets' && activeSourceFilter !== 'cdn') {
-    const lastFolderName = (UserProfileManager.profile && UserProfileManager.profile.last_local_folder_name) ? UserProfileManager.profile.last_local_folder_name : 'Sua pasta de mídias';
-    const relinkBanner = document.createElement('div');
-    relinkBanner.className = 'media-relink-banner';
-    relinkBanner.innerHTML = `
+  const isCloudHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  const hasLocalConnected = MediaProvider.localFilesByName.size > 0;
+  const isVideoOrAllTab = activeLibraryAssetType !== 'mattes' && activeLibraryAssetType !== 'fx' && activeLibraryAssetType !== 'presets';
+
+  if (isCloudHost && !hasLocalConnected && isVideoOrAllTab) {
+    const cloudSsdBanner = document.createElement('div');
+    cloudSsdBanner.className = 'media-relink-banner';
+    cloudSsdBanner.style.background = 'linear-gradient(90deg, rgba(230, 126, 34, 0.18), rgba(211, 84, 0, 0.28))';
+    cloudSsdBanner.style.border = '1px solid rgba(230, 126, 34, 0.55)';
+    cloudSsdBanner.style.marginBottom = '12px';
+    cloudSsdBanner.innerHTML = `
       <div class="relink-banner-info">
-        <span class="relink-icon">📁⚠️</span>
+        <span class="relink-icon">💾⚡</span>
         <div>
-          <strong>${unlinkedClips.length} CLIPE(S) LOCAL(IS) DESVINCULADO(S)</strong>
-          <div style="font-size:9.5px; opacity:0.8;">Pasta de origem: <em>${lastFolderName}</em>. Reconecte a pasta para restaurar a reprodução instantânea.</div>
+          <strong style="color: #f39c12; letter-spacing: 0.5px;">MODO WEB · VINCULE SUA PASTA DO SSD LOCAL</strong>
+          <div style="font-size:10px; opacity:0.9; color: #ecf0f1;">Os 74 vídeos brutos (20 GB) rodam direto do seu disco com 0ms de latência. Aponte a pasta uma vez e o navegador lembrará nas próximas sessões.</div>
         </div>
       </div>
       <div class="relink-banner-actions">
-        <button class="btn btn-primary btn-xs" onclick="window.relinkLocalMediaFolder()" title="Reconectar pasta de mídias local via File System Access">⚡ RECONECTAR PASTA</button>
-        <button class="btn btn-outline btn-xs" onclick="window.relinkWithFileInput()" title="Selecionar arquivos ou pasta manualmente">📂 LOCALIZAR ARQUIVOS</button>
+        <button class="btn btn-primary btn-xs" style="background:#e67e22; border-color:#d35400; font-weight:bold; cursor:pointer;" onclick="window.relinkLocalMediaFolder()" title="Vincular pasta do SSD local">⚡ CONECTAR PASTA SSD</button>
       </div>
     `;
-    container.appendChild(relinkBanner);
+    container.appendChild(cloudSsdBanner);
+  } else {
+    const unlinkedClips = allClips.filter(c => (c.is_local || c.id.startsWith('local_')) && (c.is_disconnected || !MediaProvider.isLocalFileConnected(c)));
+    if (unlinkedClips.length > 0 && isVideoOrAllTab && activeSourceFilter !== 'cdn') {
+      const lastFolderName = (UserProfileManager.profile && UserProfileManager.profile.last_local_folder_name) ? UserProfileManager.profile.last_local_folder_name : 'Sua pasta de mídias';
+      const relinkBanner = document.createElement('div');
+      relinkBanner.className = 'media-relink-banner';
+      relinkBanner.innerHTML = `
+        <div class="relink-banner-info">
+          <span class="relink-icon">📁⚠️</span>
+          <div>
+            <strong>${unlinkedClips.length} CLIPE(S) LOCAL(IS) DESVINCULADO(S)</strong>
+            <div style="font-size:9.5px; opacity:0.8;">Pasta de origem: <em>${lastFolderName}</em>. Reconecte a pasta para restaurar a reprodução instantânea.</div>
+          </div>
+        </div>
+        <div class="relink-banner-actions">
+          <button class="btn btn-primary btn-xs" onclick="window.relinkLocalMediaFolder()" title="Reconectar pasta de mídias local via File System Access">⚡ RECONECTAR PASTA</button>
+          <button class="btn btn-outline btn-xs" onclick="window.relinkWithFileInput()" title="Selecionar arquivos ou pasta manualmente">📂 LOCALIZAR ARQUIVOS</button>
+        </div>
+      `;
+      container.appendChild(relinkBanner);
+    }
   }
 
   updateAutopilotPoolUI();

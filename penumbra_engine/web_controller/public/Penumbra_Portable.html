@@ -7641,6 +7641,25 @@ body.resizing-workspace-active .top-zone {
   gap: 6px;
 }
 
+.nsb-select-quality {
+  background: #23252c;
+  border: 1px solid #32353e;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+  cursor: pointer;
+  height: 100%;
+}
+
+.nsb-select-quality:hover,
+.nsb-select-quality:focus {
+  border-color: #00f0ff;
+}
+
 .nsb-btn-dl:hover {
   background: #00f0ff;
   border-color: #00f0ff;
@@ -7648,10 +7667,48 @@ body.resizing-workspace-active .top-zone {
 }
 
 .nsb-btn-stream:hover {
-  background: #ff334b;
-  border-color: #ff334b;
-  color: #000;
+background: #ff334b;
+border-color: #ff334b;
+color: #000;
 }
+
+.nsb-btn-temporary:hover {
+background: #214743;
+border-color: #59c9b4;
+color: #e7fffa;
+}
+
+.nexus-ingest-feedback {
+margin-top: 8px;
+padding: 10px 12px;
+background: rgba(25, 31, 37, 0.88);
+border: 1px solid #303942;
+border-radius: 4px;
+color: #d9e2e8;
+font-size: 11px;
+font-family: var(--font-mono);
+line-height: 1.45;
+}
+
+.nexus-ingest-feedback[hidden],
+.nexus-ingest-feedback [hidden] { display: none !important; }
+.nexus-ingest-status-line { display: flex; align-items: center; gap: 9px; min-height: 16px; }
+.nexus-ingest-indicator { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: #7a8790; }
+.nexus-ingest-message { flex: 1; min-width: 0; }
+.nexus-ingest-percent { color: #8ce0cf; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nexus-ingest-progress { display: block; width: 100%; height: 7px; margin-top: 10px; overflow: hidden; appearance: none; border: 0; border-radius: 999px; background: #29343a; color: #59c9b4; accent-color: #59c9b4; }
+.nexus-ingest-progress::-webkit-progress-bar { background: #29343a; border-radius: 999px; }
+.nexus-ingest-progress::-webkit-progress-value,
+.nexus-ingest-progress::-moz-progress-bar { background: linear-gradient(90deg, #3aa99b, #75ddc6); border-radius: 999px; transition: width 0.35s ease; }
+.nexus-ingest-detail { margin-top: 7px; color: #8f9ba4; font-size: 10px; font-variant-numeric: tabular-nums; }
+.nexus-ingest-feedback[data-state="working"] { background: rgba(24, 44, 45, 0.62); border-color: #365c59; }
+.nexus-ingest-feedback[data-state="working"] .nexus-ingest-indicator { background: #61d2bd; box-shadow: 0 0 9px rgba(97, 210, 189, 0.46); animation: nexus-ingest-pulse 1.6s ease-in-out infinite; }
+.nexus-ingest-feedback[data-state="success"] { background: rgba(23, 48, 39, 0.62); border-color: #416b54; }
+.nexus-ingest-feedback[data-state="success"] .nexus-ingest-indicator { background: #79cf8e; }
+.nexus-ingest-feedback[data-state="error"] { background: rgba(55, 34, 37, 0.62); border-color: #70464b; color: #f0c2c6; }
+.nexus-ingest-feedback[data-state="error"] .nexus-ingest-indicator { background: #d57e87; }
+@keyframes nexus-ingest-pulse { 50% { opacity: 0.45; box-shadow: 0 0 2px rgba(97, 210, 189, 0.2); } }
+@media (prefers-reduced-motion: reduce) { .nexus-ingest-feedback[data-state="working"] .nexus-ingest-indicator { animation: none; } .nexus-ingest-progress::-webkit-progress-value { transition: none; } }
 
 /* TECHNICAL BENCHMARK SPECS STRIP */
 .nexus-specs-bar {
@@ -11661,14 +11718,14 @@ body.resizing-workspace-active .top-zone {
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                 </svg>
               </div>
-              <span class="nsc-badge">OFFLINE · DIRECT FS</span>
+              <span class="nsc-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4);">RECOMENDADO · SSD LOCAL</span>
             </div>
             <div class="nsc-meta">
               <h3>LOCAL DRIVE (SSD)</h3>
-              <p>Ler pasta de projeto diretamente via File System Access API. Zero latência, acesso direto aos arquivos brutos.</p>
+              <p>Funciona tanto offline quanto na web! Reproduz os 74 vídeos brutos (20 GB) com 0ms de latência e sem gastar internet.</p>
             </div>
             <div class="nsc-action">
-              <span>SELECIONAR PASTA</span>
+              <span>CONECTAR PASTA SSD</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
           </div>
@@ -11681,14 +11738,14 @@ body.resizing-workspace-active .top-zone {
                   <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
                 </svg>
               </div>
-              <span class="nsc-badge badge-cdn">EDGE CDN GLOBAL</span>
+              <span class="nsc-badge badge-cdn">CENAS 3D & STREAMING</span>
             </div>
             <div class="nsc-meta">
               <h3>NUVEM GIGANTERA</h3>
-              <p>Streaming do portfólio completo com miniaturas inteligentes e previews animados otimizados em WebP.</p>
+              <p>Acesse as 12 Cenas 3D generativas e miniaturas da nuvem. Para tocar os vídeos brutos, você poderá vincular o SSD a qualquer momento.</p>
             </div>
             <div class="nsc-action">
-              <span>AUTENTICAR COM PIN</span>
+              <span>ENTRAR COM PIN (2026)</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
           </div>
@@ -11720,10 +11777,27 @@ body.resizing-workspace-active .top-zone {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>BAIXAR</span>
             </button>
+            <select id="select-nexus-yt-quality" class="nsb-select nsb-select-quality" title="Resolução do download: 720p esquenta menos o notebook em sessões longas">
+              <option value="720" selected>720p</option>
+              <option value="1080">1080p</option>
+            </select>
             <button id="btn-nexus-yt-connect" class="nsb-submit-btn nsb-btn-stream" title="Ingere imediatamente como stream de vídeo ao vivo">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span>STREAM</span>
             </button>
+            <button id="btn-nexus-yt-temporary" class="nsb-submit-btn nsb-btn-temporary" type="button" title="Baixa uma cópia temporária local do vídeo do YouTube">
+              <span>YT TEMP</span>
+            </button>
+            <button id="btn-nexus-yt-cancel" class="nsb-submit-btn" type="button" hidden>CANCELAR</button>
+          </div>
+          <div id="nexus-ingest-feedback" class="nexus-ingest-feedback" role="status" aria-live="polite" hidden>
+            <div class="nexus-ingest-status-line">
+              <span class="nexus-ingest-indicator" aria-hidden="true"></span>
+              <span id="nexus-ingest-message" class="nexus-ingest-message"></span>
+              <span id="nexus-ingest-percent" class="nexus-ingest-percent" hidden></span>
+            </div>
+            <progress id="nexus-ingest-progress" class="nexus-ingest-progress" max="100" aria-label="Progresso do download temporário" hidden></progress>
+            <div id="nexus-ingest-detail" class="nexus-ingest-detail" hidden></div>
           </div>
         </div>
 
@@ -17701,13 +17775,41 @@ window.penumbraHwTwin = new HardwareTwinUI(window.penumbraMidi);
  * 7. Headphone Safe Auditioning & Dynamic 1.In Media Pool Router
  */
 
+function safeCDNMediaUrl(value) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'gigantera-penumbra.b-cdn.net' || parsed.port || parsed.username || parsed.password) return '';
+    return parsed.href;
+  } catch {
+    return '';
+  }
+}
+
+function safeManifestPath(value) {
+  if (typeof value !== 'string' || !value || value.includes('\\') || value.includes('%') || value.startsWith('/') || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)) return null;
+  const segments = value.split('/');
+  if (segments.some(segment => !segment || segment === '.' || segment === '..')) return null;
+  return segments.join('/');
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+}
+
+function cdnAssetUrl(value) {
+  const safePath = safeManifestPath(value);
+  return safePath ? `https://gigantera-penumbra.b-cdn.net/${safePath.split('/').map(encodeURIComponent).join('/')}` : '';
+}
+
 // ============================================================================
 // 0. HYBRID ASSET RESOLUTION STRATEGY (HARS)
 // ============================================================================
 // Determines if we are running locally, remotely controlling local, or fully cloud
 const HARS = {
   getMode: () => {
-    if (window.location.hostname === 'localhost') return 'local';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return 'local';
     if (window.location.hostname.includes('gigantera.xyz') || window.location.hostname.includes('vercel.app')) return 'cloud';
     return 'lan';
   },
@@ -17716,8 +17818,9 @@ const HARS = {
     const storedIP = localStorage.getItem('penumbra_lan_ip');
     if (mode === 'local') return '';
     if (mode === 'cloud' && storedIP) return `http://${storedIP}:3000`;
-    if (mode === 'cloud') return 'https://gigantera-penumbra.b-cdn.net'; // Vibe-Coding Zero-Server CDN
-    return ''; // LAN mode (accessed via IP) uses relative paths
+    // No cloud host (ex: gigantera.xyz ou vercel.app), manifestos e rotas estáticas residem na mesma origem
+    if (mode === 'cloud') return ''; 
+    return ''; // LAN mode usa caminhos relativos
   },
   getWsUrl: () => {
     const mode = HARS.getMode();
@@ -17728,7 +17831,18 @@ const HARS = {
     if (mode === 'cloud') return null; // No WS in pure CDN mode
     return `${protocol}//${window.location.host}`; // LAN mode
   },
-  resolveUrl: (path) => `${HARS.getApiBase()}${path}`
+  resolveUrl: (path) => {
+    const base = HARS.getApiBase();
+    if (base) {
+      const cleanPath = String(path || '').startsWith('/') ? path : `/${path}`;
+      return `${base.replace(/\/+$/, '')}${cleanPath}`;
+    }
+    const clean = String(path || '').replace(/^\/+/, '');
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/penumbra')) {
+      return `/penumbra/${clean}`;
+    }
+    return `/${clean}`;
+  }
 };
 
 // ============================================================================
@@ -18021,6 +18135,15 @@ window.PenumbraIDB = PenumbraIDB;
 // ============================================================================
 // 0.5 TRI-SOURCE MEDIA PROVIDER (STANDALONE VJ ARCHITECTURE)
 // ============================================================================
+function normalizeMediaFilename(name) {
+  if (!name) return '';
+  return String(name)
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 const MediaProvider = {
   mode: 'none', // 'local', 'cdn', 'youtube'
   localDirHandle: null,
@@ -18033,7 +18156,9 @@ const MediaProvider = {
     if (clip.has_local_match) return true;
     if (clip.relative_path && MediaProvider.localFilesMap.has(clip.relative_path)) return true;
     const norm = (clip.filename || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip.filename);
     if (norm && MediaProvider.localFilesByName.has(norm)) return true;
+    if (normClean && MediaProvider.localFilesByName.has(normClean)) return true;
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       if (clip.is_downloaded || (clip.relative_path && !clip.relative_path.startsWith('LOCAL_') && !clip.relative_path.startsWith('EXTRA_'))) return true;
     }
@@ -18108,13 +18233,15 @@ const MediaProvider = {
               try {
                 const file = await entry.getFile();
                 MediaProvider.localFilesMap.set(entryPath, file);
-                MediaProvider.localFilesByName.set(lowerName, {
+                const fileEntryData = {
                   file,
                   path: entryPath,
                   filename: entry.name,
                   size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
                   isServer: false
-                });
+                };
+                MediaProvider.localFilesByName.set(lowerName, fileEntryData);
+                MediaProvider.localFilesByName.set(normalizeMediaFilename(entry.name), fileEntryData);
 
                 if (ext === 'json') {
                   if (entry.name !== 'media_manifest.json') {
@@ -18266,10 +18393,22 @@ const MediaProvider = {
     let matchedCount = 0;
     allClips.forEach(clip => {
       const norm = (clip.filename || '').toLowerCase().trim();
-      const match = MediaProvider.localFilesByName.get(norm);
+      const normClean = normalizeMediaFilename(clip.filename);
+      const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+      const baseClean = normalizeMediaFilename(baseName);
+      const match = MediaProvider.localFilesByName.get(norm) ||
+                    MediaProvider.localFilesByName.get(normClean) ||
+                    (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                    (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
       if (match) {
         clip.has_local_match = true;
         clip.local_match_info = match;
+        clip.is_disconnected = false;
+        clip.needs_relink = false;
+        if (match.path) clip.relative_path = match.path;
+        if (match.file instanceof File) {
+          MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+        }
         matchedCount++;
       } else {
         clip.has_local_match = false;
@@ -18299,7 +18438,16 @@ const MediaProvider = {
         }
       } catch (e) {}
     }
-    // 1. Try Bunny Edge CDN
+    // 1. Try host origin manifest first (same-origin, zero CORS overhead)
+    try {
+      const originPath = typeof HARS !== 'undefined' ? HARS.resolveUrl('media_manifest.json') : '/media_manifest.json';
+      const resHost = await fetch(originPath);
+      if (resHost.ok) {
+        console.log('[MediaProvider] Loaded manifest from host origin');
+        return await resHost.json();
+      }
+    } catch(eHost) {}
+    // 2. Try Bunny Edge CDN
     try {
       const res = await fetch('https://gigantera-penumbra.b-cdn.net/media_manifest.json');
       if (res.ok) {
@@ -18333,16 +18481,19 @@ const MediaProvider = {
     const clip = typeof clipOrPath === 'object' ? clipOrPath : allClips.find(c => c.relative_path === clipOrPath || c.filename === clipOrPath || c.id === clipOrPath);
     const relPath = typeof clipOrPath === 'string' ? clipOrPath : (clip ? (clip.relative_path || clip.filename) : '');
     const normName = (clip?.filename || relPath.split('/').pop() || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip?.filename || relPath.split('/').pop() || '');
 
     // 0. Smart Deduplication: If file exists locally on SSD or via File System Access API
     const smartDedup = typeof UserProfileManager !== 'undefined' ? UserProfileManager.getSetting('smart_dedup_enabled', true) : true;
-    if (smartDedup && MediaProvider.localFilesByName.has(normName)) {
-      const match = MediaProvider.localFilesByName.get(normName);
-      if (match.file instanceof File) {
-        return URL.createObjectURL(match.file);
-      }
-      if (match.isServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        return `/api/raw-video?path=${encodeURIComponent(match.path || match.filename)}`;
+    if (smartDedup) {
+      const match = MediaProvider.localFilesByName.get(normName) || MediaProvider.localFilesByName.get(normClean);
+      if (match) {
+        if (match.file instanceof File) {
+          return URL.createObjectURL(match.file);
+        }
+        if (match.isServer && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          return `/api/raw-video?path=${encodeURIComponent(match.path || match.filename)}`;
+        }
       }
     }
 
@@ -18387,6 +18538,7 @@ const MediaProvider = {
 
     // 5. Direct external HTTP URL
     if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
+      if (relPath.includes('gigantera-penumbra.b-cdn.net')) return safeCDNMediaUrl(relPath);
       if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
         return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
       }
@@ -18412,8 +18564,7 @@ const MediaProvider = {
 
     // 8. Se estiver em nuvem/remoto, busca o arquivo Gigantera legítimo no storage da CDN
     if (relPath && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
-      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
-      return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
+      return cdnAssetUrl(relPath);
     }
 
     return '';
@@ -18422,32 +18573,30 @@ const MediaProvider = {
   getThumbUrl: (clip) => {
     if (!clip) return '';
     if (clip.thumbnail && (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://'))) {
-      return clip.thumbnail;
+      if (clip.thumbnail.startsWith('https://img.youtube.com/vi/')) return clip.thumbnail;
+      return safeCDNMediaUrl(clip.thumbnail);
     }
     const ytId = clip.youtube_id || extractYouTubeId(clip.filename) || extractYouTubeId(clip.relative_path);
     if (ytId) {
       return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
     }
     if (!clip.thumbnail) return '';
-    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) {
-      const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-      return `/thumbnails/${cleanThumb}`;
-    }
-    const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) {
-      return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
-    }
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return `/thumbnails/${cleanThumb}`;
-    }
-    return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
+    const cleanThumb = safeManifestPath(clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail);
+    if (!cleanThumb) return '';
+    const encodedThumb = cleanThumb.split('/').map(encodeURIComponent).join('/');
+    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) return `/thumbnails/${encodedThumb}`;
+    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) return cdnAssetUrl(cleanThumb);
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return `/thumbnails/${encodedThumb}`;
+    return cdnAssetUrl(cleanThumb);
   },
 
   getPreviewAnimUrl: (clip) => {
     if (!clip || !clip.preview_anim) return '';
-    if (clip.preview_anim.startsWith('http://') || clip.preview_anim.startsWith('https://')) return clip.preview_anim;
-    const cleanAnim = clip.preview_anim.startsWith('/') ? clip.preview_anim.substring(1) : clip.preview_anim;
-    return `https://gigantera-penumbra.b-cdn.net/${cleanAnim}`;
+    if (clip.preview_anim.startsWith('http://') || clip.preview_anim.startsWith('https://')) {
+      if (clip.preview_anim.includes('gigantera-penumbra.b-cdn.net')) return safeCDNMediaUrl(clip.preview_anim);
+      return '';
+    }
+    return cdnAssetUrl(clip.preview_anim);
   }
 };
 
@@ -18555,7 +18704,7 @@ let appState = {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
       num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
@@ -18857,6 +19006,7 @@ let hasHandoverFrame = false;
 // ----------------------------------------------------------------------------
 // CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
 // ----------------------------------------------------------------------------
+let pendingContextRestoreRaf = false;
 [prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
   if (!cv) return;
   cv.addEventListener('contextlost', (e) => {
@@ -18866,7 +19016,17 @@ let hasHandoverFrame = false;
   cv.addEventListener('contextrestored', () => {
     console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
     lastFrameTime = 0;
-    requestAnimationFrame(renderVisuals);
+    // A GPU reset tende a disparar 'contextrestored' em vários canvases quase ao
+    // mesmo tempo; renderVisuals já se reagenda sozinho (requestAnimationFrame no
+    // fim do próprio loop), então só a primeira restauração do lote deve iniciar
+    // uma nova cadeia de RAF — sem essa guarda, cada canvas abriria seu próprio
+    // loop paralelo e duplicaria o render indefinidamente.
+    if (pendingContextRestoreRaf) return;
+    pendingContextRestoreRaf = true;
+    requestAnimationFrame((time) => {
+      pendingContextRestoreRaf = false;
+      renderVisuals(time);
+    });
   });
 });
 
@@ -19170,11 +19330,23 @@ function sendAction(action, payload = {}) {
 // ============================================================================
 // 4. HARDWARE VIDEO STREAMS & MATTE ASSET LOADERS
 // ============================================================================
+let lastVideoErrorToastTime = 0;
 function attachPlayerErrorHandler(player, label) {
   if (player && !player._hasErrHandler) {
     player._hasErrHandler = true;
     player.addEventListener('error', () => {
       console.warn(`[Player ${label}] Falha ao decodificar sinal de vídeo (${player.src}).`);
+      const now = Date.now();
+      if (now - lastVideoErrorToastTime > 8000) {
+        lastVideoErrorToastTime = now;
+        if (MediaProvider.localFilesByName.size === 0) {
+          if (typeof showHudMacroToast === 'function') {
+            showHudMacroToast('💾 Vídeos brutos no SSD. Clique em "CONECTAR PASTA SSD" para tocar direto do disco!', 6000);
+          } else if (typeof showMacroToast === 'function') {
+            showMacroToast('💾 Conecte a pasta do SSD para reproduzir do seu disco local');
+          }
+        }
+      }
     });
   }
 }
@@ -22263,10 +22435,10 @@ function createDefault3DConfig(scene = 'star_13', palette = 'pt_rubi') {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
-      num13_sub_kick: 1.8,
+      num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
       air_sparkle: 1.0
     }
   };
@@ -22394,7 +22566,7 @@ function renderSceneMarineSpine(ctx, w, h, simTime, p) {
   const cosX = Math.cos(p.rotX), sinX = Math.sin(p.rotX);
 
   const swimPhase = simTime * 3.2;
-  const swimAmp = 0.08 + p.bass * 0.14;
+  const swimAmp = (0.08 + p.bass * 0.14) * (p.cfg3d.audio_reactivity?.spine_swimming || 1.0);
   const ribExp = 1.0 + p.sub * 0.45;
   const dorsalPulse = 1.0 + p.air * 0.35;
 
@@ -22491,9 +22663,10 @@ function renderSceneMarineSpine(ctx, w, h, simTime, p) {
     const persp = p.fov / depth;
     const sx = w * 0.5 + x1 * persp * w;
     const sy = h * 0.5 + y2 * persp * h;
-    const spR = Math.max(0.8, (s.size / depth) * (0.8 + p.air * 0.6));
+    const sparkleMult = p.cfg3d.audio_reactivity?.air_sparkle || 1.0;
+    const spR = Math.max(0.8, (s.size / depth) * (0.8 + p.air * 0.6 * sparkleMult));
 
-    ctx.fillStyle = p.palette.accentRgba((s.alpha * (0.6 + p.air * 0.4)).toFixed(2));
+    ctx.fillStyle = p.palette.accentRgba((s.alpha * (0.6 + p.air * 0.4 * sparkleMult)).toFixed(2));
     ctx.beginPath();
     ctx.arc(sx, sy, spR, 0, Math.PI * 2);
     ctx.fill();
@@ -23460,7 +23633,7 @@ function renderSceneBiomorphicFlora(ctx, w, h, simTime, p) {
 
   const branches = 10;
   const segments = 14;
-  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5);
+  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5) * (p.cfg3d.audio_reactivity?.spine_swimming || 1.0);
 
   ctx.save();
   ctx.translate(cx, cy);
@@ -25577,9 +25750,9 @@ function advanceSmartQueue(targetState = null) {
   // Context-aware selection based on macro state
   let filteredCandidates = candidatePool;
   if (stateToUse === 'INTRO' || stateToUse === 'BREAK') {
-    filteredCandidates = candidatePool.filter(c => c.category === 'MINIMAL' || c.category === 'ABSTRACT');
+    filteredCandidates = candidatePool.filter(c => c.category === 'MINIMAL' || c.category === 'ABSTRACT' || c.is_generative);
   } else if (stateToUse === 'BUILD') {
-    filteredCandidates = candidatePool.filter(c => c.category === 'ABSTRACT' || c.category === 'FIGURA');
+    filteredCandidates = candidatePool.filter(c => c.category === 'ABSTRACT' || c.category === 'FIGURA' || c.is_generative);
   } else if (stateToUse === 'DROP') {
     filteredCandidates = candidatePool.filter(c => c.category === 'DENSE' || c.category === 'CHROMA' || c.is_generative);
   } else if (stateToUse === 'GROOVE') {
@@ -25704,7 +25877,24 @@ function executeTakeCommit() {
   if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
+let lastHardCutTimestamp = 0;
 function executeHardCut(isUserAction = false) {
+  const nowCut = performance.now();
+  // Debounce de clique/tecla duplo literal (ex.: dois cliques rápidos no botão
+  // físico de corte, ou Enter seguido do clique): isso não depende de
+  // isUserAction e vale para qualquer origem, numa janela curta o bastante
+  // para nunca atrapalhar dois cortes manuais de verdade em sequência.
+  if (nowCut - lastHardCutTimestamp < 400) {
+    return;
+  }
+  lastHardCutTimestamp = nowCut;
+  // Mesma proteção anti-disparo-duplo de startAutoTransition: um hard cut
+  // disparado por automação dentro de 3s de outro take é ignorado; um hard cut
+  // explícito do operador (botão ou Enter) sempre executa essa checagem.
+  if (!isUserAction && (nowCut - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowCut;
   isAutoTransitioning = false;
   autoTransitionProgress = 0.0;
   const bar = document.getElementById('auto-take-bar');
@@ -26509,12 +26699,13 @@ window.resetMatteTransform = resetMatteTransform;
 
 function getMatteThumbUrl(matte) {
   if (!matte) return '';
-  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const mPath = safeManifestPath(matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '') || '';
   if (!mPath) return '';
+  const encodedPath = mPath.split('/').map(encodeURIComponent).join('/');
   if (MediaProvider.mode === 'cdn' || window.location.hostname.includes('b-cdn.net') || window.location.hostname.includes('vercel.app')) {
-    return `https://gigantera-penumbra.b-cdn.net/mattes/${mPath}`;
+    return `https://gigantera-penumbra.b-cdn.net/mattes/${encodedPath}`;
   }
-  return `./mattes/${mPath}`;
+  return `./mattes/${encodedPath}`;
 }
 
 async function loadMattesCatalog() {
@@ -27746,13 +27937,15 @@ async function relinkWithDirectoryHandle(dirHandle, options = {}) {
             try {
               const file = await entry.getFile();
               MediaProvider.localFilesMap.set(entryPath, file);
-              MediaProvider.localFilesByName.set(lower, {
+              const fileObj = {
                 file,
                 path: entryPath,
                 filename: entry.name,
                 size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
                 isServer: false
-              });
+              };
+              MediaProvider.localFilesByName.set(lower, fileObj);
+              MediaProvider.localFilesByName.set(normalizeMediaFilename(entry.name), fileObj);
             } catch (fe) {}
           }
         } else if (entry.kind === 'directory') {
@@ -27765,18 +27958,22 @@ async function relinkWithDirectoryHandle(dirHandle, options = {}) {
 
     let relinkedCount = 0;
     allClips.forEach(clip => {
-      if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
-        const norm = (clip.filename || '').toLowerCase().trim();
-        const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
-        const match = MediaProvider.localFilesByName.get(norm) || (baseName ? MediaProvider.localFilesByName.get(baseName) : null);
-        if (match && match.file instanceof File) {
-          clip.is_disconnected = false;
-          clip.needs_relink = false;
-          clip.local_match_info = match;
-          if (match.path) clip.relative_path = match.path;
-          MediaProvider.localFilesMap.set(clip.relative_path, match.file);
-          relinkedCount++;
-        }
+      const norm = (clip.filename || '').toLowerCase().trim();
+      const normClean = normalizeMediaFilename(clip.filename);
+      const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+      const baseClean = normalizeMediaFilename(baseName);
+      const match = MediaProvider.localFilesByName.get(norm) ||
+                    MediaProvider.localFilesByName.get(normClean) ||
+                    (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                    (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
+      if (match && match.file instanceof File) {
+        clip.has_local_match = true;
+        clip.is_disconnected = false;
+        clip.needs_relink = false;
+        clip.local_match_info = match;
+        if (match.path) clip.relative_path = match.path;
+        MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+        relinkedCount++;
       }
     });
 
@@ -27803,26 +28000,37 @@ window.relinkWithFiles = async function(fileList) {
   let relinkedCount = 0;
   for (const file of Array.from(fileList)) {
     const norm = file.name.toLowerCase().trim();
+    const normClean = normalizeMediaFilename(file.name);
     const relPath = file.webkitRelativePath || file.name;
     MediaProvider.localFilesMap.set(relPath, file);
-    MediaProvider.localFilesByName.set(norm, {
+    const fileObj = {
       file,
       path: relPath,
       filename: file.name,
       size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
       isServer: false
-    });
+    };
+    MediaProvider.localFilesByName.set(norm, fileObj);
+    MediaProvider.localFilesByName.set(normClean, fileObj);
   }
 
   allClips.forEach(clip => {
-    if (clip.is_local || clip.id.startsWith('local_') || clip.needs_relink || clip.is_disconnected) {
-      const norm = (clip.filename || '').toLowerCase().trim();
-      const match = MediaProvider.localFilesByName.get(norm);
-      if (match && match.file instanceof File) {
-        clip.is_disconnected = false;
-        clip.needs_relink = false;
-        relinkedCount++;
-      }
+    const norm = (clip.filename || '').toLowerCase().trim();
+    const normClean = normalizeMediaFilename(clip.filename);
+    const baseName = clip.relative_path ? clip.relative_path.split('/').pop().toLowerCase().trim() : '';
+    const baseClean = normalizeMediaFilename(baseName);
+    const match = MediaProvider.localFilesByName.get(norm) ||
+                  MediaProvider.localFilesByName.get(normClean) ||
+                  (baseName ? MediaProvider.localFilesByName.get(baseName) : null) ||
+                  (baseClean ? MediaProvider.localFilesByName.get(baseClean) : null);
+    if (match && match.file instanceof File) {
+      clip.has_local_match = true;
+      clip.is_disconnected = false;
+      clip.needs_relink = false;
+      clip.local_match_info = match;
+      if (match.path) clip.relative_path = match.path;
+      MediaProvider.localFilesMap.set(clip.relative_path, match.file);
+      relinkedCount++;
     }
   });
 
@@ -28361,7 +28569,7 @@ function createMediaCardElement(clip) {
   
   const isAutoEligible = isClipEligibleForAutopilot(clip);
   card.dataset.clipId = clip.id;
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${clipSource}`;
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${escapeHTML(clipSource)}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
@@ -28395,35 +28603,37 @@ function createMediaCardElement(clip) {
   }
 
   const clipFolder = getClipFolder(clip);
+  const clipIdArg = escapeHTML(JSON.stringify(String(clip.id)));
+  const clipFolderArg = escapeHTML(JSON.stringify(String(clipFolder)));
 
   let actionBtnHtml = '';
   if (isUnlinked) {
-    actionBtnHtml = `<button class="btn-card-action btn-action-relink" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> RELINK</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-action-relink" onclick="window.relinkSpecificClip(${clipIdArg}, event)" title="Localizar este clipe"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> RELINK</button>`;
   } else if (clip.has_local_match || cacheInfo.isCached) {
     actionBtnHtml = `<button class="btn-card-action is-active-cached" title="Arquivo pronto no SSD local" onclick="event.stopPropagation();">✓ LOCAL</button>`;
   } else if (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream') {
-    actionBtnHtml = `<button class="btn-card-action btn-card-activate" onclick="window.activateMediaClip('${clip.id}', event)" title="Ativar clipe com streaming em alta">⚡ ATIVAR</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-card-activate" onclick="window.activateMediaClip(${clipIdArg}, event)" title="Ativar clipe com streaming em alta">⚡ ATIVAR</button>`;
   }
 
   card.innerHTML = `
     <div class="media-card-thumb">
-      ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
+      ${thumbSrc ? `<img src="${escapeHTML(thumbSrc)}" loading="lazy" alt="${escapeHTML(clip.filename)}" data-static="${escapeHTML(thumbSrc)}" data-anim="${escapeHTML(animSrc)}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
       ${srcBadgeHtml}
       ${isOnAir ? '<span class="thumb-air-indicator">● PGM</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
       ${isInL5 ? '<span class="thumb-l5-indicator">● L5</span>' : ''}
-      ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
-      <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
-      <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
+      ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
+      <span class="thumb-duration-badge">${escapeHTML(clip.duration ? `${Math.round(clip.duration)}s` : 'LOOP')}</span>
+      <span class="thumb-resolution-badge">${escapeHTML(clip.width || '1920')}×${escapeHTML(clip.height || '1080')}</span>
     </div>
     <div class="media-card-info">
       <div class="media-card-title-row">
-        <span class="media-card-title" title="${clip.filename}">${clip.display_title || clip.filename}</span>
+        <span class="media-card-title" title="${escapeHTML(clip.filename)}">${clip.display_title ? escapeHTML(clip.display_title) : escapeHTML(clip.filename)}</span>
         ${cacheBadgeHtml}
       </div>
-      <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}');" title="Filtrar por esta pasta: ${clipFolder}">
+      <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter(${clipFolderArg});" title="Filtrar por esta pasta: ${escapeHTML(clipFolder)}">
         <svg class="folder-icon-svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-        <span>${clipFolder}</span>
+        <span>${escapeHTML(clipFolder)}</span>
       </div>
       <div class="card-actions-grid">
         <button class="btn-card-action btn-action-pgm btn-bus-a ${isOnAir ? 'is-active-on-air' : ''}" data-bus="A" title="Enviar para Program Master [A]">
@@ -28438,7 +28648,7 @@ function createMediaCardElement(clip) {
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
           <span>L5</span>
         </button>
-        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar no Studio Inspector [I]">
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', ${clipIdArg})" title="Inspecionar no Studio Inspector [I]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
         </button>
@@ -28622,7 +28832,8 @@ window.selectLibraryAssetType = selectLibraryAssetType;
 
 function createMatteCardForLibrary(matte) {
   const card = document.createElement('div');
-  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const mPath = safeManifestPath(matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '') || '';
+  const mPathArg = escapeHTML(JSON.stringify(mPath));
   const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === mPath);
   card.className = `library-card-matte ${isInspecting ? 'is-inspect-selected' : ''}`;
   const targetL = appState.matte_target_layer || 'layer3';
@@ -28634,18 +28845,18 @@ function createMatteCardForLibrary(matte) {
 
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
-      <img src="${thumbUrl}" loading="lazy" alt="${mName}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';">
-      <span class="lib-badge-type lib-badge-matte">${mCat}</span>
+      <img src="${escapeHTML(thumbUrl)}" loading="lazy" alt="${escapeHTML(mName)}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';">
+      <span class="lib-badge-type lib-badge-matte">${escapeHTML(mCat)}</span>
     </div>
     <div class="library-card-info">
-      <div class="library-card-title" title="${mName}">${mName}</div>
-      <div class="library-card-desc" title="${mDesc}">${mDesc}</div>
+      <div class="library-card-title" title="${escapeHTML(mName)}">${escapeHTML(mName)}</div>
+      <div class="library-card-desc" title="${escapeHTML(mDesc)}">${escapeHTML(mDesc)}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer0')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer1')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
-      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer3')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); openStudioInspector('matte', '${mPath}');" title="Editar parâmetros no Studio Inspector">⚙ INSP</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer0')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer1')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer3')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); openStudioInspector('matte', ${mPathArg});" title="Editar parâmetros no Studio Inspector">⚙ INSP</button>
     </div>
   `;
 
@@ -28993,25 +29204,50 @@ function renderMediaCards() {
   }
 
   // 4. CLIPS & ALL VIEW
-  const unlinkedClips = allClips.filter(c => (c.is_local || c.id.startsWith('local_')) && (c.is_disconnected || !MediaProvider.isLocalFileConnected(c)));
-  if (unlinkedClips.length > 0 && activeLibraryAssetType !== 'mattes' && activeLibraryAssetType !== 'fx' && activeLibraryAssetType !== 'presets' && activeSourceFilter !== 'cdn') {
-    const lastFolderName = (UserProfileManager.profile && UserProfileManager.profile.last_local_folder_name) ? UserProfileManager.profile.last_local_folder_name : 'Sua pasta de mídias';
-    const relinkBanner = document.createElement('div');
-    relinkBanner.className = 'media-relink-banner';
-    relinkBanner.innerHTML = `
+  const isCloudHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  const hasLocalConnected = MediaProvider.localFilesByName.size > 0;
+  const isVideoOrAllTab = activeLibraryAssetType !== 'mattes' && activeLibraryAssetType !== 'fx' && activeLibraryAssetType !== 'presets';
+
+  if (isCloudHost && !hasLocalConnected && isVideoOrAllTab) {
+    const cloudSsdBanner = document.createElement('div');
+    cloudSsdBanner.className = 'media-relink-banner';
+    cloudSsdBanner.style.background = 'linear-gradient(90deg, rgba(230, 126, 34, 0.18), rgba(211, 84, 0, 0.28))';
+    cloudSsdBanner.style.border = '1px solid rgba(230, 126, 34, 0.55)';
+    cloudSsdBanner.style.marginBottom = '12px';
+    cloudSsdBanner.innerHTML = `
       <div class="relink-banner-info">
-        <span class="relink-icon">📁⚠️</span>
+        <span class="relink-icon">💾⚡</span>
         <div>
-          <strong>${unlinkedClips.length} CLIPE(S) LOCAL(IS) DESVINCULADO(S)</strong>
-          <div style="font-size:9.5px; opacity:0.8;">Pasta de origem: <em>${lastFolderName}</em>. Reconecte a pasta para restaurar a reprodução instantânea.</div>
+          <strong style="color: #f39c12; letter-spacing: 0.5px;">MODO WEB · VINCULE SUA PASTA DO SSD LOCAL</strong>
+          <div style="font-size:10px; opacity:0.9; color: #ecf0f1;">Os 74 vídeos brutos (20 GB) rodam direto do seu disco com 0ms de latência. Aponte a pasta uma vez e o navegador lembrará nas próximas sessões.</div>
         </div>
       </div>
       <div class="relink-banner-actions">
-        <button class="btn btn-primary btn-xs" onclick="window.relinkLocalMediaFolder()" title="Reconectar pasta de mídias local via File System Access">⚡ RECONECTAR PASTA</button>
-        <button class="btn btn-outline btn-xs" onclick="window.relinkWithFileInput()" title="Selecionar arquivos ou pasta manualmente">📂 LOCALIZAR ARQUIVOS</button>
+        <button class="btn btn-primary btn-xs" style="background:#e67e22; border-color:#d35400; font-weight:bold; cursor:pointer;" onclick="window.relinkLocalMediaFolder()" title="Vincular pasta do SSD local">⚡ CONECTAR PASTA SSD</button>
       </div>
     `;
-    container.appendChild(relinkBanner);
+    container.appendChild(cloudSsdBanner);
+  } else {
+    const unlinkedClips = allClips.filter(c => (c.is_local || c.id.startsWith('local_')) && (c.is_disconnected || !MediaProvider.isLocalFileConnected(c)));
+    if (unlinkedClips.length > 0 && isVideoOrAllTab && activeSourceFilter !== 'cdn') {
+      const lastFolderName = (UserProfileManager.profile && UserProfileManager.profile.last_local_folder_name) ? UserProfileManager.profile.last_local_folder_name : 'Sua pasta de mídias';
+      const relinkBanner = document.createElement('div');
+      relinkBanner.className = 'media-relink-banner';
+      relinkBanner.innerHTML = `
+        <div class="relink-banner-info">
+          <span class="relink-icon">📁⚠️</span>
+          <div>
+            <strong>${unlinkedClips.length} CLIPE(S) LOCAL(IS) DESVINCULADO(S)</strong>
+            <div style="font-size:9.5px; opacity:0.8;">Pasta de origem: <em>${lastFolderName}</em>. Reconecte a pasta para restaurar a reprodução instantânea.</div>
+          </div>
+        </div>
+        <div class="relink-banner-actions">
+          <button class="btn btn-primary btn-xs" onclick="window.relinkLocalMediaFolder()" title="Reconectar pasta de mídias local via File System Access">⚡ RECONECTAR PASTA</button>
+          <button class="btn btn-outline btn-xs" onclick="window.relinkWithFileInput()" title="Selecionar arquivos ou pasta manualmente">📂 LOCALIZAR ARQUIVOS</button>
+        </div>
+      `;
+      container.appendChild(relinkBanner);
+    }
   }
 
   updateAutopilotPoolUI();
@@ -29863,7 +30099,7 @@ function setupEvents() {
   if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition(null, true));
 
   const btnCutTake = document.getElementById('btn-cut-take');
-  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut());
+  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut(true));
 
   document.querySelectorAll('.trans-rate-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -31239,14 +31475,189 @@ function bootstrapApp() {
       });
     }
 
-    // 4. YOUTUBE / STREAM INGESTION & DOWNLOADER IN STUDIO LAUNCHER
+    // 4. YOUTUBE / STREAM INGESTION
+    const btnYTTemp = document.getElementById('btn-nexus-yt-temporary');
+    const btnYTCancel = document.getElementById('btn-nexus-yt-cancel');
+    const inputYT = document.getElementById('input-nexus-yt');
+    const ingestFeedback = document.getElementById('nexus-ingest-feedback');
+    const ingestMessage = document.getElementById('nexus-ingest-message');
+    const ingestPercent = document.getElementById('nexus-ingest-percent');
+    const ingestProgress = document.getElementById('nexus-ingest-progress');
+    const ingestDetail = document.getElementById('nexus-ingest-detail');
+    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+    let activeYoutubeJobId = null;
+    let pendingCancelJobId = null;
+    const showIngestFeedback = (message, state = 'error') => {
+      if (!ingestFeedback) return;
+      ingestFeedback.dataset.state = state;
+      ingestFeedback.hidden = false;
+      if (ingestMessage) ingestMessage.textContent = message;
+      if (ingestProgress) ingestProgress.hidden = true;
+      if (ingestPercent) ingestPercent.hidden = true;
+      if (ingestDetail) ingestDetail.hidden = true;
+    };
+    const formatBytes = bytes => {
+      if (!Number.isFinite(Number(bytes)) || Number(bytes) < 0) return '';
+      const value = Number(bytes);
+      if (value < 1024) return `${Math.round(value)} B`;
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let size = value / 1024;
+      let unit = units[0];
+      for (let index = 1; size >= 1024 && index < units.length; index += 1) {
+        size /= 1024;
+        unit = units[index];
+      }
+      return `${size.toFixed(size < 10 ? 1 : 0)} ${unit}`;
+    };
+    const showYoutubeProgress = job => {
+      const percent = job.percent == null ? null : Number(job.percent);
+      const hasPercent = Number.isFinite(percent) && percent >= 0;
+      const converting = job.status === 'converting';
+      const cancelling = job.status === 'cancelling';
+      showIngestFeedback(cancelling ? 'Cancelamento solicitado…' : converting ? 'Convertendo para reprodução local…' : 'Baixando para o cache temporário local…', 'working');
+      if (ingestProgress) {
+        ingestProgress.hidden = false;
+        if (hasPercent && !cancelling) ingestProgress.value = Math.min(100, percent);
+        else if (ingestProgress.removeAttribute) ingestProgress.removeAttribute('value');
+      }
+      if (ingestPercent) {
+        ingestPercent.hidden = !hasPercent || cancelling;
+        if (hasPercent) ingestPercent.textContent = `${Math.round(percent)}%`;
+      }
+      if (ingestDetail) {
+        const received = formatBytes(job.downloadedBytes || 0);
+        const total = formatBytes(job.totalBytes || 0);
+        ingestDetail.hidden = false;
+        ingestDetail.textContent = converting ? 'Etapa final: preparando o vídeo para reprodução.' : total ? `${received} de ${total} recebidos` : `${received} recebidos · tamanho total desconhecido`;
+      }
+    };
+    const addTemporaryYoutubeClip = (url, job) => {
+      const category = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
+      allClips.unshift({
+        id: `youtube_${job.id}`,
+        filename: job.title || 'Vídeo do YouTube',
+        project: 'YOUTUBE TEMP',
+        category,
+        source: 'youtube',
+        relative_path: `/api/youtube-downloads/${encodeURIComponent(job.id)}/media`,
+        is_stream: true,
+        is_temporary: true,
+        thumbnail: '',
+        duration: job.duration || 9999
+      });
+      MediaProvider.mode = 'youtube';
+      renderMediaCards();
+      updateSourceUI('stream');
+      closeStudioLauncher();
+    };
+    const waitForYoutubeDownload = async url => {
+      const qualitySelect = document.getElementById('select-nexus-yt-quality');
+      const quality = qualitySelect ? qualitySelect.value : '720';
+      const startResponse = await fetch('/api/youtube-downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, quality })
+      });
+      const startJob = await startResponse.json().catch(() => ({}));
+      if (!startResponse.ok || !startJob.id) throw new Error(startJob.error || 'Não foi possível iniciar o download.');
+      activeYoutubeJobId = startJob.id;
+      if (btnYTCancel) btnYTCancel.hidden = false;
+      let job = startJob;
+      while (activeYoutubeJobId) {
+        if (job.status === 'complete') {
+          activeYoutubeJobId = null;
+          if (btnYTCancel) btnYTCancel.hidden = true;
+          showIngestFeedback('Vídeo pronto e adicionado à biblioteca local.', 'success');
+          if (ingestProgress) { ingestProgress.hidden = false; ingestProgress.value = 100; }
+          if (ingestPercent) { ingestPercent.hidden = false; ingestPercent.textContent = '100%'; }
+          addTemporaryYoutubeClip(url, job);
+          return;
+        }
+        if (job.status === 'failed' || job.status === 'cancelled') {
+          activeYoutubeJobId = null;
+          if (btnYTCancel) btnYTCancel.hidden = true;
+          throw new Error(job.error || 'Download temporário falhou.');
+        }
+        showYoutubeProgress(job);
+        await new Promise(resolve => setTimeout(resolve, 700));
+        const response = await fetch(`/api/youtube-downloads/${encodeURIComponent(startJob.id)}`);
+        const nextJob = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(nextJob.error || 'O download temporário não foi encontrado.');
+        job = nextJob;
+      }
+    };
+    const handleYTIngest = async () => {
+      const rawUrl = (inputYT ? inputYT.value : '').trim();
+      if (pendingCancelJobId) {
+        showIngestFeedback('Confirme o cancelamento anterior antes de iniciar outro download.', 'error');
+        return;
+      }
+      let parsedUrl;
+      try { parsedUrl = new URL(rawUrl); } catch {
+        showIngestFeedback('URL inválida. Use um link HTTPS do YouTube ou um MP4/WebM direto da Bunny CDN.', 'error');
+        return;
+      }
+      const host = parsedUrl.hostname.toLowerCase();
+      const isYoutube = host === 'youtu.be' || host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com';
+      if (isYoutube && parsedUrl.protocol === 'https:') {
+        if (btnYTTemp) btnYTTemp.disabled = true;
+        showIngestFeedback('Conectando ao YouTube e iniciando a transferência…', 'working');
+        try {
+          await waitForYoutubeDownload(parsedUrl.href);
+        } catch (error) {
+          const jobId = activeYoutubeJobId;
+          let confirmed = !jobId;
+          if (jobId) {
+            try {
+              const cancelResponse = await fetch(`/api/youtube-downloads/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+              confirmed = cancelResponse.status === 409;
+              if (cancelResponse.ok) pendingCancelJobId = jobId;
+            } catch {}
+            if (!confirmed) pendingCancelJobId = jobId;
+          }
+          const message = error.message || 'Download do YouTube falhou.';
+          showIngestFeedback(confirmed ? message : `${message} Cancelamento ainda não confirmado.`, 'error');
+        } finally {
+          activeYoutubeJobId = null;
+          if (btnYTTemp) btnYTTemp.disabled = false;
+          if (btnYTCancel) btnYTCancel.hidden = !pendingCancelJobId;
+        }
+        return;
+      }
+      if (!safeCDNMediaUrl(rawUrl) || !/\.(mp4|webm)$/i.test(parsedUrl.pathname)) {
+        showIngestFeedback('Use uma URL HTTPS direta de MP4/WebM da Bunny CDN ou um link do YouTube.', 'error');
+        return;
+      }
+      allClips.unshift({ id: `stream_${Date.now()}`, filename: rawUrl, category: selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE', relative_path: rawUrl, is_stream: true, thumbnail: '', duration: 9999 });
+      renderMediaCards();
+      updateSourceUI('stream');
+      closeStudioLauncher();
+    };
+    if (btnYTTemp) btnYTTemp.addEventListener('click', handleYTIngest);
+    if (btnYTCancel) btnYTCancel.addEventListener('click', async () => {
+      const jobId = activeYoutubeJobId || pendingCancelJobId;
+      if (!jobId) return;
+      showIngestFeedback('Cancelando download…', 'working');
+      try {
+        const response = await fetch(`/api/youtube-downloads/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+        if (response.status === 409) {
+          if (pendingCancelJobId === jobId) pendingCancelJobId = null;
+          if (!activeYoutubeJobId && !pendingCancelJobId) btnYTCancel.hidden = true;
+          showIngestFeedback('Não há transferência ativa para cancelar.', 'success');
+        } else if (response.ok) {
+          if (!activeYoutubeJobId) pendingCancelJobId = jobId;
+          showIngestFeedback('Cancelamento solicitado; aguardando encerramento.', 'working');
+        } else showIngestFeedback('O servidor não confirmou o cancelamento. Tente novamente.', 'error');
+      } catch {
+        showIngestFeedback('Não foi possível enviar o cancelamento; tente novamente quando a conexão voltar.', 'error');
+      }
+    });
     const btnYTStream = document.getElementById('btn-nexus-yt-connect');
     const btnYTDl = document.getElementById('btn-nexus-yt-download');
-    const inputYT = document.getElementById('input-nexus-yt');
-    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+    const inputYTLauncher = document.getElementById('input-nexus-yt');
 
     const handleLauncherStream = (mode) => {
-      const url = (inputYT ? inputYT.value : '').trim();
+      const url = (inputYTLauncher ? inputYTLauncher.value : '').trim();
       if (!url) return;
       const cat = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
       console.log(`[Studio Launcher] YouTube/Stream Ingest (${mode}):`, url);
@@ -33754,6 +34165,14 @@ function renderStudioInspector() {
               <span class="insp-val-disp">${(react.spine_swimming || 1.0).toFixed(1)}x</span>
             </div>
             <input type="range" min="2" max="25" value="${Math.round((react.spine_swimming || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.spine_swimming', this.value / 10.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>CINTILAÇÃO DE ESPOROS (AIR / HI-HAT SPARKLE)</span>
+              <span class="insp-val-disp">${(react.air_sparkle || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((react.air_sparkle || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.air_sparkle', this.value / 10.0)">
           </div>
 
           <button class="insp-btn-toggle" style="margin-top: 10px; border-color: rgba(239,68,68,0.4);" onclick="window.reset3DConfig('${currentTarget}')">
