@@ -705,6 +705,10 @@
 
         <div class="pro-timeline-arrangement-body">
           <div class="timeline-tracks-sidebar">
+            <div class="tl-ruler-corner-header" title="Canais do Arranger (Alinhamento 1:1 com a Régua de Compassos)">
+              <span class="tl-corner-label">TRACKS</span>
+              <span class="tl-corner-count">7 CANAIS</span>
+            </div>
             <div class="tl-track-header track-master" onclick="openStudioInspector('layer', 0)" title="Clique para Inspecionar L0 Master [I]">
               <span class="track-tag">PGM</span>
               <span class="track-name">L0 MASTER</span>
@@ -777,20 +781,15 @@
               <input type="range" class="pro-slider" style="flex:1" id="l0-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer0', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l0-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l0-matte" onchange="onLayerMatteChange('layer0', this.value)" title="Máscara Própria de L0">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png" selected>Matte B: Vignette Penumbra</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: Metade Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas Tempo</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer0', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer0')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l0-matte-inv" onclick="toggleLayerMatteInvert('layer0')" title="Inverter Preto/Branco da Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer0">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer0')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l0-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer0')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer0', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l0-matte-inv" onclick="toggleLayerMatteInvert('layer0')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l0-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l0-blend" onchange="onLayerBlendChange('layer0', this.value)">
@@ -820,17 +819,15 @@
               <button class="ch-pill-rot" id="l1-rot-cw" onclick="setLayerRotation('layer1', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l1-fit-wings" onclick="setLayerFitMode('layer1', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l1-matte" onchange="onLayerMatteChange('layer1', this.value)" title="Máscara Própria de L1">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Suave</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Radial</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: Metade Esquerda</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer1', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer1')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l1-matte-inv" onclick="toggleLayerMatteInvert('layer1')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer1">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer1')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l1-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer1')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer1', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l1-matte-inv" onclick="toggleLayerMatteInvert('layer1')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l1-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l1-blend" onchange="onLayerBlendChange('layer1', this.value)">
@@ -860,16 +857,15 @@
               <button class="ch-pill-rot" id="l2-rot-cw" onclick="setLayerRotation('layer2', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l2-fit-wings" onclick="setLayerFitMode('layer2', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l2-matte" onchange="onLayerMatteChange('layer2', this.value)" title="Máscara Própria de L2">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Central</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer2', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer2')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l2-matte-inv" onclick="toggleLayerMatteInvert('layer2')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer2">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer2')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l2-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer2')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer2', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l2-matte-inv" onclick="toggleLayerMatteInvert('layer2')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l2-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l2-blend" onchange="onLayerBlendChange('layer2', this.value)" title="Modo de Mesclagem do Find Edges (Sobel)">
@@ -891,7 +887,7 @@
             <div class="ch-header">
               <button class="btn-solo active" id="btn-toggle-l3" onclick="toggleLayerActive('layer3')">L3</button>
               <div class="ch-meta">
-                <span class="ch-name">CUE OVERLAY (PREVIEW B)</span>
+                <span class="ch-name">DECK B · CUE BUS (PREVIEW)</span>
                 <span class="ch-clip-name" id="l3-sub-text">Metallic_spine...</span>
               </div>
             </div>
@@ -907,20 +903,15 @@
               <input type="range" class="pro-slider" style="flex:1" id="l3-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer3', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l3-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l3-matte" onchange="onLayerMatteChange('layer3', this.value)" title="Máscara Própria de L3 (Transfere ao PGM no TAKE!)">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_a_solids/matte_a_half_left.png" selected>Matte A: 50% Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas Tempo</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Central</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer3', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer3')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l3-matte-inv" onclick="toggleLayerMatteInvert('layer3')" title="Inverter Preto/Branco da Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer3">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer3')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l3-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer3')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer3', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l3-matte-inv" onclick="toggleLayerMatteInvert('layer3')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l3-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l3-blend" onchange="onLayerBlendChange('layer3', this.value)">
@@ -931,8 +922,8 @@
               </select>
             </div>
             <div class="ch-fader-slot">
-              <input type="range" class="pro-slider ch-slider" id="l3-opacity" min="0" max="100" value="40" oninput="onLayerOpacityChange('layer3', this.value)">
-              <span class="ch-val" id="lbl-l3-opacity">40%</span>
+              <input type="range" class="pro-slider ch-slider" id="l3-opacity" min="0" max="100" value="100" oninput="onLayerOpacityChange('layer3', this.value)">
+              <span class="ch-val" id="lbl-l3-opacity">100%</span>
             </div>
           </div>
 
@@ -951,17 +942,15 @@
               <button class="ch-pill-rot" id="l4-rot-cw" onclick="setLayerRotation('layer4', 90)">↻+90</button>
               <button class="ch-pill-rot" id="l4-fit-wings" onclick="setLayerFitMode('layer4', 'wings')">WINGS</button>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l4-matte" onchange="onLayerMatteChange('layer4', this.value)" title="Máscara Própria de L4">
-                <option value="none">NENHUMA (FULL FRAME)</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png" selected>Matte C: Persianas Drop</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Caótico</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Abertura Radial</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer4', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer4')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l4-matte-inv" onclick="toggleLayerMatteInvert('layer4')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer4">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer4')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l4-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer4')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer4', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l4-matte-inv" onclick="toggleLayerMatteInvert('layer4')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l4-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l4-blend" onchange="onLayerBlendChange('layer4', this.value)">
@@ -996,20 +985,15 @@
               <input type="range" class="pro-slider" style="flex:1" id="l5-speed" min="10" max="400" value="100" oninput="setLayerSpeed('layer5', this.value)" title="Playback Speed (Time-Stretch)">
               <span class="ch-val" id="lbl-l5-speed" style="width: 28px;">1.0x</span>
             </div>
-            <div class="ch-matte-slot">
-              <span class="ch-slot-icon">M</span>
-              <select class="pro-select select-matte" id="l5-matte" onchange="onLayerMatteChange('layer5', this.value)" title="Máscara Própria de L5">
-                <option value="none" selected>NENHUMA (FULL FRAME)</option>
-                <option value="cat_a_solids/matte_a_half_left.png">Matte A: 50% Esquerda</option>
-                <option value="cat_a_solids/matte_a_third_center.png">Matte A: Terço Central</option>
-                <option value="cat_b_soft/matte_b_penumbra_vignette.png">Matte B: Vignette Radial</option>
-                <option value="cat_c_tempo/matte_c_staccato_blinds.png">Matte C: Persianas</option>
-                <option value="cat_d_procedural/matte_d_lissajous_aperture.png">Matte D: Lissajous Suave</option>
-                <option value="cat_e_structural/matte_e_fine_stripes.png">Matte E: Grade Estrutural</option>
-              </select>
-              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Matte">✕</button>
-              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar na Biblioteca de Máscaras">LIB ↗</button>
-              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Máscara">INV</button>
+            <div class="ch-matte-capsule" id="ch-matte-slot-layer5">
+              <div class="ch-matte-badge" onclick="openMatteLibraryForLayer('layer5')" title="Clique para abrir e escolher máscaras na Biblioteca de Mattes">
+                <span class="ch-slot-icon">M</span>
+                <span class="ch-matte-name" id="lbl-l5-matte-name">NENHUMA (FULL FRAME)</span>
+              </div>
+              <button class="btn-browse-matte" onclick="openMatteLibraryForLayer('layer5')" title="Explorar 29 Máscaras na Biblioteca [Módulo 3]">MATTES ↗</button>
+              <button class="btn-clear-matte" onclick="onLayerMatteChange('layer5', 'none')" title="Remover Máscara (Full Frame)">✕</button>
+              <button class="btn-inv" id="l5-matte-inv" onclick="toggleLayerMatteInvert('layer5')" title="Inverter Canal Alpha (Preto/Branco)">INV</button>
+              <select id="l5-matte" style="display:none;"></select>
             </div>
             <div class="ch-blend-slot">
               <select class="pro-select" id="l5-blend" onchange="onLayerBlendChange('layer5', this.value)">

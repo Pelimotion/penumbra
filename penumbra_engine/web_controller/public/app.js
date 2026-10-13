@@ -2786,39 +2786,40 @@ window.selectSpecificMacroPreset = selectSpecificMacroPreset;
 
 function adaptAutopilotToForcedState(state, specificPresetIdx = null) {
   const targetIdx = specificPresetIdx !== null ? specificPresetIdx : (appState.macro_preset_indices[state] || 0);
+  // Aplica estritamente a estética, cinemática, máscaras e FX do macro preset sobre o vídeo atual em reprodução
   applyMacroPreset(state, targetIdx, true);
-
-  const totalBars = appState.phrase?.total_bars || 1;
 
   if (state === 'DROP') {
     appState.drop_likelihood = 0.98;
     appState.buildup_likelihood = 0.20;
 
-    if (appState.autopilot_rules && appState.autopilot_rules.auto_drop_take) {
-      appState.last_take_total_bar = totalBars;
-      if (appState.layers.layer4) {
-        appState.layers.layer4.active = true;
-        appState.layers.layer4.opacity = 0.90;
-      }
-      // Immediate impact transition
-      startAutoTransition(0.3);
+    // No DROP: Ativa Accent Climax (Layer 4 Difference) para impacto visual imediato sobre a textura do vídeo atual
+    if (appState.layers.layer4 && !appState.layers.layer4.locked) {
+      appState.layers.layer4.active = true;
+      appState.layers.layer4.opacity = 0.85;
+    }
+    // Efeito de impacto cênico no Program Monitor sem cortar o vídeo
+    const prgBox = document.querySelector('.program-box') || document.getElementById('program-screen-box');
+    if (prgBox) {
+      prgBox.classList.remove('take-flash');
+      void prgBox.offsetWidth;
+      prgBox.classList.add('take-flash');
+      setTimeout(() => prgBox.classList.remove('take-flash'), 400);
     }
   } else if (state === 'BUILD') {
     appState.buildup_likelihood = 0.88;
     appState.drop_likelihood = 0.15;
+    // Prepara e arma o próximo candidato adequado no Deck B (Preview Cue), sem cortar o vídeo atual de L0
     advanceSmartQueue('DROP');
   } else if (state === 'BREAK') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(3.5);
   } else if (state === 'GROOVE') {
     appState.buildup_likelihood = 0.25;
     appState.drop_likelihood = 0.10;
-    startAutoTransition(1.5);
   } else if (state === 'INTRO') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(2.5);
   }
 }
 window.adaptAutopilotToForcedState = adaptAutopilotToForcedState;
@@ -3053,8 +3054,85 @@ function startProgramRotationDissolve(oldDeg, newDeg) {
 }
 
 // ============================================================================
-// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS
+// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS (WORLD-CLASS SEAMLESS BOUNCE)
 // ============================================================================
+const layerPingPongStates = {
+  layer0: { direction: 1 },
+  layer3: { direction: 1 },
+  layer5: { direction: 1 }
+};
+
+function processLayerPingPong(player, layerId, dt) {
+  if (!player || !player.duration || isNaN(player.duration) || player.duration <= 0.2) return;
+  const layer = appState.layers[layerId];
+  if (!layer) return;
+
+  const isPingPong = Boolean(layer.pingPong);
+  const isPaused = Boolean(layer.paused);
+  const speed = Math.max(0.1, Number(layer.speed || 1.0));
+
+  if (isPaused) {
+    if (!player.paused) player.pause();
+    return;
+  }
+
+  if (isPingPong) {
+    // Modo Ping-Pong: desativa loop padrão para impedir o corte brusco para o frame 0
+    if (player.loop) player.loop = false;
+
+    let pp = layerPingPongStates[layerId];
+    if (!pp) {
+      pp = { direction: 1 };
+      layerPingPongStates[layerId] = pp;
+    }
+
+    const duration = player.duration;
+    const curTime = player.currentTime;
+
+    if (pp.direction === 1) {
+      // 1. Fase Ida: toca para frente na velocidade configurada
+      if (Math.abs(player.playbackRate - speed) > 0.01) {
+        try { player.playbackRate = speed; } catch (e) {}
+      }
+      if (player.paused && !player.ended && player.readyState >= 2) {
+        player.play().catch(() => {});
+      }
+
+      // Ao alcançar o final do vídeo (ou disparar evento ended): inverte para rebobinar suavemente
+      if (curTime >= duration - 0.10 || player.ended) {
+        pp.direction = -1;
+        player.pause();
+      }
+    } else {
+      // 2. Fase Volta: rebobina suavemente a 60 FPS decrementando currentTime
+      if (!player.paused) player.pause();
+      const step = Math.max(0.005, dt * speed);
+      const newTime = Math.max(0, curTime - step);
+      player.currentTime = newTime;
+
+      // Ao alcançar o início do clipe: inverte de volta para frente sem corte brusco
+      if (newTime <= 0.08) {
+        pp.direction = 1;
+        player.currentTime = 0.05;
+        player.play().catch(() => {});
+      }
+    }
+  } else {
+    // Loop Contínuo Normal (Forward 360°)
+    if (!player.loop) player.loop = true;
+    if (Math.abs(player.playbackRate - speed) > 0.01) {
+      try { player.playbackRate = speed; } catch (e) {}
+    }
+    if (player.paused && player.readyState >= 2) {
+      player.play().catch(() => {});
+    }
+    if (layerPingPongStates[layerId]) {
+      layerPingPongStates[layerId].direction = 1;
+    }
+  }
+}
+window.processLayerPingPong = processLayerPingPong;
+
 function toggleLayerPlayback(layerId) {
   if (appState.layers[layerId]) {
     const isPaused = appState.layers[layerId].paused || false;
@@ -3069,16 +3147,48 @@ function toggleLayerPingPong(layerId) {
     const isPingPong = appState.layers[layerId].pingPong || false;
     appState.layers[layerId].pingPong = !isPingPong;
     
-    const btn = document.getElementById(layerId === 'layer0' ? 'l0-pingpong' : 'l3-pingpong');
+    const lprefix = layerId.replace('layer', 'l');
+    const btn = document.getElementById(`${lprefix}-pingpong`);
     if (btn) btn.classList.toggle('active', !isPingPong);
     
+    showMacroToast(appState.layers[layerId].pingPong ? `⮂ Ping-Pong Ativo em ${layerId.toUpperCase()} (Ida e Volta Suave)` : `🔁 Loop Contínuo em ${layerId.toUpperCase()}`);
+    
     sendAction('set_layer_pingpong', { layer: layerId, enabled: !isPingPong });
+    updateUI();
   }
 }
+window.toggleLayerPingPong = toggleLayerPingPong;
+
+function updateMixerMattesUI() {
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lKey => {
+    const lprefix = lKey.replace('layer', 'l');
+    const layer = appState.layers[lKey];
+    if (!layer) return;
+
+    const lbl = document.getElementById(`lbl-${lprefix}-matte-name`);
+    const capsule = document.getElementById(`ch-matte-slot-${lKey}`);
+    const btnInv = document.getElementById(`${lprefix}-matte-inv`);
+    const isInv = Boolean(layer.matte_invert);
+
+    if (btnInv) btnInv.classList.toggle('active', isInv);
+
+    const mattePath = layer.matte;
+    if (mattePath && mattePath !== 'none') {
+      const foundMatte = (allMattes || []).find(m => m.path === mattePath || m.filename === mattePath.split('/').pop());
+      const name = foundMatte ? foundMatte.name : mattePath.split('/').pop().replace('.png', '').replace(/_/g, ' ');
+      if (lbl) lbl.textContent = (isInv ? '⚡ ' : '🔒 ') + name.toUpperCase();
+      if (capsule) capsule.classList.add('has-matte');
+    } else {
+      if (lbl) lbl.textContent = 'PASSTHROUGH (FULL FRAME)';
+      if (capsule) capsule.classList.remove('has-matte');
+    }
+  });
+}
+window.updateMixerMattesUI = updateMixerMattesUI;
 
 function setLayerSpeed(layerId, speedVal) {
   const speedNormalized = speedVal / 100.0;
-  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : 'lbl-l3-speed');
+  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : (layerId === 'layer5' ? 'lbl-l5-speed' : 'lbl-l3-speed'));
   if (lbl) lbl.textContent = speedNormalized.toFixed(1) + 'x';
   
   if (appState.layers[layerId]) {
@@ -3270,6 +3380,8 @@ function openMatteLibraryForLayer(layerId) {
   switchTab('tab-mattes');
   switchMatteSub('masks');
   setMatteTargetLayer(layerId);
+  const lName = (layerId === 'master') ? 'MASTER (GLOBAL)' : layerId.toUpperCase();
+  showMacroToast(`🎭 Foco em ${lName}: Escolha uma das 29 máscaras do catálogo abaixo`);
 }
 window.openMatteLibraryForLayer = openMatteLibraryForLayer;
 
@@ -3619,6 +3731,7 @@ function renderVisuals(time) {
   const aspectConfig = getAspectRatioDimensions(appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9'));
   const targetBusW = aspectConfig.w;
   const targetBusH = aspectConfig.h;
+  const isVert = Boolean(aspectConfig.isVertical || appState.vertical_mode || appState.vertical_projection);
 
   if (busCanvasA.width !== targetBusW || busCanvasA.height !== targetBusH) {
     busCanvasA.width = targetBusW;
@@ -3639,6 +3752,11 @@ function renderVisuals(time) {
 
   const w = busCanvasA.width;
   const h = busCanvasA.height;
+
+  // Process Real-Time Playback Dynamics & Ping-Pong Loops (Smooth 60 FPS Bounce)
+  if (playerL0) processLayerPingPong(playerL0, 'layer0', dt);
+  if (playerL3) processLayerPingPong(playerL3, 'layer3', dt);
+  if (playerL5) processLayerPingPong(playerL5, 'layer5', dt);
 
   // --------------------------------------------------------------------------
   // 1. RENDER DECK A INTO busCanvasA (MASTER BUS A)
@@ -3774,10 +3892,10 @@ function renderVisuals(time) {
     const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
-      // Clamped Deck B Base Opacity: Deck B represents the incoming Base Video for transition.
-      // It must strictly adhere to the master base video opacity (layer0.opacity) to prevent flashes!
-      const masterBaseOpacity = (appState.layers.layer0 && appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
-      const deckBOpacity = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? Math.min(masterBaseOpacity, appState.layers.layer3.opacity) : masterBaseOpacity;
+      // Deck B representa a mídia que está sendo pré-visualizada (CUE) e pronta para transição.
+      // No monitor Preview/CUE, o operador deve sempre ver o vídeo base com nitidez.
+      const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+      const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
 
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
@@ -3807,17 +3925,15 @@ function renderVisuals(time) {
           offCtxB.restore();
         }
 
-        // Only draw base video to Bus B if opacity is greater than 0.5% (avoids flash when base is 0)
-        if (deckBOpacity > 0.005) {
-          busCtxB.save();
-          busCtxB.filter = getTonalFilterString(appState.tonal);
-          busCtxB.globalAlpha = deckBOpacity;
-          busCtxB.drawImage(offscreenB, 0, 0, w, h);
-          busCtxB.restore();
-        }
+        // Always draw base video to Bus B
+        busCtxB.save();
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = deckBOpacity;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
+        busCtxB.restore();
 
         // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         if (appState.layers.layer1.active && l1BOpacity > 0.005) {
           busCtxB.save();
           busCtxB.translate(w/2, h/2);
@@ -3834,9 +3950,9 @@ function renderVisuals(time) {
 
       // LAYER 2 on Bus B: EDGE TRACE SOBEL
       const l2 = appState.layers.layer2;
-      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.0;
       if (queuedSource && l2 && l2.active && l2BOpacity > 0.005) {
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
                           (!appState.layers.layer1.active || l1BOpacity <= 0.01);
         const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
@@ -7498,6 +7614,7 @@ function syncActiveMatteToAppState(mattePath) {
 window.syncActiveMatteToAppState = syncActiveMatteToAppState;
 
 function assignMatteToLayer(mattePath, layerId) {
+  if (!layerId) layerId = appState.matte_target_layer || 'layer3';
   if (layerId === 'master') {
     appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
     sendAction('set_master_matte', { matte: appState.master_matte });
@@ -7513,8 +7630,9 @@ function assignMatteToLayer(mattePath, layerId) {
   renderMattesCards();
   renderStudioInspector();
   updateUI();
+  if (typeof updateMixerMattesUI === 'function') updateMixerMattesUI();
   if (typeof showMacroToast === 'function') {
-    const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
+    const lName = layerId === 'master' ? 'MASTER' : (layerId ? layerId.replace('layer', 'L').toUpperCase() : 'CAMADA');
     showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
   }
 }
@@ -7755,7 +7873,7 @@ function renderMattesCards() {
     card.querySelectorAll('.btn-route').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const targetLayer = btn.dataset.layer;
+        const targetLayer = btn.dataset.layer || appState.matte_target_layer || 'layer3';
         assignMatteToLayer(matte.path, targetLayer);
       });
     });
@@ -7783,6 +7901,15 @@ function updateUI() {
   refreshMacroStateBadges();
   updateMasterLockedMatteUI();
   updateTimelineTransformInspector();
+  updateMixerMattesUI();
+
+  // Sync ping-pong loop button states
+  ['layer0', 'layer3', 'layer5'].forEach(lKey => {
+    const pfx = lKey.replace('layer', 'l');
+    const btn = document.getElementById(`${pfx}-pingpong`);
+    if (btn) btn.classList.toggle('active', Boolean(appState.layers[lKey]?.pingPong));
+  });
+
   const badgePreset = document.getElementById('badge-macro-preset-name');
   if (badgePreset && appState.macro_state) {
     const p = appState.active_macro_preset || getActiveMacroPreset(appState.macro_state);
@@ -11444,7 +11571,7 @@ function setupEvents() {
   });
 
   // Layer Opacity Sliders
-  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity'].forEach(id => {
+  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity', 'l5-opacity'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', (e) => {
@@ -11457,7 +11584,7 @@ function setupEvents() {
   });
 
   // Layer Blend Dropdowns
-  ['l1-blend', 'l3-blend', 'l4-blend'].forEach(id => {
+  ['l1-blend', 'l3-blend', 'l4-blend', 'l5-blend'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', (e) => {
