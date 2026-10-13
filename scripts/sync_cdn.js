@@ -7,20 +7,15 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
+const { thumbnailNeedsRefresh } = require('./sync_utils');
 const crypto = require('crypto');
 const https = require('https');
 const bundlePortable = require('./build_portable');
 
-// Secure environment loading from the external DEV vault
-const ENV_PATH = '/Volumes/PLM_SSD_01/Dev/.env';
-if (fs.existsSync(ENV_PATH)) {
-  const envContent = fs.readFileSync(ENV_PATH, 'utf-8');
-  envContent.split('\n').forEach(line => {
-    const match = line.match(/^([^=]+)=(.*)$/);
-    if (match) process.env[match[1].trim()] = match[2].trim();
-  });
-}
+// Load repository-local .env while preserving explicitly supplied process variables.
+const { loadEnvFileIfUnset } = require('./sync_utils');
+loadEnvFileIfUnset(path.join(__dirname, '../.env'));
 
 const STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE || 'gigantera';
 const STORAGE_PASS = process.env.BUNNY_STORAGE_PASSWORD;
@@ -28,7 +23,7 @@ const PULL_ZONE = process.env.BUNNY_PULL_ZONE_URL || 'https://gigantera-penumbra
 const REGION = 'br.storage.bunnycdn.com'; // São Paulo storage region for gigantera
 
 // Pipeline Root Directory (Where all projects live)
-const PIPELINE_DIR = '/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera';
+const PIPELINE_DIR = process.env.PENUMBRA_MEDIA_ROOT || '/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera';
 const OUTPUT_DIR = path.join(__dirname, '../cdn_build');
 
 if (!STORAGE_PASS) {
@@ -127,11 +122,11 @@ async function processMedia() {
       console.log(`[FFMPEG] 🎞️ Processing ${remoteRelativePath}...`);
       fs.copyFileSync(fullPath, videoOutPath);
       
-      if (!fs.existsSync(staticThumbPath)) {
-        execSync(`ffmpeg -y -i "${fullPath}" -ss 00:00:01.000 -vframes 1 -vf "scale=320:-1" -c:v libwebp -quality 80 "${staticThumbPath}"`, { stdio: 'ignore' });
+      if (thumbnailNeedsRefresh(fullPath, staticThumbPath)) {
+        execFileSync('ffmpeg', ['-y', '-i', fullPath, '-ss', '00:00:01.000', '-vframes', '1', '-vf', 'scale=320:-1', '-c:v', 'libwebp', '-quality', '80', staticThumbPath], { stdio: 'ignore' });
       }
-      if (!fs.existsSync(animThumbPath)) {
-        execSync(`ffmpeg -y -i "${fullPath}" -t 3 -vf "fps=10,scale=320:-1:flags=lanczos" -vcodec libwebp -lossless 0 -compression_level 4 -q:v 50 -loop 0 -preset default -an -vsync 0 "${animThumbPath}"`, { stdio: 'ignore' });
+      if (thumbnailNeedsRefresh(fullPath, animThumbPath)) {
+        execFileSync('ffmpeg', ['-y', '-i', fullPath, '-t', '3', '-vf', 'fps=10,scale=320:-1:flags=lanczos', '-vcodec', 'libwebp', '-lossless', '0', '-compression_level', '4', '-q:v', '50', '-loop', '0', '-preset', 'default', '-an', '-vsync', '0', animThumbPath], { stdio: 'ignore' });
       }
       
       uploadQueue.push({ local: videoOutPath, remote: remoteRelativePath });

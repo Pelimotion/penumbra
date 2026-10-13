@@ -7632,10 +7632,48 @@ body.resizing-workspace-active .top-zone {
 }
 
 .nsb-btn-stream:hover {
-  background: #ff334b;
-  border-color: #ff334b;
-  color: #000;
+background: #ff334b;
+border-color: #ff334b;
+color: #000;
 }
+
+.nsb-btn-temporary:hover {
+background: #214743;
+border-color: #59c9b4;
+color: #e7fffa;
+}
+
+.nexus-ingest-feedback {
+margin-top: 8px;
+padding: 10px 12px;
+background: rgba(25, 31, 37, 0.88);
+border: 1px solid #303942;
+border-radius: 4px;
+color: #d9e2e8;
+font-size: 11px;
+font-family: var(--font-mono);
+line-height: 1.45;
+}
+
+.nexus-ingest-feedback[hidden],
+.nexus-ingest-feedback [hidden] { display: none !important; }
+.nexus-ingest-status-line { display: flex; align-items: center; gap: 9px; min-height: 16px; }
+.nexus-ingest-indicator { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: #7a8790; }
+.nexus-ingest-message { flex: 1; min-width: 0; }
+.nexus-ingest-percent { color: #8ce0cf; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nexus-ingest-progress { display: block; width: 100%; height: 7px; margin-top: 10px; overflow: hidden; appearance: none; border: 0; border-radius: 999px; background: #29343a; color: #59c9b4; accent-color: #59c9b4; }
+.nexus-ingest-progress::-webkit-progress-bar { background: #29343a; border-radius: 999px; }
+.nexus-ingest-progress::-webkit-progress-value,
+.nexus-ingest-progress::-moz-progress-bar { background: linear-gradient(90deg, #3aa99b, #75ddc6); border-radius: 999px; transition: width 0.35s ease; }
+.nexus-ingest-detail { margin-top: 7px; color: #8f9ba4; font-size: 10px; font-variant-numeric: tabular-nums; }
+.nexus-ingest-feedback[data-state="working"] { background: rgba(24, 44, 45, 0.62); border-color: #365c59; }
+.nexus-ingest-feedback[data-state="working"] .nexus-ingest-indicator { background: #61d2bd; box-shadow: 0 0 9px rgba(97, 210, 189, 0.46); animation: nexus-ingest-pulse 1.6s ease-in-out infinite; }
+.nexus-ingest-feedback[data-state="success"] { background: rgba(23, 48, 39, 0.62); border-color: #416b54; }
+.nexus-ingest-feedback[data-state="success"] .nexus-ingest-indicator { background: #79cf8e; }
+.nexus-ingest-feedback[data-state="error"] { background: rgba(55, 34, 37, 0.62); border-color: #70464b; color: #f0c2c6; }
+.nexus-ingest-feedback[data-state="error"] .nexus-ingest-indicator { background: #d57e87; }
+@keyframes nexus-ingest-pulse { 50% { opacity: 0.45; box-shadow: 0 0 2px rgba(97, 210, 189, 0.2); } }
+@media (prefers-reduced-motion: reduce) { .nexus-ingest-feedback[data-state="working"] .nexus-ingest-indicator { animation: none; } .nexus-ingest-progress::-webkit-progress-value { transition: none; } }
 
 /* TECHNICAL BENCHMARK SPECS STRIP */
 .nexus-specs-bar {

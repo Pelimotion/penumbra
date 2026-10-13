@@ -12,6 +12,34 @@
  * 7. Headphone Safe Auditioning & Dynamic 1.In Media Pool Router
  */
 
+function safeCDNMediaUrl(value) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'gigantera-penumbra.b-cdn.net' || parsed.port || parsed.username || parsed.password) return '';
+    return parsed.href;
+  } catch {
+    return '';
+  }
+}
+
+function safeManifestPath(value) {
+  if (typeof value !== 'string' || !value || value.includes('\\') || value.includes('%') || value.startsWith('/') || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)) return null;
+  const segments = value.split('/');
+  if (segments.some(segment => !segment || segment === '.' || segment === '..')) return null;
+  return segments.join('/');
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+}
+
+function cdnAssetUrl(value) {
+  const safePath = safeManifestPath(value);
+  return safePath ? `https://gigantera-penumbra.b-cdn.net/${safePath.split('/').map(encodeURIComponent).join('/')}` : '';
+}
+
 // ============================================================================
 // 0. HYBRID ASSET RESOLUTION STRATEGY (HARS)
 // ============================================================================
@@ -698,6 +726,7 @@ const MediaProvider = {
 
     // 5. Direct external HTTP URL
     if (relPath.startsWith('http://') || relPath.startsWith('https://')) {
+      if (relPath.includes('gigantera-penumbra.b-cdn.net')) return safeCDNMediaUrl(relPath);
       if (clip && clip.is_stream && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && !relPath.includes('/api/stream/proxy')) {
         return `/api/stream/proxy?url=${encodeURIComponent(relPath)}`;
       }
@@ -723,8 +752,7 @@ const MediaProvider = {
 
     // 8. Se estiver em nuvem/remoto, busca o arquivo Gigantera legítimo no storage da CDN
     if (relPath && !relPath.startsWith('LOCAL_') && !relPath.startsWith('EXTRA_')) {
-      const cleanPath = relPath.startsWith('/') ? relPath.substring(1) : relPath;
-      return `https://gigantera-penumbra.b-cdn.net/${cleanPath}`;
+      return cdnAssetUrl(relPath);
     }
 
     return '';
@@ -733,32 +761,30 @@ const MediaProvider = {
   getThumbUrl: (clip) => {
     if (!clip) return '';
     if (clip.thumbnail && (clip.thumbnail.startsWith('http://') || clip.thumbnail.startsWith('https://'))) {
-      return clip.thumbnail;
+      if (clip.thumbnail.startsWith('https://img.youtube.com/vi/')) return clip.thumbnail;
+      return safeCDNMediaUrl(clip.thumbnail);
     }
     const ytId = clip.youtube_id || extractYouTubeId(clip.filename) || extractYouTubeId(clip.relative_path);
     if (ytId) {
       return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
     }
     if (!clip.thumbnail) return '';
-    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) {
-      const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-      return `/thumbnails/${cleanThumb}`;
-    }
-    const cleanThumb = clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail;
-    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) {
-      return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
-    }
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return `/thumbnails/${cleanThumb}`;
-    }
-    return `https://gigantera-penumbra.b-cdn.net/${cleanThumb}`;
+    const cleanThumb = safeManifestPath(clip.thumbnail.startsWith('/') ? clip.thumbnail.substring(1) : clip.thumbnail);
+    if (!cleanThumb) return '';
+    const encodedThumb = cleanThumb.split('/').map(encodeURIComponent).join('/');
+    if (clip.is_downloaded && !clip.thumbnail.startsWith('http')) return `/thumbnails/${encodedThumb}`;
+    if (MediaProvider.mode === 'cdn' && !clip.is_downloaded) return cdnAssetUrl(cleanThumb);
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return `/thumbnails/${encodedThumb}`;
+    return cdnAssetUrl(cleanThumb);
   },
 
   getPreviewAnimUrl: (clip) => {
     if (!clip || !clip.preview_anim) return '';
-    if (clip.preview_anim.startsWith('http://') || clip.preview_anim.startsWith('https://')) return clip.preview_anim;
-    const cleanAnim = clip.preview_anim.startsWith('/') ? clip.preview_anim.substring(1) : clip.preview_anim;
-    return `https://gigantera-penumbra.b-cdn.net/${cleanAnim}`;
+    if (clip.preview_anim.startsWith('http://') || clip.preview_anim.startsWith('https://')) {
+      if (clip.preview_anim.includes('gigantera-penumbra.b-cdn.net')) return safeCDNMediaUrl(clip.preview_anim);
+      return '';
+    }
+    return cdnAssetUrl(clip.preview_anim);
   }
 };
 
@@ -8843,12 +8869,13 @@ window.resetMatteTransform = resetMatteTransform;
 
 function getMatteThumbUrl(matte) {
   if (!matte) return '';
-  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const mPath = safeManifestPath(matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '') || '';
   if (!mPath) return '';
+  const encodedPath = mPath.split('/').map(encodeURIComponent).join('/');
   if (MediaProvider.mode === 'cdn' || window.location.hostname.includes('b-cdn.net') || window.location.hostname.includes('vercel.app')) {
-    return `https://gigantera-penumbra.b-cdn.net/mattes/${mPath}`;
+    return `https://gigantera-penumbra.b-cdn.net/mattes/${encodedPath}`;
   }
-  return `./mattes/${mPath}`;
+  return `./mattes/${encodedPath}`;
 }
 
 async function loadMattesCatalog() {
@@ -10695,7 +10722,7 @@ function createMediaCardElement(clip) {
   
   const isAutoEligible = isClipEligibleForAutopilot(clip);
   card.dataset.clipId = clip.id;
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${clipSource}`;
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${escapeHTML(clipSource)}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
@@ -10729,35 +10756,37 @@ function createMediaCardElement(clip) {
   }
 
   const clipFolder = getClipFolder(clip);
+  const clipIdArg = escapeHTML(JSON.stringify(String(clip.id)));
+  const clipFolderArg = escapeHTML(JSON.stringify(String(clipFolder)));
 
   let actionBtnHtml = '';
   if (isUnlinked) {
-    actionBtnHtml = `<button class="btn-card-action btn-action-relink" onclick="window.relinkSpecificClip('${clip.id}', event)" title="Localizar este clipe"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> RELINK</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-action-relink" onclick="window.relinkSpecificClip(${clipIdArg}, event)" title="Localizar este clipe"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> RELINK</button>`;
   } else if (clip.has_local_match || cacheInfo.isCached) {
     actionBtnHtml = `<button class="btn-card-action is-active-cached" title="Arquivo pronto no SSD local" onclick="event.stopPropagation();">✓ LOCAL</button>`;
   } else if (clipSource === 'cdn' || clipSource === 'youtube' || clipSource === 'stream') {
-    actionBtnHtml = `<button class="btn-card-action btn-card-activate" onclick="window.activateMediaClip('${clip.id}', event)" title="Ativar clipe com streaming em alta">⚡ ATIVAR</button>`;
+    actionBtnHtml = `<button class="btn-card-action btn-card-activate" onclick="window.activateMediaClip(${clipIdArg}, event)" title="Ativar clipe com streaming em alta">⚡ ATIVAR</button>`;
   }
 
   card.innerHTML = `
     <div class="media-card-thumb">
-      ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
+      ${thumbSrc ? `<img src="${escapeHTML(thumbSrc)}" loading="lazy" alt="${escapeHTML(clip.filename)}" data-static="${escapeHTML(thumbSrc)}" data-anim="${escapeHTML(animSrc)}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
       ${srcBadgeHtml}
       ${isOnAir ? '<span class="thumb-air-indicator">● PGM</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
       ${isInL5 ? '<span class="thumb-l5-indicator">● L5</span>' : ''}
-      ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
-      <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
-      <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
+      ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
+      <span class="thumb-duration-badge">${escapeHTML(clip.duration ? `${Math.round(clip.duration)}s` : 'LOOP')}</span>
+      <span class="thumb-resolution-badge">${escapeHTML(clip.width || '1920')}×${escapeHTML(clip.height || '1080')}</span>
     </div>
     <div class="media-card-info">
       <div class="media-card-title-row">
-        <span class="media-card-title" title="${clip.filename}">${clip.display_title || clip.filename}</span>
+        <span class="media-card-title" title="${escapeHTML(clip.filename)}">${clip.display_title ? escapeHTML(clip.display_title) : escapeHTML(clip.filename)}</span>
         ${cacheBadgeHtml}
       </div>
-      <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter('${clipFolder}');" title="Filtrar por esta pasta: ${clipFolder}">
+      <div class="media-card-folder-tag" onclick="event.stopPropagation(); setFolderFilter(${clipFolderArg});" title="Filtrar por esta pasta: ${escapeHTML(clipFolder)}">
         <svg class="folder-icon-svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-        <span>${clipFolder}</span>
+        <span>${escapeHTML(clipFolder)}</span>
       </div>
       <div class="card-actions-grid">
         <button class="btn-card-action btn-action-pgm btn-bus-a ${isOnAir ? 'is-active-on-air' : ''}" data-bus="A" title="Enviar para Program Master [A]">
@@ -10772,7 +10801,7 @@ function createMediaCardElement(clip) {
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
           <span>L5</span>
         </button>
-        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar no Studio Inspector [I]">
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', ${clipIdArg})" title="Inspecionar no Studio Inspector [I]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
         </button>
@@ -10956,7 +10985,8 @@ window.selectLibraryAssetType = selectLibraryAssetType;
 
 function createMatteCardForLibrary(matte) {
   const card = document.createElement('div');
-  const mPath = matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '';
+  const mPath = safeManifestPath(matte.path || (matte.category_folder ? `${matte.category_folder}/${matte.filename}` : matte.filename) || '') || '';
+  const mPathArg = escapeHTML(JSON.stringify(mPath));
   const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === mPath);
   card.className = `library-card-matte ${isInspecting ? 'is-inspect-selected' : ''}`;
   const targetL = appState.matte_target_layer || 'layer3';
@@ -10968,18 +10998,18 @@ function createMatteCardForLibrary(matte) {
 
   card.innerHTML = `
     <div class="library-card-thumb-wrap">
-      <img src="${thumbUrl}" loading="lazy" alt="${mName}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';">
-      <span class="lib-badge-type lib-badge-matte">${mCat}</span>
+      <img src="${escapeHTML(thumbUrl)}" loading="lazy" alt="${escapeHTML(mName)}" onerror="this.onerror=null; this.src='${MATTE_SVG_FALLBACK}';">
+      <span class="lib-badge-type lib-badge-matte">${escapeHTML(mCat)}</span>
     </div>
     <div class="library-card-info">
-      <div class="library-card-title" title="${mName}">${mName}</div>
-      <div class="library-card-desc" title="${mDesc}">${mDesc}</div>
+      <div class="library-card-title" title="${escapeHTML(mName)}">${escapeHTML(mName)}</div>
+      <div class="library-card-desc" title="${escapeHTML(mDesc)}">${escapeHTML(mDesc)}</div>
     </div>
     <div class="library-card-actions">
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer0')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
-      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer1')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
-      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); assignMatteToLayer('${mPath}', 'layer3')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
-      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); openStudioInspector('matte', '${mPath}');" title="Editar parâmetros no Studio Inspector">⚙ INSP</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer0')" title="Aplicar no Layer 0 (Master Base)">→ L0</button>
+      <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer1')" title="Aplicar no Layer 1 (Reflexo)">→ L1</button>
+      <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); assignMatteToLayer(${mPathArg}, 'layer3')" title="Aplicar no Layer 3 (Cue Deck B)">→ L3</button>
+      <button class="btn-edit-params btn-xs" onclick="event.stopPropagation(); openStudioInspector('matte', ${mPathArg});" title="Editar parâmetros no Studio Inspector">⚙ INSP</button>
     </div>
   `;
 
@@ -13573,14 +13603,187 @@ function bootstrapApp() {
       });
     }
 
-    // 4. YOUTUBE / STREAM INGESTION & DOWNLOADER IN STUDIO LAUNCHER
+    // 4. YOUTUBE / STREAM INGESTION
+    const btnYTTemp = document.getElementById('btn-nexus-yt-temporary');
+    const btnYTCancel = document.getElementById('btn-nexus-yt-cancel');
+    const inputYT = document.getElementById('input-nexus-yt');
+    const ingestFeedback = document.getElementById('nexus-ingest-feedback');
+    const ingestMessage = document.getElementById('nexus-ingest-message');
+    const ingestPercent = document.getElementById('nexus-ingest-percent');
+    const ingestProgress = document.getElementById('nexus-ingest-progress');
+    const ingestDetail = document.getElementById('nexus-ingest-detail');
+    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+    let activeYoutubeJobId = null;
+    let pendingCancelJobId = null;
+    const showIngestFeedback = (message, state = 'error') => {
+      if (!ingestFeedback) return;
+      ingestFeedback.dataset.state = state;
+      ingestFeedback.hidden = false;
+      if (ingestMessage) ingestMessage.textContent = message;
+      if (ingestProgress) ingestProgress.hidden = true;
+      if (ingestPercent) ingestPercent.hidden = true;
+      if (ingestDetail) ingestDetail.hidden = true;
+    };
+    const formatBytes = bytes => {
+      if (!Number.isFinite(Number(bytes)) || Number(bytes) < 0) return '';
+      const value = Number(bytes);
+      if (value < 1024) return `${Math.round(value)} B`;
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let size = value / 1024;
+      let unit = units[0];
+      for (let index = 1; size >= 1024 && index < units.length; index += 1) {
+        size /= 1024;
+        unit = units[index];
+      }
+      return `${size.toFixed(size < 10 ? 1 : 0)} ${unit}`;
+    };
+    const showYoutubeProgress = job => {
+      const percent = job.percent == null ? null : Number(job.percent);
+      const hasPercent = Number.isFinite(percent) && percent >= 0;
+      const converting = job.status === 'converting';
+      const cancelling = job.status === 'cancelling';
+      showIngestFeedback(cancelling ? 'Cancelamento solicitado…' : converting ? 'Convertendo para reprodução local…' : 'Baixando para o cache temporário local…', 'working');
+      if (ingestProgress) {
+        ingestProgress.hidden = false;
+        if (hasPercent && !cancelling) ingestProgress.value = Math.min(100, percent);
+        else if (ingestProgress.removeAttribute) ingestProgress.removeAttribute('value');
+      }
+      if (ingestPercent) {
+        ingestPercent.hidden = !hasPercent || cancelling;
+        if (hasPercent) ingestPercent.textContent = `${Math.round(percent)}%`;
+      }
+      if (ingestDetail) {
+        const received = formatBytes(job.downloadedBytes || 0);
+        const total = formatBytes(job.totalBytes || 0);
+        ingestDetail.hidden = false;
+        ingestDetail.textContent = converting ? 'Etapa final: preparando o vídeo para reprodução.' : total ? `${received} de ${total} recebidos` : `${received} recebidos · tamanho total desconhecido`;
+      }
+    };
+    const addTemporaryYoutubeClip = (url, job) => {
+      const category = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
+      allClips.unshift({
+        id: `youtube_${job.id}`,
+        filename: job.title || 'Vídeo do YouTube',
+        project: 'YOUTUBE TEMP',
+        category,
+        source: 'youtube',
+        relative_path: `/api/youtube-downloads/${encodeURIComponent(job.id)}/media`,
+        is_stream: true,
+        is_temporary: true,
+        thumbnail: '',
+        duration: job.duration || 9999
+      });
+      MediaProvider.mode = 'youtube';
+      renderMediaCards();
+      updateSourceUI('stream');
+      closeStudioLauncher();
+    };
+    const waitForYoutubeDownload = async url => {
+      const startResponse = await fetch('/api/youtube-downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const startJob = await startResponse.json().catch(() => ({}));
+      if (!startResponse.ok || !startJob.id) throw new Error(startJob.error || 'Não foi possível iniciar o download.');
+      activeYoutubeJobId = startJob.id;
+      if (btnYTCancel) btnYTCancel.hidden = false;
+      let job = startJob;
+      while (activeYoutubeJobId) {
+        if (job.status === 'complete') {
+          activeYoutubeJobId = null;
+          if (btnYTCancel) btnYTCancel.hidden = true;
+          showIngestFeedback('Vídeo pronto e adicionado à biblioteca local.', 'success');
+          if (ingestProgress) { ingestProgress.hidden = false; ingestProgress.value = 100; }
+          if (ingestPercent) { ingestPercent.hidden = false; ingestPercent.textContent = '100%'; }
+          addTemporaryYoutubeClip(url, job);
+          return;
+        }
+        if (job.status === 'failed' || job.status === 'cancelled') {
+          activeYoutubeJobId = null;
+          if (btnYTCancel) btnYTCancel.hidden = true;
+          throw new Error(job.error || 'Download temporário falhou.');
+        }
+        showYoutubeProgress(job);
+        await new Promise(resolve => setTimeout(resolve, 700));
+        const response = await fetch(`/api/youtube-downloads/${encodeURIComponent(startJob.id)}`);
+        const nextJob = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(nextJob.error || 'O download temporário não foi encontrado.');
+        job = nextJob;
+      }
+    };
+    const handleYTIngest = async () => {
+      const rawUrl = (inputYT ? inputYT.value : '').trim();
+      if (pendingCancelJobId) {
+        showIngestFeedback('Confirme o cancelamento anterior antes de iniciar outro download.', 'error');
+        return;
+      }
+      let parsedUrl;
+      try { parsedUrl = new URL(rawUrl); } catch {
+        showIngestFeedback('URL inválida. Use um link HTTPS do YouTube ou um MP4/WebM direto da Bunny CDN.', 'error');
+        return;
+      }
+      const host = parsedUrl.hostname.toLowerCase();
+      const isYoutube = host === 'youtu.be' || host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com';
+      if (isYoutube && parsedUrl.protocol === 'https:') {
+        if (btnYTTemp) btnYTTemp.disabled = true;
+        showIngestFeedback('Conectando ao YouTube e iniciando a transferência…', 'working');
+        try {
+          await waitForYoutubeDownload(parsedUrl.href);
+        } catch (error) {
+          const jobId = activeYoutubeJobId;
+          let confirmed = !jobId;
+          if (jobId) {
+            try {
+              const cancelResponse = await fetch(`/api/youtube-downloads/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+              confirmed = cancelResponse.status === 409;
+              if (cancelResponse.ok) pendingCancelJobId = jobId;
+            } catch {}
+            if (!confirmed) pendingCancelJobId = jobId;
+          }
+          const message = error.message || 'Download do YouTube falhou.';
+          showIngestFeedback(confirmed ? message : `${message} Cancelamento ainda não confirmado.`, 'error');
+        } finally {
+          activeYoutubeJobId = null;
+          if (btnYTTemp) btnYTTemp.disabled = false;
+          if (btnYTCancel) btnYTCancel.hidden = !pendingCancelJobId;
+        }
+        return;
+      }
+      if (!safeCDNMediaUrl(rawUrl) || !/\.(mp4|webm)$/i.test(parsedUrl.pathname)) {
+        showIngestFeedback('Use uma URL HTTPS direta de MP4/WebM da Bunny CDN ou um link do YouTube.', 'error');
+        return;
+      }
+      allClips.unshift({ id: `stream_${Date.now()}`, filename: rawUrl, category: selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE', relative_path: rawUrl, is_stream: true, thumbnail: '', duration: 9999 });
+      renderMediaCards();
+      updateSourceUI('stream');
+      closeStudioLauncher();
+    };
+    if (btnYTTemp) btnYTTemp.addEventListener('click', handleYTIngest);
+    if (btnYTCancel) btnYTCancel.addEventListener('click', async () => {
+      const jobId = activeYoutubeJobId || pendingCancelJobId;
+      if (!jobId) return;
+      showIngestFeedback('Cancelando download…', 'working');
+      try {
+        const response = await fetch(`/api/youtube-downloads/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+        if (response.status === 409) {
+          if (pendingCancelJobId === jobId) pendingCancelJobId = null;
+          if (!activeYoutubeJobId && !pendingCancelJobId) btnYTCancel.hidden = true;
+          showIngestFeedback('Não há transferência ativa para cancelar.', 'success');
+        } else if (response.ok) {
+          if (!activeYoutubeJobId) pendingCancelJobId = jobId;
+          showIngestFeedback('Cancelamento solicitado; aguardando encerramento.', 'working');
+        } else showIngestFeedback('O servidor não confirmou o cancelamento. Tente novamente.', 'error');
+      } catch {
+        showIngestFeedback('Não foi possível enviar o cancelamento; tente novamente quando a conexão voltar.', 'error');
+      }
+    });
     const btnYTStream = document.getElementById('btn-nexus-yt-connect');
     const btnYTDl = document.getElementById('btn-nexus-yt-download');
-    const inputYT = document.getElementById('input-nexus-yt');
-    const selectYTCat = document.getElementById('select-nexus-yt-cat');
+    const inputYTLauncher = document.getElementById('input-nexus-yt');
 
     const handleLauncherStream = (mode) => {
-      const url = (inputYT ? inputYT.value : '').trim();
+      const url = (inputYTLauncher ? inputYTLauncher.value : '').trim();
       if (!url) return;
       const cat = selectYTCat ? selectYTCat.value : 'STREAMS & YOUTUBE';
       console.log(`[Studio Launcher] YouTube/Stream Ingest (${mode}):`, url);

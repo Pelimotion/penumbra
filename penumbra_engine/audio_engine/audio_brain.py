@@ -133,6 +133,31 @@ class PenumbraAudioBrain:
             "vocals": 0.0
         }
 
+    def advance_beat_clock(self, now):
+        """Advance musical counters without discarding elapsed beat intervals."""
+        self.beat_pulse = 0
+        self.downbeat_pulse = 0
+        if self.beat_interval <= 0:
+            self.beat_phase = 0.0
+            return
+
+        elapsed = max(0.0, now - self.last_beat_time)
+        self.beat_phase = (elapsed % self.beat_interval) / self.beat_interval
+        missed_beats = int(elapsed // self.beat_interval)
+        if not missed_beats:
+            return
+
+        self.beat_pulse = 1
+        self.last_beat_time += missed_beats * self.beat_interval
+        for _ in range(missed_beats):
+            self.beat_counter += 1
+            if self.beat_counter > 4:
+                self.beat_counter = 1
+                self.total_bars += 1
+                self.bar_counter = ((self.total_bars - 1) % 8) + 1
+                self.phrase_counter = ((self.total_bars - 1) // 8) % 8 + 1
+                self.downbeat_pulse = 1
+
     def process_audio_buffer(self, audio_data):
         """
         Processes a mono audio buffer (length buffer_size, normalized -1.0 to 1.0).
@@ -211,21 +236,7 @@ class PenumbraAudioBrain:
         self.history_onsets.append(1 if is_onset else 0)
 
         # 7. Beat & Phase Tracking (Internal Clock locked to estimated tempo)
-        elapsed_since_beat = now - self.last_beat_time
-        self.beat_phase = (elapsed_since_beat % self.beat_interval) / self.beat_interval
-        
-        self.beat_pulse = 0
-        self.downbeat_pulse = 0
-        if elapsed_since_beat >= self.beat_interval:
-            self.beat_pulse = 1
-            self.last_beat_time = now
-            self.beat_counter += 1
-            if self.beat_counter > 4:
-                self.beat_counter = 1
-                self.total_bars += 1
-                self.bar_counter = ((self.total_bars - 1) % 8) + 1
-                self.phrase_counter = ((self.total_bars - 1) // 8) % 8 + 1
-                self.downbeat_pulse = 1
+        self.advance_beat_clock(now)
 
         # 8. Multi-Bar Long-Horizon Buildup & Drop Algorithms
         if len(self.history_flux) >= 60:
@@ -713,8 +724,8 @@ async def run_multi_source_engine(audio_path):
         finally:
             brain.ws_clients.discard(websocket)
 
-    ws_server = await websockets.serve(ws_handler, "0.0.0.0", brain.ws_port)
-    print(f"[*] WebSocket server listening on ws://0.0.0.0:{brain.ws_port}")
+    ws_server = await websockets.serve(ws_handler, "127.0.0.1", brain.ws_port)
+    print(f"[*] WebSocket server listening on ws://127.0.0.1:{brain.ws_port}")
 
     await engine.start()
 
