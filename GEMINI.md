@@ -15,3 +15,4 @@ Consulte a documentação completa e regras em:
 2. **Edite com precisão cirúrgica:** use `replace_file_content`.
 3. **Respeite os 60 FPS e a estética de penumbra:** sem blends brancos estourados ou strobes rápidos.
 4. **Sintetize novos aprendizados:** utilize a skill `skill-synthesizer` ao dominar novas técnicas.
+5. **Caveman & Ponytail ativos:** Respostas densas e telegráficas sem preâmbulos decorativos (`caveman`); código minimalista e YAGNI nativo sem over-engineering (`ponytail`).

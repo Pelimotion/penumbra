@@ -29,6 +29,10 @@ Bem-vindo ao workspace do **Penumbra System / Video Art Drinkzinho**. Este proje
    - Sempre criar uma feature/fix branch (ex: `feat/...`, `fix/...`), publicar com `git push -u origin <branch>` e trabalhar nela.
    - Ao concluir a tarefa ou marco, abrir um Pull Request (PR) no GitHub (`gh pr create`) apontando para `main`. O revisor humano avalia e dá merge sem conflitos concorrentes.
 
+6. **Protocolos Padrão Caveman & Ponytail:**
+   - **Caveman (Prose Compression):** Zero enrolação conversacional, comunicação telegráfica e objetiva, máxima densidade de sinal por token ([`.agents/skills/caveman/SKILL.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/skills/caveman/SKILL.md)).
+   - **Ponytail (Senior Dev Minimalism & YAGNI):** Zero over-engineering, soluções nativas e simples em primeiro lugar, preguiçoso com complexidade e implacável com corretude ([`.agents/skills/ponytail/SKILL.md`](file:///Volumes/PLM_SSD_01/Pipeline%20SSD%2001/Gigantera/Pipeline%20Gigantera/Video%20Art%20Drinkzinho/.agents/skills/ponytail/SKILL.md)).
+
 ---
 
 ## 📚 Documentação e Regras Detalhadas
