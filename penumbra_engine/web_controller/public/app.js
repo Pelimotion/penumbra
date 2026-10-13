@@ -892,7 +892,7 @@ let appState = {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
       num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
@@ -4611,10 +4611,10 @@ function createDefault3DConfig(scene = 'star_13', palette = 'pt_rubi') {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
-      num13_sub_kick: 1.8,
+      num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
       air_sparkle: 1.0
     }
   };
