@@ -892,7 +892,7 @@ let appState = {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
       num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
@@ -4611,10 +4611,10 @@ function createDefault3DConfig(scene = 'star_13', palette = 'pt_rubi') {
       glow_intensity: 1.0
     },
     audio_reactivity: {
-      spine_swimming: 1.0,
+      spine_swimming: 1.0,    // knob compartilhado: ondulação da coluna em 'spine' E pulso de brilho em 'biomorphic_flora' (cenas tratadas como continuação uma da outra)
       ocean_wave_amp: 1.0,
       star_treble_spin: 1.2,
-      num13_sub_kick: 1.8,
+      num13_sub_kick: 1.8,    // decoupled bass kick on the numeral 13!
       air_sparkle: 1.0
     }
   };
@@ -5809,7 +5809,7 @@ function renderSceneBiomorphicFlora(ctx, w, h, simTime, p) {
 
   const branches = 10;
   const segments = 14;
-  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5);
+  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5) * (p.cfg3d.audio_reactivity?.spine_swimming || 1.0);
 
   ctx.save();
   ctx.translate(cx, cy);
@@ -7921,9 +7921,9 @@ function advanceSmartQueue(targetState = null) {
   // Context-aware selection based on macro state
   let filteredCandidates = candidatePool;
   if (stateToUse === 'INTRO' || stateToUse === 'BREAK') {
-    filteredCandidates = candidatePool.filter(c => c.category === 'MINIMAL' || c.category === 'ABSTRACT');
+    filteredCandidates = candidatePool.filter(c => c.category === 'MINIMAL' || c.category === 'ABSTRACT' || c.is_generative);
   } else if (stateToUse === 'BUILD') {
-    filteredCandidates = candidatePool.filter(c => c.category === 'ABSTRACT' || c.category === 'FIGURA');
+    filteredCandidates = candidatePool.filter(c => c.category === 'ABSTRACT' || c.category === 'FIGURA' || c.is_generative);
   } else if (stateToUse === 'DROP') {
     filteredCandidates = candidatePool.filter(c => c.category === 'DENSE' || c.category === 'CHROMA' || c.is_generative);
   } else if (stateToUse === 'GROOVE') {
@@ -16294,6 +16294,14 @@ function renderStudioInspector() {
               <span class="insp-val-disp">${(react.spine_swimming || 1.0).toFixed(1)}x</span>
             </div>
             <input type="range" min="2" max="25" value="${Math.round((react.spine_swimming || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.spine_swimming', this.value / 10.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>CINTILAÇÃO DE ESPOROS (AIR / HI-HAT SPARKLE)</span>
+              <span class="insp-val-disp">${(react.air_sparkle || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((react.air_sparkle || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.air_sparkle', this.value / 10.0)">
           </div>
 
           <button class="insp-btn-toggle" style="margin-top: 10px; border-color: rgba(239,68,68,0.4);" onclick="window.reset3DConfig('${currentTarget}')">
