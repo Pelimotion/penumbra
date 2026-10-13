@@ -52,6 +52,8 @@ graph TD
 │   ├── qa_critic.md                   # Verificação visual, testes de runtime e auditoria
 │   └── memory_synthesizer.md          # Extração de skills, atualização de estado e descarte de ruído
 ├── skills/                            # Habilidades procedurais descobertas sob demanda
+│   ├── caveman/                       # Compressão radical de prosa e economia de tokens de saída
+│   ├── ponytail/                      # Minimalismo sênior, YAGNI e APIs nativas sem sobre-engenharia
 │   ├── skill-synthesizer/             # Sintetizador autônomo de novas skills
 │   ├── penumbra-vj-guardian/          # Guardião especializado do motor VJ (Penumbra)
 │   ├── midi-hardware-master/          # Conectividade MIDI Pro, Modos B1-B4 e Hardware Twin
