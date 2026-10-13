@@ -1,7 +1,7 @@
 # 🪐 PENUMBRA ENGINE · RELATÓRIO PREFLIGHT & SAFETY NET
 
-- **Data de Execução:** 13/10/2026, 15:34:54
-- **Duração Total:** 20.12s
+- **Data de Execução:** 13/10/2026, 15:38:31
+- **Duração Total:** 18.63s
 - **Status Geral:** 🟢 APROVADO (Zero Regressões)
 
 ## 1. Playwright Smoke E2E (Fluxo ao Vivo)
@@ -23,10 +23,10 @@
 ### Viewports Auditados (Cockpit UI):
 | Viewport | Dimensões | Status | Variação | Baseline |
 |---|---|---|---|---|
-| desktop_1920x1080 | 1920x1080 | PASS | 3.03% | `cockpit_desktop_1920x1080.png` |
-| macbook_1280x800 | 1280x800 | PASS | 4.59% | `cockpit_macbook_1280x800.png` |
-| ipad_1180x820 | 1180x820 | PASS | 4.34% | `cockpit_ipad_1180x820.png` |
-| ipad_1024x768 | 1024x768 | PASS | 3.38% | `cockpit_ipad_1024x768.png` |
+| desktop_1920x1080 | 1920x1080 | PASS | 2.89% | `cockpit_desktop_1920x1080.png` |
+| macbook_1280x800 | 1280x800 | PASS | 4.17% | `cockpit_macbook_1280x800.png` |
+| ipad_1180x820 | 1180x820 | PASS | 4.14% | `cockpit_ipad_1180x820.png` |
+| ipad_1024x768 | 1024x768 | PASS | 3.36% | `cockpit_ipad_1024x768.png` |
 
 ### Output Visual por Macro State (Program Canvas):
 | Estado Musical | Status | Arquivo Baseline |

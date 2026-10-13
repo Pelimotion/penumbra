@@ -7543,11 +7543,20 @@ function executeTakeCommit() {
   if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
+let lastHardCutTimestamp = 0;
 function executeHardCut(isUserAction = false) {
+  const nowCut = performance.now();
+  // Debounce de clique/tecla duplo literal (ex.: dois cliques rápidos no botão
+  // físico de corte, ou Enter seguido do clique): isso não depende de
+  // isUserAction e vale para qualquer origem, numa janela curta o bastante
+  // para nunca atrapalhar dois cortes manuais de verdade em sequência.
+  if (nowCut - lastHardCutTimestamp < 400) {
+    return;
+  }
+  lastHardCutTimestamp = nowCut;
   // Mesma proteção anti-disparo-duplo de startAutoTransition: um hard cut
   // disparado por automação dentro de 3s de outro take é ignorado; um hard cut
-  // explícito do operador (botão ou Enter) sempre executa.
-  const nowCut = performance.now();
+  // explícito do operador (botão ou Enter) sempre executa essa checagem.
   if (!isUserAction && (nowCut - lastAutopilotTakeTimestamp < 3000)) {
     return;
   }
