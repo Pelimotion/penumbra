@@ -39,12 +39,13 @@ function uploadToBunny(localFilePath, remotePath) {
   return new Promise((resolve, reject) => {
     const fileStat = fs.statSync(localFilePath);
     const fileStream = fs.createReadStream(localFilePath);
+    const targetRemote = remotePath.startsWith('penumbra-app/') ? remotePath : `penumbra-app/${remotePath}`;
     
-    console.log(`[CDN] ⬆️ Uploading: ${remotePath} (${(fileStat.size / 1024 / 1024).toFixed(2)} MB)...`);
+    console.log(`[CDN] ⬆️ Uploading: ${targetRemote} (${(fileStat.size / 1024 / 1024).toFixed(2)} MB)...`);
 
     const options = {
       hostname: REGION,
-      path: `/${STORAGE_ZONE}/${remotePath}`,
+      path: `/${STORAGE_ZONE}/${targetRemote}`,
       method: 'PUT',
       headers: {
         'AccessKey': STORAGE_PASS,
