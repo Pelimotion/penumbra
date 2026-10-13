@@ -1,8 +1,9 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 20:37:26 BRT
-- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
-- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
+- **Última Atualização:** 13/10/2026, 19:17:00 BRT
+- **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net/penumbra-app/`)
+- **Organização Bunny Storage:** 📁 `gigantera-portfolio/` (site raiz/portfólio) | 📁 `penumbra-app/` (Penumbra VJ Engine completo) | Raiz limpa (0 arquivos soltos)
+- **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000), [https://gigantera.xyz/penumbra/](https://gigantera.xyz/penumbra/) e [https://gigantera-penumbra.b-cdn.net/penumbra-app/index.html](https://gigantera-penumbra.b-cdn.net/penumbra-app/index.html)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
