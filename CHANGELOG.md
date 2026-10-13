@@ -1,12 +1,27 @@
 # 📜 PENUMBRA SYSTEM · CHANGELOG
 
-> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 10/10/2026, 17:37:57 BRT
+> Auto-gerado por `scripts/update_docs.js` · Atualizado em: 11/10/2026, 06:26:45 BRT
 
 ---
 
 ## Outubro de 2026
 
+### 🐛 Correções
+- `0e745ce` **(render-cue)** resolve renderVisuals isVert reference error, guarantee Deck B Cue signal and fix matte layerId fallback
+- `64f069d` **(mattes)** fix master matte assignment, real alpha channel inversion, and mixer flexbox layout
+- `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
+- `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
+- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
+- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
+- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
+- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
+- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
+- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
+- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
+
 ### ✨ Novos Recursos
+- `e820ce3` **(autopilot-mixer-timeline)** decouple status takes, 60fps ping-pong engine, mixer mattes UX and timeline vertical alignment
+- `8b83a55` **(orchestration)** multi-aspect vertical modes, projector routing, L2 sobel fix and macos background keep-alive
 - `5e91eff` **(fx-engine)** implement master fx bypass toggle, clean autopilot baseline and human-in-the-loop manual fx lock
 - `a21e5b7` **(timeline)** implement pro arrangement timeline with dynamic rhythm scaling and forward predictability
 - `75fa793` **(inspector)** unify studio inspector for layers and mattes with per-matte engine, follow selection mode and pin toggle
@@ -29,31 +44,8 @@
 - `ef2736f` Auto-Launch Portable App, Multi-Folder Imports, UX Refinements
 - `67c972c` Auto-Installer OTA, Portable Executable, and Full Pipeline Scanner
 
-### 🐛 Correções
-- `d7ded29` **(autopilot-pool)** compact media pool nav bar, clear manual lock badges, and settings folder exclusion sync
-- `4e2a97b` **(media-pool)** purge foreign BC Mapping videos from manifest and CDN; add clean 1-click projector mode and remove Bê nomenclature
-- `fd2f575` **(media-audio)** fix cloud video playback freezing and implement PenumbraWebAudio club DSP microphone suite
-- `41618bf` **(midi)** mapeamento nativo de CC para M-Vave SMC-MIXER (faders CC 20-27, knobs CC 30-37, master CC 28)
-- `48047d4` **(midi)** add universal M-Vave VAVE6412 MCU/CC dual mapping, fix encoder ballistic delta and button channel layout
-- `1f06ab2` **(media-nexus)** streamline localhost SSD connection and eliminate empty folder alerts
-- `063f2dd` **(cockpit)** resolve popout 404, macOS projector blackout, ingest deck overlay and splitters
-- `3151ef1` **(routing)** add synchronous base href detection for subpaths and /penumbra route in server.js
-- `094b6a5` **(routing)** resolve root and /penumbra 404s for styles.css, app.js and assets on Vercel
-
-### 📚 Documentação
-- `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
-- `1ee13ab` **(architecture)** sync technical architecture, state, graphify and knowledge base for next session
-- `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
-- `a87bbba` **(state)** atualizar links de preview e handover
-- `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
-- `332f9d5` **(handover)** register ADR-38, update system state and establish feat/penumbra-collaborative-dev branch
-- `306937c` **(governance)** implement PR-first collaborative git flow and conflict prevention rule
-- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
-- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
-- `f1a6951` add ADR-0013 and update changelog for source orchestration
-- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
-
 ### 🔧 Manutenção
+- `31787ef` record post-commit state hash [skip ci]
 - `8acad70` Merge pull request #1 from Pelimotion/feat/collab-branch-pr-governance
 - `5c02002` auto-deploy + auto-docs on every commit (post-commit hook + update_docs.js)
 - `7095a42` Set default FPS to 30 and Network Outputs to OFF
@@ -65,9 +57,20 @@
 - `cbd65d9` Fix standalone 404 errors: dummy favicon.ico and mock mattes catalog for zero-server architecture
 - `2762f6a` Update favicon to geometric SVG tetrapod without background
 - `484d97e` Implement Phase 2: Standalone VJ Architecture & Media Nexus Modal
-- `8b58c52` Implement HARS Architecture and CORS
-- `12cf409` Add tetrapod favicon
-- `fbcfa9d` Initial commit of Penumbra Engine
+
+### 📚 Documentação
+- `f7cfaeb` sync architecture, state, and changelog for next session
+- `1a7e7c6` update STATE.md with Studio Inspector, Color & Light suite and Bins breadcrumbs
+- `1ee13ab` **(architecture)** sync technical architecture, state, graphify and knowledge base for next session
+- `cbc4a1c` update DECISOES.md ADR 41 and STATE.md for cloud video and audio suite
+- `a87bbba` **(state)** atualizar links de preview e handover
+- `5022ddd` **(state)** registrar suporte dual-preset M-Vave e atalhos B1-B4
+- `332f9d5` **(handover)** register ADR-38, update system state and establish feat/penumbra-collaborative-dev branch
+- `306937c` **(governance)** implement PR-first collaborative git flow and conflict prevention rule
+- `5836f2f` **(state)** update documentation with Media Ingest Hub features and live metrics
+- `f8c5286` **(state)** update online production URL to gigantera.xyz/penumbra
+- `f1a6951` add ADR-0013 and update changelog for source orchestration
+- `19b97e7` add ADR-0012 for universal Vercel asset resolution and sync state
 
 ### 🔄 Outros
 - `59149e4` **(vercel)** configure buildCommand and outputDirectory for automated static deployment

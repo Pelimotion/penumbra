@@ -874,13 +874,15 @@ let appState = {
     }
   },
   gen3d: {
-    active_scene: 'star_13', // 'spine', 'ocean_sun', 'star_13', 'hybrid'
-    palette: 'cyan_neon',    // 'cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice'
+    active_scene: 'star_13', // 'star_13', 'spine', 'black_hole_singularity', 'biomorphic_flora', 'sol_vermelho_horizonte', etc.
+    palette: 'pt_rubi',      // 'pt_rubi', 'cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice', 'noir_gold'
     camera: {
       orbit_speed: 1.0,
       tilt: 0.22,
       fov: 1.35,
-      distance: 2.3
+      distance: 2.3,
+      roll: 0.0,
+      auto_orbit: true
     },
     particles: {
       count_mult: 1.0,
@@ -897,6 +899,10 @@ let appState = {
       air_sparkle: 1.0
     }
   },
+  deckA_3d: null,  // 3D parameters actively driving Program A (Live on air)
+  deckB_3d: null,  // 3D parameters driving Cue B (Preview / pre-air staging)
+  layer5_3d: null, // 3D parameters driving Layer 5 (Support / Overlay)
+  inspector_3d_target: 'deckA', // 'deckA' | 'deckB' | 'layer5'
   audio_monitor: {
     enabled: false,
     volume: 0.70
@@ -921,9 +927,11 @@ let appState = {
   manual_forced_bars: 0,
   active_macro_preset: null,
   last_take_total_bar: 0,
+  aspectRatio: '16:9',
+  aspect_fit_mode: 'fit',
   vertical_mode: false,
   vertical_projection: false,
-  projector_compensation: true,
+  projector_compensation: false,
   audio_gain: 1.0,
   fps_limit: 30,
   network_output_enabled: false,
@@ -1183,6 +1191,94 @@ handoverCanvas.width = 640;
 handoverCanvas.height = 360;
 let hasHandoverFrame = false;
 
+// ----------------------------------------------------------------------------
+// CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
+// ----------------------------------------------------------------------------
+let pendingContextRestoreRaf = false;
+[prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
+  if (!cv) return;
+  cv.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    console.warn('[PENUMBRA ENGINE] Canvas Context Lost detectado! Prevenindo encerramento e aguardando restauração...');
+  });
+  cv.addEventListener('contextrestored', () => {
+    console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
+    lastFrameTime = 0;
+    // A GPU reset tende a disparar 'contextrestored' em vários canvases quase ao
+    // mesmo tempo; renderVisuals já se reagenda sozinho (requestAnimationFrame no
+    // fim do próprio loop), então só a primeira restauração do lote deve iniciar
+    // uma nova cadeia de RAF — sem essa guarda, cada canvas abriria seu próprio
+    // loop paralelo e duplicaria o render indefinidamente.
+    if (pendingContextRestoreRaf) return;
+    pendingContextRestoreRaf = true;
+    requestAnimationFrame((time) => {
+      pendingContextRestoreRaf = false;
+      renderVisuals(time);
+    });
+  });
+});
+
+// ----------------------------------------------------------------------------
+// LIVE SET SESSION PERSISTENCE & AUTO-RECOVERY (ANTI-CRASH STAGE RESILIENCE)
+// ----------------------------------------------------------------------------
+function saveLiveSetSession() {
+  try {
+    if (!appState || !appState.layers) return;
+    const sessionSnapshot = {
+      timestamp: Date.now(),
+      macro_state: appState.macro_state,
+      bpm: appState.bpm,
+      crossfader: crossfader ? Number(crossfader.value) : 0,
+      aspectRatio: appState.aspectRatio,
+      vertical_mode: Boolean(appState.vertical_mode),
+      blackout: Boolean(appState.blackout),
+      layers: {
+        layer0: { ...appState.layers.layer0 },
+        layer1: { ...appState.layers.layer1 },
+        layer2: { ...appState.layers.layer2 },
+        layer3: { ...appState.layers.layer3 },
+        layer4: { ...appState.layers.layer4 },
+        layer5: { ...appState.layers.layer5 }
+      }
+    };
+    sessionStorage.setItem('penumbra_live_set_session', JSON.stringify(sessionSnapshot));
+  } catch (err) {}
+}
+
+function restoreLiveSetSession() {
+  try {
+    const raw = sessionStorage.getItem('penumbra_live_set_session');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.layers) return false;
+    if (Date.now() - (data.timestamp || 0) > 12 * 3600 * 1000) return false;
+
+    if (data.macro_state) appState.macro_state = data.macro_state;
+    if (data.bpm) appState.bpm = data.bpm;
+    if (data.aspectRatio) appState.aspectRatio = data.aspectRatio;
+    if (data.vertical_mode !== undefined) appState.vertical_mode = data.vertical_mode;
+    if (data.blackout !== undefined) appState.blackout = data.blackout;
+
+    for (const [lid, ldata] of Object.entries(data.layers)) {
+      if (appState.layers[lid]) {
+        appState.layers[lid] = { ...appState.layers[lid], ...ldata };
+      }
+    }
+
+    if (crossfader && data.crossfader !== undefined) {
+      crossfader.value = data.crossfader;
+    }
+    console.log('[PENUMBRA ENGINE] Set operacional restaurado com sucesso a partir de sessionStorage.');
+    return true;
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao restaurar sessão de set:', err);
+    return false;
+  }
+}
+window.saveLiveSetSession = saveLiveSetSession;
+window.restoreLiveSetSession = restoreLiveSetSession;
+
+
 // Theater / Expanded Modal Elements
 const theaterModal = document.getElementById('theater-modal');
 const theaterCanvas = document.getElementById('theater-canvas');
@@ -1252,9 +1348,15 @@ function initWebSocket() {
         if (incoming.layers) {
           for (const [lid, lprops] of Object.entries(incoming.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fit')
               };
@@ -1289,9 +1391,15 @@ function initWebSocket() {
         if (incomingData.layers) {
           for (const [lid, lprops] of Object.entries(incomingData.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fill')
               };
@@ -1302,10 +1410,15 @@ function initWebSocket() {
         if (incomingData.audio_source) {
           updateAudioSourceUI(incomingData.audio_source);
         }
+        const preservedLastTakeBar = appState.last_take_total_bar;
+        const preservedPhrase = appState.phrase;
         appState = { ...appState, ...incomingData };
+        if (preservedLastTakeBar !== undefined) appState.last_take_total_bar = preservedLastTakeBar;
+        if (preservedPhrase) appState.phrase = { ...preservedPhrase, ...(incomingData.phrase || {}) };
         window.appState = appState;
         updateMeters();
-        runAutopilotEngine();
+        // Governance: runAutopilotEngine() runs deterministically inside 60 FPS render loop beat tick,
+        // avoiding asynchronous race conditions from 40ms telemetry updates.
       } else if (msg.type === 'audio_source_status') {
         updateAudioSourceUI(msg.data);
       } else if (msg.type === 'manifest_updated') {
@@ -1515,11 +1628,12 @@ function syncVideoSources() {
   if (stripB) stripB.textContent = `CUE: ${appState.layers.layer3.name || appState.layers.layer3.clipId}`;
 }
 
-function getMatteImage(relPath) {
+function getMatteImage(relPath, invert = false) {
   if (!relPath || relPath === 'none') return null;
-  const src = `/mattes/${relPath}`;
-  if (lumaCanvasCache[src]) return lumaCanvasCache[src];
-  if (!matteCache[src]) {
+  const baseSrc = `/mattes/${relPath}`;
+  const cacheKey = invert ? `${baseSrc}_inv` : baseSrc;
+  if (lumaCanvasCache[cacheKey]) return lumaCanvasCache[cacheKey];
+  if (!matteCache[baseSrc]) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -1531,23 +1645,38 @@ function getMatteImage(relPath) {
         ctx.drawImage(img, 0, 0, 640, 360);
         const imgData = ctx.getImageData(0, 0, 640, 360);
         const d = imgData.data;
+
+        const cInv = document.createElement('canvas');
+        cInv.width = 640;
+        cInv.height = 360;
+        const ctxInv = cInv.getContext('2d', { willReadFrequently: true });
+        const imgDataInv = ctxInv.createImageData(640, 360);
+        const dInv = imgDataInv.data;
+
         for (let i = 0; i < d.length; i += 4) {
           const lum = Math.round(d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
           d[i] = 255;
           d[i+1] = 255;
           d[i+2] = 255;
           d[i+3] = lum;
+
+          dInv[i] = 255;
+          dInv[i+1] = 255;
+          dInv[i+2] = 255;
+          dInv[i+3] = 255 - lum;
         }
         ctx.putImageData(imgData, 0, 0);
-        lumaCanvasCache[src] = c;
+        ctxInv.putImageData(imgDataInv, 0, 0);
+        lumaCanvasCache[baseSrc] = c;
+        lumaCanvasCache[`${baseSrc}_inv`] = cInv;
       } catch (err) {
         console.warn('Luma matte conversion error:', err);
       }
     };
-    img.src = src;
-    matteCache[src] = img;
+    img.src = baseSrc;
+    matteCache[baseSrc] = img;
   }
-  return lumaCanvasCache[src] || (matteCache[src].complete && matteCache[src].naturalWidth > 0 ? matteCache[src] : null);
+  return lumaCanvasCache[cacheKey] || (matteCache[baseSrc].complete && matteCache[baseSrc].naturalWidth > 0 ? (lumaCanvasCache[cacheKey] || matteCache[baseSrc]) : null);
 }
 
 function getClipImage(clip) {
@@ -1572,22 +1701,30 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
   const srcH = source.videoHeight || source.naturalHeight || targetH;
   if (!srcW || !srcH) return null;
 
-  // 1. MIRROR WINGS MODE: broadcast standard for vertical 9:16 videos on 16:9 screens
-  if (mode === 'wings' && srcH > srcW && (!rotation || rotation === 0)) {
-    // Background: zoomed and blurred to fill full 16:9 canvas
+  // 1. MIRROR WINGS MODE: broadcast standard for mismatched aspect ratios (vertical on horizontal & vice-versa)
+  const isRatioMismatch = Math.abs((srcW / srcH) - (targetW / targetH)) > 0.05;
+  if (mode === 'wings' && isRatioMismatch && (!rotation || rotation === 0)) {
+    // Background: zoomed and blurred to fill full target canvas
     ctx.save();
-    ctx.filter = 'blur(18px) brightness(35%) saturate(130%)';
+    ctx.filter = 'blur(20px) brightness(35%) saturate(130%)';
     const bgScale = Math.max(targetW / srcW, targetH / srcH);
     const bgW = srcW * bgScale;
     const bgH = srcH * bgScale;
     ctx.drawImage(source, (targetW - bgW) / 2, (targetH - bgH) / 2, bgW, bgH);
     ctx.restore();
 
-    // Foreground: crisp centered 9:16 with soft drop shadow & transform
+    // Foreground: crisp centered aspect-fit with soft drop shadow & transform (ZERO CROP)
     const fgRatio = srcW / srcH;
-    const fgH = targetH;
-    const fgW = targetH * fgRatio;
+    let fgW, fgH;
+    if (fgRatio > targetW / targetH) {
+      fgW = targetW;
+      fgH = targetW / fgRatio;
+    } else {
+      fgH = targetH;
+      fgW = targetH * fgRatio;
+    }
     const fgX = (targetW - fgW) / 2;
+    const fgY = (targetH - fgH) / 2;
     ctx.save();
     ctx.translate(targetW / 2 + (posX || 0), targetH / 2 + (posY || 0));
     if (scale && scale !== 1.0) ctx.scale(scale, scale);
@@ -1597,7 +1734,7 @@ function drawFittedImage(ctx, source, targetW, targetH, mode = 'fill', rotation 
     ctx.shadowBlur = 20;
     ctx.drawImage(source, -fgW / 2, -fgH / 2, fgW, fgH);
     ctx.restore();
-    return { x: fgX, y: 0, w: fgW, h: fgH };
+    return { x: fgX, y: fgY, w: fgW, h: fgH };
   }
 
   // 2. ROTATION, SCALE, TRANSLATION & FIT ENGINE (-90 CCW, 0 NORMAL, +90 CW, 180 FLIP)
@@ -1984,7 +2121,7 @@ function getTonalFilterString(t) {
   return `contrast(${totalContrast}%) brightness(${totalBrightness}%) saturate(${totalSaturate}%)`;
 }
 
-function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
+function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0, invert = false) {
   const roundness = vig.roundness !== undefined ? Number(vig.roundness) : 0.65;
   const feather = Math.max(0.02, Number(vig.feather || 0.38));
   const innerR = Math.max(0.05, Number(vig.inner_radius || 0.42));
@@ -2001,9 +2138,15 @@ function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
     const rStart = maxDim * innerR * (1.0 - pulse);
     const rEnd = maxDim * outerR;
     const grad = ctx.createRadialGradient(cx, cy, Math.max(0, rStart), cx, cy, rEnd);
-    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    grad.addColorStop(Math.min(0.99, Math.max(0.01, 1.0 - feather)), 'rgba(0, 0, 0, 0.45)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    if (invert) {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      grad.addColorStop(Math.min(0.99, Math.max(0.01, feather)), 'rgba(0, 0, 0, 0.45)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    } else {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(Math.min(0.99, Math.max(0.01, 1.0 - feather)), 'rgba(0, 0, 0, 0.45)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    }
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
   } else {
@@ -2014,14 +2157,24 @@ function drawProceduralVignette(ctx, w, h, vig, audioPulse = 0) {
 
     ctx.filter = `blur(${featherPx}px)`;
     ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.rect(-featherPx * 2, -featherPx * 2, w + featherPx * 4, h + featherPx * 4);
-    if (ctx.roundRect) {
-      ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+    if (invert) {
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+      } else {
+        ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      }
+      ctx.fill();
     } else {
-      ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      ctx.beginPath();
+      ctx.rect(-featherPx * 2, -featherPx * 2, w + featherPx * 4, h + featherPx * 4);
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH, cornerR);
+      } else {
+        ctx.rect(cx - boxW * 0.5, cy - boxH * 0.5, boxW, boxH);
+      }
+      ctx.fill('evenodd');
     }
-    ctx.fill('evenodd');
   }
   ctx.restore();
 }
@@ -2075,14 +2228,11 @@ function drawDeformedMatte(ctx, matteImg, w, h, t, deform, invert = false, matte
   ctx.translate(-w / 2, -h / 2);
   
   const isInv = invert || Boolean(cfg.invert) || Boolean(appState.matte?.invert);
-  if (isInv) {
-    ctx.filter = 'invert(100%)';
-  }
   
   const isVigMatte = (matteImg.src && (matteImg.src.includes('vignette') || matteImg.src.includes('vinheta'))) || vig.enabled;
   if (isVigMatte && vig.enabled) {
     const pulseBand = vig.audio_band === 'sub' ? (appState.bands?.sub || 0) : (appState.bands?.bass || 0);
-    drawProceduralVignette(ctx, w, h, vig, pulseBand);
+    drawProceduralVignette(ctx, w, h, vig, pulseBand, isInv);
   } else {
     drawFittedImage(ctx, matteImg, w, h, 'fill');
   }
@@ -2773,39 +2923,40 @@ window.selectSpecificMacroPreset = selectSpecificMacroPreset;
 
 function adaptAutopilotToForcedState(state, specificPresetIdx = null) {
   const targetIdx = specificPresetIdx !== null ? specificPresetIdx : (appState.macro_preset_indices[state] || 0);
+  // Aplica estritamente a estética, cinemática, máscaras e FX do macro preset sobre o vídeo atual em reprodução
   applyMacroPreset(state, targetIdx, true);
-
-  const totalBars = appState.phrase?.total_bars || 1;
 
   if (state === 'DROP') {
     appState.drop_likelihood = 0.98;
     appState.buildup_likelihood = 0.20;
 
-    if (appState.autopilot_rules && appState.autopilot_rules.auto_drop_take) {
-      appState.last_take_total_bar = totalBars;
-      if (appState.layers.layer4) {
-        appState.layers.layer4.active = true;
-        appState.layers.layer4.opacity = 0.90;
-      }
-      // Immediate impact transition
-      startAutoTransition(0.3);
+    // No DROP: Ativa Accent Climax (Layer 4 Difference) para impacto visual imediato sobre a textura do vídeo atual
+    if (appState.layers.layer4 && !appState.layers.layer4.locked) {
+      appState.layers.layer4.active = true;
+      appState.layers.layer4.opacity = 0.85;
+    }
+    // Efeito de impacto cênico no Program Monitor sem cortar o vídeo
+    const prgBox = document.querySelector('.program-box') || document.getElementById('program-screen-box');
+    if (prgBox) {
+      prgBox.classList.remove('take-flash');
+      void prgBox.offsetWidth;
+      prgBox.classList.add('take-flash');
+      setTimeout(() => prgBox.classList.remove('take-flash'), 400);
     }
   } else if (state === 'BUILD') {
     appState.buildup_likelihood = 0.88;
     appState.drop_likelihood = 0.15;
+    // Prepara e arma o próximo candidato adequado no Deck B (Preview Cue), sem cortar o vídeo atual de L0
     advanceSmartQueue('DROP');
   } else if (state === 'BREAK') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(3.5);
   } else if (state === 'GROOVE') {
     appState.buildup_likelihood = 0.25;
     appState.drop_likelihood = 0.10;
-    startAutoTransition(1.5);
   } else if (state === 'INTRO') {
     appState.buildup_likelihood = 0.10;
     appState.drop_likelihood = 0.05;
-    startAutoTransition(2.5);
   }
 }
 window.adaptAutopilotToForcedState = adaptAutopilotToForcedState;
@@ -3040,8 +3191,85 @@ function startProgramRotationDissolve(oldDeg, newDeg) {
 }
 
 // ============================================================================
-// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS
+// PLAYBACK, TIME-STRETCH & PING-PONG LOOPS (WORLD-CLASS SEAMLESS BOUNCE)
 // ============================================================================
+const layerPingPongStates = {
+  layer0: { direction: 1 },
+  layer3: { direction: 1 },
+  layer5: { direction: 1 }
+};
+
+function processLayerPingPong(player, layerId, dt) {
+  if (!player || !player.duration || isNaN(player.duration) || player.duration <= 0.2) return;
+  const layer = appState.layers[layerId];
+  if (!layer) return;
+
+  const isPingPong = Boolean(layer.pingPong);
+  const isPaused = Boolean(layer.paused);
+  const speed = Math.max(0.1, Number(layer.speed || 1.0));
+
+  if (isPaused) {
+    if (!player.paused) player.pause();
+    return;
+  }
+
+  if (isPingPong) {
+    // Modo Ping-Pong: desativa loop padrão para impedir o corte brusco para o frame 0
+    if (player.loop) player.loop = false;
+
+    let pp = layerPingPongStates[layerId];
+    if (!pp) {
+      pp = { direction: 1 };
+      layerPingPongStates[layerId] = pp;
+    }
+
+    const duration = player.duration;
+    const curTime = player.currentTime;
+
+    if (pp.direction === 1) {
+      // 1. Fase Ida: toca para frente na velocidade configurada
+      if (Math.abs(player.playbackRate - speed) > 0.01) {
+        try { player.playbackRate = speed; } catch (e) {}
+      }
+      if (player.paused && !player.ended && player.readyState >= 2) {
+        player.play().catch(() => {});
+      }
+
+      // Ao alcançar o final do vídeo (ou disparar evento ended): inverte para rebobinar suavemente
+      if (curTime >= duration - 0.10 || player.ended) {
+        pp.direction = -1;
+        player.pause();
+      }
+    } else {
+      // 2. Fase Volta: rebobina suavemente a 60 FPS decrementando currentTime
+      if (!player.paused) player.pause();
+      const step = Math.max(0.005, dt * speed);
+      const newTime = Math.max(0, curTime - step);
+      player.currentTime = newTime;
+
+      // Ao alcançar o início do clipe: inverte de volta para frente sem corte brusco
+      if (newTime <= 0.08) {
+        pp.direction = 1;
+        player.currentTime = 0.05;
+        player.play().catch(() => {});
+      }
+    }
+  } else {
+    // Loop Contínuo Normal (Forward 360°)
+    if (!player.loop) player.loop = true;
+    if (Math.abs(player.playbackRate - speed) > 0.01) {
+      try { player.playbackRate = speed; } catch (e) {}
+    }
+    if (player.paused && player.readyState >= 2) {
+      player.play().catch(() => {});
+    }
+    if (layerPingPongStates[layerId]) {
+      layerPingPongStates[layerId].direction = 1;
+    }
+  }
+}
+window.processLayerPingPong = processLayerPingPong;
+
 function toggleLayerPlayback(layerId) {
   if (appState.layers[layerId]) {
     const isPaused = appState.layers[layerId].paused || false;
@@ -3056,16 +3284,48 @@ function toggleLayerPingPong(layerId) {
     const isPingPong = appState.layers[layerId].pingPong || false;
     appState.layers[layerId].pingPong = !isPingPong;
     
-    const btn = document.getElementById(layerId === 'layer0' ? 'l0-pingpong' : 'l3-pingpong');
+    const lprefix = layerId.replace('layer', 'l');
+    const btn = document.getElementById(`${lprefix}-pingpong`);
     if (btn) btn.classList.toggle('active', !isPingPong);
     
+    showMacroToast(appState.layers[layerId].pingPong ? `⮂ Ping-Pong Ativo em ${layerId.toUpperCase()} (Ida e Volta Suave)` : `🔁 Loop Contínuo em ${layerId.toUpperCase()}`);
+    
     sendAction('set_layer_pingpong', { layer: layerId, enabled: !isPingPong });
+    updateUI();
   }
 }
+window.toggleLayerPingPong = toggleLayerPingPong;
+
+function updateMixerMattesUI() {
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lKey => {
+    const lprefix = lKey.replace('layer', 'l');
+    const layer = appState.layers[lKey];
+    if (!layer) return;
+
+    const lbl = document.getElementById(`lbl-${lprefix}-matte-name`);
+    const capsule = document.getElementById(`ch-matte-slot-${lKey}`);
+    const btnInv = document.getElementById(`${lprefix}-matte-inv`);
+    const isInv = Boolean(layer.matte_invert);
+
+    if (btnInv) btnInv.classList.toggle('active', isInv);
+
+    const mattePath = layer.matte;
+    if (mattePath && mattePath !== 'none') {
+      const foundMatte = (allMattes || []).find(m => m.path === mattePath || m.filename === mattePath.split('/').pop());
+      const name = foundMatte ? foundMatte.name : mattePath.split('/').pop().replace('.png', '').replace(/_/g, ' ');
+      if (lbl) lbl.textContent = (isInv ? '⚡ ' : '🔒 ') + name.toUpperCase();
+      if (capsule) capsule.classList.add('has-matte');
+    } else {
+      if (lbl) lbl.textContent = 'PASSTHROUGH (FULL FRAME)';
+      if (capsule) capsule.classList.remove('has-matte');
+    }
+  });
+}
+window.updateMixerMattesUI = updateMixerMattesUI;
 
 function setLayerSpeed(layerId, speedVal) {
   const speedNormalized = speedVal / 100.0;
-  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : 'lbl-l3-speed');
+  const lbl = document.getElementById(layerId === 'layer0' ? 'lbl-l0-speed' : (layerId === 'layer5' ? 'lbl-l5-speed' : 'lbl-l3-speed'));
   if (lbl) lbl.textContent = speedNormalized.toFixed(1) + 'x';
   
   if (appState.layers[layerId]) {
@@ -3121,18 +3381,36 @@ function toggleLayerActive(layerId) {
 window.toggleLayerActive = toggleLayerActive;
 
 function onLayerMatteChange(layerId, val) {
-  if (appState.layers[layerId]) {
+  if (layerId === 'master') {
+    appState.master_matte = val;
+    sendAction('set_master_matte', { matte: val });
+    updateMatteRibbonActiveStatus();
+    renderMattesCards();
+  } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte = val;
     sendAction('set_layer_matte', { layer: layerId, matte: val });
+    if (appState.matte_target_layer === layerId) {
+      updateMatteRibbonActiveStatus();
+    }
   }
 }
 window.onLayerMatteChange = onLayerMatteChange;
 
 function toggleLayerMatteInvert(layerId) {
-  if (appState.layers[layerId]) {
+  if (layerId === 'master') {
+    appState.master_matte_invert = !appState.master_matte_invert;
+    sendAction('set_master_matte_invert', { value: appState.master_matte_invert });
+    if (appState.matte_target_layer === 'master') {
+      updateMatteRibbonActiveStatus();
+    }
+  } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte_invert = !appState.layers[layerId].matte_invert;
     const btn = document.getElementById(`${layerId.replace('layer', 'l')}-matte-inv`);
-    if (btn) btn.classList.toggle('active', appState.layers[layerId].matte_invert);
+    if (btn) btn.classList.toggle('active', !!appState.layers[layerId].matte_invert);
+    sendAction('set_layer_param', { layer: layerId, param: 'matte_invert', value: appState.layers[layerId].matte_invert });
+    if (appState.matte_target_layer === layerId) {
+      updateMatteRibbonActiveStatus();
+    }
   }
 }
 window.toggleLayerMatteInvert = toggleLayerMatteInvert;
@@ -3167,7 +3445,8 @@ window.setMatteTargetLayer = setMatteTargetLayer;
 
 function updateMatteRibbonActiveStatus() {
   const tgt = appState.matte_target_layer || 'layer3';
-  const currentMattePath = appState.layers[tgt]?.matte;
+  const currentMattePath = (tgt === 'master') ? appState.master_matte : appState.layers[tgt]?.matte;
+  const isInv = (tgt === 'master') ? !!appState.master_matte_invert : !!appState.layers[tgt]?.matte_invert;
   const titleEl = document.getElementById('target-active-matte-title');
   const btnClear = document.getElementById('btn-clear-target-matte');
   const btnInv = document.getElementById('btn-inv-target-matte');
@@ -3189,14 +3468,20 @@ function updateMatteRibbonActiveStatus() {
   }
 
   if (btnInv) {
-    btnInv.classList.toggle('active', !!appState.layers[tgt]?.matte_invert);
+    btnInv.classList.toggle('active', isInv);
   }
 }
 window.updateMatteRibbonActiveStatus = updateMatteRibbonActiveStatus;
 
 function clearCurrentTargetMatte() {
   const tgt = appState.matte_target_layer || 'layer3';
-  if (appState.layers[tgt]) {
+  if (tgt === 'master') {
+    appState.master_matte = 'none';
+    sendAction('set_master_matte', { matte: 'none' });
+    updateMatteRibbonActiveStatus();
+    renderMattesCards();
+    updateUI();
+  } else if (appState.layers[tgt]) {
     appState.layers[tgt].matte = 'none';
     const selId = tgt.replace('layer', 'l') + '-matte';
     const sel = document.getElementById(selId);
@@ -3211,7 +3496,13 @@ window.clearCurrentTargetMatte = clearCurrentTargetMatte;
 
 function toggleCurrentTargetMatteInvert() {
   const tgt = appState.matte_target_layer || 'layer3';
-  if (appState.layers[tgt]) {
+  if (tgt === 'master') {
+    appState.master_matte_invert = !appState.master_matte_invert;
+    const btnInv = document.getElementById('btn-inv-target-matte');
+    if (btnInv) btnInv.classList.toggle('active', !!appState.master_matte_invert);
+    sendAction('set_master_matte_invert', { value: appState.master_matte_invert });
+    updateMatteRibbonActiveStatus();
+  } else if (appState.layers[tgt]) {
     appState.layers[tgt].matte_invert = !appState.layers[tgt].matte_invert;
     const invBtnId = tgt.replace('layer', 'l') + '-matte-inv';
     const invBtn = document.getElementById(invBtnId);
@@ -3226,6 +3517,8 @@ function openMatteLibraryForLayer(layerId) {
   switchTab('tab-mattes');
   switchMatteSub('masks');
   setMatteTargetLayer(layerId);
+  const lName = (layerId === 'master') ? 'MASTER (GLOBAL)' : layerId.toUpperCase();
+  showMacroToast(`🎭 Foco em ${lName}: Escolha uma das 29 máscaras do catálogo abaixo`);
 }
 window.openMatteLibraryForLayer = openMatteLibraryForLayer;
 
@@ -3296,38 +3589,79 @@ function updateGeometryUI() {
   });
 }
 
-function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
-  if (!srcCanvas) return;
-  if (!isVert) {
-    ctx.drawImage(srcCanvas, 0, 0, pw, ph);
-  } else {
-    // Upright portrait 9:16 aspect fill (no side rotation, straight preview!)
-    const srcW = srcCanvas.width;
-    const srcH = srcCanvas.height;
-    const targetRatio = pw / ph; // 360/640 = 0.5625
-    const srcRatio = srcW / srcH; // 1280/720 = 1.7778
-    let sx = 0, sy = 0, sWidth = srcW, sHeight = srcH;
-    if (srcRatio > targetRatio) {
-      sWidth = srcH * targetRatio;
-      sx = (srcW - sWidth) / 2;
-    } else {
-      sHeight = srcW / targetRatio;
-      sy = (srcH - sHeight) / 2;
-    }
-    ctx.drawImage(srcCanvas, sx, sy, sWidth, sHeight, 0, 0, pw, ph);
+function getAspectRatioDimensions(ratioStr) {
+  switch (ratioStr) {
+    case '9:16':
+      return { w: 360, h: 640, isVertical: true, ratio: 9 / 16, label: '9:16 VERTICAL' };
+    case '1:1':
+      return { w: 480, h: 480, isVertical: false, ratio: 1 / 1, label: '1:1 QUADRADO' };
+    case '4:5':
+      return { w: 384, h: 480, isVertical: true, ratio: 4 / 5, label: '4:5 SOCIAL' };
+    case '4:3':
+      return { w: 480, h: 360, isVertical: false, ratio: 4 / 3, label: '4:3 RETRÔ' };
+    case '21:9':
+      return { w: 640, h: 274, isVertical: false, ratio: 21 / 9, label: '21:9 ULTRAWIDE' };
+    case '16:9':
+    default:
+      return { w: 640, h: 360, isVertical: false, ratio: 16 / 9, label: '16:9 HORIZONTAL' };
   }
+}
+window.getAspectRatioDimensions = getAspectRatioDimensions;
+
+function setAspectRatio(ratio) {
+  const cfg = getAspectRatioDimensions(ratio);
+  appState.aspectRatio = ratio;
+  appState.vertical_mode = cfg.isVertical;
+  appState.vertical_projection = cfg.isVertical;
+
+  const canvases = [busCanvasA, busCanvasB, offscreenA, offscreenB, sobelCanvas, handoverCanvas, rotSnapshotCanvas];
+  canvases.forEach(c => {
+    if (c) {
+      c.width = cfg.w;
+      c.height = cfg.h;
+    }
+  });
+
+  if (prgCanvas) {
+    prgCanvas.width = cfg.w;
+    prgCanvas.height = cfg.h;
+  }
+  if (prvCanvas) {
+    prvCanvas.width = cfg.w;
+    prvCanvas.height = cfg.h;
+  }
+
+  updateUI();
+  if (typeof renderStudioInspector === 'function') renderStudioInspector();
+  console.log(`[PENUMBRA ENGINE] Aspect Ratio Master alterado para: ${cfg.label} (${cfg.w}×${cfg.h})`);
+}
+window.setAspectRatio = setAspectRatio;
+
+function setDefaultFitMode(mode) {
+  appState.aspect_fit_mode = mode;
+  appState.fit_mode = mode;
+  ['layer0', 'layer1', 'layer2', 'layer3', 'layer4', 'layer5'].forEach(lid => {
+    if (appState.layers && appState.layers[lid]) appState.layers[lid].fit_mode = mode;
+  });
+  updateUI();
+  console.log(`[PENUMBRA ENGINE] Modo de Enquadramento Padrão definido para: ${mode.toUpperCase()}`);
+}
+window.setDefaultFitMode = setDefaultFitMode;
+
+function drawBusToProgram(ctx, srcCanvas, pw, ph, isVert) {
+  if (!srcCanvas || !ctx) return;
+  // Transferência direta 1:1 já que os barramentos operam nativamente na geometria do Program
+  ctx.drawImage(srcCanvas, 0, 0, pw, ph);
 }
 
 function toggleVerticalMode(forceValue = null) {
+  let targetVal;
   if (forceValue !== null) {
-    appState.vertical_mode = Boolean(forceValue);
+    targetVal = Boolean(forceValue);
   } else {
-    appState.vertical_mode = !appState.vertical_mode;
+    targetVal = !(appState.aspectRatio === '9:16' || appState.vertical_mode);
   }
-  appState.vertical_projection = appState.vertical_mode;
-  
-  updateUI();
-  console.log(`[PENUMBRA ENGINE] Modo Vertical (9:16) ${appState.vertical_mode ? 'ATIVADO' : 'DESATIVADO'}`);
+  setAspectRatio(targetVal ? '9:16' : '16:9');
 }
 window.toggleVerticalMode = toggleVerticalMode;
 
@@ -3338,6 +3672,7 @@ function toggleProjectorCompensation(checked = null) {
     appState.projector_compensation = !appState.projector_compensation;
   }
   updateUI();
+  console.log(`[PENUMBRA ENGINE] Compensação de Saída de Projetor 90°: ${appState.projector_compensation ? 'LIGADO (ROTACIONADO 90°)' : 'DESLIGADO (NATIVO RETO NO CENTRO)'}`);
 }
 window.toggleProjectorCompensation = toggleProjectorCompensation;
 
@@ -3380,10 +3715,51 @@ function toggleNetworkOutput(isOn) {
 }
 window.toggleNetworkOutput = toggleNetworkOutput;
 
+let lastEngineTick = performance.now();
+let keepAliveWorkerInstance = null;
+
+function initBackgroundKeepAlive() {
+  if (keepAliveWorkerInstance) return;
+  try {
+    const workerScript = `
+      var timer = null;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(function() {
+            self.postMessage('tick');
+          }, 1000 / 60);
+        } else if (e.data === 'stop') {
+          if (timer) clearInterval(timer);
+          timer = null;
+        }
+      };
+    `;
+    const blob = new Blob([workerScript], { type: 'application/javascript' });
+    keepAliveWorkerInstance = new Worker(URL.createObjectURL(blob));
+    keepAliveWorkerInstance.onmessage = function() {
+      const now = performance.now();
+      // Se a aba do navegador perdeu o foco, ficou oculta ou o RAF foi suspenso pelo macOS:
+      if (document.hidden || !document.hasFocus() || (now - lastEngineTick > 25)) {
+        renderVisuals(now);
+      }
+    };
+    keepAliveWorkerInstance.postMessage('start');
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
+    console.log('[PENUMBRA ENGINE] Background Anti-Freeze Worker ativo (60 FPS contínuo no Mac).');
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao inicializar keep-alive worker:', err);
+  }
+}
+window.initBackgroundKeepAlive = initBackgroundKeepAlive;
+
 function renderVisuals(time) {
   const targetFps = appState.fps_limit || 60;
   const fpsInterval = 1000 / targetFps;
   const now = time || performance.now();
+  lastEngineTick = now;
   
   if (!lastFrameTime) lastFrameTime = now;
   const elapsed = now - lastFrameTime;
@@ -3488,8 +3864,36 @@ function renderVisuals(time) {
   if (prgPlayhead) prgPlayhead.style.width = `${clipLoopProgress}%`;
   if (prvPlayhead) prvPlayhead.style.width = `${((clipLoopProgress + 40) % 100)}%`;
 
+  // Dynamic Bus Sizing according to Master Aspect Ratio
+  const aspectConfig = getAspectRatioDimensions(appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9'));
+  const targetBusW = aspectConfig.w;
+  const targetBusH = aspectConfig.h;
+  const isVert = Boolean(aspectConfig.isVertical || appState.vertical_mode || appState.vertical_projection);
+
+  if (busCanvasA.width !== targetBusW || busCanvasA.height !== targetBusH) {
+    busCanvasA.width = targetBusW;
+    busCanvasA.height = targetBusH;
+    busCanvasB.width = targetBusW;
+    busCanvasB.height = targetBusH;
+    offscreenA.width = targetBusW;
+    offscreenA.height = targetBusH;
+    offscreenB.width = targetBusW;
+    offscreenB.height = targetBusH;
+    sobelCanvas.width = targetBusW;
+    sobelCanvas.height = targetBusH;
+    handoverCanvas.width = targetBusW;
+    handoverCanvas.height = targetBusH;
+    rotSnapshotCanvas.width = targetBusW;
+    rotSnapshotCanvas.height = targetBusH;
+  }
+
   const w = busCanvasA.width;
   const h = busCanvasA.height;
+
+  // Process Real-Time Playback Dynamics & Ping-Pong Loops (Smooth 60 FPS Bounce)
+  if (playerL0) processLayerPingPong(playerL0, 'layer0', dt);
+  if (playerL3) processLayerPingPong(playerL3, 'layer3', dt);
+  if (playerL5) processLayerPingPong(playerL5, 'layer5', dt);
 
   // --------------------------------------------------------------------------
   // 1. RENDER DECK A INTO busCanvasA (MASTER BUS A)
@@ -3499,9 +3903,18 @@ function renderVisuals(time) {
     busCtxA.fillRect(0, 0, w, h);
 
     const baseClip = allClips.find(c => c.id === appState.layers.layer0.clipId) || allClips[0];
-    const isBaseGen = baseClip && (baseClip.is_generative || baseClip.id === 'clip_gen_plexus_spine');
+    const isBaseGen = baseClip && (baseClip.is_generative || baseClip.id === 'clip_gen_plexus_spine' || baseClip.category === '3D');
     const videoL0Ready = playerL0 && playerL0.readyState >= 2;
-    const baseSource = isBaseGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL0Ready ? playerL0 : getClipImage(baseClip));
+    const baseSource = isBaseGen ? getPlexusSpineCanvas(w, h, simTime, baseClip?.gen_scene, 'deckA') : (videoL0Ready ? playerL0 : getClipImage(baseClip));
+
+    // Clip & Layer Transforms for Deck A (acessíveis globalmente para Layer 0 e Layer 2 Sobel)
+    const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+    const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
+    const l0 = appState.layers.layer0;
+    const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
+    const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
+    const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
+    const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
 
     if (baseSource && appState.layers.layer0.active) {
       offCtxA.clearRect(0, 0, w, h);
@@ -3509,13 +3922,6 @@ function renderVisuals(time) {
       offCtxA.fillRect(0, 0, w, h);
 
       // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
-      const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
-      const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
-      const l0 = appState.layers.layer0;
-      const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
-      const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
-      const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
-      const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
       const tnFilter0 = getClipTonalFilterString(clipTn0);
       offCtxA.save();
       if (tnFilter0 !== 'none') offCtxA.filter = tnFilter0;
@@ -3547,7 +3953,7 @@ function renderVisuals(time) {
       }
 
       // Apply Layer 0 Matte with invert support
-      const matteL0 = getMatteImage(appState.layers.layer0.matte);
+      const matteL0 = getMatteImage(appState.layers.layer0.matte, appState.layers.layer0.matte_invert);
       if (matteL0 && appState.layers.layer0.matte !== 'none') {
         offCtxA.save();
         offCtxA.globalCompositeOperation = 'destination-in';
@@ -3583,20 +3989,26 @@ function renderVisuals(time) {
       busCtxA.restore();
     }
 
-    // LAYER 2: EDGE TRACE (Sobel Contours) - Sits Above Main Layer with Luminous Chalk/Neon Whites
-    if (baseSource && appState.layers.layer2.active) {
+    // LAYER 2: EDGE TRACE (Sobel Contours / Find Edges) - Desaparece no zero e blend profissional
+    const l2 = appState.layers.layer2;
+    const l2Opacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.85;
+    if (baseSource && l2 && l2.active && l2Opacity > 0.005) {
       const isL2SoloA = (!appState.layers.layer0.active || (appState.layers.layer0.opacity !== undefined && appState.layers.layer0.opacity <= 0.01)) &&
                         (!appState.layers.layer1.active || l1AOpacity <= 0.01);
-      const l2 = appState.layers.layer2;
+      const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+      const finalL2Alpha = isL2SoloA ? l2Opacity : Math.min(1.0, l2Opacity * edgeMix * (0.85 + air * 0.3));
+
+      const tf0 = {
+        rotation: totalRot0,
+        scale: totalScale0,
+        pos_x: totalPosX0,
+        pos_y: totalPosY0,
+        flip_h: clipTf0.flip_h,
+        flip_v: clipTf0.flip_v
+      };
+
       busCtxA.save();
-      if (isL2SoloA) {
-        busCtxA.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-      } else {
-        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-        busCtxA.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-        drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-      }
+      drawSobelContours(busCtxA, baseSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloA, finalL2Alpha, tf0, l2.blend || 'Screen', l2.matte, l2.matte_invert);
       busCtxA.restore();
     }
 
@@ -3614,15 +4026,24 @@ function renderVisuals(time) {
     busCtxB.fillRect(0, 0, w, h);
 
     const queuedClip = allClips.find(c => c.id === appState.layers.layer3.clipId) || allClips[1] || allClips[0];
-    const isQueuedGen = queuedClip && (queuedClip.is_generative || queuedClip.id === 'clip_gen_plexus_spine');
+    const isQueuedGen = queuedClip && (queuedClip.is_generative || queuedClip.id === 'clip_gen_plexus_spine' || queuedClip.category === '3D');
     const videoL3Ready = playerL3 && playerL3.readyState >= 2;
-    const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
+    const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime, queuedClip?.gen_scene, 'deckB') : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
-      // Clamped Deck B Base Opacity: Deck B represents the incoming Base Video for transition.
-      // It must strictly adhere to the master base video opacity (layer0.opacity) to prevent flashes!
-      const masterBaseOpacity = (appState.layers.layer0 && appState.layers.layer0.opacity !== undefined) ? appState.layers.layer0.opacity : 1.0;
-      const deckBOpacity = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? Math.min(masterBaseOpacity, appState.layers.layer3.opacity) : masterBaseOpacity;
+      // Deck B representa a mídia que está sendo pré-visualizada (CUE) e pronta para transição.
+      // No monitor Preview/CUE, o operador deve sempre ver o vídeo base com nitidez.
+      const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
+      const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
+
+      // Clip & Layer Transforms for Deck B (acessíveis globalmente para Layer 3 e Layer 2 Sobel no Bus B)
+      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+      const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
+      const l3 = appState.layers.layer3;
+      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
 
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
@@ -3630,13 +4051,6 @@ function renderVisuals(time) {
         offCtxB.fillRect(0, 0, w, h);
 
         // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
-        const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
-        const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
-        const l3 = appState.layers.layer3;
-        const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
-        const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
-        const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
-        const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
         const tnFilter3 = getClipTonalFilterString(clipTn3);
         offCtxB.save();
         if (tnFilter3 !== 'none') offCtxB.filter = tnFilter3;
@@ -3644,7 +4058,7 @@ function renderVisuals(time) {
         offCtxB.restore();
 
         // Apply Layer 3 Matte with invert support
-        const matteL3 = getMatteImage(appState.layers.layer3.matte);
+        const matteL3 = getMatteImage(appState.layers.layer3.matte, appState.layers.layer3.matte_invert);
         if (matteL3 && appState.layers.layer3.matte !== 'none') {
           offCtxB.save();
           offCtxB.globalCompositeOperation = 'destination-in';
@@ -3652,17 +4066,15 @@ function renderVisuals(time) {
           offCtxB.restore();
         }
 
-        // Only draw base video to Bus B if opacity is greater than 0.5% (avoids flash when base is 0)
-        if (deckBOpacity > 0.005) {
-          busCtxB.save();
-          busCtxB.filter = getTonalFilterString(appState.tonal);
-          busCtxB.globalAlpha = deckBOpacity;
-          busCtxB.drawImage(offscreenB, 0, 0, w, h);
-          busCtxB.restore();
-        }
+        // Always draw base video to Bus B
+        busCtxB.save();
+        busCtxB.filter = getTonalFilterString(appState.tonal);
+        busCtxB.globalAlpha = deckBOpacity;
+        busCtxB.drawImage(offscreenB, 0, 0, w, h);
+        busCtxB.restore();
 
         // LAYER 1 on Bus B: SELF-DOUBLE (Ensures smooth crossfade without layer pop-in)
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         if (appState.layers.layer1.active && l1BOpacity > 0.005) {
           busCtxB.save();
           busCtxB.translate(w/2, h/2);
@@ -3677,21 +4089,27 @@ function renderVisuals(time) {
         }
       }
 
-      // LAYER 2 on Bus B: EDGE TRACE SOBEL (Renders above main layer with luminance boost, even in solo mode)
-      if (appState.layers.layer2.active) {
-        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.55;
+      // LAYER 2 on Bus B: EDGE TRACE SOBEL
+      const l2 = appState.layers.layer2;
+      const l2BOpacity = (l2 && l2.opacity !== undefined) ? l2.opacity : 0.0;
+      if (queuedSource && l2 && l2.active && l2BOpacity > 0.005) {
+        const l1BOpacity = (appState.layers.layer1 && appState.layers.layer1.opacity !== undefined) ? appState.layers.layer1.opacity : 0.0;
         const isL2SoloB = (!appState.layers.layer3.active || deckBOpacity <= 0.01) &&
                           (!appState.layers.layer1.active || l1BOpacity <= 0.01);
-        const l2 = appState.layers.layer2;
+        const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85);
+        const finalL2AlphaB = isL2SoloB ? l2BOpacity : Math.min(1.0, l2BOpacity * edgeMix * (0.85 + air * 0.3));
+
+        const tf3 = {
+          rotation: totalRot3,
+          scale: totalScale3,
+          pos_x: totalPosX3,
+          pos_y: totalPosY3,
+          flip_h: clipTf3.flip_h,
+          flip_v: clipTf3.flip_v
+        };
+
         busCtxB.save();
-        if (isL2SoloB) {
-          busCtxB.globalAlpha = l2.opacity !== undefined ? l2.opacity : 1.0;
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, true);
-        } else {
-          const edgeMix = (l2.edge_mix !== undefined ? l2.edge_mix : 0.85) * (l2.opacity !== undefined ? l2.opacity : 0.85);
-          busCtxB.globalAlpha = Math.min(1.0, edgeMix * (0.85 + air * 0.3));
-          drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || appState.tonal.edge_threshold || 0.28, false);
-        }
+        drawSobelContours(busCtxB, queuedSource, w, h, simTime, l2.edge_threshold || 0.28, isL2SoloB, finalL2AlphaB, tf3, l2.blend || 'Screen', l2.matte, l2.matte_invert);
         busCtxB.restore();
       }
 
@@ -3706,6 +4124,10 @@ function renderVisuals(time) {
   // 3. RENDER PREVIEW CANVAS (Shows Bus B / Cue in real time)
   // --------------------------------------------------------------------------
   if (prvCtx && prvCanvas) {
+    if (prvCanvas.width !== targetBusW || prvCanvas.height !== targetBusH) {
+      prvCanvas.width = targetBusW;
+      prvCanvas.height = targetBusH;
+    }
     prvCtx.fillStyle = '#050608';
     prvCtx.fillRect(0, 0, prvCanvas.width, prvCanvas.height);
     prvCtx.drawImage(busCanvasB, 0, 0, prvCanvas.width, prvCanvas.height);
@@ -3728,12 +4150,9 @@ function renderVisuals(time) {
   // 4. RENDER PROGRAM CANVAS (EQUAL-POWER DISSOLVE MASTER)
   // --------------------------------------------------------------------------
   if (prgCtx && prgCanvas) {
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
-    const targetPw = isVert ? 360 : 640;
-    const targetPh = isVert ? 640 : 360;
-    if (prgCanvas.width !== targetPw || prgCanvas.height !== targetPh) {
-      prgCanvas.width = targetPw;
-      prgCanvas.height = targetPh;
+    if (prgCanvas.width !== targetBusW || prgCanvas.height !== targetBusH) {
+      prgCanvas.width = targetBusW;
+      prgCanvas.height = targetBusH;
     }
 
     const pw = prgCanvas.width;
@@ -3802,9 +4221,9 @@ function renderVisuals(time) {
       const l4Opacity = (appState.layers.layer4 && appState.layers.layer4.opacity !== undefined) ? appState.layers.layer4.opacity : 0.25;
       if (l4Opacity > 0.005 && (appState.macro_state === 'DROP' || appState.drop_likelihood > 0.65) && appState.layers.layer4.active) {
         const accentClip = allClips.find(c => c.id === appState.layers.layer4.clipId) || allClips[2] || allClips[0];
-        const isAccentGen = accentClip && (accentClip.is_generative || accentClip.id === 'clip_gen_plexus_spine');
+        const isAccentGen = accentClip && (accentClip.is_generative || accentClip.id === 'clip_gen_plexus_spine' || accentClip.category === '3D');
         const videoL4Ready = playerL4 && playerL4.readyState >= 2;
-        const accentSource = isAccentGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL4Ready ? playerL4 : getClipImage(accentClip));
+        const accentSource = isAccentGen ? getPlexusSpineCanvas(w, h, simTime, accentClip?.gen_scene, 'layer4') : (videoL4Ready ? playerL4 : getClipImage(accentClip));
 
         if (accentSource) {
           offCtxB.clearRect(0, 0, w, h);
@@ -3816,7 +4235,7 @@ function renderVisuals(time) {
           const totalPosY4 = (l4.pos_y || 0) + (clipTf4.pos_y || 0);
           drawFittedImage(offCtxB, accentSource, w, h, l4.fit_mode || 'fit', totalRot4, totalScale4, totalPosX4, totalPosY4);
 
-          const matteL4 = getMatteImage(appState.layers.layer4.matte);
+          const matteL4 = getMatteImage(appState.layers.layer4.matte, appState.layers.layer4.matte_invert);
           if (matteL4 && appState.layers.layer4.matte !== 'none') {
             offCtxB.save();
             offCtxB.globalCompositeOperation = 'destination-in';
@@ -3835,9 +4254,9 @@ function renderVisuals(time) {
       // 4.4. LAYER 5: DEDICATED OVERLAY DECK (PRIMARY FOREGROUND & INDEPENDENT LOOP COMPOSITING)
       if (appState.layers.layer5 && appState.layers.layer5.active && (appState.layers.layer5.opacity || 0) > 0.005) {
         const overlayClip = allClips.find(c => c.id === appState.layers.layer5.clipId) || allClips[1] || allClips[0];
-        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine');
+        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine' || overlayClip.category === '3D');
         const videoL5Ready = playerL5 && playerL5.readyState >= 2;
-        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
+        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime, overlayClip?.gen_scene, 'layer5') : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
 
         if (overlaySource) {
           offCtxOverlay.clearRect(0, 0, w, h);
@@ -3854,7 +4273,7 @@ function renderVisuals(time) {
           drawFittedImage(offCtxOverlay, overlaySource, w, h, l5.fit_mode || 'fill', totalRot5, totalScale5, totalPosX5, totalPosY5, clipTf5.flip_h, clipTf5.flip_v);
           offCtxOverlay.restore();
 
-          const matteL5 = getMatteImage(l5.matte);
+          const matteL5 = getMatteImage(l5.matte, l5.matte_invert);
           if (matteL5 && l5.matte !== 'none') {
             offCtxOverlay.save();
             offCtxOverlay.globalCompositeOperation = 'destination-in';
@@ -3873,7 +4292,7 @@ function renderVisuals(time) {
 
     // 4.5. MASTER LOCKED MATTE (STATIC FRAMING OVERLAY) vs DYNAMIC MASTER MATTE
     if (!isBlackout && appState.master_locked_matte_active && appState.master_locked_matte && appState.master_locked_matte !== 'none') {
-      const lockedMatteImg = getMatteImage(appState.master_locked_matte);
+      const lockedMatteImg = getMatteImage(appState.master_locked_matte, appState.master_locked_matte_invert);
       if (lockedMatteImg) {
         prgCtx.save();
         prgCtx.globalCompositeOperation = 'destination-in';
@@ -3882,11 +4301,11 @@ function renderVisuals(time) {
         prgCtx.restore();
       }
     } else if (!isBlackout && appState.master_matte && appState.master_matte !== 'none') {
-      const masterMatteImg = getMatteImage(appState.master_matte);
+      const masterMatteImg = getMatteImage(appState.master_matte, appState.master_matte_invert);
       if (masterMatteImg) {
         prgCtx.save();
         prgCtx.globalCompositeOperation = 'destination-in';
-        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, false, appState.master_matte);
+        drawDeformedMatte(prgCtx, masterMatteImg, pw, ph, simTime, appState.matte?.deform, Boolean(appState.master_matte_invert), appState.master_matte);
         prgCtx.restore();
       }
     }
@@ -3933,47 +4352,86 @@ function renderVisuals(time) {
   requestAnimationFrame(renderVisuals);
 }
 
-// Hardware-Accelerated Video Difference Sobel Contour Synthesizer (High-Luminance White Contours)
-function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) {
-  if (!baseSource) return;
+// Hardware-Accelerated High-Definition Edge Trace (Find Edges / Sobel Contours)
+function drawSobelContours(ctx, source, w, h, t, threshold, isSolo, alpha = 1.0, transform = null, blend = 'Screen', matteId = null, matteInv = false) {
+  if (!source || alpha <= 0.005) return;
   if (sobelCanvas.width !== w || sobelCanvas.height !== h) {
     sobelCanvas.width = w;
     sobelCanvas.height = h;
   }
-  sobelCtx.clearRect(0, 0, w, h);
-  sobelCtx.save();
-
+  
   const l2 = (appState.layers && appState.layers.layer2) || {};
   const edgeWidth = l2.edge_width || appState.tonal?.edge_width || 2.2;
-  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.8);
-  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || appState.tonal?.edge_threshold || 0.28);
-  const contrastBoost = Math.round(180 + (1.0 - thresh) * 220);
+  const lumBoost = Math.max(1.0, l2.luminance || appState.tonal?.edge_luminance || 2.5);
+  const thresh = threshold !== undefined ? threshold : (l2.edge_threshold || 0.28);
+  
+  // Extrai parâmetros de transformação para alinhar perfeitamente com a cena em movimento
+  const rot = transform ? (transform.rotation || 0) : (l2.rotation || 0);
+  const scale = transform ? (transform.scale || 1.0) : (l2.scale || 1.0);
+  const posX = transform ? (transform.pos_x || 0) : (l2.pos_x || 0);
+  const posY = transform ? (transform.pos_y || 0) : (l2.pos_y || 0);
+  const flipH = transform ? Boolean(transform.flip_h) : false;
+  const flipV = transform ? Boolean(transform.flip_v) : false;
+  const fitMode = l2.fit_mode || appState.aspect_fit_mode || 'fit';
 
-  // 1. Grayscale de alto contraste no buffer dedicado do Sobel
-  sobelCtx.filter = 'grayscale(100%) contrast(' + contrastBoost + '%)';
-  drawFittedImage(sobelCtx, baseSource, w, h, l2.fit_mode || appState.fit_mode || 'fit');
+  // 1. Renderiza a fonte em grayscale de alto contraste no sobelCanvas
+  sobelCtx.clearRect(0, 0, w, h);
+  sobelCtx.save();
+  const contrastBoost = Math.round(180 + (1.0 - thresh) * 200);
+  sobelCtx.filter = `grayscale(100%) contrast(${contrastBoost}%)`;
+  drawFittedImage(sobelCtx, source, w, h, fitMode, rot, scale, posX, posY, flipH, flipV);
 
-  // 2. Extração de contornos por gradiente espacial de diferença
+  // 2. Extração espacial de diferença (bordas nítidas)
   sobelCtx.globalCompositeOperation = 'difference';
   sobelCtx.drawImage(sobelCanvas, edgeWidth, edgeWidth);
   sobelCtx.restore();
 
-  // 3. Elevação de luminância e renderização com brancos vívidos
+  // 3. Gate de Ruído / Corte de Nível Preto Puro:
+  // Garante que o fundo seja estritamente #000000 e NUNCA gere névoa leitosa sobre outras camadas!
+  sobelCtx.save();
+  sobelCtx.globalCompositeOperation = 'color-dodge';
+  sobelCtx.filter = `contrast(${200 + Math.round(thresh * 100)}%) brightness(${Math.round(lumBoost * 110)}%)`;
+  sobelCtx.drawImage(sobelCanvas, 0, 0);
+  sobelCtx.restore();
+
+  // 4. Aplicação de Máscara Matte (se configurada para L2)
+  if (matteId && matteId !== 'none') {
+    const matteImg = getMatteImage(matteId, matteInv);
+    if (matteImg) {
+      sobelCtx.save();
+      sobelCtx.globalCompositeOperation = 'destination-in';
+      drawDeformedMatte(sobelCtx, matteImg, w, h, t, appState.matte?.deform, matteInv, matteId);
+      sobelCtx.restore();
+    }
+  }
+
+  // 5. Composição no barramento de destino
   ctx.save();
+  const clampedAlpha = Math.max(0.0, Math.min(1.0, alpha));
+  ctx.globalAlpha = clampedAlpha;
+  
   if (isSolo) {
-    // MODO SOLO: Fundo negro puro, contornos brancos luminosos e limpos
+    // MODO SOLO: Fundo negro puro, contornos brancos destacados e chalk neon suave
     ctx.globalCompositeOperation = 'source-over';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 145) + '%) contrast(' + Math.round(125 * lumBoost) + '%)';
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
-    // Realce luminoso para chalk/neon orgânico sem clipping digital
+    // Realce luminoso orgânico proporcional ao fader (desaparece no zero!)
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.65;
+    ctx.globalAlpha = clampedAlpha * 0.45;
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   } else {
-    // MODO COMPOSTO: Sobreposto no topo da camada base mantendo luminância
-    const blendMode = (l2.blend || 'Screen').toLowerCase();
-    ctx.globalCompositeOperation = blendMode === 'multiply' ? 'multiply' : 'screen';
-    ctx.filter = 'brightness(' + Math.round(lumBoost * 135) + '%) contrast(' + Math.round(115 * lumBoost) + '%)';
+    // MODO COMPOSTO: Mistura profissional sem lavar os tons escuros da camada base
+    const b = (blend || l2.blend || 'Screen').toLowerCase();
+    if (b === 'lighten') {
+      ctx.globalCompositeOperation = 'lighten';
+    } else if (b === 'overlay') {
+      ctx.globalCompositeOperation = 'overlay';
+    } else if (b === 'difference') {
+      ctx.globalCompositeOperation = 'difference';
+    } else if (b === 'source-over' || b === 'cutout') {
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      ctx.globalCompositeOperation = 'screen';
+    }
     ctx.drawImage(sobelCanvas, 0, 0, w, h);
   }
   ctx.restore();
@@ -3988,6 +4446,7 @@ function drawSobelContours(ctx, baseSource, w, h, t, threshold, isSolo = false) 
 let plexusSpinePoints = null;
 let plexusCanvas = document.createElement('canvas');
 let plexusCtx = plexusCanvas.getContext('2d');
+const plexusCanvasBuffers = new Map();
 let marineSpores = [];
 
 function generateProceduralSpine() {
@@ -4095,6 +4554,28 @@ function getPlexusPaletteColors(paletteKey) {
         nodeBase: '#e2e8f0',
         nodeHot: '#ffffff'
       };
+    case 'pt_rubi':
+      return {
+        bgStart: 'rgba(32, 3, 6, 1)',
+        bgEnd: 'rgba(5, 0, 2, 1)',
+        primary: 'rgb(220, 38, 38)',
+        primaryRgba: (a) => `rgba(220, 38, 38, ${a})`,
+        accentRgba: (a) => `rgba(255, 183, 3, ${a})`,
+        nodeBase: '#dc2626',
+        nodeHot: '#ffffff',
+        label: 'PT RUBI & OURO'
+      };
+    case 'noir_gold':
+      return {
+        bgStart: 'rgba(28, 20, 4, 1)',
+        bgEnd: 'rgba(5, 4, 1, 1)',
+        primary: 'rgb(255, 183, 3)',
+        primaryRgba: (a) => `rgba(255, 183, 3, ${a})`,
+        accentRgba: (a) => `rgba(250, 204, 21, ${a})`,
+        nodeBase: '#ffb703',
+        nodeHot: '#fffbeb',
+        label: 'NOIR & OURO'
+      };
     case 'cyan_neon':
     default:
       return {
@@ -4104,25 +4585,97 @@ function getPlexusPaletteColors(paletteKey) {
         primaryRgba: (a) => `rgba(0, 240, 255, ${a})`,
         accentRgba: (a) => `rgba(0, 255, 136, ${a})`,
         nodeBase: '#00f0ff',
-        nodeHot: '#ffffff'
+        nodeHot: '#ffffff',
+        label: 'CIANO NEON'
       };
   }
 }
 
-function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
-  if (plexusCanvas.width !== w || plexusCanvas.height !== h) {
-    plexusCanvas.width = w;
-    plexusCanvas.height = h;
+function createDefault3DConfig(scene = 'star_13', palette = 'pt_rubi') {
+  return {
+    active_scene: scene,
+    palette: palette,
+    camera: {
+      orbit_speed: 1.0,
+      tilt: 0.22,
+      fov: 1.35,
+      distance: 2.3,
+      roll: 0.0,
+      auto_orbit: true
+    },
+    particles: {
+      count_mult: 1.0,
+      point_size: 1.0,
+      line_connect_dist: 55,
+      wireframe: true,
+      glow_intensity: 1.0
+    },
+    audio_reactivity: {
+      spine_swimming: 1.0,
+      ocean_wave_amp: 1.0,
+      star_treble_spin: 1.2,
+      num13_sub_kick: 1.8,
+      air_sparkle: 1.0
+    }
+  };
+}
+window.createDefault3DConfig = createDefault3DConfig;
+
+function getActive3DConfig(target = null) {
+  const tgt = target || appState.inspector_3d_target || 'deckA';
+  if (tgt === 'deckA') {
+    if (!appState.deckA_3d) appState.deckA_3d = createDefault3DConfig('star_13', 'pt_rubi');
+    return appState.deckA_3d;
+  }
+  if (tgt === 'deckB') {
+    if (!appState.deckB_3d) appState.deckB_3d = createDefault3DConfig('spine', 'cyan_neon');
+    return appState.deckB_3d;
+  }
+  if (tgt === 'layer5') {
+    if (!appState.layer5_3d) appState.layer5_3d = createDefault3DConfig('nebula_particles', 'deep_violet');
+    return appState.layer5_3d;
+  }
+  return appState.gen3d || (appState.gen3d = createDefault3DConfig());
+}
+window.getActive3DConfig = getActive3DConfig;
+
+function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'main') {
+  let buf = plexusCanvasBuffers.get(bufferId);
+  if (!buf) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    buf = { canvas: c, ctx: c.getContext('2d') };
+    plexusCanvasBuffers.set(bufferId, buf);
+  } else if (buf.canvas.width !== w || buf.canvas.height !== h) {
+    buf.canvas.width = w;
+    buf.canvas.height = h;
   }
   
   if (!plexusSpinePoints) {
     plexusSpinePoints = generateProceduralSpine();
   }
 
-  const ctx = plexusCtx;
-  const cfg3d = appState.gen3d || {};
+  const canvas = buf.canvas;
+  const ctx = buf.ctx;
+
+  // Resolve decoupled 3D configuration per deck/layer
+  let cfg3d;
+  if (bufferId === 'deckA') {
+    if (!appState.deckA_3d) appState.deckA_3d = createDefault3DConfig('star_13', 'pt_rubi');
+    cfg3d = appState.deckA_3d;
+  } else if (bufferId === 'deckB') {
+    if (!appState.deckB_3d) appState.deckB_3d = createDefault3DConfig('spine', 'cyan_neon');
+    cfg3d = appState.deckB_3d;
+  } else if (bufferId === 'layer5') {
+    if (!appState.layer5_3d) appState.layer5_3d = createDefault3DConfig('nebula_particles', 'deep_violet');
+    cfg3d = appState.layer5_3d;
+  } else {
+    cfg3d = appState.gen3d || {};
+  }
+
   const activeScene = explicitScene || cfg3d.active_scene || 'star_13';
-  const palette = getPlexusPaletteColors(cfg3d.palette || 'cyan_neon');
+  const palette = getPlexusPaletteColors(cfg3d.palette || 'pt_rubi');
 
   const bass = Number(appState.bands?.bass || 0.45);
   const sub = Number(appState.bands?.sub || 0.45);
@@ -4132,8 +4685,10 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
   const camCfg = cfg3d.camera || {};
   const orbitSpeed = camCfg.orbit_speed !== undefined ? camCfg.orbit_speed : 1.0;
   const camTilt = camCfg.tilt !== undefined ? camCfg.tilt : 0.22;
+  const camRoll = camCfg.roll !== undefined ? camCfg.roll : 0.0;
   const camDist = Math.max(1.2, camCfg.distance !== undefined ? camCfg.distance : 2.3);
   const fov = camCfg.fov !== undefined ? camCfg.fov : 1.35;
+  const autoOrbit = camCfg.auto_orbit !== false;
 
   // Background radial gradient
   const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, 40, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
@@ -4144,23 +4699,41 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
   ctx.fillRect(0, 0, w, h);
 
   // 3D Camera Angles
-  let rotY = simTime * 0.28 * orbitSpeed;
+  let rotY = autoOrbit ? (simTime * 0.28 * orbitSpeed) : (orbitSpeed * Math.PI * 0.5);
   let rotX = camTilt + Math.sin(simTime * 0.18) * 0.12;
 
+  const renderParams = { bass, sub, presence, air, camDist, fov, palette, cfg3d, rotY, rotX, camRoll };
+
   // Branch rendering per scene
-  if (activeScene === 'ocean_sun') {
-    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  if (activeScene === 'mercury_blob') {
+    renderSceneMercuryBlob(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'monolith_13') {
+    renderSceneMonolith13(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'nebula_particles') {
+    renderSceneNebulaParticles(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'cyber_wireframe') {
+    renderSceneCyberWireframe(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'hyper_torus') {
+    renderSceneHyperTorus(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'black_hole_singularity') {
+    renderSceneBlackHole(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'biomorphic_flora') {
+    renderSceneBiomorphicFlora(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'sol_vermelho_horizonte') {
+    renderSceneSolVermelho(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'ocean_sun') {
+    renderSceneOceanSun(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'star_13') {
-    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneStar13(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'hybrid') {
-    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isSubMesh: true });
-    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isOverlayStar: true });
+    renderSceneOceanSun(ctx, w, h, simTime, { ...renderParams, isSubMesh: true });
+    renderSceneStar13(ctx, w, h, simTime, { ...renderParams, isOverlayStar: true });
   } else {
     // Default: 'spine' (Houdini Biomorphic Marine Spine)
-    renderSceneMarineSpine(ctx, w, h, simTime, { rotY, rotX, camDist, fov, bass, sub, presence, air, palette, cfg3d });
+    renderSceneMarineSpine(ctx, w, h, simTime, renderParams);
   }
 
-  return plexusCanvas;
+  return canvas;
 }
 window.getPlexusSpineCanvas = getPlexusSpineCanvas;
 
@@ -4374,78 +4947,171 @@ function renderSceneOceanSun(ctx, w, h, simTime, p) {
 }
 
 function renderSceneStar13(ctx, w, h, simTime, p) {
-  // DECOUPLED AUDIO REACTIVITY:
-  // 1. The outer sacred vector star spins and radiates smoothly with TREBLE & AIR
+  // ============================================================================
+  // ESTRELA 13 PT · IDENTIDADE OFICIAL DO PARTIDO DOS TRABALHADORES (5 PONTAS 3D)
+  // Geometria Áurea Regular (Cinco Pontas), Facetamento Bi-piramidal Chiaroscuro
+  // e Tipografia Grotesca Oficial de Campanha com Kick de Subgrave Desacoplado
+  // ============================================================================
   const trebleSpin = (p.cfg3d.audio_reactivity?.star_treble_spin || 1.2);
-  const rotY = simTime * (0.45 + (p.air + p.presence) * 0.85) * trebleSpin;
-  const rotX = Math.sin(simTime * 0.28) * 0.25;
-  const rotZ = Math.cos(simTime * 0.22) * 0.15;
+  const rotY = p.rotY !== undefined ? p.rotY : (simTime * (0.32 + (p.air + p.presence) * 0.5) * trebleSpin);
+  const rotX = p.rotX !== undefined ? p.rotX : (0.16 + Math.sin(simTime * 0.22) * 0.16);
+  const rotZ = Math.cos(simTime * 0.18) * 0.08 + (p.camRoll || 0);
 
   const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
   const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
-  // 8-Pointed 3D Sacred Vector Star (Vertices)
-  const starVertices = [];
-  const points = 8;
-  const rOuter = (p.isOverlayStar ? 0.38 : 0.52) * (1.0 + p.presence * 0.15);
-  const rInner = (p.isOverlayStar ? 0.18 : 0.24);
-
-  for (let i = 0; i < points * 2; i++) {
-    const angle = (i / (points * 2)) * Math.PI * 2;
-    const rad = (i % 2 === 0) ? rOuter : rInner;
-    const zOffset = (i % 2 === 0) ? Math.sin(angle * 2) * 0.12 : -0.08;
-    const px = Math.cos(angle) * rad;
-    const py = Math.sin(angle) * rad;
-    const pz = zOffset;
-
-    // Apply 3D Rotation Matrix to outer star
-    const x1 = px * cosY + pz * sinY;
-    const z1 = -px * sinY + pz * cosY;
-    const y2 = py * cosX - z1 * sinX;
-    const z2 = py * sinX + z1 * cosX;
+  // Projeção 3D com rotação Yaw/Pitch/Roll
+  const project3D = (px, py, pz) => {
+    // Rot Z (Roll)
+    const x0 = px * cosZ - py * sinZ;
+    const y0 = px * sinZ + py * cosZ;
+    const z0 = pz;
+    // Rot Y (Yaw)
+    const x1 = x0 * cosY + z0 * sinY;
+    const z1 = -x0 * sinY + z0 * cosY;
+    // Rot X (Pitch)
+    const y2 = y0 * cosX - z1 * sinX;
+    const z2 = y0 * sinX + z1 * cosX;
 
     const depth = p.camDist + z2;
-    if (depth > 0.1) {
+    if (depth > 0.08) {
       const persp = p.fov / depth;
       const sx = w * 0.5 + x1 * persp * w;
       const sy = h * (p.isOverlayStar ? 0.42 : 0.5) + y2 * persp * h;
-      starVertices.push({ sx, sy, depth });
+      return { sx, sy, depth, x1, y2, z2 };
+    }
+    return null;
+  };
+
+  // 1. A ESTRELA OFICIAL DE 5 PONTAS (REGULAR PENTAGRAM EM PROPORÇÃO ÁUREA)
+  // Raio interno oficial de pentagrama regular: rInner = rOuter * sin(18°) / sin(54°) ≈ rOuter * 0.381966
+  const rOuter = (p.isOverlayStar ? 0.36 : 0.50) * (1.0 + (p.presence || 0) * 0.12);
+  const rInner = rOuter * 0.381966;
+  const zApex = 0.14; // Relevo escultural central 3D
+
+  const outerVerts3D = [];
+  const innerVerts3D = [];
+
+  for (let k = 0; k < 5; k++) {
+    // Ponta superior (k=0) perfeitamente alinhada para cima a -90° (-PI/2)
+    const angleOuter = -Math.PI * 0.5 + k * (Math.PI * 2 / 5);
+    const angleInner = -Math.PI * 0.5 + (k + 0.5) * (Math.PI * 2 / 5);
+
+    outerVerts3D.push({
+      x: Math.cos(angleOuter) * rOuter,
+      y: Math.sin(angleOuter) * rOuter,
+      z: 0.0
+    });
+
+    innerVerts3D.push({
+      x: Math.cos(angleInner) * rInner,
+      y: Math.sin(angleInner) * rInner,
+      z: -0.03
+    });
+  }
+
+  // Projetar ápice frontal, ápice traseiro e os 10 vértices perimetrais
+  const pApexFront = project3D(0, 0, zApex);
+  const pOuter = outerVerts3D.map(v => project3D(v.x, v.y, v.z));
+  const pInner = innerVerts3D.map(v => project3D(v.x, v.y, v.z));
+
+  ctx.save();
+
+  // Desenhar as 10 Facetas Esculturais Frontais com Iluminação Chiaroscuro
+  if (pApexFront) {
+    const lightDir = { x: 0.55, y: -0.65, z: 0.52 }; // Luz direcional de estúdio de palco
+
+    for (let k = 0; k < 5; k++) {
+      const nextK = (k + 1) % 5;
+      const tip = pOuter[k];
+      const val = pInner[k];
+      const nextTip = pOuter[nextK];
+
+      // Faceta A: Ápice Central -> Ponta[k] -> Vale[k]
+      if (tip && val) {
+        const nx = (outerVerts3D[k].x + innerVerts3D[k].x) * 0.5;
+        const ny = (outerVerts3D[k].y + innerVerts3D[k].y) * 0.5;
+        const dot = Math.max(0.18, Math.min(1.0, (nx * lightDir.x + ny * lightDir.y) * 0.5 + 0.58));
+
+        ctx.fillStyle = (p.palette.primary === 'rgb(220, 38, 38)' || p.palette.label === 'PT RUBI & OURO')
+          ? `rgba(${Math.round(225 * dot)}, ${Math.round(29 * dot)}, ${Math.round(72 * dot)}, 0.95)`
+          : p.palette.primaryRgba(dot.toFixed(2));
+
+        ctx.beginPath();
+        ctx.moveTo(pApexFront.sx, pApexFront.sy);
+        ctx.lineTo(tip.sx, tip.sy);
+        ctx.lineTo(val.sx, val.sy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = p.palette.accentRgba(0.35);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+
+      // Faceta B: Ápice Central -> Vale[k] -> Ponta Seguinte[nextK]
+      if (val && nextTip) {
+        const nx2 = (innerVerts3D[k].x + outerVerts3D[nextK].x) * 0.5;
+        const ny2 = (innerVerts3D[k].y + outerVerts3D[nextK].y) * 0.5;
+        const dot2 = Math.max(0.12, Math.min(1.0, (nx2 * -lightDir.x + ny2 * -lightDir.y) * 0.5 + 0.42));
+
+        ctx.fillStyle = (p.palette.primary === 'rgb(220, 38, 38)' || p.palette.label === 'PT RUBI & OURO')
+          ? `rgba(${Math.round(165 * dot2)}, ${Math.round(18 * dot2)}, ${Math.round(48 * dot2)}, 0.95)`
+          : p.palette.primaryRgba((dot2 * 0.85).toFixed(2));
+
+        ctx.beginPath();
+        ctx.moveTo(pApexFront.sx, pApexFront.sy);
+        ctx.lineTo(val.sx, val.sy);
+        ctx.lineTo(nextTip.sx, nextTip.sy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = p.palette.primaryRgba(0.4);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
     }
   }
 
-  // Draw Sacred Vector Star Lines
-  ctx.save();
-  ctx.lineWidth = 1.8 + p.presence * 1.5;
-  ctx.strokeStyle = p.palette.primaryRgba(0.85);
+  // Contorno Externo Áureo & Halo Dourado nas 5 Pontas
+  ctx.strokeStyle = p.palette.accentRgba(0.9);
+  ctx.lineWidth = 2.0 + (p.presence || 0) * 1.5;
   ctx.beginPath();
-  for (let i = 0; i < starVertices.length; i++) {
-    const v1 = starVertices[i];
-    const v2 = starVertices[(i + 1) % starVertices.length];
-    ctx.moveTo(v1.sx, v1.sy);
-    ctx.lineTo(v2.sx, v2.sy);
-    // Radial spokes to center
-    if (i % 2 === 0) {
-      ctx.lineTo(w * 0.5, h * (p.isOverlayStar ? 0.42 : 0.5));
+  for (let k = 0; k < 5; k++) {
+    const tip = pOuter[k];
+    const val = pInner[k];
+    if (tip && val) {
+      if (k === 0) ctx.moveTo(tip.sx, tip.sy);
+      else ctx.lineTo(tip.sx, tip.sy);
+      ctx.lineTo(val.sx, val.sy);
     }
   }
+  ctx.closePath();
   ctx.stroke();
 
-  // Glow halo around star tips
-  for (let i = 0; i < starVertices.length; i += 2) {
-    const tip = starVertices[i];
-    const halo = ctx.createRadialGradient(tip.sx, tip.sy, 0, tip.sx, tip.sy, 16);
-    halo.addColorStop(0, p.palette.nodeHot);
-    halo.addColorStop(0.5, p.palette.accentRgba(0.4));
-    halo.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = halo;
-    ctx.fillRect(tip.sx - 16, tip.sy - 16, 32, 32);
+  // Halos de Luz Estelar nas 5 Pontas
+  for (let k = 0; k < 5; k++) {
+    const tip = pOuter[k];
+    if (tip) {
+      const halo = ctx.createRadialGradient(tip.sx, tip.sy, 0, tip.sx, tip.sy, 16);
+      halo.addColorStop(0, p.palette.nodeHot);
+      halo.addColorStop(0.5, p.palette.accentRgba(0.5));
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(tip.sx - 16, tip.sy - 16, 32, 32);
+    }
   }
   ctx.restore();
 
-  // 2. THE DECOUPLED CENTRAL NUMERAL "13"
-  // Reacts VIOLENTLY to SUB-BASS & BASS kicks without inheriting the star's frantic spin!
+  // ============================================================================
+  // 2. O NUMERAL OFICIAL DE CAMPANHA "13" DESACOPLADO
+  // Responde com VIGOR & KICK aos impulsos de subgrave sem herdar o giro da estrela!
+  // Tipografia fiel: "1" sólido com aba a 45° e base robusta; "3" com curvas
+  // simétricas e corte horizontal central.
+  // ============================================================================
   const kickMult = (p.cfg3d.audio_reactivity?.num13_sub_kick || 1.8);
-  const kickEnergy = (p.sub * 0.85 + p.bass * 0.6) * kickMult;
+  const kickEnergy = ((p.sub || 0.4) * 0.85 + (p.bass || 0.4) * 0.6) * kickMult;
   const kickZDisplace = -0.35 * Math.min(1.5, kickEnergy);
   const kickScale = 1.0 + Math.min(1.2, kickEnergy * 0.65);
 
@@ -4458,47 +5124,832 @@ function renderSceneStar13(ctx, w, h, simTime, p) {
   ctx.translate(numCx, numCy);
   ctx.scale(kickScale, kickScale);
 
-  // Stylized high-tech vector glyph for "13"
-  ctx.lineWidth = Math.max(2.5, 4.0 * (1.0 + kickEnergy * 0.4));
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  const glyphH = Math.min(w, h) * (p.isOverlayStar ? 0.14 : 0.185);
+  const glyphW = glyphH * 0.72;
 
   const isHotKick = kickEnergy > 0.85;
   if (isHotKick) {
-    // Chromatic aberration glow when kicking hard
-    ctx.shadowColor = p.palette.primary;
-    ctx.shadowBlur = 24 * kickEnergy;
-    ctx.strokeStyle = p.palette.nodeHot;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 28 * kickEnergy;
   } else {
-    ctx.shadowColor = p.palette.accentRgba(0.6);
-    ctx.shadowBlur = 12;
-    ctx.strokeStyle = p.palette.primary;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
   }
 
-  const glyphH = Math.min(w, h) * (p.isOverlayStar ? 0.12 : 0.16);
-  const glyphW = glyphH * 0.65;
-  const gY0 = -glyphH * 0.5;
-  const gY1 = glyphH * 0.5;
+  const colFill = isHotKick ? '#ffffff' : '#f8fafc';
+  ctx.fillStyle = colFill;
 
-  // Numeral "1"
+  // Numeral "1" Oficial
+  const x1_center = -glyphW * 0.38;
+  const stemW = glyphW * 0.24;
+  const flagW = glyphW * 0.28;
+  const flagH = glyphH * 0.26;
+  const baseY = glyphH * 0.48;
+  const topY = -glyphH * 0.48;
+
   ctx.beginPath();
-  const x1_offset = -glyphW * 0.65;
-  ctx.moveTo(x1_offset - glyphW * 0.25, gY0 + glyphH * 0.25);
-  ctx.lineTo(x1_offset, gY0);
-  ctx.lineTo(x1_offset, gY1);
-  ctx.moveTo(x1_offset - glyphW * 0.3, gY1);
-  ctx.lineTo(x1_offset + glyphW * 0.25, gY1);
+  // Coluna vertical sólida
+  ctx.rect(x1_center - stemW * 0.5, topY, stemW, glyphH * 0.96);
+  // Bico/bandeira angular chanfrada a 45°
+  ctx.moveTo(x1_center - stemW * 0.5, topY);
+  ctx.lineTo(x1_center - stemW * 0.5 - flagW, topY + flagH);
+  ctx.lineTo(x1_center - stemW * 0.5, topY + flagH * 0.65);
+  ctx.closePath();
+  // Sapata/base horizontal de sustentação
+  ctx.rect(x1_center - stemW * 1.1, baseY - glyphH * 0.09, stemW * 2.2, glyphH * 0.09);
+  ctx.fill();
+
+  // Numeral "3" Oficial
+  const x3_center = glyphW * 0.36;
+  const arcR = glyphH * 0.25;
+  const barThick = glyphW * 0.23;
+
+  ctx.beginPath();
+  // Barra horizontal superior
+  ctx.rect(x3_center - arcR * 0.8, topY, arcR * 1.5, barThick);
+  // Arco superior
+  ctx.arc(x3_center, topY + arcR, arcR, -Math.PI * 0.45, Math.PI * 0.25, false);
+  // Arco inferior
+  ctx.arc(x3_center, baseY - arcR, arcR, -Math.PI * 0.25, Math.PI * 0.65, false);
+  // Junção horizontal central
+  ctx.rect(x3_center - arcR * 0.4, topY + arcR * 1.05 - barThick * 0.5, arcR * 1.0, barThick * 0.85);
+  ctx.lineWidth = barThick;
+  ctx.strokeStyle = colFill;
+  ctx.lineCap = 'square';
   ctx.stroke();
 
-  // Numeral "3"
-  ctx.beginPath();
-  const x3_offset = glyphW * 0.35;
-  ctx.moveTo(x3_offset - glyphW * 0.3, gY0);
-  ctx.lineTo(x3_offset + glyphW * 0.3, gY0);
-  ctx.lineTo(x3_offset + glyphW * 0.05, gY0 + glyphH * 0.46);
-  ctx.arc(x3_offset, gY0 + glyphH * 0.48, glyphW * 0.15, -Math.PI * 0.5, Math.PI * 0.5);
-  ctx.arc(x3_offset, gY1 - glyphW * 0.25, glyphW * 0.32, -Math.PI * 0.4, Math.PI * 0.8);
+  // Realce sutil de borda dourada
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = p.palette.accentRgba(0.65);
   ctx.stroke();
+
+  ctx.restore();
+}
+
+function renderSceneMercuryBlob(ctx, w, h, simTime, p) {
+  // Escultura Orgânica Contemporânea de Cromo Líquido / Mercúrio Metálico (Deformador Simplex Chiaroscuro)
+  const rotY = simTime * 0.35;
+  const rotX = 0.25 + Math.sin(simTime * 0.22) * 0.15;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const baseRadius = 0.44;
+  const latRings = 24;
+  const lonSegments = 32;
+  const projectedRings = [];
+
+  const viscosityPulse = 1.0 + p.bass * 0.45;
+  const morphSpeed = simTime * 1.6;
+
+  for (let lat = 0; lat <= latRings; lat++) {
+    const theta = (lat / latRings) * Math.PI;
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    const ringPts = [];
+
+    for (let lon = 0; lon <= lonSegments; lon++) {
+      const phi = (lon / lonSegments) * Math.PI * 2;
+      const cosPhi = Math.cos(phi);
+      const sinPhi = Math.sin(phi);
+
+      const deform = (
+        Math.sin(theta * 3.0 + phi * 2.0 + morphSpeed) * 0.07 +
+        Math.cos(theta * 5.0 - morphSpeed * 1.3) * 0.04 * (1.0 + p.sub * 0.8) +
+        Math.sin(phi * 4.0 + morphSpeed * 0.9) * 0.05 * (1.0 + p.bass * 0.6)
+      ) * viscosityPulse;
+
+      const r = baseRadius + deform;
+
+      const px = r * sinTheta * cosPhi;
+      const py = r * cosTheta;
+      const pz = r * sinTheta * sinPhi;
+
+      const nx = sinTheta * cosPhi;
+      const ny = cosTheta;
+      const nz = sinTheta * sinPhi;
+
+      const x1 = px * cosY + pz * sinY;
+      const z1 = -px * sinY + pz * cosY;
+      const y2 = py * cosX - z1 * sinX;
+      const z2 = py * sinX + z1 * cosX;
+
+      const nx1 = nx * cosY + nz * sinY;
+      const nz1 = -nx * sinY + nz * cosY;
+      const ny2 = ny * cosX - nz1 * sinX;
+      const nz2 = ny * sinX + nz1 * cosX;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        const sx = w * 0.5 + x1 * persp * w;
+        const sy = h * 0.5 + y2 * persp * h;
+
+        const dotLight = nx1 * 0.55 - ny2 * 0.65 + nz2 * 0.52;
+        const specular = Math.pow(Math.max(0, dotLight), 7.0);
+        const rim = Math.pow(1.0 - Math.max(0, nz2), 2.2);
+
+        ringPts.push({ sx, sy, depth, dotLight, specular, rim });
+      } else {
+        ringPts.push(null);
+      }
+    }
+    projectedRings.push(ringPts);
+  }
+
+  ctx.save();
+  for (let lat = 0; lat < latRings; lat++) {
+    const r1 = projectedRings[lat];
+    const r2 = projectedRings[lat + 1];
+
+    for (let lon = 0; lon < lonSegments; lon++) {
+      const p1 = r1[lon];
+      const p2 = r1[lon + 1];
+      const p3 = r2[lon + 1];
+      const p4 = r2[lon];
+
+      if (!p1 || !p2 || !p3 || !p4) continue;
+
+      const avgDot = (p1.dotLight + p2.dotLight + p3.dotLight + p4.dotLight) * 0.25;
+      const avgSpec = (p1.specular + p2.specular + p3.specular + p4.specular) * 0.25;
+      const avgRim = (p1.rim + p2.rim + p3.rim + p4.rim) * 0.25;
+
+      const baseAlpha = Math.max(0.12, Math.min(0.95, (avgDot * 0.5 + 0.5) * 0.75 + avgSpec * 0.85));
+      ctx.fillStyle = avgSpec > 0.45 ? p.palette.nodeHot : p.palette.primaryRgba(baseAlpha.toFixed(2));
+
+      ctx.beginPath();
+      ctx.moveTo(p1.sx, p1.sy);
+      ctx.lineTo(p2.sx, p2.sy);
+      ctx.lineTo(p3.sx, p3.sy);
+      ctx.lineTo(p4.sx, p4.sy);
+      ctx.closePath();
+      ctx.fill();
+
+      if (avgRim > 0.55) {
+        ctx.strokeStyle = p.palette.accentRgba((avgRim * 0.65).toFixed(2));
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+    }
+  }
+
+  const dropletCount = 28;
+  for (let i = 0; i < dropletCount; i++) {
+    const angle = (i / dropletCount) * Math.PI * 2 + simTime * 0.7 * (i % 2 === 0 ? 1 : -1);
+    const dropDist = baseRadius * (1.35 + Math.sin(angle * 3 + simTime) * 0.2 * (1.0 + p.presence * 0.4));
+    const dX = Math.cos(angle) * dropDist;
+    const dY = Math.sin(angle * 2) * 0.12 + Math.cos(angle) * 0.08;
+    const dZ = Math.sin(angle) * dropDist;
+
+    const x1 = dX * cosY + dZ * sinY;
+    const z1 = -dX * sinY + dZ * cosY;
+    const y2 = dY * cosX - z1 * sinX;
+    const z2 = dY * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      const radius = Math.max(1.5, 3.5 * persp * (1.0 + p.air * 0.8));
+
+      const dropGrad = ctx.createRadialGradient(sx - radius * 0.3, sy - radius * 0.3, 0, sx, sy, radius * 1.8);
+      dropGrad.addColorStop(0, p.palette.nodeHot);
+      dropGrad.addColorStop(0.5, p.palette.primaryRgba(0.85));
+      dropGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = dropGrad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneMonolith13(ctx, w, h, simTime, p) {
+  // Instalação Arquitetônica Brutalista: Monólito Sagrado 13 com Fendas de Luz Volumétricas
+  const rotY = simTime * 0.18;
+  const rotX = 0.22 + Math.sin(simTime * 0.14) * 0.08;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const hw = 0.28;
+  const hh = 0.72;
+  const hd = 0.12;
+
+  const rawVertices = [
+    [-hw, -hh, -hd], [hw, -hh, -hd], [hw, hh, -hd], [-hw, hh, -hd],
+    [-hw, -hh,  hd], [hw, -hh,  hd], [hw, hh,  hd], [-hw, hh,  hd]
+  ];
+
+  const proj = [];
+  for (let i = 0; i < rawVertices.length; i++) {
+    const [px, py, pz] = rawVertices[i];
+    const x1 = px * cosY + pz * sinY;
+    const z1 = -px * sinY + pz * cosY;
+    const y2 = py * cosX - z1 * sinX;
+    const z2 = py * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      proj.push({
+        sx: w * 0.5 + x1 * persp * w,
+        sy: h * 0.5 + y2 * persp * h,
+        z: z2,
+        depth
+      });
+    } else {
+      proj.push(null);
+    }
+  }
+
+  const faces = [
+    { idx: [0, 1, 2, 3], name: 'front' },
+    { idx: [5, 4, 7, 6], name: 'back' },
+    { idx: [4, 0, 3, 7], name: 'left' },
+    { idx: [1, 5, 6, 2], name: 'right' },
+    { idx: [4, 5, 1, 0], name: 'top' },
+    { idx: [3, 2, 6, 7], name: 'bottom' }
+  ];
+
+  ctx.save();
+  faces.forEach(f => {
+    const pts = f.idx.map(i => proj[i]);
+    if (pts.some(p => !p)) return;
+
+    const vax = pts[1].sx - pts[0].sx, vay = pts[1].sy - pts[0].sy;
+    const vbx = pts[2].sx - pts[0].sx, vby = pts[2].sy - pts[0].sy;
+    const cross2D = vax * vby - vay * vbx;
+    if (cross2D <= 0) return;
+
+    const isFront = f.name === 'front';
+    const isTop = f.name === 'top';
+    const faceLight = isTop ? 0.42 : (isFront ? 0.32 : 0.18);
+    const colVal = Math.floor(faceLight * 255);
+    ctx.fillStyle = `rgb(${Math.floor(colVal * 0.85)}, ${Math.floor(colVal * 0.95)}, ${Math.floor(colVal * 1.1)})`;
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].sx, pts[0].sy);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = p.palette.accentRgba(0.35);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    if (isFront) {
+      const slats = 5;
+      const kickLight = 0.4 + p.sub * 0.6;
+      for (let s = 1; s <= slats; s++) {
+        const t = s / (slats + 1);
+        const topX = pts[0].sx + (pts[1].sx - pts[0].sx) * t;
+        const topY = pts[0].sy + (pts[1].sy - pts[0].sy) * t;
+        const botX = pts[3].sx + (pts[2].sx - pts[3].sx) * t;
+        const botY = pts[3].sy + (pts[2].sy - pts[3].sy) * t;
+
+        ctx.strokeStyle = p.palette.primaryRgba(kickLight.toFixed(2));
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(topX, topY + 15);
+        ctx.lineTo(botX, botY - 15);
+        ctx.stroke();
+      }
+
+      const midX = (pts[0].sx + pts[1].sx + pts[2].sx + pts[3].sx) * 0.25;
+      const midY = (pts[0].sy + pts[1].sy + pts[2].sy + pts[3].sy) * 0.25;
+      const glyphScale = 1.0 + p.bass * 0.3;
+
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.scale(glyphScale, glyphScale);
+      ctx.font = 'bold 36px "SF Pro Display", "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = p.palette.nodeHot;
+      ctx.shadowColor = p.palette.primary;
+      ctx.shadowBlur = 18 * (1.0 + p.bass * 0.8);
+      ctx.fillText('13', 0, 0);
+      ctx.restore();
+    }
+  });
+
+  const dustCount = 45;
+  for (let i = 0; i < dustCount; i++) {
+    const t = (simTime * 0.25 + i / dustCount) % 1.0;
+    const dY = (0.5 - t) * 1.8;
+    const angle = (i * 137.5 * Math.PI) / 180;
+    const dist = 0.45 + Math.sin(i * 1.3) * 0.2;
+    const dX = Math.cos(angle) * dist;
+    const dZ = Math.sin(angle) * dist;
+
+    const x1 = dX * cosY + dZ * sinY;
+    const z1 = -dX * sinY + dZ * cosY;
+    const y2 = dY * cosX - z1 * sinX;
+    const z2 = dY * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      const alpha = Math.sin(t * Math.PI) * (0.3 + p.air * 0.5);
+
+      ctx.fillStyle = p.palette.primaryRgba(alpha.toFixed(2));
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.8 * persp * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneNebulaParticles(ctx, w, h, simTime, p) {
+  // Enxame Quântico de Partículas & Atrator Estranho de Lorenz (Volumetric Stardust)
+  const rotY = simTime * 0.24;
+  const rotX = 0.35 + Math.sin(simTime * 0.16) * 0.12;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const count = 320;
+  const projected = [];
+  const expand = 1.0 + p.presence * 0.35;
+
+  for (let i = 0; i < count; i++) {
+    const t = i * 0.08 + simTime * 0.4;
+    const px = (Math.sin(t * 1.1) * Math.cos(t * 0.7) * 0.75 + Math.sin(t * 2.3) * 0.2) * expand;
+    const py = (Math.cos(t * 1.3) * 0.65 + Math.sin(t * 3.1) * 0.15) * expand;
+    const pz = (Math.sin(t * 0.9) * 0.75 + Math.cos(t * 1.7) * 0.25) * expand;
+
+    const x1 = px * cosY + pz * sinY;
+    const z1 = -px * sinY + pz * cosY;
+    const y2 = py * cosX - z1 * sinX;
+    const z2 = py * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      projected.push({ sx, sy, depth, z2, i });
+    }
+  }
+
+  ctx.save();
+  const connThreshold = 48 * (1.0 + p.bass * 0.4);
+  const connThresholdSq = connThreshold * connThreshold;
+  ctx.lineWidth = 1.0;
+
+  for (let i = 0; i < projected.length; i += 2) {
+    const p1 = projected[i];
+    for (let j = i + 1; j < Math.min(i + 12, projected.length); j++) {
+      const p2 = projected[j];
+      const dx = p1.sx - p2.sx;
+      const dy = p1.sy - p2.sy;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq < connThresholdSq) {
+        const d = Math.sqrt(distSq);
+        const alpha = (1.0 - d / connThreshold) * (0.25 + p.air * 0.45);
+        ctx.strokeStyle = p.palette.accentRgba(alpha.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+    }
+  }
+
+  for (let i = 0; i < projected.length; i++) {
+    const pt = projected[i];
+    const size = Math.max(1.2, (2.6 / pt.depth) * (1.0 + p.presence * 0.5));
+    const alpha = Math.min(0.95, (1.2 / pt.depth) * (0.45 + p.air * 0.55));
+
+    ctx.fillStyle = (i % 7 === 0) ? p.palette.nodeHot : p.palette.primaryRgba(alpha.toFixed(2));
+    ctx.beginPath();
+    ctx.arc(pt.sx, pt.sy, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderSceneCyberWireframe(ctx, w, h, simTime, p) {
+  // Matriz Tridimensional de Tensores Brutalistas & Tesseract Laser Wireframe
+  const rotY = simTime * 0.42;
+  const rotX = simTime * 0.28;
+  const rotZ = Math.sin(simTime * 0.18) * 0.2;
+
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+
+  const sizes = [0.32, 0.58 * (1.0 + p.sub * 0.3)];
+  const projectedSets = [];
+
+  sizes.forEach(s => {
+    const cubeVerts = [
+      [-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s],
+      [-s, -s,  s], [s, -s,  s], [s, s,  s], [-s, s,  s]
+    ];
+    const proj = [];
+    cubeVerts.forEach(([px, py, pz]) => {
+      let x1 = px * cosY + pz * sinY;
+      let z1 = -px * sinY + pz * cosY;
+      let y2 = py * cosX - z1 * sinX;
+      let z2 = py * sinX + z1 * cosX;
+      let x3 = x1 * cosZ - y2 * sinZ;
+      let y3 = x1 * sinZ + y2 * cosZ;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        proj.push({
+          sx: w * 0.5 + x3 * persp * w,
+          sy: h * 0.5 + y3 * persp * h,
+          depth
+        });
+      } else {
+        proj.push(null);
+      }
+    });
+    projectedSets.push(proj);
+  });
+
+  const edges = [
+    [0,1], [1,2], [2,3], [3,0],
+    [4,5], [5,6], [6,7], [7,4],
+    [0,4], [1,5], [2,6], [3,7]
+  ];
+
+  ctx.save();
+  const kickEnergy = p.bass * 0.8 + p.sub * 0.4;
+  ctx.lineWidth = 1.5 + kickEnergy * 1.5;
+
+  projectedSets.forEach((proj, setIdx) => {
+    const isInner = setIdx === 0;
+    ctx.strokeStyle = isInner ? p.palette.nodeHot : p.palette.primaryRgba((0.65 + kickEnergy * 0.35).toFixed(2));
+
+    edges.forEach(([i1, i2]) => {
+      const p1 = proj[i1];
+      const p2 = proj[i2];
+      if (!p1 || !p2) return;
+
+      ctx.beginPath();
+      ctx.moveTo(p1.sx, p1.sy);
+      ctx.lineTo(p2.sx, p2.sy);
+      ctx.stroke();
+    });
+  });
+
+  if (projectedSets[0] && projectedSets[1]) {
+    ctx.strokeStyle = p.palette.accentRgba((0.4 + p.air * 0.4).toFixed(2));
+    ctx.lineWidth = 1.0;
+    for (let i = 0; i < 8; i++) {
+      const p1 = projectedSets[0][i];
+      const p2 = projectedSets[1][i];
+      if (p1 && p2) {
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneHyperTorus(ctx, w, h, simTime, p) {
+  // Nó Toroidal Topológico & Vórtice de Fluxo Harmônico
+  const rotY = simTime * 0.32;
+  const rotX = 0.38 + Math.sin(simTime * 0.2) * 0.14;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const R = 0.42;
+  const rBase = 0.16 * (1.0 + p.bass * 0.35);
+  const rings = 20;
+  const tubeSteps = 24;
+  const grid = [];
+
+  for (let i = 0; i < rings; i++) {
+    const u = (i / rings) * Math.PI * 2;
+    const ringPts = [];
+    for (let j = 0; j < tubeSteps; j++) {
+      const v = (j / tubeSteps) * Math.PI * 2 + simTime * 1.5;
+      const px = (R + rBase * Math.cos(v)) * Math.cos(u);
+      const py = (R + rBase * Math.cos(v)) * Math.sin(u);
+      const pz = rBase * Math.sin(v) + Math.sin(u * 3 + simTime * 2) * 0.05 * (1.0 + p.sub * 0.5);
+
+      const x1 = px * cosY + pz * sinY;
+      const z1 = -px * sinY + pz * cosY;
+      const y2 = py * cosX - z1 * sinX;
+      const z2 = py * sinX + z1 * cosX;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        ringPts.push({
+          sx: w * 0.5 + x1 * persp * w,
+          sy: h * 0.5 + y2 * persp * h,
+          depth
+        });
+      } else {
+        ringPts.push(null);
+      }
+    }
+    grid.push(ringPts);
+  }
+
+  ctx.save();
+  ctx.lineWidth = 1.0;
+  for (let i = 0; i < rings; i++) {
+    const nextI = (i + 1) % rings;
+    for (let j = 0; j < tubeSteps; j++) {
+      const nextJ = (j + 1) % tubeSteps;
+      const p1 = grid[i][j];
+      const p2 = grid[i][nextJ];
+      const p3 = grid[nextI][j];
+
+      if (!p1) continue;
+
+      if (p2) {
+        const alpha = Math.min(0.8, (1.2 / p1.depth) * (0.3 + p.presence * 0.5));
+        ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+      if (p3) {
+        const alpha2 = Math.min(0.7, (1.0 / p1.depth) * (0.25 + p.air * 0.45));
+        ctx.strokeStyle = p.palette.accentRgba(alpha2.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p3.sx, p3.sy);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneBlackHole(ctx, w, h, simTime, p) {
+  // Singularidade Gravitacional, Lente Relativística & Disco de Acreção Doppler
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.5);
+  const minDim = Math.min(w, h);
+  const kickEnergy = ((p.sub || 0.4) * 0.9 + (p.bass || 0.4) * 0.5);
+  const tilt = 0.42;
+
+  // 1. Accretion Disk (Background Half - behind black hole)
+  const diskRInner = minDim * 0.16;
+  const diskROuter = minDim * 0.44 * (1.0 + kickEnergy * 0.15);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const ringCount = 12;
+  for (let r = ringCount; r >= 1; r--) {
+    const frac = r / ringCount;
+    const radX = diskRInner + (diskROuter - diskRInner) * frac;
+    const radY = radX * Math.sin(tilt);
+
+    // Relativistic Doppler beaming: Left side approaching (brighter), Right side receding (dimmer)
+    const diskGrad = ctx.createLinearGradient(-radX, 0, radX, 0);
+    diskGrad.addColorStop(0, p.palette.primaryRgba(0.85));
+    diskGrad.addColorStop(0.35, p.palette.accentRgba(0.6));
+    diskGrad.addColorStop(0.75, p.palette.primaryRgba(0.2));
+    diskGrad.addColorStop(1, 'rgba(15, 2, 5, 0.05)');
+
+    ctx.strokeStyle = diskGrad;
+    ctx.lineWidth = 2.0 + (1.0 - frac) * 3.5 * (1.0 + (p.bass || 0.4) * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radX, radY, 0, Math.PI, 0, false);
+    ctx.stroke();
+  }
+
+  // 2. Gravitational Lensing Halo (Relativistic Photon Ring)
+  const shadowRadius = minDim * 0.14;
+  const photonRadius = shadowRadius * 1.15;
+
+  const lensingGrad = ctx.createRadialGradient(0, 0, shadowRadius * 0.8, 0, 0, photonRadius * 1.6);
+  lensingGrad.addColorStop(0, '#000000');
+  lensingGrad.addColorStop(0.48, 'rgba(0,0,0,0.95)');
+  lensingGrad.addColorStop(0.68, p.palette.nodeHot);
+  lensingGrad.addColorStop(0.82, p.palette.primaryRgba(0.75));
+  lensingGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.fillStyle = lensingGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, photonRadius * 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. The Pitch-Black Event Horizon (Singularity Sphere)
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(0, 0, shadowRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Razor-sharp photon ring border
+  ctx.strokeStyle = p.palette.primaryRgba(0.95);
+  ctx.lineWidth = 1.8 + kickEnergy * 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, photonRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 4. Accretion Disk (Foreground Half - in front of black hole)
+  for (let r = 1; r <= ringCount; r++) {
+    const frac = r / ringCount;
+    const radX = diskRInner + (diskROuter - diskRInner) * frac;
+    const radY = radX * Math.sin(tilt);
+
+    const diskGrad = ctx.createLinearGradient(-radX, 0, radX, 0);
+    diskGrad.addColorStop(0, p.palette.nodeHot);
+    diskGrad.addColorStop(0.25, p.palette.primaryRgba(0.9));
+    diskGrad.addColorStop(0.6, p.palette.accentRgba(0.5));
+    diskGrad.addColorStop(1, p.palette.primaryRgba(0.15));
+
+    ctx.strokeStyle = diskGrad;
+    ctx.lineWidth = 2.0 + (1.0 - frac) * 3.5 * (1.0 + (p.bass || 0.4) * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radX, radY, 0, 0, Math.PI, false);
+    ctx.stroke();
+  }
+
+  // 5. Relativistic Infalling Matter Particles
+  const partCount = 30;
+  for (let i = 0; i < partCount; i++) {
+    const angle = (i / partCount) * Math.PI * 2 + simTime * 1.4 * (1.0 + (i % 3) * 0.2);
+    const pFrac = ((i * 0.17 + simTime * 0.25) % 1.0);
+    const radX = shadowRadius * (1.1 + pFrac * 2.2);
+    const radY = radX * Math.sin(tilt) + (i % 2 === 0 ? 1 : -1) * Math.sin(angle * 2) * 10;
+    const px = Math.cos(angle) * radX;
+    const py = Math.sin(angle) * radY;
+
+    const isApproaching = Math.sin(angle) > 0;
+    const alpha = (isApproaching ? 0.9 : 0.3) * (1.0 - pFrac);
+    ctx.fillStyle = pFrac < 0.2 ? p.palette.nodeHot : p.palette.accentRgba(alpha.toFixed(2));
+    ctx.beginPath();
+    ctx.arc(px, py, 1.5 + (1.0 - pFrac) * 2.0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function renderSceneBiomorphicFlora(ctx, w, h, simTime, p) {
+  // Flora Neural Biomórfica & Micélio 3D (Continuidade Poética Espinhaço)
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.5);
+  const minDim = Math.min(w, h);
+  const rotY = p.rotY !== undefined ? p.rotY : (simTime * 0.22);
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+  const branches = 10;
+  const segments = 14;
+  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  for (let b = 0; b < branches; b++) {
+    const baseAngle = (b / branches) * Math.PI * 2;
+    let prevX = 0, prevY = 0;
+
+    for (let s = 1; s <= segments; s++) {
+      const frac = s / segments;
+      const angle = baseAngle + Math.sin(simTime * 0.8 + frac * 3.0) * 0.35 + frac * 0.8;
+      const r = minDim * (0.05 + frac * 0.42) * (1.0 + Math.sin(simTime * 1.2 + b) * 0.08);
+      const z = Math.sin(frac * Math.PI * 2 + simTime + b) * minDim * 0.18;
+      const y = -minDim * 0.35 * Math.cos(frac * Math.PI * 0.5) + Math.sin(angle * 2 + simTime) * 15;
+
+      const curX = Math.cos(angle) * r;
+      const curZ = z;
+      const curY = y;
+
+      const rx = curX * cosY + curZ * sinY;
+      const rz = -curX * sinY + curZ * cosY;
+      const depth = p.camDist + rz / minDim;
+
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        const sx = rx * persp;
+        const sy = curY * persp;
+
+        if (s > 1) {
+          ctx.strokeStyle = (s % 3 === 0) ? p.palette.accentRgba(0.8) : p.palette.primaryRgba((0.2 + frac * 0.6).toFixed(2));
+          ctx.lineWidth = Math.max(1.0, (1.0 - frac) * 3.5 * persp);
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+
+          if (s % 2 === 0) {
+            const nodeGlow = 2.0 + Math.sin(simTime * 3.0 + s + b) * 1.5 * (1.0 + pulseVocal);
+            ctx.fillStyle = (s === segments) ? p.palette.nodeHot : p.palette.primaryRgba(0.9);
+            ctx.beginPath();
+            ctx.arc(sx, sy, Math.max(1.5, nodeGlow * persp), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        prevX = sx;
+        prevY = sy;
+      }
+    }
+  }
+
+  const coreR = minDim * 0.04 * (1.0 + (p.sub || 0.4) * 0.6);
+  const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR * 2);
+  coreGrad.addColorStop(0, p.palette.nodeHot);
+  coreGrad.addColorStop(0.5, p.palette.primaryRgba(0.7));
+  coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function renderSceneSolVermelho(ctx, w, h, simTime, p) {
+  // Sol Monumental Vermelho, Chiaroscuro & Grade Topográfica 3D em Perspectiva
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.52);
+  const minDim = Math.min(w, h);
+  const bass = p.bass || 0.4;
+  const sub = p.sub || 0.4;
+
+  ctx.save();
+
+  // 1. Sol Monumental no Horizonte
+  const sunRadius = minDim * 0.28 * (1.0 + sub * 0.12);
+  const sunY = cy - minDim * 0.05;
+
+  const sunGrad = ctx.createRadialGradient(cx, sunY, sunRadius * 0.2, cx, sunY, sunRadius * 1.8);
+  sunGrad.addColorStop(0, '#ffffff');
+  sunGrad.addColorStop(0.35, '#dc2626');
+  sunGrad.addColorStop(0.7, 'rgba(185, 28, 28, 0.4)');
+  sunGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(cx, sunY, sunRadius * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#dc2626';
+  ctx.beginPath();
+  ctx.arc(cx, sunY, sunRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fendas Horizontais Chiaroscuro
+  const bandCount = 10;
+  for (let i = 0; i < bandCount; i++) {
+    const bandY = sunY + sunRadius * (0.15 + (i / bandCount) * 0.85);
+    const bandH = 2.0 + i * 1.2;
+    ctx.fillStyle = '#050002';
+    ctx.fillRect(cx - sunRadius, bandY, sunRadius * 2, bandH);
+  }
+
+  // 2. Grade Topográfica 3D em Perspectiva
+  const gridRows = 22;
+  const gridCols = 32;
+  const gridW = w * 1.4;
+  const horizY = cy + minDim * 0.02;
+
+  ctx.lineWidth = 1.0;
+  for (let c = 0; c <= gridCols; c++) {
+    const xFrac = (c / gridCols) - 0.5;
+    const topX = cx + xFrac * w * 0.15;
+    const botX = cx + xFrac * gridW;
+
+    ctx.strokeStyle = p.palette.primaryRgba(0.25);
+    ctx.beginPath();
+    ctx.moveTo(topX, horizY);
+    ctx.lineTo(botX, h);
+    ctx.stroke();
+  }
+
+  for (let r = 1; r <= gridRows; r++) {
+    const zFrac = r / gridRows;
+    const yPersp = horizY + (h - horizY) * Math.pow(zFrac, 2.2);
+    const spanW = w * 0.15 + (gridW - w * 0.15) * zFrac;
+
+    const alpha = Math.min(0.9, zFrac * (0.3 + bass * 0.5));
+    ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(2));
+    ctx.beginPath();
+
+    const wavePoints = 28;
+    for (let wp = 0; wp <= wavePoints; wp++) {
+      const wFrac = wp / wavePoints;
+      const wx = (cx - spanW * 0.5) + spanW * wFrac;
+      const waveMod = Math.sin(wFrac * Math.PI * 6.0 + simTime * 2.0 + r * 0.4) * (14.0 * zFrac) * (1.0 + sub * 0.8);
+      const wy = yPersp + waveMod;
+
+      if (wp === 0) ctx.moveTo(wx, wy);
+      else ctx.lineTo(wx, wy);
+    }
+    ctx.stroke();
+  }
 
   ctx.restore();
 }
@@ -5926,6 +7377,7 @@ window.runFxAutopilotEngine = runFxAutopilotEngine;
 let lastAutopilotBar = 0;
 let lastAutopilotState = null;
 let lastDropTriggered = false;
+let lastAutopilotTakeTimestamp = 0;
 
 function runAutopilotEngine() {
   // Musical Autopilot for FX Engine
@@ -5934,6 +7386,7 @@ function runAutopilotEngine() {
   if (!appState.auto_mode) return;
 
   const p = appState.phrase;
+  if (!p) return;
   const currentBar = p.current_bar;
   const currentBeat = p.current_beat;
   const totalBars = p.total_bars || 1;
@@ -5965,12 +7418,18 @@ function runAutopilotEngine() {
   if (del.media) {
     const minBarsInterval = Math.max(8, Number(appState.autopilot_min_bars) || 16);
     const barsSinceLastTake = totalBars - (appState.last_take_total_bar || 0);
+    const nowMs = performance.now();
+    const bpmVal = Number(appState.bpm) || 124.0;
+    // Strict musical cooldown in milliseconds (at least 70% of phrase length)
+    const minTakeCooldownMs = Math.max(6000, (minBarsInterval * (240.0 / bpmVal) * 1000.0 * 0.70));
+    const timeSinceLastTake = nowMs - lastAutopilotTakeTimestamp;
     
-    // Auto Cycle on Downbeat
+    // Auto Cycle on Downbeat (Frase completa)
     if (currentBar === 1 && currentBeat === 1 && totalBars > 1) {
-      if (barsSinceLastTake >= minBarsInterval && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
+      if (barsSinceLastTake >= minBarsInterval && timeSinceLastTake >= minTakeCooldownMs && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
         lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         
         // Evolve matte policy if enabled
         if (del.mattes && appState.autopilot_matte_policy === 'evolve') {
@@ -5980,11 +7439,13 @@ function runAutopilotEngine() {
       }
     }
 
-    // Auto Drop Take (Hard Cut on Climax)
+    // Auto Drop Take (Hard Cut on Climax) - Strict guard to never cut if a take just occurred
     if (isEnteringDrop && currentBeat === 1 && !lastDropTriggered && !isAutoTransitioning) {
-      if (barsSinceLastTake >= 8) {
+      if (barsSinceLastTake >= Math.max(8, Math.floor(minBarsInterval / 2)) && timeSinceLastTake >= minTakeCooldownMs) {
         lastDropTriggered = true;
+        lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         executeTakeCommit();
       }
     } else if (appState.macro_state !== 'DROP') {
@@ -6528,6 +7989,11 @@ function executeTakeCommit() {
     appState.layers.layer0.rotation = queuedRotation || 0;
     appState.layers.layer0.fit_mode = queuedFitMode || 'fill';
 
+    // Transfer/Handover staged 3D scene parameters from Cue B to Program A live
+    if (appState.deckB_3d && appState.deckA_3d) {
+      Object.assign(appState.deckA_3d, JSON.parse(JSON.stringify(appState.deckB_3d)));
+    }
+
     // 2. SEAMLESS ZERO-GLITCH PLAYER SWAP:
     // playerL3 was ALREADY decoding & playing this video smoothly at 60 FPS.
     // By swapping references, playerL0 becomes the active player with ZERO dropped frames,
@@ -6547,17 +8013,24 @@ function executeTakeCommit() {
     if (stripA) stripA.textContent = `BASE: ${queuedName || queuedClipId}`;
 
     // 5. Send action to server & OSC
-    sendAction('trigger_take', { clipId: queuedClipId, name: queuedName });
+    sendAction('trigger_take', { 
+      clipId: queuedClipId, 
+      name: queuedName,
+      nextCueClipId: queueList[0]?.clipId,
+      nextCueName: queueList[0]?.name
+    });
     sendAction('cue_clip', { layer: 'layer0', clipId: queuedClipId, name: queuedName });
     sendAction('set_layer_rotation', { layer: 'layer0', rotation: queuedRotation || 0 });
     sendAction('set_layer_fit_mode', { layer: 'layer0', fit_mode: queuedFitMode || 'fill' });
     sendAction('set_crossfader', { value: 0 });
   }
 
-  // 5.5 Record safety bar count to prevent autopilot from rapid-cycling takes
+  // 5.5 Record safety bar count & timestamp to prevent autopilot from rapid-cycling takes
+  lastAutopilotTakeTimestamp = performance.now();
   if (appState.phrase) {
     appState.last_take_total_bar = appState.phrase.total_bars || 1;
     appState.phrase.last_take_bar = appState.phrase.total_bars || 1;
+    lastAutopilotBar = appState.phrase.total_bars || 1;
   }
 
   // 6. Advance smart queue to arm the NEXT clip into Preview Cue
@@ -6571,9 +8044,27 @@ function executeTakeCommit() {
   updateUI();
   updateGeometryUI();
   syncVideoSources();
+  if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
-function executeHardCut() {
+let lastHardCutTimestamp = 0;
+function executeHardCut(isUserAction = false) {
+  const nowCut = performance.now();
+  // Debounce de clique/tecla duplo literal (ex.: dois cliques rápidos no botão
+  // físico de corte, ou Enter seguido do clique): isso não depende de
+  // isUserAction e vale para qualquer origem, numa janela curta o bastante
+  // para nunca atrapalhar dois cortes manuais de verdade em sequência.
+  if (nowCut - lastHardCutTimestamp < 400) {
+    return;
+  }
+  lastHardCutTimestamp = nowCut;
+  // Mesma proteção anti-disparo-duplo de startAutoTransition: um hard cut
+  // disparado por automação dentro de 3s de outro take é ignorado; um hard cut
+  // explícito do operador (botão ou Enter) sempre executa essa checagem.
+  if (!isUserAction && (nowCut - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowCut;
   isAutoTransitioning = false;
   autoTransitionProgress = 0.0;
   const bar = document.getElementById('auto-take-bar');
@@ -6583,8 +8074,18 @@ function executeHardCut() {
   executeTakeCommit();
 }
 
-function startAutoTransition(duration = null) {
+function startAutoTransition(duration = null, isUserAction = false) {
   if (isAutoTransitioning) return;
+  const nowStart = performance.now();
+  // Se for automação e acabamos de comitar um take há menos de 3s, ignora disparo duplo
+  if (!isUserAction && (nowStart - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowStart;
+  if (appState.phrase) {
+    lastAutopilotBar = appState.phrase.total_bars || 1;
+    appState.last_take_total_bar = appState.phrase.total_bars || 1;
+  }
   if (isSyncBeatTransition) {
     currentTransitionDuration = (4.0 * 60.0) / (appState.bpm || 124.0); // 1 bar (4 beats)
   } else {
@@ -6617,14 +8118,29 @@ function renderQueueCards() {
   renderProTimeline();
 }
 
+let cachedTimelineRect = null;
+let lastTimelineRenderTick = 0;
+window.addEventListener('resize', () => { cachedTimelineRect = null; });
+window.invalidateTimelineRect = () => { cachedTimelineRect = null; };
+
 function renderProTimeline() {
   const canvas = document.getElementById('timeline-canvas');
   if (!canvas) return;
+
+  const now = performance.now();
+  // Throttle timeline arranger to ~30 FPS so master video compositing has full 60 FPS priority
+  if (now - lastTimelineRenderTick < 32) return;
+  lastTimelineRenderTick = now;
+
   const ctx = canvas.getContext('2d');
   
-  // Set real canvas resolution based on device pixel ratio to ensure razor-sharp rendering
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return;
+  // Use cached bounding rect to eliminate synchronous getBoundingClientRect layout thrashing at 60 FPS
+  if (!cachedTimelineRect || cachedTimelineRect.width <= 0) {
+    cachedTimelineRect = canvas.getBoundingClientRect();
+  }
+  const rect = cachedTimelineRect;
+  if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
   const dpr = window.devicePixelRatio || 1;
   const targetW = Math.floor(rect.width * dpr);
   const targetH = Math.floor(rect.height * dpr);
@@ -7297,19 +8813,25 @@ function syncActiveMatteToAppState(mattePath) {
 window.syncActiveMatteToAppState = syncActiveMatteToAppState;
 
 function assignMatteToLayer(mattePath, layerId) {
+  if (!layerId) layerId = appState.matte_target_layer || 'layer3';
   if (layerId === 'master') {
     appState.master_matte = (appState.master_matte === mattePath) ? 'none' : mattePath;
+    sendAction('set_master_matte', { matte: appState.master_matte });
   } else if (appState.layers[layerId]) {
     appState.layers[layerId].matte = (appState.layers[layerId].matte === mattePath) ? 'none' : mattePath;
     const selId = layerId.replace('layer', 'l') + '-matte';
     const sel = document.getElementById(selId);
     if (sel) sel.value = appState.layers[layerId].matte;
+    sendAction('set_layer_matte', { layer: layerId, matte: appState.layers[layerId].matte });
   }
   syncActiveMatteToAppState(mattePath);
+  updateMatteRibbonActiveStatus();
   renderMattesCards();
   renderStudioInspector();
+  updateUI();
+  if (typeof updateMixerMattesUI === 'function') updateMixerMattesUI();
   if (typeof showMacroToast === 'function') {
-    const lName = layerId === 'master' ? 'MASTER' : layerId.replace('layer', 'L').toUpperCase();
+    const lName = layerId === 'master' ? 'MASTER' : (layerId ? layerId.replace('layer', 'L').toUpperCase() : 'CAMADA');
     showMacroToast(`[MATTE] "${getMatteName(mattePath)}" vinculada a ${lName}`);
   }
 }
@@ -7453,7 +8975,7 @@ function renderMattesCards() {
 
   const searchVal = (document.getElementById('input-matte-search')?.value || '').toLowerCase();
   const targetL = appState.matte_target_layer || 'layer3';
-  const targetMattePath = appState.layers[targetL]?.matte;
+  const targetMattePath = (targetL === 'master') ? appState.master_matte : appState.layers[targetL]?.matte;
   const isPassthrough = !targetMattePath || targetMattePath === 'none';
 
   // Always show Passthrough card when searching or viewing ALL
@@ -7490,7 +9012,7 @@ function renderMattesCards() {
 
   filtered.forEach(matte => {
     const card = document.createElement('div');
-    const isSelected = appState.layers[targetL]?.matte === matte.path;
+    const isSelected = (targetL === 'master') ? (appState.master_matte === matte.path) : (appState.layers[targetL]?.matte === matte.path);
     const isInspecting = (studioInspectorState && studioInspectorState.targetType === 'matte' && studioInspectorState.targetMattePath === matte.path);
     card.className = `matte-card ${isSelected ? 'selected' : ''} ${isInspecting ? 'is-inspect-selected' : ''}`;
     card.dataset.path = matte.path;
@@ -7551,15 +9073,8 @@ function renderMattesCards() {
     card.querySelectorAll('.btn-route').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const targetLayer = btn.dataset.layer;
-        appState.layers[targetLayer].matte = matte.path;
-        const selId = targetLayer.replace('layer', 'l') + '-matte';
-        const sel = document.getElementById(selId);
-        if (sel) sel.value = matte.path;
-        sendAction('set_layer_matte', { layer: targetLayer, matte: matte.path });
-        updateMatteRibbonActiveStatus();
-        renderMattesCards();
-        updateUI();
+        const targetLayer = btn.dataset.layer || appState.matte_target_layer || 'layer3';
+        assignMatteToLayer(matte.path, targetLayer);
       });
     });
 
@@ -7586,6 +9101,15 @@ function updateUI() {
   refreshMacroStateBadges();
   updateMasterLockedMatteUI();
   updateTimelineTransformInspector();
+  updateMixerMattesUI();
+
+  // Sync ping-pong loop button states
+  ['layer0', 'layer3', 'layer5'].forEach(lKey => {
+    const pfx = lKey.replace('layer', 'l');
+    const btn = document.getElementById(`${pfx}-pingpong`);
+    if (btn) btn.classList.toggle('active', Boolean(appState.layers[lKey]?.pingPong));
+  });
+
   const badgePreset = document.getElementById('badge-macro-preset-name');
   if (badgePreset && appState.macro_state) {
     const p = appState.active_macro_preset || getActiveMacroPreset(appState.macro_state);
@@ -7639,22 +9163,67 @@ function updateUI() {
     const fG = document.getElementById('fader-gamma');
     if (fG && document.activeElement !== fG) fG.value = Math.round(g * 100);
 
-    const isVert = Boolean(appState.vertical_mode || appState.vertical_projection);
+    const currentAspect = appState.aspectRatio || (appState.vertical_mode ? '9:16' : '16:9');
+    const isVert = (currentAspect === '9:16' || currentAspect === '4:5' || Boolean(appState.vertical_mode || appState.vertical_projection));
 
-    // Sync Program Monitor Box styling and badge
+    // Sync Program Monitor Box styling, aspect ratio attribute and badge
     const prgScreenBox = document.getElementById('program-screen-box');
-    if (prgScreenBox) prgScreenBox.classList.toggle('mode-vertical', isVert);
+    if (prgScreenBox) {
+      prgScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prgScreenBox.classList.toggle('mode-vertical', isVert);
+    }
+    const prvScreenBox = document.getElementById('preview-screen-box');
+    if (prvScreenBox) {
+      prvScreenBox.setAttribute('data-aspect-ratio', currentAspect);
+      prvScreenBox.classList.toggle('mode-vertical', isVert);
+    }
 
     const badgePrg = document.getElementById('badge-prg-status');
-    if (badgePrg) badgePrg.textContent = isVert ? 'PROGRAM (MODO VERTICAL 9:16)' : 'PROGRAM (AO VIVO)';
+    if (badgePrg) {
+      badgePrg.textContent = isVert ? `PROGRAM (MODO VERTICAL ${currentAspect})` : `PROGRAM (${currentAspect} AO VIVO)`;
+    }
 
     const btnPrgVert = document.getElementById('btn-prg-toggle-vertical');
     if (btnPrgVert) btnPrgVert.classList.toggle('active', isVert);
 
-    // Sync Settings Modal controls
+    // Sync Master Aspect Ratio buttons in Settings
+    const aspectKeys = ['16:9', '9:16', '1:1', '4:5', '4:3', '21:9'];
+    aspectKeys.forEach(arKey => {
+      const btnId = 'btn-cfg-aspect-' + arKey.replace(':', '-');
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.toggle('active', currentAspect === arKey);
+    });
+
+    const lblCfgMasterAspect = document.getElementById('lbl-cfg-master-aspect-badge');
+    if (lblCfgMasterAspect) {
+      lblCfgMasterAspect.textContent = `${currentAspect} ${currentAspect === '9:16' ? '(VERTICAL)' : (currentAspect === '16:9' ? '(HORIZONTAL)' : '')}`;
+      lblCfgMasterAspect.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge text-cyan';
+    }
+
+    // Sync Default Fit Mode buttons
+    const curFit = appState.aspect_fit_mode || 'fit';
+    ['fit', 'fill', 'wings'].forEach(m => {
+      const b = document.getElementById('btn-cfg-fit-mode-' + m);
+      if (b) b.classList.toggle('active', curFit === m);
+    });
+
+    // Sync Projector Routing / Compensation buttons & badge
+    const isProjComp = Boolean(appState.projector_compensation);
+    const btnStraight = document.getElementById('btn-cfg-proj-straight');
+    const btnRotated = document.getElementById('btn-cfg-proj-rotated');
+    if (btnStraight) btnStraight.classList.toggle('active', !isProjComp);
+    if (btnRotated) btnRotated.classList.toggle('active', isProjComp);
+
+    const lblProjBadge = document.getElementById('lbl-cfg-proj-comp-badge');
+    if (lblProjBadge) {
+      lblProjBadge.textContent = isProjComp ? 'COMPENSAÇÃO 90° CCW (PROJETOR FÍSICO)' : 'NATIVO HORIZONTAL (CENTRO)';
+      lblProjBadge.className = isProjComp ? 'cfg-badge text-amber' : 'cfg-badge text-cyan';
+    }
+
+    // Legacy fallback bindings
     const lblCfgVert = document.getElementById('lbl-cfg-vert-status');
     if (lblCfgVert) {
-      lblCfgVert.textContent = isVert ? 'MODO VERTICAL 9:16 (ATIVO)' : 'HORIZONTAL 16:9';
+      lblCfgVert.textContent = isVert ? `MODO VERTICAL ${currentAspect} (ATIVO)` : 'HORIZONTAL 16:9';
       lblCfgVert.className = isVert ? 'cfg-badge text-emerald' : 'cfg-badge';
     }
 
@@ -7664,7 +9233,7 @@ function updateUI() {
     if (btnCfgModeVert) btnCfgModeVert.classList.toggle('active', isVert);
 
     const chkProjComp = document.getElementById('chk-cfg-proj-comp');
-    if (chkProjComp) chkProjComp.checked = Boolean(appState.projector_compensation);
+    if (chkProjComp) chkProjComp.checked = isProjComp;
 
     const btnVert = document.getElementById('btn-toggle-vertical-proj');
     if (btnVert) {
@@ -7912,16 +9481,16 @@ async function loadMediaPool(providedClips = null) {
     // Keep only videos for the UI Grid
     allClips = allClips.filter(c => c.type !== 'model');
 
-    // Ensure all 4 Generative 3D clips are prepended and available in Media Pool
+    // Ensure all 9 Generative 3D clips are prepended and available in Media Pool under category 3D
     const genClipsDefs = [
       {
         id: "clip_gen_plexus_spine",
         filename: "PLEXUS 3D ESPINHAÇO (Houdini Generative Marine Spine)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/plexus_espinhaco_3d.gen",
         absolute_path: "GENERATIVE/plexus_espinhaco_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.07, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.07, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.45, contrast: 0.85,
         thumbnail: "thumb_005_Metallic_spine_sculpture.jpg",
@@ -7929,13 +9498,83 @@ async function loadMediaPool(providedClips = null) {
         project: "Espinhaço 3D Plexus", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'spine'
       },
       {
+        id: "clip_gen_mercury_blob",
+        filename: "LIQUID CHROME MERCURY (Escultura Orgânica & Cromo Líquido)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/mercury_blob_3d.gen",
+        absolute_path: "GENERATIVE/mercury_blob_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.58, contrast: 1.15,
+        thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
+        notes: "Deformador de mercúrio líquido cromado com reflexos Chiaroscuro e pulsos de viscosidade áudio-reativos.",
+        project: "Mercury Liquid 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'mercury_blob'
+      },
+      {
+        id: "clip_gen_monolith_13",
+        filename: "BRUTALIST MONOLITH 13 (Monólito Sagrado & Luz Volumétrica)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/monolith_13_3d.gen",
+        absolute_path: "GENERATIVE/monolith_13_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.42, contrast: 1.20,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Instalação arquitetônica brutalista de prisma monolítico com fendas de laser e runa 13 luminosa.",
+        project: "Brutalist Monolith 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'monolith_13'
+      },
+      {
+        id: "clip_gen_nebula_particles",
+        filename: "NEBULA STARDUST 3D (Atrator Estranho & Enxame Quântico)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/nebula_particles_3d.gen",
+        absolute_path: "GENERATIVE/nebula_particles_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.50, contrast: 0.95,
+        thumbnail: "thumb_006_Abstract_iridescent_crystal.jpg",
+        notes: "Enxame tridimensional de partículas cósmicas orbitando em atrator de Lorenz com micro-filamentos de luz.",
+        project: "Nebula Quantum 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'nebula_particles'
+      },
+      {
+        id: "clip_gen_cyber_wireframe",
+        filename: "ARCHITECTURAL WIREFRAME (Hipercubo Tesseract Brutalista)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/cyber_wireframe_3d.gen",
+        absolute_path: "GENERATIVE/cyber_wireframe_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.07, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.48, contrast: 1.10,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Matriz tridimensional de tensores ortogonais e cubos aninhados com feixes de corte laser nos kicks.",
+        project: "Wireframe Lattice 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'cyber_wireframe'
+      },
+      {
+        id: "clip_gen_hyper_torus",
+        filename: "QUANTUM TORUS FLUX (Nó Toroidal Topológico & Vórtice)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/hyper_torus_3d.gen",
+        absolute_path: "GENERATIVE/hyper_torus_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.55, contrast: 1.05,
+        thumbnail: "thumb_003_Holographic_chrome_face.jpg",
+        notes: "Estrutura toroidal helicoidal animada em rotação contínua com linhas de fluxo de campo quântico.",
+        project: "Quantum Torus 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'hyper_torus'
+      },
+      {
         id: "clip_gen_ocean_sun",
         filename: "OCEAN SUN 3D (Mar Ondulante + Sol Celestial de Partículas)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/ocean_sun_3d.gen",
         absolute_path: "GENERATIVE/ocean_sun_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.08, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.52, contrast: 0.90,
         thumbnail: "thumb_001_Animate_silver_tail.jpg",
@@ -7944,36 +9583,81 @@ async function loadMediaPool(providedClips = null) {
       },
       {
         id: "clip_gen_star_13",
-        filename: "STAR 13 (Estrela Sagrada Vetorial + Numeral 13 Desacoplado)",
-        folder: "GENERATIVE",
+        filename: "STAR 13 (Estrela Oficial PT + Numeral 13 Tridimensional Chiaroscuro)",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/star_13_3d.gen",
         absolute_path: "GENERATIVE/star_13_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.09, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.60, contrast: 1.05,
         thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
-        notes: "Estrela sagrada de 8 pontas com giro suave nos agudos e numeral 13 com kick violento desacoplado nos graves.",
+        notes: "Estrela regular de 5 pontas do Partido dos Trabalhadores em relevo áureo e numeral 13 oficial com subgrave desacoplado.",
         project: "Star 13 Sacred", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'star_13'
       },
       {
         id: "clip_gen_hybrid",
         filename: "HYBRID COSMOS (Mar + Estrela 13 + Horizonte Solar)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/hybrid_cosmos_3d.gen",
         absolute_path: "GENERATIVE/hybrid_cosmos_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.10, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.10, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.58, contrast: 0.95,
         thumbnail: "thumb_003_Holographic_chrome_face.jpg",
         notes: "Composição harmônica do oceano ondulante, estrela sagrada 13 e orbe celestial.",
         project: "Hybrid Cosmos", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'hybrid'
+      },
+      {
+        id: "clip_gen_black_hole",
+        filename: "SINGULARITY 3D (Vórtice Espaço-Tempo & Horizonte de Eventos)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/black_hole_3d.gen",
+        absolute_path: "GENERATIVE/black_hole_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.38, contrast: 1.35,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Singularidade com lente gravitacional relativística, anel de fótons e disco de acreção com Doppler.",
+        project: "Black Hole Singularity 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'black_hole_singularity'
+      },
+      {
+        id: "clip_gen_biomorphic_flora",
+        filename: "BIOMORPHIC FLORA (Morfogênese Botânica & Tentáculos Neurais)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/biomorphic_flora_3d.gen",
+        absolute_path: "GENERATIVE/biomorphic_flora_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.46, contrast: 1.05,
+        thumbnail: "thumb_005_Metallic_spine_sculpture.jpg",
+        notes: "Morfogênese fractal de micélio e tentáculos bioluminescentes com pulsos de frequências médias e agudas.",
+        project: "Biomorphic Flora 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'biomorphic_flora'
+      },
+      {
+        id: "clip_gen_sol_vermelho",
+        filename: "SOL VERMELHO HORIZONTE (Vaporwave Penumbra & Grade Vetorial Retrô)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/sol_vermelho_3d.gen",
+        absolute_path: "GENERATIVE/sol_vermelho_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.54, contrast: 1.15,
+        thumbnail: "thumb_001_Animate_silver_tail.jpg",
+        notes: "Sol monumental com faixas horizontais de difração, grade topográfica 3D em perspectiva e reflexos.",
+        project: "Sol Vermelho 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'sol_vermelho_horizonte'
       }
     ];
 
     genClipsDefs.forEach(gc => {
-      if (!allClips.some(c => c.id === gc.id)) {
+      const idx = allClips.findIndex(c => c.id === gc.id);
+      if (idx !== -1) {
+        allClips[idx] = Object.assign({}, allClips[idx], gc);
+      } else {
         allClips.unshift(gc);
       }
     });
@@ -7998,7 +9682,7 @@ async function loadMediaPool(providedClips = null) {
 
 function getClipFolder(c) {
   if (!c) return '1. IN';
-  if (c.is_generative || c.id === 'clip_gen_plexus_spine') return 'GENERATIVE 3D';
+  if (c.is_generative || c.id === 'clip_gen_plexus_spine' || c.category === '3D' || c.category === 'GENERATIVE' || c.folder === 'GENERATIVE' || c.folder === 'GENERATIVE 3D' || c.project_folder === 'GENERATIVE 3D') return 'GENERATIVE 3D';
   if (c.project_folder) return c.project_folder;
   if (c.project && c.folder) return `${c.project}/${c.folder}`;
   if (c.project) return `${c.project}/1. In`;
@@ -8674,7 +10358,7 @@ window.openCategorySelector = function(clipId, event) {
   const clip = allClips.find(c => c.id === clipId);
   if (!clip) return;
 
-  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', 'STREAMS & YOUTUBE', 'GENERATIVE'];
+  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', '3D', 'STREAMS & YOUTUBE', 'GENERATIVE'];
   const newCat = prompt(`Alterar categoria do clipe "${clip.filename}":\n\nCategorias disponíveis:\n${categories.join(' · ')}`, clip.category || 'MINIMAL');
   if (newCat && categories.includes(newCat.trim().toUpperCase())) {
     window.setClipCategory(clipId, newCat.trim().toUpperCase());
@@ -9033,11 +10717,12 @@ function createMediaCardElement(clip) {
   const isUnlinked = Boolean((clip.is_local || clip.id.startsWith('local_')) && (clip.is_disconnected || !MediaProvider.isLocalFileConnected(clip)));
   const isOnAir = (appState.layers?.layer0?.clipId === clip.id);
   const isInCue = (appState.layers?.layer3?.clipId === clip.id);
+  const isInL5 = (appState.layers?.layer5?.clipId === clip.id);
   const isSelected = (studioInspectorState && studioInspectorState.targetClipId === clip.id);
   
   const isAutoEligible = isClipEligibleForAutopilot(clip);
   card.dataset.clipId = clip.id;
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${escapeHTML(clipSource)}`;
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${escapeHTML(clipSource)}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
@@ -9087,8 +10772,9 @@ function createMediaCardElement(clip) {
     <div class="media-card-thumb">
       ${thumbSrc ? `<img src="${escapeHTML(thumbSrc)}" loading="lazy" alt="${escapeHTML(clip.filename)}" data-static="${escapeHTML(thumbSrc)}" data-anim="${escapeHTML(animSrc)}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
       ${srcBadgeHtml}
-      ${isOnAir ? '<span class="thumb-air-indicator">● NO AR</span>' : ''}
+      ${isOnAir ? '<span class="thumb-air-indicator">● PGM</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
+      ${isInL5 ? '<span class="thumb-l5-indicator">● L5</span>' : ''}
       ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
       <span class="thumb-duration-badge">${escapeHTML(clip.duration ? `${Math.round(clip.duration)}s` : 'LOOP')}</span>
       <span class="thumb-resolution-badge">${escapeHTML(clip.width || '1920')}×${escapeHTML(clip.height || '1080')}</span>
@@ -9103,24 +10789,22 @@ function createMediaCardElement(clip) {
         <span>${escapeHTML(clipFolder)}</span>
       </div>
       <div class="card-actions-grid">
-        <button class="btn-card-action btn-action-pgm btn-bus-a" data-bus="A" title="Enviar para Program Master [A]">
+        <button class="btn-card-action btn-action-pgm btn-bus-a ${isOnAir ? 'is-active-on-air' : ''}" data-bus="A" title="Enviar para Program Master [A]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          <span>A (PGM)</span>
+          <span>PGM</span>
         </button>
-        <button class="btn-card-action btn-action-cue btn-bus-b" data-bus="B" title="Preparar no Preview Cue [B]">
+        <button class="btn-card-action btn-action-cue btn-bus-b ${isInCue ? 'is-active-cue' : ''}" data-bus="B" title="Preparar no Preview Cue [B]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"></circle></svg>
-          <span>B (CUE)</span>
+          <span>CUE</span>
         </button>
-        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', ${clipIdArg})" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">
+        <button class="btn-card-action btn-action-l5 ${isInL5 ? 'is-active-l5' : ''}" data-layer="layer5" title="Enviar para Camada de Apoio / Overlay [L5]">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+          <span>L5</span>
+        </button>
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', ${clipIdArg})" title="Inspecionar no Studio Inspector [I]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
         </button>
-        <button class="btn-card-action btn-action-ap ${isAutoEligible ? 'is-auto-active' : 'is-auto-excluded'}" onclick="event.stopPropagation(); toggleClipAutopilot(${clipIdArg}, event);" title="${isAutoEligible ? 'Take ATIVO no Autopilot · Clique para travar em apenas MANUAL seu' : 'Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot'}">
-          ${isAutoEligible ? '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg> <span>NO AUTO</span>' : '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span>MANUAL</span>'}
-        </button>
-
-        <button class="btn-card-action btn-action-l5" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
-        ${actionBtnHtml}
       </div>
     </div>
   `;
@@ -9227,6 +10911,7 @@ function createMediaCardElement(clip) {
       e.stopPropagation();
       appState.layers.layer4.clipId = clip.id;
       appState.layers.layer4.name = clip.filename;
+      appState.layers.layer4._assignedAt = Date.now();
       sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
@@ -9237,18 +10922,19 @@ function createMediaCardElement(clip) {
   if (btnL5) {
     btnL5.addEventListener('click', (e) => {
       e.stopPropagation();
-      appState.layers.layer5.clipId = clip.id;
-      appState.layers.layer5.name = clip.filename;
-      sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
-      updateUI();
-      syncVideoSources();
-      showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
+      if (typeof window.routeClipToLayer === 'function') {
+        window.routeClipToLayer(clip.id, 'layer5');
+      } else {
+        appState.layers.layer5.clipId = clip.id;
+        appState.layers.layer5.name = clip.filename;
+        appState.layers.layer5._assignedAt = Date.now();
+        sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
+        updateUI();
+        syncVideoSources();
+        showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
+      }
     });
   }
-
-  card.addEventListener('click', () => {
-    routeClipToBus(clip.id, 'B');
-  });
 
   return card;
 }
@@ -9285,9 +10971,9 @@ function selectLibraryAssetType(type) {
   const catStrip = document.querySelector('.pool-category-strip');
   const folderStrip = document.querySelector('.pool-folder-strip');
 
-  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
-  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
-  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
+  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
+  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
 
   if (typeof UserProfileManager !== 'undefined') {
     UserProfileManager.setSetting('library_active_asset_type', type);
@@ -9615,7 +11301,10 @@ function renderMediaCards() {
 
   // Update counts on badges
   const badgeClips = document.getElementById('lib-count-clips');
-  if (badgeClips) badgeClips.textContent = allClips.length;
+  if (badgeClips) badgeClips.textContent = allClips.filter(c => !c.is_generative && c.codec !== 'procedural_3d').length;
+  const badge3d = document.getElementById('lib-count-3d');
+  const count3d = allClips.filter(c => c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D').length;
+  if (badge3d) badge3d.textContent = count3d;
   const badgeMattes = document.getElementById('lib-count-mattes');
   if (badgeMattes) badgeMattes.textContent = allMattes.length;
   const badgeFx = document.getElementById('lib-count-fx');
@@ -9699,6 +11388,25 @@ function renderMediaCards() {
     const matchSearch = !searchVal || nameText.includes(searchVal) || titleText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
     if (!matchSearch) return false;
 
+    // Filter by Asset Type (Coleções Globais: 3D ou VÍDEOS)
+    if (activeLibraryAssetType === '3d') {
+      const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+      if (!is3d) return false;
+    } else if (activeLibraryAssetType === 'clips') {
+      const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+      if (is3d) return false;
+    }
+
+    // Filter by Category
+    if (activeCategoryFilter && activeCategoryFilter !== 'ALL') {
+      if (activeCategoryFilter === '3D') {
+        const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+        if (!is3d) return false;
+      } else if (c.category !== activeCategoryFilter) {
+        return false;
+      }
+    }
+
     // Filter by Project / Folder
     if (activeProjectFilter !== 'ALL' && c.project !== activeProjectFilter) return false;
 
@@ -9728,7 +11436,8 @@ function renderMediaCards() {
 
   const searchCountLbl = document.getElementById('lbl-search-count');
   if (searchCountLbl) {
-    searchCountLbl.textContent = `${filtered.length} / ${allClips.length} CLIPES`;
+    const typeLabel = activeLibraryAssetType === '3d' ? 'CENAS 3D' : (activeLibraryAssetType === 'clips' ? 'VÍDEOS' : 'CLIPES');
+    searchCountLbl.textContent = `${filtered.length} / ${allClips.length} ${typeLabel}`;
   }
 
   // Grouped by Folder View Mode (DaVinci Resolve / Ableton Bin hierarchy)
@@ -10515,10 +12224,10 @@ function setupEvents() {
 
   // Central M/E Transition Strip Controls
   const btnAutoTake = document.getElementById('btn-auto-take');
-  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition());
+  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition(null, true));
 
   const btnCutTake = document.getElementById('btn-cut-take');
-  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut());
+  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut(true));
 
   document.querySelectorAll('.trans-rate-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -11080,7 +12789,7 @@ function setupEvents() {
 
   // Take Button in Program Monitor
   const btnTake = document.getElementById('btn-cue-take');
-  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(); });
+  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(null, true); });
 
   // Pro Crossfader A/B Real-time Slider
   if (crossfader) {
@@ -11089,10 +12798,11 @@ function setupEvents() {
       sendAction('set_crossfader', { value: val });
     });
     crossfader.addEventListener('change', (e) => {
+      if (!e.isTrusted || isAutoTransitioning) return;
       const val = Number(e.target.value);
       if (val >= 98) {
         // Complete cut to B when fully crossfaded
-        executeTakeTransition();
+        executeTakeTransition(null, true);
       }
     });
   }
@@ -11205,7 +12915,7 @@ function setupEvents() {
   });
 
   // Layer Opacity Sliders
-  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity'].forEach(id => {
+  ['l0-opacity', 'l1-opacity', 'l2-opacity', 'l3-opacity', 'l4-opacity', 'l5-opacity'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', (e) => {
@@ -11218,7 +12928,7 @@ function setupEvents() {
   });
 
   // Layer Blend Dropdowns
-  ['l1-blend', 'l3-blend', 'l4-blend'].forEach(id => {
+  ['l1-blend', 'l3-blend', 'l4-blend', 'l5-blend'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', (e) => {
@@ -11645,10 +13355,16 @@ window.openStudioLauncher = openStudioLauncher;
 function closeStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');
   if (!nexusModal) return;
+  if (document.activeElement && nexusModal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   nexusModal.classList.add('dialog-closing');
   setTimeout(() => {
     try { nexusModal.close(); } catch (e) { nexusModal.removeAttribute('open'); }
     nexusModal.classList.remove('dialog-closing');
+    if (document.activeElement && nexusModal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }, 240);
 }
 window.closeStudioLauncher = closeStudioLauncher;
@@ -12153,13 +13869,22 @@ function bootstrapApp() {
     }
   }
 
-  applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  const hasRestoredLiveSet = typeof restoreLiveSetSession === 'function' ? restoreLiveSetSession() : false;
+  if (!hasRestoredLiveSet) {
+    applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  }
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
   updateFxUI();
+  initBackgroundKeepAlive();
   renderVisuals();
   updateUI();
   updateSourceUI(activeMediaSource);
+
+  // Periodically persist live set state for anti-crash resilience
+  setInterval(() => {
+    if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
+  }, 3500);
 
   window.addEventListener('resize', () => {
     if (typeof renderQueueCards === 'function') renderQueueCards();
@@ -12353,6 +14078,7 @@ function routeClipToBus(clipId, bus) {
   if (bus === 'A') {
     appState.layers.layer0.clipId = clip.id;
     appState.layers.layer0.name = clipName;
+    appState.layers.layer0._assignedAt = Date.now();
     appState.layers.layer0.fit_mode = 'fill';
     appState.layers.layer0.matte = 'none';
     updateUI();
@@ -12362,6 +14088,7 @@ function routeClipToBus(clipId, bus) {
   } else {
     appState.layers.layer3.clipId = clip.id;
     appState.layers.layer3.name = clipName;
+    appState.layers.layer3._assignedAt = Date.now();
     appState.layers.layer3.fit_mode = 'fill';
     appState.layers.layer3.matte = 'none';
     updateUI();
@@ -12370,6 +14097,28 @@ function routeClipToBus(clipId, bus) {
     sendAction('set_layer_fit_mode', { layer: 'layer3', fit_mode: 'fill' });
   }
 }
+window.routeClipToBus = routeClipToBus;
+
+function routeClipToLayer(clipId, layerKey = 'layer5') {
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId) ||
+               (typeof allMediaPoolClips !== 'undefined' ? allMediaPoolClips : []).find(c => c.id === clipId) ||
+               { id: clipId, filename: clipId };
+  if (!clip || !appState.layers || !appState.layers[layerKey]) return;
+  const clipName = clip.filename || clip.name || clip.id;
+  appState.layers[layerKey].clipId = clip.id;
+  appState.layers[layerKey].name = clipName;
+  appState.layers[layerKey]._assignedAt = Date.now();
+  if (appState.layers[layerKey].opacity === undefined || appState.layers[layerKey].opacity <= 0.05) {
+    appState.layers[layerKey].opacity = 0.85;
+  }
+  updateUI();
+  syncVideoSources();
+  sendAction('cue_clip', { layer: layerKey, clipId: clip.id, name: clipName });
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[${layerKey.toUpperCase()}] Armado: "${clip.display_title || clipName.slice(0, 24)}"`);
+  }
+}
+window.routeClipToLayer = routeClipToLayer;
 
 function swapBuses() {
   const tempId = appState.layers.layer0.clipId;
@@ -12378,6 +14127,14 @@ function swapBuses() {
   appState.layers.layer0.name = appState.layers.layer3.name;
   appState.layers.layer3.clipId = tempId;
   appState.layers.layer3.name = tempName;
+
+  // Swap decoupled 3D configurations between Deck A and Deck B
+  if (appState.deckA_3d && appState.deckB_3d) {
+    const temp3d = JSON.parse(JSON.stringify(appState.deckA_3d));
+    Object.assign(appState.deckA_3d, appState.deckB_3d);
+    Object.assign(appState.deckB_3d, temp3d);
+  }
+
   updateUI();
   syncVideoSources();
 }
@@ -12407,6 +14164,9 @@ function openSettingsModal() {
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.classList.remove('active');
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) {
+    document.activeElement.blur();
+  }
 }
 
 window.openSettingsModal = openSettingsModal;
@@ -12469,15 +14229,32 @@ function rescanMediaWithFeedback() {
 }
 window.rescanMediaWithFeedback = rescanMediaWithFeedback;
 
+let isKeyboardShortcutsInitialized = false;
+
 function initKeyboardShortcuts() {
+  if (isKeyboardShortcutsInitialized) return;
+  isKeyboardShortcutsInitialized = true;
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+    const isTextInput = activeEl && (
+      (activeEl.tagName === 'INPUT' && ['text', 'password', 'search', 'email', 'url', 'number', 'tel'].includes(activeEl.type)) ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.isContentEditable
+    );
+
+    // Se o elemento ativo for órfão ou estiver em diálogo/container invisível, desfoca para liberar os atalhos
+    if (isTextInput && activeEl.offsetParent === null && activeEl !== document.body) {
+      activeEl.blur();
+    } else if (isTextInput) {
       if (e.key === 'Escape') {
         activeEl.blur();
+        closeSettingsModal();
+        closeShortcutsModal();
+        closeTheater();
         if (typeof window.toggleMediaIngestDeck === 'function') {
           window.toggleMediaIngestDeck(false);
         }
+        return;
       }
       return;
     }
@@ -12487,7 +14264,7 @@ function initKeyboardShortcuts() {
     // SPACE: Auto Take (Smooth Transition)
     if (e.code === 'Space') {
       e.preventDefault();
-      startAutoTransition();
+      startAutoTransition(null, true);
       return;
     }
 
@@ -12501,7 +14278,7 @@ function initKeyboardShortcuts() {
     // ENTER: Hard Cut
     if (key === 'Enter') {
       e.preventDefault();
-      executeHardCut();
+      executeHardCut(true);
       return;
     }
 
@@ -12526,14 +14303,17 @@ function initKeyboardShortcuts() {
       if (focusedClipId) {
         routeClipToBus(focusedClipId, 'A');
       } else if (appState.layers.layer3.clipId) {
-        startAutoTransition();
+        startAutoTransition(null, true);
       }
       return;
     }
     if (key === 'b' || key === 'B') {
       e.preventDefault();
-      if (focusedClipId) {
+      if (focusedClipId && !e.shiftKey) {
         routeClipToBus(focusedClipId, 'B');
+      } else {
+        const btnBlackout = document.getElementById('btn-blackout');
+        if (btnBlackout) btnBlackout.click();
       }
       return;
     }
@@ -12575,6 +14355,18 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       const btnBlackout = document.getElementById('btn-blackout');
       if (btnBlackout) btnBlackout.click();
+      return;
+    }
+
+    // , (Comma): Toggle Preferences & System Settings Modal
+    if (key === ',' || e.code === 'Comma') {
+      e.preventDefault();
+      const modal = document.getElementById('settings-modal');
+      if (modal && modal.classList.contains('active')) {
+        closeSettingsModal();
+      } else {
+        openSettingsModal();
+      }
       return;
     }
 
@@ -12620,7 +14412,7 @@ function initKeyboardShortcuts() {
     }
 
     // I: Toggle Studio Inspector (DaVinci / After Effects Style)
-    if (key === 'i' || key === 'I') {
+    if (key === 'i' || key === 'I' || e.code === 'KeyI') {
       e.preventDefault();
       toggleStudioInspector();
       return;
@@ -12632,6 +14424,7 @@ function initKeyboardShortcuts() {
         toggleStudioInspector();
         return;
       }
+      closeSettingsModal();
       closeShortcutsModal();
       closeTheater();
       if (typeof window.toggleMediaIngestDeck === 'function') {
@@ -13015,6 +14808,7 @@ function setDockViewMode(mode) {
   const lblQuick = document.getElementById('lbl-quick-switch-text');
 
   if (mode === 'timeline') {
+    if (typeof window.invalidateTimelineRect === 'function') window.invalidateTimelineRect();
     if (btnModules) btnModules.classList.remove('active');
     if (btnTimeline) btnTimeline.classList.add('active');
     if (viewModules) viewModules.style.display = 'none';
@@ -13713,7 +15507,7 @@ function renderStudioInspector() {
             <span class="insp-val-disp">${layer.blend || 'Normal'}</span>
           </div>
           <select class="insp-select" onchange="onLayerBlendChange('${lKey}', this.value); renderStudioInspector();">
-            ${['Normal', 'Screen', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
+            ${['Normal', 'Screen', 'Lighten', 'Multiply', 'Difference', 'Soft_Light', 'Overlay'].map(b => `
               <option value="${b}" ${(layer.blend || 'Normal').toLowerCase() === b.toLowerCase() ? 'selected' : ''}>${b}</option>
             `).join('')}
           </select>
@@ -13895,16 +15689,39 @@ function renderStudioInspector() {
     const tonal = appState.tonal || {};
 
     if (subtab === 'transform') {
+      const curAspect = appState.aspectRatio || '16:9';
+      const curFit = appState.aspect_fit_mode || 'fit';
+      const isProjComp = Boolean(appState.projector_compensation);
+
       html += `
         <div class="insp-section">
-          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI)</div>
+          <div class="insp-sec-title">ENQUADRAMENTO MASTER (SAÍDA NDI / HDMI / POP-OUT)</div>
           <div class="insp-control-row">
-            <span class="insp-label">ASPECT RATIO DA TRANSMISSÃO</span>
+            <span class="insp-label">PROPORÇÃO DA IMAGEM MASTER</span>
+            <div class="insp-pills-row" style="flex-wrap: wrap;">
+              <button class="insp-btn-pill ${curAspect === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZ</button>
+              <button class="insp-btn-pill ${curAspect === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERT</button>
+              <button class="insp-btn-pill ${curAspect === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 SQUARE</button>
+              <button class="insp-btn-pill ${curAspect === '4:5' ? 'active' : ''}" onclick="setAspectRatio('4:5'); renderStudioInspector();">4:5 SOCIAL</button>
+              <button class="insp-btn-pill ${curAspect === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curAspect === '21:9' ? 'active' : ''}" onclick="setAspectRatio('21:9'); renderStudioInspector();">21:9 ULTRA</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ENQUADRAMENTO DE VÍDEOS DE PROPORÇÃO DIFERENTE</span>
             <div class="insp-pills-row">
-              <button class="insp-btn-pill ${appState.aspectRatio === '16:9' ? 'active' : ''}" onclick="setAspectRatio('16:9'); renderStudioInspector();">16:9 HORIZONTAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '9:16' ? 'active' : ''}" onclick="setAspectRatio('9:16'); renderStudioInspector();">9:16 VERTICAL</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '1:1' ? 'active' : ''}" onclick="setAspectRatio('1:1'); renderStudioInspector();">1:1 QUADRADO</button>
-              <button class="insp-btn-pill ${appState.aspectRatio === '4:3' ? 'active' : ''}" onclick="setAspectRatio('4:3'); renderStudioInspector();">4:3 RETRÔ</button>
+              <button class="insp-btn-pill ${curFit === 'fit' ? 'active' : ''}" onclick="setDefaultFitMode('fit'); renderStudioInspector();" title="Preserva 100% da imagem com bordas pretas puras #000000">FIT (ZERO CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'fill' ? 'active' : ''}" onclick="setDefaultFitMode('fill'); renderStudioInspector();" title="Preenche a tela toda sem bordas pretas">FILL (CROP)</button>
+              <button class="insp-btn-pill ${curFit === 'wings' ? 'active' : ''}" onclick="setDefaultFitMode('wings'); renderStudioInspector();" title="Preenchimento broadcast com asas espelhadas e desfoque suave">WINGS (BROADCAST)</button>
+            </div>
+          </div>
+
+          <div class="insp-control-row">
+            <span class="insp-label">ROTEAMENTO DE PROJETOR / TELÃO HDMI</span>
+            <div class="insp-pills-row">
+              <button class="insp-btn-pill ${!isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(false); renderStudioInspector();" title="Telão comum na horizontal: vídeo vertical fica centralizado">⬍ NATIVO HORIZ</button>
+              <button class="insp-btn-pill ${isProjComp ? 'active' : ''}" onclick="toggleProjectorCompensation(true); renderStudioInspector();" title="Projetor ou tela montada fisicamente em pé: gira saída 90° CCW">⤾ GIRAR 90° PROJETOR</button>
             </div>
           </div>
         </div>
@@ -14258,74 +16075,177 @@ function renderStudioInspector() {
 
     container.innerHTML = html;
   } else if (targetType === '3d') {
-    if (badge) badge.textContent = '🌌 CENÁRIOS 3D & ESTRELA 13';
-    const cfg3d = appState.gen3d || {};
+    const currentTarget = appState.inspector_3d_target || 'deckA';
+    if (badge) {
+      badge.textContent = currentTarget === 'deckA' ? '🔴 3D PGM A (AO VIVO)' : (currentTarget === 'deckB' ? '🟢 3D CUE B (PRÉ-AR)' : '🟡 3D L5 (APOIO)');
+    }
+
+    const cfg3d = getActive3DConfig(currentTarget);
     const curScene = cfg3d.active_scene || 'star_13';
-    const curPal = cfg3d.palette || 'cyan_neon';
+    const curPal = cfg3d.palette || 'pt_rubi';
     const react = cfg3d.audio_reactivity || {};
+    const cam = cfg3d.camera || {};
+    const parts = cfg3d.particles || {};
+
+    const all3DScenes = [
+      { id: 'star_13', name: 'ESTRELA 13 PT', desc: 'Estrela 5 pontas áurea PT + Numeral 13 oficial', icon: '⭐' },
+      { id: 'spine', name: 'ESPINHAÇO HOUDINI', desc: 'Vértebras marinhas biomórficas abyss', icon: '🦴' },
+      { id: 'black_hole_singularity', name: 'SINGULARIDADE', desc: 'Vórtice espaço-tempo & anel de fótons Doppler', icon: '🕳️' },
+      { id: 'biomorphic_flora', name: 'BIOMORPHIC FLORA', desc: 'Micélio fractal & tentáculos bioluminescentes', icon: '🌿' },
+      { id: 'sol_vermelho_horizonte', name: 'SOL VERMELHO', desc: 'Sol monumental & grade vetorial em perspectiva', icon: '🌅' },
+      { id: 'mercury_blob', name: 'MERCÚRIO LÍQUIDO', desc: 'Escultura fluida cromada Chiaroscuro', icon: '💧' },
+      { id: 'monolith_13', name: 'MONÓLITO BRUTALISTA', desc: 'Prisma sagrado brutalista & fendas laser', icon: '🏛️' },
+      { id: 'nebula_particles', name: 'NEBULA PARTICLES', desc: 'Enxame quântico em atrator de Lorenz', icon: '✨' },
+      { id: 'cyber_wireframe', name: 'WIREFRAME LATTICE', desc: 'Hipercubo Tesseract brutalista laser', icon: '🕸️' },
+      { id: 'hyper_torus', name: 'QUANTUM TORUS', desc: 'Nó toroidal topológico & fluxo quântico', icon: '🌀' },
+      { id: 'ocean_sun', name: 'OCEAN SUN', desc: 'Mar ondulante 3D + orbe solar celestial', icon: '🌊' },
+      { id: 'hybrid', name: 'HYBRID COSMOS', desc: 'Mar + Estrela 13 + Sol no horizonte', icon: '🪐' }
+    ];
+
+    const luxuryPalettes = [
+      { id: 'pt_rubi', label: 'PT RUBI & OURO', color: '#dc2626' },
+      { id: 'noir_gold', label: 'NOIR OBSIDIANA', color: '#ffd700' },
+      { id: 'cyan_neon', label: 'CIANO NEON', color: '#00f0ff' },
+      { id: 'solar_gold', label: 'SOLAR DOURADO', color: '#ffb703' },
+      { id: 'matrix_emerald', label: 'MATRIX VERDE', color: '#00ff88' },
+      { id: 'deep_violet', label: 'ULTRAVIOLETA', color: '#d946ef' },
+      { id: 'monochrome_ice', label: 'GELO MONO', color: '#e2e8f0' }
+    ];
 
     html += `
-      <!-- 3D SCENE PICKER GRID -->
-      <div class="insp-section">
-        <div class="insp-sec-title">CENÁRIO 3D GENERATIVO</div>
-        <div class="insp-scene-grid">
-          ${[
-            { id: 'spine', name: 'ESPINHAÇO', desc: 'Vértebras marinhas Houdini abyss' },
-            { id: 'ocean_sun', name: 'OCEAN SUN', desc: 'Mar ondulante + sol/lua de partículas' },
-            { id: 'star_13', name: 'ESTRELA 13', desc: 'Estrela sagrada + numeral 13 desacoplado' },
-            { id: 'hybrid', name: 'HYBRID COSMOS', desc: 'Mar + estrela 13 + horizonte solar' }
-          ].map(sc => `
-            <div class="insp-scene-card ${curScene === sc.id ? 'active' : ''}" onclick="appState.gen3d.active_scene = '${sc.id}'; renderStudioInspector();">
-              <div class="insp-scene-card-name">${sc.name}</div>
-              <div class="insp-scene-card-desc">${sc.desc}</div>
-            </div>
-          `).join('')}
+      <!-- DECK TARGET STAGING SELECTOR -->
+      <div class="insp-section insp-highlight-card" style="border-left: 3px solid ${currentTarget === 'deckA' ? '#ef4444' : (currentTarget === 'deckB' ? '#10b981' : '#f59e0b')};">
+        <div class="insp-sec-title">ALVO DE STAGING 3D (DESACOPLAMENTO)</div>
+        <div class="insp-pills-row" style="margin-bottom: 8px;">
+          <button class="insp-layer-pill ${currentTarget === 'deckA' ? 'active' : ''}" style="${currentTarget === 'deckA' ? 'background:#ef4444;color:#fff;' : ''}" onclick="window.setInspector3DTarget('deckA')">
+            🔴 PGM A (AO VIVO)
+          </button>
+          <button class="insp-layer-pill ${currentTarget === 'deckB' ? 'active' : ''}" style="${currentTarget === 'deckB' ? 'background:#10b981;color:#fff;' : ''}" onclick="window.setInspector3DTarget('deckB')">
+            🟢 CUE B (PRÉ-AR)
+          </button>
+          <button class="insp-layer-pill ${currentTarget === 'layer5' ? 'active' : ''}" style="${currentTarget === 'layer5' ? 'background:#f59e0b;color:#000;' : ''}" onclick="window.setInspector3DTarget('layer5')">
+            🟡 L5 (APOIO)
+          </button>
         </div>
-      </div>
-
-      <!-- PALETTE SELECTOR -->
-      <div class="insp-section">
-        <div class="insp-sec-title">PALETA DE COR & LUZ (LUXURY THEMES)</div>
-        <div class="insp-pills-row">
-          ${[
-            { id: 'cyan_neon', label: 'CIANO NEON', color: '#00f0ff' },
-            { id: 'solar_gold', label: 'SOLAR DOURADO', color: '#ffb703' },
-            { id: 'matrix_emerald', label: 'MATRIX ESMERALDA', color: '#00ff88' },
-            { id: 'deep_violet', label: 'ULTRAVIOLETA', color: '#d946ef' },
-            { id: 'monochrome_ice', label: 'GELO MONO', color: '#e2e8f0' }
-          ].map(pal => `
-            <button class="insp-palette-pill ${curPal === pal.id ? 'active' : ''}" onclick="appState.gen3d.palette = '${pal.id}'; renderStudioInspector();">
-              <span class="pal-dot" style="background:${pal.color};"></span>
-              <span>${pal.label}</span>
-            </button>
-          `).join('')}
+        <div class="insp-desc" style="font-size:0.75rem;">
+          ${currentTarget === 'deckA' ? '⚠️ Modificando parâmetros 3D AO VIVO no Program Master A.' : (currentTarget === 'deckB' ? '🛡️ Staging seguro: Edite no CUE B sem vazar alterações para o sinal ao vivo!' : '✨ Modificando parâmetros 3D da Camada de Apoio L5.')}
+        </div>
+        <div class="insp-routes-strip" style="margin-top:6px;">
+          <button class="btn-insp-route" onclick="window.triggerCurrent3DLive('${curScene}')" title="Disparar este cenário 3D no PGM A">
+            ▶ DISPARAR NO PGM A
+          </button>
+          <button class="btn-insp-route" onclick="window.armCurrent3DCue('${curScene}')" title="Armar este cenário 3D no CUE B">
+            ● ARMAR NO CUE B
+          </button>
+          <button class="btn-insp-route" onclick="window.copy3DConfig('${currentTarget === 'deckB' ? 'deckB' : 'deckA'}', '${currentTarget === 'deckB' ? 'deckA' : 'deckB'}')" title="Copiar parâmetros 3D">
+            📋 ${currentTarget === 'deckB' ? 'PASSAR CUE ➔ PGM' : 'PASSAR PGM ➔ CUE'}
+          </button>
         </div>
       </div>
     `;
 
     if (subtab === 'transform') {
-      const cam = cfg3d.camera || {};
+      // 1. SCENE PICKER (CENAS 3D)
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">SELEÇÃO DE CENÁRIO 3D (${all3DScenes.length} CENAS DISPONÍVEIS)</div>
+          <div class="insp-scene-grid">
+            ${all3DScenes.map(sc => `
+              <div class="insp-scene-card ${curScene === sc.id ? 'active' : ''}" onclick="window.set3DScene('${sc.id}')">
+                <div class="insp-scene-card-name">${sc.icon} ${sc.name}</div>
+                <div class="insp-scene-card-desc">${sc.desc}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      // 2. PALETTES & LIGHTING (PALETAS DE COR)
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">PALETA DE COR & LUZ (LUXURY THEMES)</div>
+          <div class="insp-pills-row">
+            ${luxuryPalettes.map(pal => `
+              <button class="insp-palette-pill ${curPal === pal.id ? 'active' : ''}" onclick="window.set3DPalette('${pal.id}')">
+                <span class="pal-dot" style="background:${pal.color};"></span>
+                <span>${pal.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">MODO DE RENDER & PONTOS</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESTRUTURA ARAMADA (WIREFRAME)</span>
+              <span class="insp-val-disp">${parts.wireframe !== false ? 'LIGADO' : 'DESLIGADO'}</span>
+            </div>
+            <button class="insp-btn-toggle ${parts.wireframe !== false ? 'active' : ''}" onclick="window.toggle3DWireframe()">
+              ${parts.wireframe !== false ? '✓ MALHA ARAMADA ATIVA' : 'MALHA DESATIVADA'}
+            </button>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESPESSURA DO TRAÇO / TAMANHO DE PONTO</span>
+              <span class="insp-val-disp">${(parts.point_size || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="5" max="30" value="${Math.round((parts.point_size || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('particles.point_size', this.value / 10.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>INTENSIDADE DE BRILHO (GLOW)</span>
+              <span class="insp-val-disp">${(parts.glow_intensity || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((parts.glow_intensity || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('particles.glow_intensity', this.value / 10.0)">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      // 3. CAMERA & REACTION (CÂMERA & KICK)
       const orbSpd = cam.orbit_speed !== undefined ? cam.orbit_speed : 1.0;
       const tilt = cam.tilt !== undefined ? cam.tilt : 0.22;
+      const roll = cam.roll !== undefined ? cam.roll : 0.0;
       const dist = cam.distance !== undefined ? cam.distance : 2.3;
+      const autoOrb = cam.auto_orbit !== false;
 
       html += `
         <div class="insp-section">
-          <div class="insp-sec-title">CÂMERA 3D & PERSPECTIVA</div>
+          <div class="insp-sec-title">CÂMERA 3D, ÓRBITA & PERSPECTIVA</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ÓRBITA AUTOMÁTICA CONTÍNUA</span>
+              <span class="insp-val-disp">${autoOrb ? 'AUTO' : 'MANUAL'}</span>
+            </div>
+            <button class="insp-btn-toggle ${autoOrb ? 'active' : ''}" onclick="window.toggle3DAutoOrbit()">
+              ${autoOrb ? '✓ ÓRBITA DINÂMICA ATIVA' : 'ÓRBITA TRAVADA'}
+            </button>
+          </div>
+
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>VELOCIDADE DE ÓRBITA</span>
               <span class="insp-val-disp">${orbSpd.toFixed(1)}x</span>
             </div>
-            <input type="range" min="-30" max="30" value="${Math.round(orbSpd * 10)}" class="insp-range" oninput="appState.gen3d.camera.orbit_speed = this.value / 10.0; renderStudioInspector();">
+            <input type="range" min="-30" max="30" value="${Math.round(orbSpd * 10)}" class="insp-range" oninput="window.set3DParam('camera.orbit_speed', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>INCLINAÇÃO DA CÂMERA (TILT)</span>
+              <span>INCLINAÇÃO VERTICAL (TILT / PITCH)</span>
               <span class="insp-val-disp">${(tilt * 180 / Math.PI).toFixed(1)}°</span>
             </div>
-            <input type="range" min="-60" max="60" value="${Math.round(tilt * 100)}" class="insp-range" oninput="appState.gen3d.camera.tilt = this.value / 100.0; renderStudioInspector();">
+            <input type="range" min="-60" max="60" value="${Math.round(tilt * 100)}" class="insp-range" oninput="window.set3DParam('camera.tilt', this.value / 100.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ROTAÇÃO DE HORIZONTE (DUTCH ANGLE / ROLL)</span>
+              <span class="insp-val-disp">${(roll * 180 / Math.PI).toFixed(1)}°</span>
+            </div>
+            <input type="range" min="-45" max="45" value="${Math.round(roll * 100)}" class="insp-range" oninput="window.set3DParam('camera.roll', this.value / 100.0)">
           </div>
 
           <div class="insp-control-row">
@@ -14333,48 +16253,48 @@ function renderStudioInspector() {
               <span>DISTÂNCIA / ZOOM (CAMERA DISTANCE)</span>
               <span class="insp-val-disp">${dist.toFixed(2)}</span>
             </div>
-            <input type="range" min="12" max="45" value="${Math.round(dist * 10)}" class="insp-range" oninput="appState.gen3d.camera.distance = this.value / 10.0; renderStudioInspector();">
+            <input type="range" min="12" max="45" value="${Math.round(dist * 10)}" class="insp-range" oninput="window.set3DParam('camera.distance', this.value / 10.0)">
           </div>
         </div>
-      `;
-    } else if (subtab === 'color') {
-      html += `
+
         <div class="insp-section insp-highlight-card">
-          <div class="insp-sec-title insp-cyan-title">REATIVIDADE DESACOPLADA · ESTRELA 13</div>
-          <div class="insp-desc">A estrela sagrada gira nos agudos e médios. O numeral 13 responde de forma isolada com impulsos vigorosos no subgrave.</div>
+          <div class="insp-sec-title insp-cyan-title">REATIVIDADE DESACOPLADA · ÁUDIO & KICK</div>
+          <div class="insp-desc">Reatividade com controle independente de graves (Sub/Bass) e frequências altas (Treble/Air).</div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>KICK DO NUMERAL 13 (SUB & BASS)</span>
-              <span class="insp-val-disp text-cyan" id="disp-gen-kick">${(react.num13_sub_kick || 1.8).toFixed(1)}x</span>
+              <span class="insp-val-disp text-cyan">${(react.num13_sub_kick || 1.8).toFixed(1)}x</span>
             </div>
-            <input type="range" min="5" max="40" value="${Math.round((react.num13_sub_kick || 1.8) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.num13_sub_kick = this.value / 10.0; document.getElementById('disp-gen-kick').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+            <input type="range" min="5" max="40" value="${Math.round((react.num13_sub_kick || 1.8) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.num13_sub_kick', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>GIRO DA ESTRELA SAGRADA (TREBLE & AIR)</span>
-              <span class="insp-val-disp text-cyan" id="disp-gen-spin">${(react.star_treble_spin || 1.2).toFixed(1)}x</span>
+              <span class="insp-val-disp text-cyan">${(react.star_treble_spin || 1.2).toFixed(1)}x</span>
             </div>
-            <input type="range" min="2" max="30" value="${Math.round((react.star_treble_spin || 1.2) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.star_treble_spin = this.value / 10.0; document.getElementById('disp-gen-spin').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+            <input type="range" min="2" max="30" value="${Math.round((react.star_treble_spin || 1.2) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.star_treble_spin', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>ONDULAÇÃO DO OCEANO (WAVE AMPLITUDE)</span>
+              <span>ONDULAÇÃO DO OCEANO / SOL (WAVE AMPLITUDE)</span>
               <span class="insp-val-disp">${(react.ocean_wave_amp || 1.0).toFixed(1)}x</span>
             </div>
-            <input type="range" min="2" max="25" value="${Math.round((react.ocean_wave_amp || 1.0) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.ocean_wave_amp = this.value / 10.0;">
+            <input type="range" min="2" max="25" value="${Math.round((react.ocean_wave_amp || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.ocean_wave_amp', this.value / 10.0)">
           </div>
-        </div>
-      `;
-    } else if (subtab === 'advanced') {
-      html += `
-        <div class="insp-section">
-          <div class="insp-sec-title">CONTROLE DIRETO MIDI · BANCO 3D (BANK 3)</div>
-          <div class="insp-desc">Use o botão BANK no cabeçalho ou o atalho "[" / "]" para entrar no modo 3D MATRIX no seu controlador físico.</div>
-          <button class="insp-btn-toggle active" onclick="if(window.penumbraMidi){ window.penumbraMidi.setBank(3); showMacroToast('Modo MIDI 3D Ativado'); }">
-            ATIVAR MAPEAMENTO MIDI 3D MATRIX
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>PULSO BIOMÓRFICO & MICÉLIO (ORGANIC PULSE)</span>
+              <span class="insp-val-disp">${(react.spine_swimming || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((react.spine_swimming || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.spine_swimming', this.value / 10.0)">
+          </div>
+
+          <button class="insp-btn-toggle" style="margin-top: 10px; border-color: rgba(239,68,68,0.4);" onclick="window.reset3DConfig('${currentTarget}')">
+            ⟲ RESETAR PARÂMETROS DESTE ALVO
           </button>
         </div>
       `;
@@ -14384,6 +16304,109 @@ function renderStudioInspector() {
   }
 }
 window.renderStudioInspector = renderStudioInspector;
+
+window.setInspector3DTarget = function(tgt) {
+  appState.inspector_3d_target = tgt;
+  renderStudioInspector();
+};
+
+window.set3DScene = function(sceneId) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  cfg.active_scene = sceneId;
+  if (tgt === 'deckA') {
+    appState.gen3d = cfg;
+  }
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D ${tgt.toUpperCase()}] Cenário: ${sceneId.toUpperCase()}`);
+  }
+};
+
+window.set3DPalette = function(palId) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  cfg.palette = palId;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.toggle3DWireframe = function() {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  if (!cfg.particles) cfg.particles = {};
+  cfg.particles.wireframe = !cfg.particles.wireframe;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.toggle3DAutoOrbit = function() {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  if (!cfg.camera) cfg.camera = {};
+  cfg.camera.auto_orbit = !cfg.camera.auto_orbit;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.set3DParam = function(path, val) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  const parts = path.split('.');
+  if (parts.length === 2) {
+    if (!cfg[parts[0]]) cfg[parts[0]] = {};
+    cfg[parts[0]][parts[1]] = Number(val);
+  } else {
+    cfg[path] = Number(val);
+  }
+  if (tgt === 'deckA') appState.gen3d = cfg;
+};
+
+window.copy3DConfig = function(fromTgt, toTgt) {
+  const src = getActive3DConfig(fromTgt);
+  const dest = getActive3DConfig(toTgt);
+  Object.assign(dest, JSON.parse(JSON.stringify(src)));
+  if (toTgt === 'deckA') appState.gen3d = dest;
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D] Configuração copiada de ${fromTgt.toUpperCase()} para ${toTgt.toUpperCase()}`);
+  }
+};
+
+window.reset3DConfig = function(tgt) {
+  const defaults = createDefault3DConfig(tgt === 'deckA' ? 'star_13' : 'spine', tgt === 'deckA' ? 'pt_rubi' : 'cyan_neon');
+  if (tgt === 'deckA') {
+    appState.deckA_3d = defaults;
+    appState.gen3d = defaults;
+  } else if (tgt === 'deckB') {
+    appState.deckB_3d = defaults;
+  } else if (tgt === 'layer5') {
+    appState.layer5_3d = defaults;
+  }
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D] Padrões restaurados para ${tgt.toUpperCase()}`);
+  }
+};
+
+window.triggerCurrent3DLive = function(sceneId) {
+  const clipId = 'clip_gen_' + (sceneId === 'star_13' ? 'star_13' : sceneId === 'spine' ? 'plexus_spine' : sceneId);
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.gen_scene === sceneId || c.id === clipId) || { id: 'clip_gen_plexus_spine', filename: 'GENERATIVE 3D' };
+  routeClipToBus(clip.id, 'A');
+  const cfgLive = getActive3DConfig('deckA');
+  cfgLive.active_scene = sceneId;
+  appState.gen3d = cfgLive;
+  renderStudioInspector();
+};
+
+window.armCurrent3DCue = function(sceneId) {
+  const clipId = 'clip_gen_' + (sceneId === 'star_13' ? 'star_13' : sceneId === 'spine' ? 'plexus_spine' : sceneId);
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.gen_scene === sceneId || c.id === clipId) || { id: 'clip_gen_plexus_spine', filename: 'GENERATIVE 3D' };
+  routeClipToBus(clip.id, 'B');
+  const cfgCue = getActive3DConfig('deckB');
+  cfgCue.active_scene = sceneId;
+  renderStudioInspector();
+};
 
 function setGlobalMatteAsset(assetPath) {
   if (!appState.matte) appState.matte = {};

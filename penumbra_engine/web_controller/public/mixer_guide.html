@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M-VAVE SMC-MIXER · Guia Técnico Interativo & Hardware Twin (Penumbra System)</title>
+  <style>
+    :root {
+      --bg-deep: #080a0f;
+      --bg-panel: #0e121a;
+      --bg-chassis: #121622;
+      --bg-card: #181f2e;
+      --border: rgba(255, 255, 255, 0.12);
+      --border-bright: rgba(0, 240, 255, 0.4);
+      --cyan: #00f0ff;
+      --cyan-glow: rgba(0, 240, 255, 0.25);
+      --amber: #ffaa00;
+      --amber-glow: rgba(255, 170, 0, 0.25);
+      --red: #ff3344;
+      --red-glow: rgba(255, 51, 68, 0.35);
+      --green: #10b981;
+      --purple: #a855f7;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: rgba(14, 18, 26, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--cyan), #0077ff);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #000;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      box-shadow: 0 0 16px var(--cyan-glow);
+    }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .status-dot.active {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .status-dot.data {
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    .btn-cockpit {
+      background: var(--cyan);
+      color: #000;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-cockpit:hover {
+      box-shadow: 0 0 14px var(--cyan);
+      transform: translateY(-1px);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Bank Selector Pill Bar */
+    .bank-switch-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-panel);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .bank-pills {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bank-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bank-pill:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .bank-pill.active {
+      background: rgba(0, 240, 255, 0.12);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan-glow);
+    }
+
+    .bank-pill.bank-b.active {
+      background: rgba(255, 170, 0, 0.12);
+      border-color: var(--amber);
+      color: var(--amber);
+      box-shadow: 0 0 16px var(--amber-glow);
+    }
+
+    .bank-pill.bank-c.active {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: var(--purple);
+      color: var(--purple);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+    }
+
+    .quick-hint {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    /* Layout Split: Hardware Twin & Dynamic Inspector */
+    .twin-workspace {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 1100px) {
+      .twin-workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Hardware Chassis */
+    .chassis-frame {
+      background: radial-gradient(circle at 50% 20%, #1a2030 0%, #0c0f17 100%);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .chassis-screws {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #475569;
+      box-shadow: inset 0 1px 2px #000;
+    }
+    .screw-tl { top: 8px; left: 8px; }
+    .screw-tr { top: 8px; right: 8px; }
+    .screw-bl { bottom: 8px; left: 8px; }
+    .screw-br { bottom: 8px; right: 8px; }
+
+    /* Chassis Header & OLED Display */
+    .chassis-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .chassis-brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-mvave {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .model-smc {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      letter-spacing: 1.5px;
+      color: var(--cyan);
+    }
+
+    .oled-screen {
+      background: #02070c;
+      border: 2px solid #112838;
+      border-radius: 6px;
+      padding: 8px 16px;
+      width: 440px;
+      box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.2);
+      font-family: var(--font-mono);
+    }
+
+    .oled-line-primary {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .oled-line-secondary {
+      font-size: 10px;
+      color: #38bdf8;
+      opacity: 0.8;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chassis-leds {
+      display: flex;
+      gap: 12px;
+    }
+
+    .chassis-led-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chassis-led-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1e293b;
+      transition: all 0.1s ease;
+    }
+
+    .chassis-led-dot.active {
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .chassis-led-dot.blink-amber {
+      background: var(--amber);
+      box-shadow: 0 0 10px var(--amber);
+    }
+
+    .chassis-led-label {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+
+    /* Mixer Console Body (8 Channels + Master) */
+    .mixer-body {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr) 110px;
+      gap: 10px;
+      background: #090c13;
+      padding: 16px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Channel Strip */
+    .ch-strip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 10px 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .ch-strip:hover {
+      background: rgba(0, 240, 255, 0.04);
+      border-color: rgba(0, 240, 255, 0.2);
+    }
+
+    .ch-strip.highlight {
+      border-color: var(--cyan);
+      box-shadow: 0 0 14px var(--cyan-glow);
+    }
+
+    .ch-number {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    /* Rotary Encoder (Knob) */
+    .knob-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .knob-body {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2a3447, #0f141f);
+      border: 2px solid #334155;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+      transition: transform 0.05s linear;
+    }
+
+    .knob-notch {
+      position: absolute;
+      top: 4px;
+      width: 3px;
+      height: 10px;
+      background: var(--cyan);
+      border-radius: 2px;
+      box-shadow: 0 0 6px var(--cyan);
+    }
+
+    .knob-tag {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      color: var(--cyan);
+      text-align: center;
+      line-height: 1.1;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0 2px;
+      word-break: break-word;
+    }
+
+    /* Channel Buttons Grid */
+    .ch-buttons-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .hw-btn {
+      height: 22px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.12s ease;
+      background: #1e2430;
+      color: var(--text-dim);
+    }
+
+    .hw-btn:hover {
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #fff;
+    }
+
+    .hw-btn.btn-mute.active {
+      background: var(--red);
+      color: #000;
+      box-shadow: 0 0 10px var(--red);
+      border-color: var(--red);
+    }
+
+    .hw-btn.btn-solo.active {
+      background: var(--amber);
+      color: #000;
+      box-shadow: 0 0 10px var(--amber);
+      border-color: var(--amber);
+    }
+
+    .hw-btn.btn-rec.active {
+      background: #ff0055;
+      color: #fff;
+      box-shadow: 0 0 10px #ff0055;
+    }
+
+    .hw-btn.btn-sel.active {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 10px var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    /* Linear Fader 60mm */
+    .fader-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: 4px;
+      cursor: pointer;
+    }
+
+    .fader-track {
+      width: 14px;
+      height: 140px;
+      background: #05070a;
+      border: 1px solid #1e293b;
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .fader-scale-ticks {
+      position: absolute;
+      left: -8px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0.3;
+    }
+
+    .fader-tick {
+      width: 4px;
+      height: 1px;
+      background: #fff;
+    }
+
+    .fader-cap {
+      position: absolute;
+      width: 28px;
+      height: 26px;
+      background: linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+      bottom: 50%;
+      transform: translateY(50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: bottom 0.05s linear;
+    }
+
+    .fader-cap-line {
+      width: 100%;
+      height: 2px;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+    }
+
+    .fader-tag {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 8px;
+      height: 24px;
+      line-height: 1.1;
+      width: 100%;
+      word-break: break-word;
+    }
+
+    /* Master Section */
+    .master-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .master-col-title {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 900;
+      color: var(--cyan);
+      letter-spacing: 1px;
+    }
+
+    .master-fader-track {
+      width: 16px;
+      height: 120px;
+      background: #020508;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .master-cap {
+      position: absolute;
+      width: 32px;
+      height: 28px;
+      background: linear-gradient(180deg, #0ea5e9, #0284c7);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 4px;
+      box-shadow: 0 0 10px var(--cyan-glow);
+      bottom: 50%;
+      transform: translateY(50%);
+    }
+
+    .master-nav-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .master-nav-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 4px 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .master-nav-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .transport-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .trans-btn {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      font-weight: 700;
+      padding: 6px 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .trans-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .trans-btn.play {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .panic-btn {
+      width: 100%;
+      background: linear-gradient(180deg, #ef4444, #991b1b);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      font-weight: 900;
+      padding: 8px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 0 10px var(--red-glow);
+    }
+
+    .panic-btn:hover {
+      box-shadow: 0 0 18px var(--red);
+      transform: scale(1.02);
+    }
+
+    /* Inspector Panel */
+    .inspector-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 80px;
+    }
+
+    .inspector-title {
+      font-size: 13px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .ctrl-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .ctrl-param {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--border-bright);
+      color: var(--cyan);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .inspector-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-lbl {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .field-val {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .field-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    /* Tutorial Section */
+    .tutorial-section {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .tutorial-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tutorial-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tutorial-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .tutorial-card p {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .tutorial-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 12.5px;
+    }
+
+    .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Comparison Table */
+    .cheat-table-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .cheat-table-card h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--cyan);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tag-b1 { color: var(--cyan); font-weight: 700; }
+    .tag-b2 { color: var(--amber); font-weight: 700; }
+    .tag-b3 { color: var(--purple); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">P</div>
+      <div class="brand-text">
+        <h1>M-VAVE SMC-MIXER · HARDWARE TWIN & GUIA TÉCNICO</h1>
+        <p>PENUMBRA VJ ENGINE · DOCUMENTAÇÃO INTERATIVA DE PERFORMANCE</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="status-badge" id="midi-status-badge">
+        <span class="status-dot" id="midi-status-dot"></span>
+        <span id="midi-status-text">Procurando Bluetooth/USB...</span>
+      </div>
+      <a href="/index.html" class="btn-cockpit">↗ ABRIR COCKPIT AO VIVO</a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Bank Selection Bar -->
+    <div class="bank-switch-bar">
+      <div class="bank-pills">
+        <button class="bank-pill active" id="pill-bank-a" onclick="switchBank(1)">
+          <span>◄ BANK A</span> · LIVE MIX & CAMADAS
+        </button>
+        <button class="bank-pill bank-b" id="pill-bank-b" onclick="switchBank(2)">
+          <span>► BANK B</span> · FX ENGINE & MATTES
+        </button>
+        <button class="bank-pill bank-c" id="pill-bank-c" onclick="switchBank(3)">
+          <span>▲ BANK C</span> · 3D MATRIX & MACROS
+        </button>
+      </div>
+      <div class="quick-hint">
+        💡 Atalho Físico: Botões <strong>◀ BANK / BANK ▶</strong> no hardware ou teclas <strong>[</strong> e <strong>]</strong>
+      </div>
+    </div>
+
+    <!-- Interactive Twin & Inspector -->
+    <div class="twin-workspace">
+      
+      <!-- Hardware Chassis -->
+      <div class="chassis-frame">
+        <span class="chassis-screws screw-tl"></span>
+        <span class="chassis-screws screw-tr"></span>
+        <span class="chassis-screws screw-bl"></span>
+        <span class="chassis-screws screw-br"></span>
+
+        <!-- Header: Brand & OLED -->
+        <div class="chassis-header">
+          <div class="chassis-brand">
+            <span class="brand-mvave">M-VAVE</span>
+            <span class="model-smc">SMC-MIXER · PENUMBRA TWIN</span>
+          </div>
+
+          <div class="oled-screen">
+            <div class="oled-line-primary" id="oled-title">BANK A · LIVE MIX, TAKES & LEVELS</div>
+            <div class="oled-line-secondary" id="oled-sub">PASSE O MOUSE OU CONECTE O MIDI BLUETOOTH</div>
+          </div>
+
+          <div class="chassis-leds">
+            <div class="chassis-led-item">
+              <span class="chassis-led-dot active" id="led-bt-status"></span>
+              <span class="chassis-led-label">BT/USB</span>
+            </div>
+            <div class="chassis-led-item">
+              <span class="chassis-led-dot" id="led-midi-rx"></span>
+              <span class="chassis-led-label">DATA</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8 Channels Strip Group + Master Section -->
+        <div class="mixer-body">
+          
+          <!-- Canais 1 a 8 gerados dinamicamente para manter dados limpos -->
+          <div id="channels-container" style="display: contents;"></div>
+
+          <!-- Seção Master & Transporte à Direita -->
+          <div class="master-col">
+            <span class="master-col-title">MASTER</span>
+
+            <!-- Master Fader -->
+            <div class="fader-slot" onclick="inspectElement('master_fader')">
+              <div class="master-fader-track" id="master-fader-track">
+                <div class="master-cap" id="master-cap"></div>
+              </div>
+              <span class="fader-tag" id="master-fader-tag" style="color:var(--cyan);font-weight:700;">CROSSFADER A/B</span>
+            </div>
+
+            <!-- Navegação de Bancos -->
+            <div class="master-nav-row">
+              <button class="master-nav-btn" onclick="prevBankUI()" title="Banco Anterior">[ ◀ BANK</button>
+              <button class="master-nav-btn" onclick="nextBankUI()" title="Próximo Banco">BANK ▶ ]</button>
+            </div>
+
+            <!-- Botões de Transporte -->
+            <div class="transport-grid">
+              <button class="trans-btn" onclick="inspectElement('trans_rew')">⏮ REW</button>
+              <button class="trans-btn" onclick="inspectElement('trans_ff')">⏭ FF</button>
+              <button class="trans-btn" onclick="inspectElement('trans_stop')">⏹ STOP</button>
+              <button class="trans-btn play" onclick="inspectElement('trans_play')">▶ PLAY</button>
+              <button class="trans-btn" onclick="inspectElement('trans_loop')">🔁 LOOP</button>
+              <button class="trans-btn" onclick="inspectElement('trans_tap')">⏱ TAP</button>
+            </div>
+
+            <!-- Botão de Pânico / Blackout -->
+            <button class="panic-btn" onclick="inspectElement('panic_btn')">
+              PANIC [B]
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Live Inspector Sidebar -->
+      <aside class="inspector-card">
+        <div class="inspector-title">
+          <span>⚙️ INSPETOR DO HARDWARE</span>
+        </div>
+
+        <div>
+          <div class="ctrl-name" id="insp-name">Fader 1 (Canal 1)</div>
+          <div class="ctrl-param" id="insp-param">Opacidade Camada L0 (Base)</div>
+        </div>
+
+        <div class="inspector-field">
+          <span class="field-lbl">Função no Modo Ativo:</span>
+          <span class="field-val" id="insp-func">Controla o nível de transparência da camada base L0 no Program PGM (0% a 100%).</span>
+        </div>
+
+        <div class="inspector-field">
+          <span class="field-lbl">Como Interagir / Sensibilidade:</span>
+          <div class="field-box" id="insp-how">
+            Mova o fader verticalmente. O sistema utiliza <strong>Soft Takeover (Pickup Mode)</strong>: se o fader físico estiver em posição diferente da tela, ele só altera o valor quando cruzar o ponto exato da tela, evitando cortes bruscos em telões.
+          </div>
+        </div>
+
+        <div class="inspector-field">
+          <span class="field-lbl">Atalho de Teclado / Equivalente:</span>
+          <div class="field-box" id="insp-shortcut">
+            Teclado: Slider L0 no Cockpit ou atalho numérico.
+          </div>
+        </div>
+
+        <div class="inspector-field">
+          <span class="field-lbl">Telemetria MIDI Bruta:</span>
+          <div class="field-box" style="font-family: var(--font-mono); font-size: 11px;" id="insp-midi-raw">
+            Canal: 1 · CC: 20 · Valor: 127 (100%)
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Guia Rápido & Tutorial Suscinto em 3 Colunas -->
+    <section class="tutorial-section">
+      <div class="tutorial-card">
+        <h3>🔵 1. Conexão Bluetooth no Mac</h3>
+        <p>O M-Vave SMC-MIXER transmite MIDI sem fio com ultra-baixa latência (Bluetooth BLE MIDI). No macOS, ele é reconhecido nativamente como porta CoreMIDI pelo sistema.</p>
+        <div class="tutorial-steps">
+          <div class="step-item">
+            <span class="step-num">1</span>
+            <span>Abra <strong>Configuração Áudio e MIDI</strong> no Mac ➔ Janela ➔ <strong>Mostrar Estúdio MIDI</strong>.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <span>Clique no ícone de <strong>Bluetooth</strong> e conecte no dispositivo <code>SMC-Mixer</code>.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">3</span>
+            <span>No navegador (Chrome/Edge), o Penumbra detecta automaticamente a porta sem precisar instalar drivers!</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-card">
+        <h3>🎛️ 2. Soft Takeover (Sem Pulos no Telão)</h3>
+        <p>Quando você troca de <strong>Bank A</strong> para <strong>Bank B</strong>, a posição física do fader pode ser diferente do valor atual do efeito.</p>
+        <div class="tutorial-steps">
+          <div class="step-item">
+            <span class="step-num">!</span>
+            <span><strong>Segurança Total:</strong> O fader fica desengatado até que você o mova e "capture" o valor que está no ar.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">!</span>
+            <span>O visor OLED mostra setas <code>▲</code> ou <code>▼</code> indicando a direção para onde você deve mover o fader até travar.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-card">
+        <h3>⚡ 3. Encoders com Aceleração Balística</h3>
+        <p>Os 8 Knobs no topo são potenciômetros rotativos sem fim (360° com passos contínuos). O Penumbra aplica cálculo de velocidade $dt$:</p>
+        <div class="tutorial-steps">
+          <div class="step-item">
+            <span class="step-num">A</span>
+            <span><strong>Giro Lento:</strong> Micro-precisão cirúrgica para afinar níveis de Gamma, Threshold e Zoom.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">B</span>
+            <span><strong>Giro Rápido:</strong> Aceleração balística multiplicada em até 3.5x para varreduras dinâmicas em drops.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mapa Comparativo / Cheat Sheet de Consulta Rápida -->
+    <section class="cheat-table-card">
+      <h3>📋 Mapa Técnico de Funções por Modo (Cheat Sheet)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Elemento Físico</th>
+            <th>BANCO A (Live Mix & Camadas)</th>
+            <th>BANCO B (FX Engine & Mattes)</th>
+            <th>BANCO C (3D Matrix & Macros)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Knobs 1 a 4</strong></td>
+            <td><span class="tag-b1">Levels:</span> Pretos (-30%/+20%), Contraste, Gamma, White Boost</td>
+            <td><span class="tag-b2">FX Shaders:</span> Pixel Sorter, Stretch, Modulation, Bad TV</td>
+            <td><span class="tag-b3">3D Camera:</span> Orbit Speed, Tilt Angle, Zoom Distance, Star Treble</td>
+          </tr>
+          <tr>
+            <td><strong>Knobs 5 a 8</strong></td>
+            <td><span class="tag-b1">Mattes:</span> Seletor de Máscara, Zoom Scale, Invert, Opacidade</td>
+            <td><span class="tag-b2">Sculpt:</span> RXXR Matrix, Sobel Threshold, Luminance, Audio Gain</td>
+            <td><span class="tag-b3">DSP & Waves:</span> Numeral 13 Kick, Wave Amp, Vignette Round, Feather</td>
+          </tr>
+          <tr>
+            <td><strong>Faders 1 a 5</strong></td>
+            <td><span class="tag-b1">Opacidades de Camada:</span> L0 (Base), L1 (Pulse), L2 (Sobel), L3 (Cue), L5 (Overlay)</td>
+            <td><span class="tag-b2">Intensidade FX:</span> Pixel Sorter, Stretch, Modulation, Bad TV, RXXR</td>
+            <td><span class="tag-b3">3D Morphs:</span> Cenas (Spine/Sun/13), Paletas, Kick Mult, Wave Amp</td>
+          </tr>
+          <tr>
+            <td><strong>Fader 6</strong></td>
+            <td><span class="tag-b1">Master Dimmer:</span> Brilho geral de saída (100% a 0% Fade)</td>
+            <td><span class="tag-b2">Master FX Dry/Wet:</span> Mix global de efeitos (0% a 100%)</td>
+            <td><span class="tag-b3">Preamp Mic:</span> Ganho do microfone de palco (0.5x a 5.0x)</td>
+          </tr>
+          <tr>
+            <td><strong>Fader 7</strong></td>
+            <td><span class="tag-b1">Master Speed:</span> Velocidade global de playback (0.25x a 2.5x)</td>
+            <td><span class="tag-b2">Sobel Edge Mix:</span> Transparência do contorno de ossatura</td>
+            <td><span class="tag-b3">Vignette Roundness:</span> Curvatura da vinheta procedural</td>
+          </tr>
+          <tr>
+            <td><strong>Fader 8 (Master)</strong></td>
+            <td><span class="tag-b1">T-Bar Crossfader:</span> Transição suave entre PGM (Bus A) e CUE (Bus B)</td>
+            <td><span class="tag-b2">Master Dimmer:</span> Fade out de segurança</td>
+            <td><span class="tag-b3">Master Dimmer:</span> Fade out de segurança</td>
+          </tr>
+          <tr>
+            <td><strong>Botões MUTE 1-5</strong></td>
+            <td><span class="tag-b1">Mute / Desliga Camadas</span> L0 a L5 instantaneamente</td>
+            <td><span class="tag-b1">Mute / Desliga Camadas</span> L0 a L5</td>
+            <td><span class="tag-b3">Macros INTRO & GROOVE:</span> Disparo imediato de presets limpos</td>
+          </tr>
+          <tr>
+            <td><strong>Botões SOLO 1-5</strong></td>
+            <td><span class="tag-b1">Solo de Camada:</span> Isola a camada selecionada no telão</td>
+            <td><span class="tag-b1">Solo de Camada</span></td>
+            <td><span class="tag-b3">Macros BUILD & DROP:</span> Disparo imediato de presets de clímax</td>
+          </tr>
+          <tr>
+            <td><strong>Botões REC 1-5</strong></td>
+            <td><span class="tag-b1">Soft Pulse:</span> Pulso suave / flash controlado na camada</td>
+            <td><span class="tag-b2">Toggle FX:</span> Liga/Desliga individual dos 5 plugins</td>
+            <td><span class="tag-b3">Cenas 3D:</span> Alterna entre Spine, Ocean, Star e Hybrid</td>
+          </tr>
+          <tr>
+            <td><strong>Botões SELECT 1-5</strong></td>
+            <td><span class="tag-b1">Focus Inspector:</span> Abre o Studio Inspector focado na camada</td>
+            <td><span class="tag-b1">Focus Inspector</span></td>
+            <td><span class="tag-b1">Focus Inspector</span></td>
+          </tr>
+          <tr>
+            <td><strong>Botão PANIC [B]</strong></td>
+            <td colspan="3" style="color:var(--red); font-weight:700;">CORTE TOTAL DE EMERGÊNCIA (Blackout instantâneo para 0% em todas as saídas HDMI / Telão)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <script>
+    // Definição dos Mapeamentos por Banco
+    const MAP_DATA = {
+      1: {
+        title: "BANK A · LIVE MIX, TAKES & LEVELS",
+        sub: "CONTROLE DE CAMADAS, NÍVEIS DE IMAGEM & TRANSIÇÕES DE PALCO",
+        knobs: [
+          { name: "Pretos", desc: "Pedestal de Pretos (-30% a +20%)" },
+          { name: "Contraste", desc: "Densidade de Contraste (60% a 160%)" },
+          { name: "Gamma", desc: "Curva Gamma de Médios (0.40 a 1.60)" },
+          { name: "White Boost", desc: "Ganho dos Contornos Brancos (1.0x a 4.0x)" },
+          { name: "Matte Sel", desc: "Seletor de Máscara (Cicla os 29 mattes)" },
+          { name: "Matte Zoom", desc: "Escala / Zoom da Máscara (0.5x a 2.5x)" },
+          { name: "Matte Inv", desc: "Inversão Preto/Branco da Máscara" },
+          { name: "Matte Mix", desc: "Opacidade e Sensibilidade de Recorte" }
+        ],
+        faders: [
+          { name: "L0 OPAC", desc: "Opacidade Camada L0 (Base PGM) · 0% a 100%" },
+          { name: "L1 PULSE", desc: "Opacidade Camada L1 (Pulse Multiply)" },
+          { name: "L2 SOBEL", desc: "Opacidade Camada L2 (Contornos Sobel)" },
+          { name: "L3 CUE", desc: "Opacidade Camada L3 (Deck B de Cue)" },
+          { name: "L5 OVERLAY", desc: "Opacidade Camada L5 (Overlay Deck)" },
+          { name: "MASTER DIM", desc: "Master Dimmer / Fade to Black (100% a 0%)" },
+          { name: "SPEED", desc: "Velocidade Global dos Vídeos (0.25x a 2.5x)" },
+          { name: "CROSSFADER", desc: "Master Crossfader entre Deck A e Deck B" }
+        ],
+        mute: "Mute da Camada (Corta o sinal instantaneamente)",
+        solo: "Solo da Camada (Isola a camada no telão)",
+        rec: "Soft Pulse (Pulso suave controlado sem estourar branco)",
+        sel: "Foco no Studio Inspector (Abre parâmetros finos da camada)"
+      },
+      2: {
+        title: "BANK B · FX ENGINE, MATTES & SCULPT",
+        sub: "STACK DOS 5 PLUGINS AFTER EFFECTS, MATTES PROCEDURAIS & SOBEL",
+        knobs: [
+          { name: "Sorter Min", desc: "Pixel Sorter: Limiar de separação de pixels" },
+          { name: "Stretch Len", desc: "Pixel Stretch: Comprimento dos rastros (px)" },
+          { name: "Mod Freq", desc: "Modulation: Frequência das ondas análogas" },
+          { name: "Bad TV Warp", desc: "Bad TV: Distorção de tubo e ruído de fita" },
+          { name: "RXXR Dens", desc: "RXXR Matrix: Densidade da grade de glifos" },
+          { name: "Sobel Thresh", desc: "Sobel Find Edges: Sensibilidade dos contornos" },
+          { name: "Sobel Boost", desc: "Sobel Luminance: Ganho de iluminação de borda" },
+          { name: "Audio Gain", desc: "Ganho de Sensibilidade Áudio-Reativa" }
+        ],
+        faders: [
+          { name: "FX SORTER", desc: "Intensidade do Plugin Pixel Sorter (0% a 100%)" },
+          { name: "FX STRETCH", desc: "Intensidade do Plugin Pixel Stretch" },
+          { name: "FX MODUL", desc: "Intensidade do Plugin Modulation" },
+          { name: "FX BAD TV", desc: "Intensidade do Plugin Bad TV" },
+          { name: "FX RXXR", desc: "Intensidade do Plugin RXXR Matrix" },
+          { name: "FX DRY/WET", desc: "Master FX Dry/Wet (Mix Global de Efeitos)" },
+          { name: "SOBEL MIX", desc: "Mix de Opacidade do Contorno Sobel" },
+          { name: "MASTER DIM", desc: "Master Dimmer de Saída" }
+        ],
+        mute: "Mute da Camada correspondente",
+        solo: "Solo da Camada correspondente",
+        rec: "Toggle ON/OFF do Plugin FX correspondente",
+        sel: "Foco no Studio Inspector da Camada"
+      },
+      3: {
+        title: "BANK C · 3D MATRIX & MACRO PRESETS",
+        sub: "CENÁRIOS PROCEDURAIS 3D, ESTRELA 13 & DISPARO DE PRESETS",
+        knobs: [
+          { name: "3D Orbit", desc: "Velocidade de Órbita da Câmera 3D" },
+          { name: "3D Tilt", desc: "Ângulo de Inclinação da Câmera (-45° a +45°)" },
+          { name: "3D Zoom", desc: "Distância / Zoom da Câmera (1.2 a 4.2)" },
+          { name: "Star Spin", desc: "Sensibilidade de Rotação por Agudos (Treble)" },
+          { name: "13 Sub Kick", desc: "Impacto Z do Numeral 13 modulado por Sub-Bass" },
+          { name: "Ocean Wave", desc: "Amplitude de Ondulação do Mar de Partículas" },
+          { name: "Vignette Rnd", desc: "Curvatura / Formato Circular da Vinheta" },
+          { name: "Vignette Fth", desc: "Suavidade das Bordas da Vinheta (Feather)" }
+        ],
+        faders: [
+          { name: "3D SCENE", desc: "Seletor de Cena 3D (Spine / Ocean / Star 13 / Hybrid)" },
+          { name: "PALETTE", desc: "Paleta Cromática (Cyan / Gold / Emerald / Violet)" },
+          { name: "13 KICK MULT", desc: "Multiplicador de Impacto Sub-Bass no Numeral 13" },
+          { name: "STAR SPIN", desc: "Sensibilidade de Rotação por Agudos" },
+          { name: "OCEAN AMP", desc: "Amplitude de Ondas do Cenário Oceânico" },
+          { name: "PREAMP GAIN", desc: "Ganho do Pré-Amplificador de Microfone" },
+          { name: "VIGNETTE", desc: "Raio de Abertura da Vinheta Procedural" },
+          { name: "MASTER DIM", desc: "Master Dimmer / Fade Out de Segurança" }
+        ],
+        mute: "Dispara Presets de INTRO e GROOVE (Presets limpos)",
+        solo: "Dispara Presets de BUILD e DROP (Presets de clímax)",
+        rec: "Alterna Cenas e Paletas do Motor 3D",
+        sel: "Foco no Studio Inspector 3D"
+      }
+    };
+
+    let currentBank = 1;
+    let selectedElement = 'fader_0';
+
+    // Gera o HTML dos 8 Canais do Mixer
+    function renderMixerChannels() {
+      const container = document.getElementById('channels-container');
+      const bData = MAP_DATA[currentBank];
+      let html = '';
+
+      for (let i = 0; i < 8; i++) {
+        const knobInfo = bData.knobs[i] || { name: `Knob ${i+1}`, desc: '' };
+        const faderInfo = bData.faders[i] || { name: `Fader ${i+1}`, desc: '' };
+
+        html += `
+          <div class="ch-strip" id="ch-strip-${i}">
+            <span class="ch-number">CH ${i + 1}</span>
+
+            <!-- Rotary Encoder Knob -->
+            <div class="knob-wrap" onclick="inspectElement('knob_${i}')">
+              <div class="knob-body" id="knob-body-${i}">
+                <div class="knob-notch"></div>
+              </div>
+              <span class="knob-tag" id="knob-tag-${i}">${knobInfo.name}</span>
+            </div>
+
+            <!-- Botões Mute, Solo, Rec, Select -->
+            <div class="ch-buttons-stack">
+              <button class="hw-btn btn-mute" id="btn-mute-${i}" onclick="inspectElement('mute_${i}')">MUTE</button>
+              <button class="hw-btn btn-solo" id="btn-solo-${i}" onclick="inspectElement('solo_${i}')">SOLO</button>
+              <button class="hw-btn btn-rec" id="btn-rec-${i}" onclick="inspectElement('rec_${i}')">REC</button>
+              <button class="hw-btn btn-sel" id="btn-sel-${i}" onclick="inspectElement('sel_${i}')">SEL</button>
+            </div>
+
+            <!-- Linear Fader -->
+            <div class="fader-slot" onclick="inspectElement('fader_${i}')">
+              <div class="fader-track" id="fader-track-${i}">
+                <div class="fader-scale-ticks">
+                  <span class="fader-tick"></span>
+                  <span class="fader-tick"></span>
+                  <span class="fader-tick"></span>
+                  <span class="fader-tick"></span>
+                  <span class="fader-tick"></span>
+                </div>
+                <div class="fader-cap" id="fader-cap-${i}" style="bottom: 50%;">
+                  <div class="fader-cap-line"></div>
+                </div>
+              </div>
+              <span class="fader-tag" id="fader-tag-${i}">${faderInfo.name}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // Alterna entre os Bancos A, B e C
+    function switchBank(bankNum) {
+      currentBank = bankNum;
+      
+      document.querySelectorAll('.bank-pill').forEach((btn, idx) => {
+        btn.classList.toggle('active', (idx + 1) === bankNum);
+      });
+
+      const bData = MAP_DATA[bankNum];
+      document.getElementById('oled-title').textContent = bData.title;
+      document.getElementById('oled-sub').textContent = bData.sub;
+
+      renderMixerChannels();
+      updateInspector();
+    }
+
+    function prevBankUI() {
+      const prev = currentBank === 1 ? 3 : currentBank - 1;
+      switchBank(prev);
+    }
+
+    function nextBankUI() {
+      const next = currentBank === 3 ? 1 : currentBank + 1;
+      switchBank(next);
+    }
+
+    // Inspetor Dinâmico ao Clicar em qualquer Controle
+    function inspectElement(typeKey) {
+      selectedElement = typeKey;
+      updateInspector();
+    }
+
+    function updateInspector() {
+      const bData = MAP_DATA[currentBank];
+      const nameEl = document.getElementById('insp-name');
+      const paramEl = document.getElementById('insp-param');
+      const funcEl = document.getElementById('insp-func');
+      const howEl = document.getElementById('insp-how');
+      const shortcutEl = document.getElementById('insp-shortcut');
+      const rawEl = document.getElementById('insp-midi-raw');
+
+      document.querySelectorAll('.ch-strip').forEach(s => s.classList.remove('highlight'));
+
+      if (selectedElement.startsWith('fader_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        const fInfo = bData.faders[idx];
+        const strip = document.getElementById(`ch-strip-${idx}`);
+        if (strip) strip.classList.add('highlight');
+
+        nameEl.textContent = `Fader ${idx + 1} (Canal ${idx + 1})`;
+        paramEl.textContent = fInfo.name;
+        funcEl.textContent = fInfo.desc;
+        howEl.innerHTML = `Mova o fader linear físico de 60mm. Opera com <strong>Soft Takeover</strong>: se o fader físico estiver em posição diferente da tela, o software só responde quando a posição física cruzar a virtual, prevenindo saltos abruptos.`;
+        shortcutEl.textContent = `Pelo mouse: clique e arraste no Cockpit. CC MIDI: CC ${20 + idx}.`;
+        rawEl.textContent = `Canal: 1 · CC: ${20 + idx} (Faixa 20 a 27) · Resolução: 0 a 127`;
+      } else if (selectedElement.startsWith('knob_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        const kInfo = bData.knobs[idx];
+        const strip = document.getElementById(`ch-strip-${idx}`);
+        if (strip) strip.classList.add('highlight');
+
+        nameEl.textContent = `Encoder ${idx + 1} (Knob 360°)`;
+        paramEl.textContent = kInfo.name;
+        funcEl.textContent = kInfo.desc;
+        howEl.innerHTML = `Giro infinito contínuo com <strong>Aceleração Balística</strong>. Giro lento = precisão cirúrgica de 0.5%. Giro rápido = saltos amplos para transições energéticas.`;
+        shortcutEl.textContent = `Pelo teclado: clique no controle no Cockpit. CC MIDI: CC ${30 + idx}.`;
+        rawEl.textContent = `Canal: 1 · CC: ${30 + idx} (Faixa 30 a 37) · Modo: Absoluto / Relativo 2`;
+      } else if (selectedElement.startsWith('mute_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        nameEl.textContent = `Botão MUTE (Canal ${idx + 1})`;
+        paramEl.textContent = `Mute / Corte Rápido`;
+        funcEl.textContent = bData.mute;
+        howEl.innerHTML = `Pressione o botão tátil. Quando ativo, o LED vermelho interno do botão acende. No Banco C, atua como disparo de presets de INTRO e GROOVE.`;
+        shortcutEl.textContent = `Teclado: Alt + ${idx + 1} para mute da camada. CC MIDI: CC ${40 + idx}.`;
+        rawEl.textContent = `Canal: 1 · CC: ${40 + idx} · Note: ${16 + idx}`;
+      } else if (selectedElement.startsWith('solo_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        nameEl.textContent = `Botão SOLO (Canal ${idx + 1})`;
+        paramEl.textContent = `Solo / Isolação`;
+        funcEl.textContent = bData.solo;
+        howEl.innerHTML = `Isola a camada correspondente no telão com iluminação do LED âmbar. No Banco C, dispara presets de BUILD e DROP.`;
+        shortcutEl.textContent = `CC MIDI: CC ${48 + idx} · Note: ${8 + idx}`;
+        rawEl.textContent = `Canal: 1 · CC: ${48 + idx} · Note: ${8 + idx}`;
+      } else if (selectedElement.startsWith('rec_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        nameEl.textContent = `Botão REC / TRIGGER (Canal ${idx + 1})`;
+        paramEl.textContent = `Ação Secundária / Trigger`;
+        funcEl.textContent = bData.rec;
+        howEl.innerHTML = `No Banco A: aciona pulso suave (strobe contido de opacidade sem flash branco puro). No Banco B: liga/desliga o shader do efeito correspondente.`;
+        shortcutEl.textContent = `CC MIDI: CC ${56 + idx} · Note: ${0 + idx}`;
+        rawEl.textContent = `Canal: 1 · CC: ${56 + idx} · Note: ${0 + idx}`;
+      } else if (selectedElement.startsWith('sel_')) {
+        const idx = parseInt(selectedElement.split('_')[1]);
+        nameEl.textContent = `Botão SELECT (Canal ${idx + 1})`;
+        paramEl.textContent = `Foco no Studio Inspector`;
+        funcEl.textContent = bData.sel;
+        howEl.innerHTML = `Foca imediatamente a camada no Studio Inspector lateral deslizante, permitindo ajustar parâmetros finos, zoom, rotação e pan.`;
+        shortcutEl.textContent = `Teclado: Shift + ${idx + 1}. CC MIDI: CC ${64 + idx}.`;
+        rawEl.textContent = `Canal: 1 · CC: ${64 + idx} · Note: ${24 + idx}`;
+      } else if (selectedElement === 'master_fader') {
+        nameEl.textContent = `Master Fader / Crossfader`;
+        paramEl.textContent = `T-Bar Crossfader A/B`;
+        funcEl.textContent = `Realiza transição gradual suave entre o sinal ativo no Program (Bus A) e o sinal armado em Preview (Bus B).`;
+        howEl.innerHTML = `Mova de 0% a 100%. No centro (50%), ambas as camadas se misturam de acordo com os modos de mesclagem (Multiply/Screen).`;
+        shortcutEl.textContent = `Teclado: Setas Esquerda (←) e Direita (→). CC MIDI: CC 28.`;
+        rawEl.textContent = `Canal: 1 · CC: 28 · Faixa: 0 a 127`;
+      } else if (selectedElement === 'panic_btn') {
+        nameEl.textContent = `Botão PANIC / BLACKOUT`;
+        paramEl.textContent = `Corte Total de Emergência`;
+        funcEl.textContent = `Zera instantaneamente todas as saídas de vídeo para preto puro (#000000) sem desligar a reprodução dos clipes.`;
+        howEl.innerHTML = `Pressione a qualquer momento no palco para escurecer a projeção. Pressione novamente para reabrir a imagem.`;
+        shortcutEl.textContent = `Teclado: Tecla 'B'. CC MIDI: CC 72.`;
+        rawEl.textContent = `Canal: 1 · CC: 72 · Toggle Instantâneo`;
+      } else if (selectedElement.startsWith('trans_')) {
+        const sub = selectedElement.replace('trans_', '');
+        const transMap = {
+          rew: { name: 'REW (Rewind)', func: 'Reinicia a frase musical e playhead no Bar 1.1.1 (Downbeat imediato).', key: 'R', cc: 64 },
+          ff: { name: 'FF (Fast Forward)', func: 'Avança a fila preditiva e executa o próximo Take programado.', key: 'Enter', cc: 65 },
+          stop: { name: 'STOP (Freeze)', func: 'Pausa ou congela a reprodução em freeze frame cinematográfico.', key: 'P', cc: 66 },
+          play: { name: 'PLAY (Auto Take)', func: 'Dispara transição suave temporizada de Auto Take entre Decks.', key: 'Space', cc: 67 },
+          loop: { name: 'LOOP (Alternar Dock)', func: 'Alterna entre visualização de dock de módulos e Pro Timeline.', key: 'Tab', cc: 68 },
+          tap: { name: 'TAP (Tap Tempo)', func: 'Ajuste manual de BPM no ritmo da música através de toques repetidos.', key: 'T', cc: 69 }
+        };
+        const t = transMap[sub] || { name: 'Transporte', func: '', key: '', cc: 0 };
+        nameEl.textContent = `Transporte: ${t.name}`;
+        paramEl.textContent = `Comando de Regência Musical`;
+        funcEl.textContent = t.func;
+        howEl.innerHTML = `Botões de controle de transporte de alta precisão sincronizados ao motor de áudio e timeline musical do Penumbra.`;
+        shortcutEl.textContent = `Teclado: Tecla '${t.key}'. CC MIDI: CC ${t.cc}.`;
+        rawEl.textContent = `Canal: 1 · CC: ${t.cc}`;
+      }
+    }
+
+    // ========================================================================
+    // Integração Web MIDI API com Detecção Bluetooth / USB em Tempo Real
+    // ========================================================================
+    let midiAccess = null;
+
+    async function initWebMidi() {
+      const badgeText = document.getElementById('midi-status-text');
+      const badgeDot = document.getElementById('midi-status-dot');
+      const rxDot = document.getElementById('led-midi-rx');
+
+      if (!navigator.requestMIDIAccess) {
+        badgeText.textContent = "Web MIDI não suportada neste browser";
+        return;
+      }
+
+      try {
+        midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+        handleMidiStateChange();
+        midiAccess.onstatechange = handleMidiStateChange;
+      } catch (e) {
+        try {
+          midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+          handleMidiStateChange();
+          midiAccess.onstatechange = handleMidiStateChange;
+        } catch (err) {
+          badgeText.textContent = "Acesso MIDI recusado";
+        }
+      }
+    }
+
+    function handleMidiStateChange() {
+      const badgeText = document.getElementById('midi-status-text');
+      const badgeDot = document.getElementById('midi-status-dot');
+      const oledSub = document.getElementById('oled-sub');
+
+      let found = null;
+      for (const input of midiAccess.inputs.values()) {
+        found = input;
+        input.onmidimessage = handleMidiMessage;
+      }
+
+      if (found) {
+        badgeText.textContent = `Conectado: ${found.name}`;
+        badgeDot.className = 'status-dot active';
+        oledSub.textContent = `MIDI CONECTADO: ${found.name.toUpperCase()}`;
+        document.getElementById('led-bt-status').className = 'chassis-led-dot active';
+      } else {
+        badgeText.textContent = "Aguardando SMC-Mixer...";
+        badgeDot.className = 'status-dot';
+      }
+    }
+
+    function handleMidiMessage(event) {
+      const [status, data1, data2] = event.data;
+      const cmd = status >> 4;
+      const ch = (status & 0xf) + 1;
+
+      // Pisca LED de Data no Chassi
+      const rxDot = document.getElementById('led-midi-rx');
+      if (rxDot) {
+        rxDot.className = 'chassis-led-dot blink-amber';
+        setTimeout(() => rxDot.className = 'chassis-led-dot', 60);
+      }
+
+      // CC Message
+      if (cmd === 11 || cmd === 0xB) {
+        const cc = data1;
+        const val = data2;
+        const norm = val / 127.0;
+
+        // Faders 1 a 8: CC 20 a 27
+        if (cc >= 20 && cc <= 27) {
+          const fIdx = cc - 20;
+          const cap = document.getElementById(`fader-cap-${fIdx}`);
+          if (cap) cap.style.bottom = `${norm * 100}%`;
+          document.getElementById('oled-sub').textContent = `FADER ${fIdx + 1}: ${Math.round(norm * 100)}% (CC ${cc})`;
+          inspectElement(`fader_${fIdx}`);
+        }
+
+        // Master Fader: CC 28
+        else if (cc === 28) {
+          const mCap = document.getElementById('master-cap');
+          if (mCap) mCap.style.bottom = `${norm * 100}%`;
+          document.getElementById('oled-sub').textContent = `MASTER CROSSFADER: ${Math.round(norm * 100)}%`;
+          inspectElement('master_fader');
+        }
+
+        // Knobs 1 a 8: CC 30 a 37
+        else if (cc >= 30 && cc <= 37) {
+          const kIdx = cc - 30;
+          const kBody = document.getElementById(`knob-body-${kIdx}`);
+          if (kBody) {
+            const rot = (norm - 0.5) * 270;
+            kBody.style.transform = `rotate(${rot}deg)`;
+          }
+          document.getElementById('oled-sub').textContent = `KNOB ${kIdx + 1}: ${Math.round(norm * 100)}% (CC ${cc})`;
+          inspectElement(`knob_${kIdx}`);
+        }
+
+        // Mute: CC 40 a 47
+        else if (cc >= 40 && cc <= 47) {
+          const idx = cc - 40;
+          const btn = document.getElementById(`btn-mute-${idx}`);
+          if (btn) btn.classList.toggle('active', val > 0);
+          inspectElement(`mute_${idx}`);
+        }
+
+        // Solo: CC 48 a 55
+        else if (cc >= 48 && cc <= 55) {
+          const idx = cc - 48;
+          const btn = document.getElementById(`btn-solo-${idx}`);
+          if (btn) btn.classList.toggle('active', val > 0);
+          inspectElement(`solo_${idx}`);
+        }
+
+        // Bank Switch: CC 70 e 71
+        else if (cc === 70 && val > 0) {
+          prevBankUI();
+        } else if (cc === 71 && val > 0) {
+          nextBankUI();
+        }
+      }
+    }
+
+    // Inicialização da Página
+    window.addEventListener('DOMContentLoaded', () => {
+      renderMixerChannels();
+      updateInspector();
+      initWebMidi();
+    });
+  </script>
+</body>
+</html>

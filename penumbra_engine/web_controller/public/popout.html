@@ -357,6 +357,14 @@
       }, durationMs);
     }
 
+    // Atualiza estado visual do botão de rotação
+    function updateRotateButtonUI() {
+      if (!btnToggleRotate) return;
+      btnToggleRotate.textContent = rotateCompensate ? '⤾ PROJETOR 90°: ATIVO' : '⬍ NATIVO HORIZ (CENTRO)';
+      btnToggleRotate.style.borderColor = rotateCompensate ? '#00ff88' : '#00f0ff';
+      btnToggleRotate.style.color = rotateCompensate ? '#00ff88' : '#00f0ff';
+    }
+
     // View mode config
     if (viewMode === 'program') {
       feedBadge.textContent = 'PROGRAM (SAÍDA PROJETOR)';
@@ -364,13 +372,15 @@
       document.title = 'PENUMBRA · SAÍDA PROGRAM (PROJETOR)';
       if (btnToggleRotate) {
         btnToggleRotate.style.display = 'inline-flex';
+        updateRotateButtonUI();
         btnToggleRotate.addEventListener('click', (e) => {
           e.stopPropagation();
           rotateCompensate = !rotateCompensate;
-          btnToggleRotate.textContent = rotateCompensate ? '⤾ PROJETOR 90°: ATIVO' : '⬍ NATIVO RETO (9:16)';
-          btnToggleRotate.style.borderColor = rotateCompensate ? '#00ff88' : '#00f0ff';
-          btnToggleRotate.style.color = rotateCompensate ? '#00ff88' : '#00f0ff';
-          showFeedbackToast(rotateCompensate ? 'ROTAÇÃO 90° ATIVA (PROJETOR FÍSICO)' : 'MODO RETO (9:16)');
+          if (window.opener && window.opener.toggleProjectorCompensation) {
+            window.opener.toggleProjectorCompensation(rotateCompensate);
+          }
+          updateRotateButtonUI();
+          showFeedbackToast(rotateCompensate ? 'ROTAÇÃO 90° ATIVA (PROJETOR FÍSICO)' : 'MODO RETO NO CENTRO (TELÃO COMUM / SEM CORTES)');
         });
       }
     } else {
@@ -521,59 +531,106 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Loop de renderização sincronizado com a janela principal
+    // Loop de renderização sincronizado com a janela principal (Zero-Drop 60 FPS)
+    let lastPopoutTick = performance.now();
+    let isRenderingFrame = false;
+
     function syncAndRender() {
-      if (window.opener && !window.opener.closed) {
-        const sourceCanvasId = viewMode === 'program' ? 'program-canvas' : 'preview-canvas';
-        const srcCanvas = window.opener.document.getElementById(sourceCanvasId);
-        const srcTc = window.opener.document.getElementById(viewMode === 'program' ? 'prg-timecode' : 'prv-timecode');
-        const srcTitle = window.opener.document.getElementById(viewMode === 'program' ? 'hud-clip-title' : 'preview-clip-title');
+      if (isRenderingFrame) return;
+      isRenderingFrame = true;
+      try {
+        lastPopoutTick = performance.now();
 
-        if (srcTc && feedTc && srcTc.textContent !== feedTc.textContent) {
-          feedTc.textContent = srcTc.textContent;
-        }
-        if (srcTitle && clipTitle && srcTitle.textContent !== clipTitle.textContent) {
-          clipTitle.textContent = srcTitle.textContent;
-        }
-
-        if (srcCanvas && srcCanvas.width > 0 && srcCanvas.height > 0) {
-          const isSrcVertical = srcCanvas.height > srcCanvas.width;
-          const cw = canvas.width;
-          const ch = canvas.height;
-
-          ctx.clearRect(0, 0, cw, ch);
-
-          if (isSrcVertical && rotateCompensate && viewMode === 'program') {
-            // Projetor montado fisicamente na vertical de 90°: gira sinal vertical para preencher tela 16:9
-            ctx.save();
-            ctx.translate(cw / 2, ch / 2);
-            ctx.rotate(Math.PI / 2);
-            const scale = Math.max(cw / srcCanvas.height, ch / srcCanvas.width);
-            const drawW = srcCanvas.width * scale;
-            const drawH = srcCanvas.height * scale;
-            ctx.drawImage(srcCanvas, -drawW / 2, -drawH / 2, drawW, drawH);
-            ctx.restore();
-          } else {
-            // Render normal com aspect cover sem barras
-            const scale = Math.max(cw / srcCanvas.width, ch / srcCanvas.height);
-            const drawW = srcCanvas.width * scale;
-            const drawH = srcCanvas.height * scale;
-            const dx = (cw - drawW) / 2;
-            const dy = (ch - drawH) / 2;
-            ctx.drawImage(srcCanvas, dx, dy, drawW, drawH);
+        if (window.opener && !window.opener.closed) {
+          // Sincroniza configuração de compensação de projetor da janela principal
+          const openerState = window.opener.appState;
+          if (openerState && openerState.projector_compensation !== undefined) {
+            const desiredComp = Boolean(openerState.projector_compensation);
+            if (rotateCompensate !== desiredComp) {
+              rotateCompensate = desiredComp;
+              updateRotateButtonUI();
+            }
           }
+
+          const sourceCanvasId = viewMode === 'program' ? 'program-canvas' : 'preview-canvas';
+          const srcCanvas = window.opener.document.getElementById(sourceCanvasId);
+          const srcTc = window.opener.document.getElementById(viewMode === 'program' ? 'prg-timecode' : 'prv-timecode');
+          const srcTitle = window.opener.document.getElementById(viewMode === 'program' ? 'hud-clip-title' : 'preview-clip-title');
+
+          if (srcTc && feedTc && srcTc.textContent !== feedTc.textContent) {
+            feedTc.textContent = srcTc.textContent;
+          }
+          if (srcTitle && clipTitle && srcTitle.textContent !== clipTitle.textContent) {
+            clipTitle.textContent = srcTitle.textContent;
+          }
+
+          if (srcCanvas && srcCanvas.width > 0 && srcCanvas.height > 0) {
+            const isSrcVertical = srcCanvas.height > srcCanvas.width;
+            const cw = canvas.width;
+            const ch = canvas.height;
+
+            // Fundo preto obsidiana absoluto (#000000) para áreas de pillarbox/letterbox
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, cw, ch);
+
+            if (isSrcVertical && rotateCompensate && viewMode === 'program') {
+              // CENÁRIO A: Projetor montado fisicamente virado a 90° (Totem Físico)
+              // Gira o feixe de vídeo 90° para que saia vertical no espaço físico
+              ctx.save();
+              ctx.translate(cw / 2, ch / 2);
+              ctx.rotate(Math.PI / 2);
+              const scale = Math.min(cw / srcCanvas.height, ch / srcCanvas.width);
+              const drawW = srcCanvas.width * scale;
+              const drawH = srcCanvas.height * scale;
+              ctx.drawImage(srcCanvas, -drawW / 2, -drawH / 2, drawW, drawH);
+              ctx.restore();
+            } else {
+              // CENÁRIO B: Telão ou Projetor comum na horizontal (16:9)
+              // Vídeo vertical (ou de qualquer aspect ratio) é mantido em pé, ESCALADO NO CENTRO DA TELA
+              // com Aspect Fit estrito (ZERO CORTES, 100% visível, bordas pretas puras nas laterais)
+              const scale = Math.min(cw / srcCanvas.width, ch / srcCanvas.height);
+              const drawW = srcCanvas.width * scale;
+              const drawH = srcCanvas.height * scale;
+              const dx = (cw - drawW) / 2;
+              const dy = (ch - drawH) / 2;
+              ctx.drawImage(srcCanvas, dx, dy, drawW, drawH);
+            }
+          }
+        } else {
+          // Fallback quando janela principal fecha ou desconecta
+          ctx.fillStyle = '#050608';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#718096';
+          ctx.font = '14px JetBrains Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText('Aguardando sinal do Cockpit Penumbra...', canvas.width / 2, canvas.height / 2);
         }
-      } else {
-        // Fallback quando janela principal fecha ou desconecta
-        ctx.fillStyle = '#050608';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#718096';
-        ctx.font = '14px JetBrains Mono';
-        ctx.textAlign = 'center';
-        ctx.fillText('Aguardando sinal do Cockpit Penumbra...', canvas.width / 2, canvas.height / 2);
+      } finally {
+        isRenderingFrame = false;
       }
       requestAnimationFrame(syncAndRender);
     }
+
+    // Background Anti-Freeze Worker Ticker
+    // Permite mudar de janela/app no Mac sem que o macOS suspenda a renderização na popup
+    try {
+      const workerBlob = new Blob([
+        "var timer = null; self.onmessage = function(e) { if (e.data === 'start') { if (timer) clearInterval(timer); timer = setInterval(function() { self.postMessage('tick'); }, 1000 / 60); } };"
+      ], { type: 'application/javascript' });
+      const keepAliveWorker = new Worker(URL.createObjectURL(workerBlob));
+      keepAliveWorker.onmessage = function() {
+        const now = performance.now();
+        // Se a janela perdeu o foco ou o requestAnimationFrame foi throttled pelo OS:
+        if (document.hidden || !document.hasFocus() || (now - lastPopoutTick > 25)) {
+          syncAndRender();
+        }
+      };
+      keepAliveWorker.postMessage('start');
+      console.log('[Popout] Background Anti-Freeze Worker ativo (60 FPS contínuo no segundo monitor).');
+    } catch (e) {
+      console.warn('[Popout] Worker keep-alive fallback:', e);
+    }
+
     syncAndRender();
   </script>
 </body>
