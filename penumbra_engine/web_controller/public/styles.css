@@ -7625,6 +7625,25 @@ body.resizing-workspace-active .top-zone {
   gap: 6px;
 }
 
+.nsb-select-quality {
+  background: #23252c;
+  border: 1px solid #32353e;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+  cursor: pointer;
+  height: 100%;
+}
+
+.nsb-select-quality:hover,
+.nsb-select-quality:focus {
+  border-color: #00f0ff;
+}
+
 .nsb-btn-dl:hover {
   background: #00f0ff;
   border-color: #00f0ff;

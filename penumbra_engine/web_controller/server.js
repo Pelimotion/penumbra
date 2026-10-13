@@ -424,7 +424,7 @@ function requireLocalRequestOrigin(req, res, next) {
 // YouTube downloads remain on this loopback machine and expire from the temporary cache.
 app.post('/api/youtube-downloads', requireLocalRequestOrigin, (req, res) => {
   try {
-    const job = youtubeDownloads.start(req.body && req.body.url);
+    const job = youtubeDownloads.start(req.body && req.body.url, req.body && req.body.quality);
     res.status(202).json(job);
   } catch (error) {
     if (error instanceof YouTubeDownloadError) {

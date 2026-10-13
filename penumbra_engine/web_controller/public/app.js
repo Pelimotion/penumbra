@@ -3756,7 +3756,7 @@ function initBackgroundKeepAlive() {
 window.initBackgroundKeepAlive = initBackgroundKeepAlive;
 
 function renderVisuals(time) {
-  const targetFps = appState.fps_limit || 60;
+  const targetFps = appState.fps_limit || 30;
   const fpsInterval = 1000 / targetFps;
   const now = time || performance.now();
   lastEngineTick = now;
@@ -4742,7 +4742,7 @@ function renderSceneMarineSpine(ctx, w, h, simTime, p) {
   const cosX = Math.cos(p.rotX), sinX = Math.sin(p.rotX);
 
   const swimPhase = simTime * 3.2;
-  const swimAmp = 0.08 + p.bass * 0.14;
+  const swimAmp = (0.08 + p.bass * 0.14) * (p.cfg3d.audio_reactivity?.spine_swimming || 1.0);
   const ribExp = 1.0 + p.sub * 0.45;
   const dorsalPulse = 1.0 + p.air * 0.35;
 
@@ -4839,9 +4839,10 @@ function renderSceneMarineSpine(ctx, w, h, simTime, p) {
     const persp = p.fov / depth;
     const sx = w * 0.5 + x1 * persp * w;
     const sy = h * 0.5 + y2 * persp * h;
-    const spR = Math.max(0.8, (s.size / depth) * (0.8 + p.air * 0.6));
+    const sparkleMult = p.cfg3d.audio_reactivity?.air_sparkle || 1.0;
+    const spR = Math.max(0.8, (s.size / depth) * (0.8 + p.air * 0.6 * sparkleMult));
 
-    ctx.fillStyle = p.palette.accentRgba((s.alpha * (0.6 + p.air * 0.4)).toFixed(2));
+    ctx.fillStyle = p.palette.accentRgba((s.alpha * (0.6 + p.air * 0.4 * sparkleMult)).toFixed(2));
     ctx.beginPath();
     ctx.arc(sx, sy, spR, 0, Math.PI * 2);
     ctx.fill();
@@ -13679,10 +13680,12 @@ function bootstrapApp() {
       closeStudioLauncher();
     };
     const waitForYoutubeDownload = async url => {
+      const qualitySelect = document.getElementById('select-nexus-yt-quality');
+      const quality = qualitySelect ? qualitySelect.value : '720';
       const startResponse = await fetch('/api/youtube-downloads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url, quality })
       });
       const startJob = await startResponse.json().catch(() => ({}));
       if (!startResponse.ok || !startJob.id) throw new Error(startJob.error || 'Não foi possível iniciar o download.');
