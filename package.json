@@ -4,7 +4,9 @@
   "description": "Penumbra System — Professional Audio-Reactive VJ Engine (Zero-Server Architecture)",
   "private": true,
   "scripts": {
-    "build": "node scripts/build_portable.js",
+    "test": "node --test",
+    "test:docs": "node --test test/repo-docs.test.cjs",
+    "test:python": "python -B -m unittest discover -s test -p test_scanner.py && python -B -m unittest discover -s test -p test_audio_clock.py",
     "deploy": "node scripts/deploy_cdn.js",
     "docs": "node scripts/update_docs.js",
     "bundle": "node scripts/build_portable.js",

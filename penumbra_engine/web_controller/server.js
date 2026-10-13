@@ -6,14 +6,25 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const dgram = require('dgram');
+const { createDownloadManager, YouTubeDownloadError } = require('./youtube-downloader');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({
+  server,
+  verifyClient: ({ origin }, done) => {
+    done(!origin || allowedWebSocketOrigins.has(origin), 403, 'Forbidden origin');
+  }
+});
 
 const PORT = process.env.PORT || 3000;
+const allowedWebSocketOrigins = new Set([
+  `http://localhost:${PORT}`,
+  `http://127.0.0.1:${PORT}`
+]);
 const OSC_PORT = 7000;
 const AUDIO_BRAIN_WS_PORT = 7001;
+const youtubeDownloads = createDownloadManager();
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const WORKSPACE_DIR = path.resolve(ROOT_DIR, '..');
@@ -58,8 +69,14 @@ app.use('/downloads', express.static(DOWNLOADS_DIR));
 
 // Smart Matte Static Resolver (finds mattes with direct or category-prefixed paths)
 app.use('/mattes', (req, res, next) => {
-  const directPath = path.join(MATTES_DIR, req.path);
-  if (fs.existsSync(directPath) && fs.statSync(directPath).isFile()) {
+  const directPath = path.resolve(MATTES_DIR, `.${req.path}`);
+  const relativePath = path.relative(MATTES_DIR, directPath);
+  const isInsideMattes = relativePath === '' || (
+    relativePath !== '..' &&
+    !relativePath.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativePath)
+  );
+  if (isInsideMattes && fs.existsSync(directPath) && fs.statSync(directPath).isFile()) {
     return res.sendFile(directPath);
   }
   const baseName = path.basename(req.path);
@@ -395,6 +412,51 @@ app.get('/api/manifest', (req, res) => {
   res.json(getManifest());
 });
 
+function requireLocalRequestOrigin(req, res, next) {
+  const origin = req.headers.origin;
+  const fetchSite = req.headers['sec-fetch-site'];
+  if ((origin && !allowedWebSocketOrigins.has(origin)) || (fetchSite && !['same-origin', 'none'].includes(fetchSite))) {
+    return res.status(403).json({ error: 'Origem não autorizada.' });
+  }
+  next();
+}
+
+// YouTube downloads remain on this loopback machine and expire from the temporary cache.
+app.post('/api/youtube-downloads', requireLocalRequestOrigin, (req, res) => {
+  try {
+    const job = youtubeDownloads.start(req.body && req.body.url);
+    res.status(202).json(job);
+  } catch (error) {
+    if (error instanceof YouTubeDownloadError) {
+      return res.status(error.status).json({ error: error.message, code: error.code });
+    }
+    console.error('[!] Could not start YouTube download:', error.message);
+    res.status(500).json({ error: 'Não foi possível iniciar o download local.' });
+  }
+});
+
+app.get('/api/youtube-downloads/:id', requireLocalRequestOrigin, (req, res) => {
+  const job = youtubeDownloads.get(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Download temporário não encontrado ou expirado.' });
+  res.json(job);
+});
+
+app.delete('/api/youtube-downloads/:id', requireLocalRequestOrigin, (req, res) => {
+  if (!youtubeDownloads.cancel(req.params.id)) {
+    return res.status(409).json({ error: 'Não há download ativo para cancelar.' });
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/youtube-downloads/:id/media', requireLocalRequestOrigin, (req, res) => {
+  const videoPath = youtubeDownloads.getMediaPath(req.params.id);
+  if (!videoPath) return res.status(404).send('Vídeo temporário não encontrado ou expirado');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.sendFile(videoPath, (error) => {
+    if (error && !res.headersSent) res.status(error.statusCode || 500).end();
+  });
+});
+
 // 1.1 Mattes Catalog Endpoint
 app.get('/api/mattes', (req, res) => {
   if (fs.existsSync(MATTES_MANIFEST_PATH)) {
@@ -411,12 +473,21 @@ app.post('/api/rescan', (req, res) => {
   console.log('[*] Rescan requested by client...');
   const scannerScript = path.join(ROOT_DIR, 'media_pool', 'scanner.py');
   const pyProc = spawn('python3', [scannerScript], { cwd: WORKSPACE_DIR });
+  let responseSent = false;
+
+  pyProc.on('error', (error) => {
+    console.error('[!] Could not start media scanner:', error.message);
+    responseSent = true;
+    res.status(500).json({ success: false, error: 'Unable to start media scanner' });
+  });
 
   pyProc.on('close', (code) => {
+    if (responseSent) return;
     console.log(`[✓] Rescan completed with code ${code}`);
     cachedManifest = null; // Bust cache
     const data = getManifest();
     broadcast({ type: 'manifest_updated', data });
+    responseSent = true;
     res.json({ success: code === 0, count: data.length });
   });
 });
@@ -1361,6 +1432,6 @@ process.on('unhandledRejection', (reason) => {
   console.warn('[!] Caught unhandled rejection:', reason);
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`[✓] Penumbra Controller Server live on http://localhost:${PORT}`);
 });

@@ -14,7 +14,7 @@ import glob
 from pathlib import Path
 
 # Paths
-BASE_DIR = Path("/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera")
+BASE_DIR = Path(os.environ.get("PENUMBRA_MEDIA_ROOT", "/Volumes/PLM_SSD_01/Pipeline SSD 01/Gigantera/Pipeline Gigantera"))
 OUTPUT_DIR = Path(__file__).resolve().parent
 MANIFEST_PATH = OUTPUT_DIR / "media_manifest.json"
 THUMBS_DIR = OUTPUT_DIR / "thumbnails"
@@ -160,31 +160,28 @@ def classify_clip(name, folder_name, meta, visual):
     else:
         return "ABSTRACT", 3, "Balanced textural loop; suited for secondary compositing"
 
-def scan_all():
-    print(f"[*] Scanning pipeline directory: {BASE_DIR}")
-    video_extensions = {".mp4", ".m4v"} # Only browser-playable H.264 formats, strictly excluding desktop-only .mov ProRes/qtrle
+def discover_candidates(base_dir):
+    base_dir = Path(base_dir)
+    if not base_dir.is_dir():
+        raise FileNotFoundError(f"Media root does not exist or is not a directory: {base_dir}")
+
+    video_extensions = {".mp4", ".m4v"}
     candidates = []
-
-    for root, dirs, files in os.walk(BASE_DIR):
+    for root, dirs, files in os.walk(base_dir):
         rpath = Path(root)
-        # Skip backup and planning folders
-        if ".git" in rpath.parts or ".planning" in rpath.parts or "bkp" in str(rpath).lower():
+        dirs[:] = [d for d in dirs if d != ".git" and d != ".planning" and d.lower() != "bkp"]
+        if not any(part.lower() in ["1. in", "takes rj"] or "1. in" in part.lower() for part in rpath.parts):
             continue
-            
-        # Strictly require raw footage: must be inside '1. In', '1. in', or camera takes
-        path_str = str(rpath)
-        is_raw_in = any(part.lower() in ["1. in", "takes rj"] or "1. in" in part.lower() for part in rpath.parts)
-        if not is_raw_in:
-            continue
-            
-        for f in files:
-            ext = os.path.splitext(f)[1].lower()
-            if ext in video_extensions and not f.startswith("._") and not f.startswith("."):
-                if "stipples_simulacao" in f.lower():
-                    continue # Exclude pitch-black simulation tests
-                full_path = rpath / f
-                candidates.append(full_path)
+        for filename in files:
+            ext = os.path.splitext(filename)[1].lower()
+            if ext in video_extensions and not filename.startswith(("._", ".")) and "stipples_simulacao" not in filename.lower():
+                candidates.append(rpath / filename)
+    return sorted(candidates)
 
+
+def scan_all(base_dir=BASE_DIR):
+    print(f"[*] Scanning pipeline directory: {base_dir}")
+    candidates = discover_candidates(base_dir)
     print(f"[*] Found {len(candidates)} RAW 1. In video files across the pipeline.")
     
     manifest = []

@@ -8,3 +8,4 @@ graphify-out/
 .env*.local
 .env
 cdn_build/
+__pycache__/

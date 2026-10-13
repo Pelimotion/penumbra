@@ -108,6 +108,19 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span>STREAM</span>
             </button>
+            <button id="btn-nexus-yt-temporary" class="nsb-submit-btn nsb-btn-temporary" type="button" title="Baixa uma cópia temporária local do vídeo do YouTube">
+              <span>YT TEMP</span>
+            </button>
+            <button id="btn-nexus-yt-cancel" class="nsb-submit-btn" type="button" hidden>CANCELAR</button>
+          </div>
+          <div id="nexus-ingest-feedback" class="nexus-ingest-feedback" role="status" aria-live="polite" hidden>
+            <div class="nexus-ingest-status-line">
+              <span class="nexus-ingest-indicator" aria-hidden="true"></span>
+              <span id="nexus-ingest-message" class="nexus-ingest-message"></span>
+              <span id="nexus-ingest-percent" class="nexus-ingest-percent" hidden></span>
+            </div>
+            <progress id="nexus-ingest-progress" class="nexus-ingest-progress" max="100" aria-label="Progresso do download temporário" hidden></progress>
+            <div id="nexus-ingest-detail" class="nexus-ingest-detail" hidden></div>
           </div>
         </div>
 
