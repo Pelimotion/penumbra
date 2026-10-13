@@ -4461,13 +4461,13 @@ body.resizing-workspace-active .top-zone {
 }
 
 /* Tab 2: Visual 5-Channel Compositor Strips */
+/* Tab 2: Visual 5-Channel Compositor Strips */
 .pro-channel-strip {
   background: rgba(9, 11, 16, 0.85);
   border: 1px solid var(--border-subtle);
   border-radius: 5px;
   padding: 4px 8px;
-  display: grid;
-  grid-template-columns: 190px 140px 1fr 100px 140px;
+  display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.15s ease;
@@ -4494,7 +4494,9 @@ body.resizing-workspace-active .top-zone {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
+  width: 170px;
+  min-width: 155px;
+  flex-shrink: 0;
 }
 
 .ch-meta {
@@ -4526,6 +4528,18 @@ body.resizing-workspace-active .top-zone {
   display: flex;
   gap: 3px;
   align-items: center;
+  width: 130px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.ch-playback {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+  min-width: 130px;
+  flex-shrink: 0;
 }
 
 .ch-pill-rot {
@@ -4556,11 +4570,18 @@ body.resizing-workspace-active .top-zone {
   display: flex;
   align-items: center;
   gap: 4px;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 180px;
 }
 
 .ch-slot-icon {
   font-size: 10px;
+  flex-shrink: 0;
+}
+
+.btn-clear-matte,
+.btn-browse-matte {
+  flex-shrink: 0;
 }
 
 .btn-inv {
@@ -4574,6 +4595,9 @@ body.resizing-workspace-active .top-zone {
   border-radius: 2px;
   cursor: pointer;
   transition: all 0.12s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
 }
 
 .btn-inv:hover {

@@ -1,6 +1,6 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 10/10/2026, 17:40:48 BRT
+- **Última Atualização:** 10/10/2026, 17:41:16 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
@@ -12,7 +12,7 @@
 - **Persistência de Áudio Mic/P2:** 🟢 CORRIGIDO (Estado `audio_source` persistido no backend e protegido no frontend contra sobrescrita de telemetria)
 - **Vídeo em Nuvem (Anti-Freeze 60 FPS):** 🟢 RESOLVIDO (6 clipes nativos CDN adicionados ao topo, fallback resiliente, crossOrigin anonymous, sem telas congeladas)
 - **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
-- **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
+- **Biblioteca de Mattes & Master Mask:** 🟢 CORRIGIDA (Atribuição direta de máscara na MASTER via Tab 3 sem erros, inversão real do canal Alpha com cache dual normal/invertido e botões INV do Mixer reposicionados em flexbox sem sobreposição de painel)
 - **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
 - **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
@@ -36,9 +36,9 @@
 
 ## 🔢 Git Status
 - **Branch:** `main`
-- **Último Commit:** `f7cfaeb` — docs: sync architecture, state, and changelog for next session
-- **Data:** 2026-10-10 17:40:47
-- **Total de Commits:** 58
+- **Último Commit:** `31787ef` — chore: record post-commit state hash [skip ci]
+- **Data:** 2026-10-10 17:41:16
+- **Total de Commits:** 59
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
