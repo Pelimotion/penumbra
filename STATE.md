@@ -1,17 +1,9 @@
 # PENUMBRA SYSTEM · ESTADO EM TEMPO REAL
 
-- **Última Atualização:** 11/10/2026, 20:20:00 BRT
+- **Última Atualização:** 11/10/2026, 20:37:26 BRT
 - **Status do Sistema:** 🟢 AO VIVO & DEPLOYED NA BUNNY CDN (`https://gigantera-penumbra.b-cdn.net`)
 - **Painel de Controle Ativo:** [http://localhost:3000](http://localhost:3000) e [https://gigantera-penumbra.b-cdn.net](https://gigantera-penumbra.b-cdn.net)
-- **Rede de Segurança P0 (Broadcast Preflight):** 🟢 100% APROVADO (`npm run preflight` em 13.9s: Smoke E2E 7/7 passos verdes + Regressão Visual em 4 Viewports e 5 Macro States)
-- **Leveza & Performance (30 FPS Default):** 🟢 ATIVO (Padrão de fábrica a 30 FPS para manter o computador e a GPU ultra-frios e leves, preservando 100% das funções)
-- **3D Vanguarda & Categoria Oficial no Media Pool:** 🟢 ENTREGUE (9 Cenas procedurais 3D de vanguarda artística/marketing/videoarte: Mercury Blob Liquid Chrome, Brutalist Monolith 13, Nebula Stardust, Cyber Wireframe Lattice, Quantum Torus Flux, Plexus Marine Spine, Ocean Sun, Star 13 e Hybrid Cosmos; com isolamento de buffers offscreen por deck/layer, categoria oficial '3D' e botão de coleção dedicado na biblioteca)
-- **Execução Híbrida Local (SSD) vs Nuvem (CDN):** 🟢 100% RESILIENTE (74 vídeos no Bunny Edge CDN com reprodução instantânea na nuvem e reconexão silenciosa em 1 clique da pasta do SSD local via File System Access API + IndexedDB)
-- **Pisca/Rebote em Deck A (Telemetry Race Condition):** 🟢 RESOLVIDO (Implementada Guarda de Autoridade Temporal de 1500ms `_assignedAt` rejeitando rollbacks de telemetria obsoleta do servidor)
-- **Ergonomia iPad & Carga Cognitiva P1:** 🟢 AUDITADO & PROPOSTA DUAL-MODE ENTREGUE (Audit em 168 targets tácteis, proposta `proposals/ipad_dual_mode_cockpit.html` com Modo LIVE >= 48px e zero-hover)
-- **Medição Científica de Output Visual P3:** 🟢 AUDITADO (ITU-R BT.709 Luma Spectrum nos 5 estados, 0.00% estouro de branco, benchmark térmico comprovando 1280x720 a 2.2ms por frame na GPU)
 - **Motor Agêntico:** 🟢 NEXUS VIBE ENGINE ATIVO (`.agents/` com Governança L1-L4, FinOps e Skills)
-- **Integridade do Autopilot (Anti-Double-Take):** 🟢 RESOLVIDO (Eliminado duplo disparo com cooldown musical determinístico, desacoplamento de telemetria WebSocket e guarda atômica `lastAutopilotTakeTimestamp`)
 - **Transformação de Clipes Pré-Ar:** 🟢 ATIVO (Dual-Tier Matrix: `TotalScale = LayerScale * ClipScale`, `TotalRot = LayerRot + ClipRot`, `TotalPos = LayerPos + ClipPos`, botão `📐 CLIPE` no Preview Cue e `📐 POS` no Media Pool)
 - **Layer 5 (Overlay Deck):** 🟢 ATIVO (Canal de sobreposição dedicado, Track L5 no Arranger, Channel Strip 5 com blend e fader próprios)
 - **Trava de Máscara Master:** 🟢 ATIVO (Flag de imunização `master_locked_matte` travando enquadramento estático contra Autopilot e Presets)
@@ -22,7 +14,7 @@
 - **Áudio Reativo Club / Balada:** 🟢 ATIVO (Suíte `PenumbraWebAudio` com permissão nativa `getUserMedia`, Highpass 28Hz, Lowpass 15.5kHz, Normalizador Dinâmico Leaky e Spectral Flux)
 - **Biblioteca de Mattes:** 🟢 CORRIGIDA (29 máscaras nativas, rotas Vercel/CDN sincronizadas, fallback resiliente)
 - **Persistência & Relink Local:** 🟢 ATIVO (IndexedDB Structured Clone de FileSystemDirectoryHandle, auto-reconnect, banner de relink e reindexação de arquivos locais)
-- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com portão de acesso autenticado
+- **Studio Launcher:** 🟢 DaVinci Resolve / Cavalry Aesthetics com PIN 2026 integrado
 
 ## Pipeline de Processos
 - **Audio Brain (DSP & Predição):** 🟢 ATIVO (PID de background, streaming teste / P2, OSC UDP 7000, WS 7001)
@@ -33,21 +25,44 @@
 ## 📦 Snapshot de Código (Auto-gerado)
 | Arquivo | Linhas | Tamanho |
 |---|---|---|
-| `app.js` | 14,831 | 627.5 KB |
-| `styles.css` | 11,453 | 225.8 KB |
-| `index.html` | 3,596 | 235.7 KB |
+| `app.js` | 15,470 | 651.4 KB |
+| `styles.css` | 11,454 | 225.8 KB |
+| `index.html` | 3,605 | 236.6 KB |
 | `Penumbra_Portable.html` | — | 1.2 MB |
 
-## 🎬 Media Pool
-- **Clipes no Manifesto:** 83 entradas (74 vídeos locais/CDN + 9 cenas procedurais 3D de vanguarda)
+## 🎬 Media Pool & Generative 3D
+- **Clipes no Manifesto:** 86 entradas (incluindo 12 cenários generativos 3D autônomos)
 - **Thumbnails Sincronizadas:** 327 arquivos no CDN
+- **Cenários 3D Disponíveis:** 12 cenas (Estrela 13 PT Oficial, Espinhaço Abyss, Singularidade, Biomorphic Flora, Sol Vermelho Horizonte, Mercúrio Líquido, Monólito Brutalista, Nebula Particles, Wireframe Lattice, Quantum Torus, Ocean Sun, Hybrid Cosmos)
 
 ## 🔢 Git Status
-- **Branch:** `feat/vj-engine-p0-quickwins-resilience`
-- **Último Commit:** `60ce10a` — fix(media-manifest): sync 9 generative 3d scenes to root media_pool manifest
-- **Deploy Vercel Produção:** `https://penumbra-xi.vercel.app`
-- **Deploy Vercel Preview:** `https://penumbra-czp1qn8x9-pelimotionart-6049s-projects.vercel.app`
-- **Deploy Bunny Edge CDN:** `https://gigantera-penumbra.b-cdn.net`
+- **Branch:** `feat/3d-scenes-inspector-pro-vj-controls`
+- **Último Commit:** `feat: 3d decoupled staging, official pt star 13, new generative scenes and studio inspector overhaul`
+- **Status:** Testes de preflight e smoke E2E 100% aprovados
+- **Pull Request (GitHub):** [#8](https://github.com/Pelimotion/penumbra/pull/8)
+- **Vercel Preview URL:** [penumbra-3d-preview.vercel.app](https://penumbra-3d-preview.vercel.app)
+- **Vercel Direct Preview:** [penumbra-k5ycx4lii-pelimotionart-6049s-projects.vercel.app](https://penumbra-k5ycx4lii-pelimotionart-6049s-projects.vercel.app)
+- **Vercel Branch Alias:** [penumbra-git-feat-3d-scenes-e6c067-pelimotionart-6049s-projects.vercel.app](https://penumbra-git-feat-3d-scenes-e6c067-pelimotionart-6049s-projects.vercel.app)
+
+## 🌌 Sistema 3D Generativo & Studio Inspector Pro
+- **Identidade Estrela 13 Oficial do PT:**
+  - Modelagem vetorial de 5 pontas com geometria áurea regular (relação de raio interno ~0.382) e 10 facetas escultóricas bi-piramidais em iluminação Chiaroscuro de palco.
+  - Numeral "13" com tipografia oficial de campanha (coluna sólida chanfrada e arcos simétricos) desacoplado do giro da estrela, respondendo com kick vigoroso aos impulsos de subgrave.
+  - Paleta oficial `pt_rubi` (Rubi `#dc2626` e Ouro `#ffb703`) e `noir_gold` (Obsidiana e Ouro).
+- **Novos Cenários 3D de Vanguarda:**
+  - `black_hole_singularity`: Lente gravitacional relativística, anel de fótons e disco de acreção com efeito Doppler de radiação relativística.
+  - `biomorphic_flora`: Morfogênese fractal de micélio e tentáculos bioluminescentes com pulsos nos médios e agudos.
+  - `sol_vermelho_horizonte`: Sol monumental com difração e grade topográfica vetorial em perspectiva com reflexos.
+- **Desacoplamento Completo PGM A vs. CUE B vs. L5:**
+  - Deck A (Live ao vivo) e Deck B (Preview Cue / Staging pré-ar) possuem estados 3D independentes (`deckA_3d`, `deckB_3d`, `layer5_3d`).
+  - Studio Inspector 3D com seletor de alvo `[ 🔴 PGM A ] [ 🟢 CUE B ] [ 🟡 L5 ]`: VJ pode pré-configurar e esculpir o 3D no CUE B sem vazar alterações para o sinal ao vivo.
+  - Handover automático de 3D no Take (`executeTakeCommit`) e no swap de buses (`swapBuses`), promovendo os ajustes pré-configurados do CUE diretamente para o PGM ao vivo.
+- **Redesign dos Cards de Clipes & Roteamento L5:**
+  - Botões compactos de broadcast sem estouro de texto: `PGM`, `CUE`, `L5` e `INSP` com microbordas e halos luminosos de tally (`is-on-air-pgm`, `is-in-cue-prv`, `is-in-l5`).
+  - Suporte de primeira classe para armar clipes e geradores 3D na Camada de Apoio (L5 / Overlay).
+- **Correção do Atalho 'I' e Foco de Sliders:**
+  - Detecção de entrada de texto refinada para ignorar sliders de alcance (`<input type="range">`), liberando o atalho `I` para abrir/fechar o Studio Inspector mesmo com faders em foco.
+  - Suporte ao código de tecla `KeyI` para compatibilidade com layouts internacionais.
 
 ## Recursos de Visualização Ampliada & Janela Flutuante
 - **⛶ EXPANDIR (Modo Cinema In-Cockpit):** Viewport 1280×720 sobreposto ao cockpit com fundo ultra-escuro (backdrop blur 24px) e take instantâneo.
@@ -60,8 +75,8 @@
   - Toast HUD flutuante em tempo real e indicador no cabeçalho de áudio com tag do preset ativo.
 - **Modo Manual com Padrão Groove Limpo:**
   - Sem interação do operador, o modo manual permanece estritamente em `GROOVE` (`Pure Clean Cinema`): zero efeitos pesados, sem distorção, máscaras limpas e vídeo original a 30 FPS cristalino.
-- **FPS Padrão:** 30 FPS (estabilidade térmica em palco) com seletor opcional para 60 FPS · **Rede/OSC:** DESLIGADO por padrão
-- **Autenticação de Acesso:** PIN dinâmico / Variável de ambiente (protegido contra vazamento público)
+- **FPS Padrão:** 30 FPS · **Rede/OSC:** DESLIGADO por padrão
+- **PIN de Acesso Cloud:** 2026
 
 ## Nexus Stream Engine & Media Pool Smart Bins
 - **Ingestão Dual-Mode:**

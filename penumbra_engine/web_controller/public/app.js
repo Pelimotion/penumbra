@@ -848,13 +848,15 @@ let appState = {
     }
   },
   gen3d: {
-    active_scene: 'star_13', // 'spine', 'ocean_sun', 'star_13', 'hybrid'
-    palette: 'cyan_neon',    // 'cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice'
+    active_scene: 'star_13', // 'star_13', 'spine', 'black_hole_singularity', 'biomorphic_flora', 'sol_vermelho_horizonte', etc.
+    palette: 'pt_rubi',      // 'pt_rubi', 'cyan_neon', 'solar_gold', 'matrix_emerald', 'deep_violet', 'monochrome_ice', 'noir_gold'
     camera: {
       orbit_speed: 1.0,
       tilt: 0.22,
       fov: 1.35,
-      distance: 2.3
+      distance: 2.3,
+      roll: 0.0,
+      auto_orbit: true
     },
     particles: {
       count_mult: 1.0,
@@ -871,6 +873,10 @@ let appState = {
       air_sparkle: 1.0
     }
   },
+  deckA_3d: null,  // 3D parameters actively driving Program A (Live on air)
+  deckB_3d: null,  // 3D parameters driving Cue B (Preview / pre-air staging)
+  layer5_3d: null, // 3D parameters driving Layer 5 (Support / Overlay)
+  inspector_3d_target: 'deckA', // 'deckA' | 'deckB' | 'layer5'
   audio_monitor: {
     enabled: false,
     volume: 0.70
@@ -4522,6 +4528,28 @@ function getPlexusPaletteColors(paletteKey) {
         nodeBase: '#e2e8f0',
         nodeHot: '#ffffff'
       };
+    case 'pt_rubi':
+      return {
+        bgStart: 'rgba(32, 3, 6, 1)',
+        bgEnd: 'rgba(5, 0, 2, 1)',
+        primary: 'rgb(220, 38, 38)',
+        primaryRgba: (a) => `rgba(220, 38, 38, ${a})`,
+        accentRgba: (a) => `rgba(255, 183, 3, ${a})`,
+        nodeBase: '#dc2626',
+        nodeHot: '#ffffff',
+        label: 'PT RUBI & OURO'
+      };
+    case 'noir_gold':
+      return {
+        bgStart: 'rgba(28, 20, 4, 1)',
+        bgEnd: 'rgba(5, 4, 1, 1)',
+        primary: 'rgb(255, 183, 3)',
+        primaryRgba: (a) => `rgba(255, 183, 3, ${a})`,
+        accentRgba: (a) => `rgba(250, 204, 21, ${a})`,
+        nodeBase: '#ffb703',
+        nodeHot: '#fffbeb',
+        label: 'NOIR & OURO'
+      };
     case 'cyan_neon':
     default:
       return {
@@ -4531,10 +4559,59 @@ function getPlexusPaletteColors(paletteKey) {
         primaryRgba: (a) => `rgba(0, 240, 255, ${a})`,
         accentRgba: (a) => `rgba(0, 255, 136, ${a})`,
         nodeBase: '#00f0ff',
-        nodeHot: '#ffffff'
+        nodeHot: '#ffffff',
+        label: 'CIANO NEON'
       };
   }
 }
+
+function createDefault3DConfig(scene = 'star_13', palette = 'pt_rubi') {
+  return {
+    active_scene: scene,
+    palette: palette,
+    camera: {
+      orbit_speed: 1.0,
+      tilt: 0.22,
+      fov: 1.35,
+      distance: 2.3,
+      roll: 0.0,
+      auto_orbit: true
+    },
+    particles: {
+      count_mult: 1.0,
+      point_size: 1.0,
+      line_connect_dist: 55,
+      wireframe: true,
+      glow_intensity: 1.0
+    },
+    audio_reactivity: {
+      spine_swimming: 1.0,
+      ocean_wave_amp: 1.0,
+      star_treble_spin: 1.2,
+      num13_sub_kick: 1.8,
+      air_sparkle: 1.0
+    }
+  };
+}
+window.createDefault3DConfig = createDefault3DConfig;
+
+function getActive3DConfig(target = null) {
+  const tgt = target || appState.inspector_3d_target || 'deckA';
+  if (tgt === 'deckA') {
+    if (!appState.deckA_3d) appState.deckA_3d = createDefault3DConfig('star_13', 'pt_rubi');
+    return appState.deckA_3d;
+  }
+  if (tgt === 'deckB') {
+    if (!appState.deckB_3d) appState.deckB_3d = createDefault3DConfig('spine', 'cyan_neon');
+    return appState.deckB_3d;
+  }
+  if (tgt === 'layer5') {
+    if (!appState.layer5_3d) appState.layer5_3d = createDefault3DConfig('nebula_particles', 'deep_violet');
+    return appState.layer5_3d;
+  }
+  return appState.gen3d || (appState.gen3d = createDefault3DConfig());
+}
+window.getActive3DConfig = getActive3DConfig;
 
 function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'main') {
   let buf = plexusCanvasBuffers.get(bufferId);
@@ -4555,9 +4632,24 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'm
 
   const canvas = buf.canvas;
   const ctx = buf.ctx;
-  const cfg3d = appState.gen3d || {};
-  const activeScene = explicitScene || cfg3d.active_scene || 'spine';
-  const palette = getPlexusPaletteColors(cfg3d.palette || 'cyan_neon');
+
+  // Resolve decoupled 3D configuration per deck/layer
+  let cfg3d;
+  if (bufferId === 'deckA') {
+    if (!appState.deckA_3d) appState.deckA_3d = createDefault3DConfig('star_13', 'pt_rubi');
+    cfg3d = appState.deckA_3d;
+  } else if (bufferId === 'deckB') {
+    if (!appState.deckB_3d) appState.deckB_3d = createDefault3DConfig('spine', 'cyan_neon');
+    cfg3d = appState.deckB_3d;
+  } else if (bufferId === 'layer5') {
+    if (!appState.layer5_3d) appState.layer5_3d = createDefault3DConfig('nebula_particles', 'deep_violet');
+    cfg3d = appState.layer5_3d;
+  } else {
+    cfg3d = appState.gen3d || {};
+  }
+
+  const activeScene = explicitScene || cfg3d.active_scene || 'star_13';
+  const palette = getPlexusPaletteColors(cfg3d.palette || 'pt_rubi');
 
   const bass = Number(appState.bands?.bass || 0.45);
   const sub = Number(appState.bands?.sub || 0.45);
@@ -4567,8 +4659,10 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'm
   const camCfg = cfg3d.camera || {};
   const orbitSpeed = camCfg.orbit_speed !== undefined ? camCfg.orbit_speed : 1.0;
   const camTilt = camCfg.tilt !== undefined ? camCfg.tilt : 0.22;
+  const camRoll = camCfg.roll !== undefined ? camCfg.roll : 0.0;
   const camDist = Math.max(1.2, camCfg.distance !== undefined ? camCfg.distance : 2.3);
   const fov = camCfg.fov !== undefined ? camCfg.fov : 1.35;
+  const autoOrbit = camCfg.auto_orbit !== false;
 
   // Background radial gradient
   const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, 40, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
@@ -4579,30 +4673,38 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'm
   ctx.fillRect(0, 0, w, h);
 
   // 3D Camera Angles
-  let rotY = simTime * 0.28 * orbitSpeed;
+  let rotY = autoOrbit ? (simTime * 0.28 * orbitSpeed) : (orbitSpeed * Math.PI * 0.5);
   let rotX = camTilt + Math.sin(simTime * 0.18) * 0.12;
+
+  const renderParams = { bass, sub, presence, air, camDist, fov, palette, cfg3d, rotY, rotX, camRoll };
 
   // Branch rendering per scene
   if (activeScene === 'mercury_blob') {
-    renderSceneMercuryBlob(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneMercuryBlob(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'monolith_13') {
-    renderSceneMonolith13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneMonolith13(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'nebula_particles') {
-    renderSceneNebulaParticles(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneNebulaParticles(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'cyber_wireframe') {
-    renderSceneCyberWireframe(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneCyberWireframe(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'hyper_torus') {
-    renderSceneHyperTorus(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneHyperTorus(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'black_hole_singularity') {
+    renderSceneBlackHole(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'biomorphic_flora') {
+    renderSceneBiomorphicFlora(ctx, w, h, simTime, renderParams);
+  } else if (activeScene === 'sol_vermelho_horizonte') {
+    renderSceneSolVermelho(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'ocean_sun') {
-    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneOceanSun(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'star_13') {
-    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+    renderSceneStar13(ctx, w, h, simTime, renderParams);
   } else if (activeScene === 'hybrid') {
-    renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isSubMesh: true });
-    renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d, isOverlayStar: true });
+    renderSceneOceanSun(ctx, w, h, simTime, { ...renderParams, isSubMesh: true });
+    renderSceneStar13(ctx, w, h, simTime, { ...renderParams, isOverlayStar: true });
   } else {
     // Default: 'spine' (Houdini Biomorphic Marine Spine)
-    renderSceneMarineSpine(ctx, w, h, simTime, { rotY, rotX, camDist, fov, bass, sub, presence, air, palette, cfg3d });
+    renderSceneMarineSpine(ctx, w, h, simTime, renderParams);
   }
 
   return canvas;
@@ -4819,78 +4921,171 @@ function renderSceneOceanSun(ctx, w, h, simTime, p) {
 }
 
 function renderSceneStar13(ctx, w, h, simTime, p) {
-  // DECOUPLED AUDIO REACTIVITY:
-  // 1. The outer sacred vector star spins and radiates smoothly with TREBLE & AIR
+  // ============================================================================
+  // ESTRELA 13 PT · IDENTIDADE OFICIAL DO PARTIDO DOS TRABALHADORES (5 PONTAS 3D)
+  // Geometria Áurea Regular (Cinco Pontas), Facetamento Bi-piramidal Chiaroscuro
+  // e Tipografia Grotesca Oficial de Campanha com Kick de Subgrave Desacoplado
+  // ============================================================================
   const trebleSpin = (p.cfg3d.audio_reactivity?.star_treble_spin || 1.2);
-  const rotY = simTime * (0.45 + (p.air + p.presence) * 0.85) * trebleSpin;
-  const rotX = Math.sin(simTime * 0.28) * 0.25;
-  const rotZ = Math.cos(simTime * 0.22) * 0.15;
+  const rotY = p.rotY !== undefined ? p.rotY : (simTime * (0.32 + (p.air + p.presence) * 0.5) * trebleSpin);
+  const rotX = p.rotX !== undefined ? p.rotX : (0.16 + Math.sin(simTime * 0.22) * 0.16);
+  const rotZ = Math.cos(simTime * 0.18) * 0.08 + (p.camRoll || 0);
 
   const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
   const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
-  // 8-Pointed 3D Sacred Vector Star (Vertices)
-  const starVertices = [];
-  const points = 8;
-  const rOuter = (p.isOverlayStar ? 0.38 : 0.52) * (1.0 + p.presence * 0.15);
-  const rInner = (p.isOverlayStar ? 0.18 : 0.24);
-
-  for (let i = 0; i < points * 2; i++) {
-    const angle = (i / (points * 2)) * Math.PI * 2;
-    const rad = (i % 2 === 0) ? rOuter : rInner;
-    const zOffset = (i % 2 === 0) ? Math.sin(angle * 2) * 0.12 : -0.08;
-    const px = Math.cos(angle) * rad;
-    const py = Math.sin(angle) * rad;
-    const pz = zOffset;
-
-    // Apply 3D Rotation Matrix to outer star
-    const x1 = px * cosY + pz * sinY;
-    const z1 = -px * sinY + pz * cosY;
-    const y2 = py * cosX - z1 * sinX;
-    const z2 = py * sinX + z1 * cosX;
+  // Projeção 3D com rotação Yaw/Pitch/Roll
+  const project3D = (px, py, pz) => {
+    // Rot Z (Roll)
+    const x0 = px * cosZ - py * sinZ;
+    const y0 = px * sinZ + py * cosZ;
+    const z0 = pz;
+    // Rot Y (Yaw)
+    const x1 = x0 * cosY + z0 * sinY;
+    const z1 = -x0 * sinY + z0 * cosY;
+    // Rot X (Pitch)
+    const y2 = y0 * cosX - z1 * sinX;
+    const z2 = y0 * sinX + z1 * cosX;
 
     const depth = p.camDist + z2;
-    if (depth > 0.1) {
+    if (depth > 0.08) {
       const persp = p.fov / depth;
       const sx = w * 0.5 + x1 * persp * w;
       const sy = h * (p.isOverlayStar ? 0.42 : 0.5) + y2 * persp * h;
-      starVertices.push({ sx, sy, depth });
+      return { sx, sy, depth, x1, y2, z2 };
+    }
+    return null;
+  };
+
+  // 1. A ESTRELA OFICIAL DE 5 PONTAS (REGULAR PENTAGRAM EM PROPORÇÃO ÁUREA)
+  // Raio interno oficial de pentagrama regular: rInner = rOuter * sin(18°) / sin(54°) ≈ rOuter * 0.381966
+  const rOuter = (p.isOverlayStar ? 0.36 : 0.50) * (1.0 + (p.presence || 0) * 0.12);
+  const rInner = rOuter * 0.381966;
+  const zApex = 0.14; // Relevo escultural central 3D
+
+  const outerVerts3D = [];
+  const innerVerts3D = [];
+
+  for (let k = 0; k < 5; k++) {
+    // Ponta superior (k=0) perfeitamente alinhada para cima a -90° (-PI/2)
+    const angleOuter = -Math.PI * 0.5 + k * (Math.PI * 2 / 5);
+    const angleInner = -Math.PI * 0.5 + (k + 0.5) * (Math.PI * 2 / 5);
+
+    outerVerts3D.push({
+      x: Math.cos(angleOuter) * rOuter,
+      y: Math.sin(angleOuter) * rOuter,
+      z: 0.0
+    });
+
+    innerVerts3D.push({
+      x: Math.cos(angleInner) * rInner,
+      y: Math.sin(angleInner) * rInner,
+      z: -0.03
+    });
+  }
+
+  // Projetar ápice frontal, ápice traseiro e os 10 vértices perimetrais
+  const pApexFront = project3D(0, 0, zApex);
+  const pOuter = outerVerts3D.map(v => project3D(v.x, v.y, v.z));
+  const pInner = innerVerts3D.map(v => project3D(v.x, v.y, v.z));
+
+  ctx.save();
+
+  // Desenhar as 10 Facetas Esculturais Frontais com Iluminação Chiaroscuro
+  if (pApexFront) {
+    const lightDir = { x: 0.55, y: -0.65, z: 0.52 }; // Luz direcional de estúdio de palco
+
+    for (let k = 0; k < 5; k++) {
+      const nextK = (k + 1) % 5;
+      const tip = pOuter[k];
+      const val = pInner[k];
+      const nextTip = pOuter[nextK];
+
+      // Faceta A: Ápice Central -> Ponta[k] -> Vale[k]
+      if (tip && val) {
+        const nx = (outerVerts3D[k].x + innerVerts3D[k].x) * 0.5;
+        const ny = (outerVerts3D[k].y + innerVerts3D[k].y) * 0.5;
+        const dot = Math.max(0.18, Math.min(1.0, (nx * lightDir.x + ny * lightDir.y) * 0.5 + 0.58));
+
+        ctx.fillStyle = (p.palette.primary === 'rgb(220, 38, 38)' || p.palette.label === 'PT RUBI & OURO')
+          ? `rgba(${Math.round(225 * dot)}, ${Math.round(29 * dot)}, ${Math.round(72 * dot)}, 0.95)`
+          : p.palette.primaryRgba(dot.toFixed(2));
+
+        ctx.beginPath();
+        ctx.moveTo(pApexFront.sx, pApexFront.sy);
+        ctx.lineTo(tip.sx, tip.sy);
+        ctx.lineTo(val.sx, val.sy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = p.palette.accentRgba(0.35);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+
+      // Faceta B: Ápice Central -> Vale[k] -> Ponta Seguinte[nextK]
+      if (val && nextTip) {
+        const nx2 = (innerVerts3D[k].x + outerVerts3D[nextK].x) * 0.5;
+        const ny2 = (innerVerts3D[k].y + outerVerts3D[nextK].y) * 0.5;
+        const dot2 = Math.max(0.12, Math.min(1.0, (nx2 * -lightDir.x + ny2 * -lightDir.y) * 0.5 + 0.42));
+
+        ctx.fillStyle = (p.palette.primary === 'rgb(220, 38, 38)' || p.palette.label === 'PT RUBI & OURO')
+          ? `rgba(${Math.round(165 * dot2)}, ${Math.round(18 * dot2)}, ${Math.round(48 * dot2)}, 0.95)`
+          : p.palette.primaryRgba((dot2 * 0.85).toFixed(2));
+
+        ctx.beginPath();
+        ctx.moveTo(pApexFront.sx, pApexFront.sy);
+        ctx.lineTo(val.sx, val.sy);
+        ctx.lineTo(nextTip.sx, nextTip.sy);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = p.palette.primaryRgba(0.4);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
     }
   }
 
-  // Draw Sacred Vector Star Lines
-  ctx.save();
-  ctx.lineWidth = 1.8 + p.presence * 1.5;
-  ctx.strokeStyle = p.palette.primaryRgba(0.85);
+  // Contorno Externo Áureo & Halo Dourado nas 5 Pontas
+  ctx.strokeStyle = p.palette.accentRgba(0.9);
+  ctx.lineWidth = 2.0 + (p.presence || 0) * 1.5;
   ctx.beginPath();
-  for (let i = 0; i < starVertices.length; i++) {
-    const v1 = starVertices[i];
-    const v2 = starVertices[(i + 1) % starVertices.length];
-    ctx.moveTo(v1.sx, v1.sy);
-    ctx.lineTo(v2.sx, v2.sy);
-    // Radial spokes to center
-    if (i % 2 === 0) {
-      ctx.lineTo(w * 0.5, h * (p.isOverlayStar ? 0.42 : 0.5));
+  for (let k = 0; k < 5; k++) {
+    const tip = pOuter[k];
+    const val = pInner[k];
+    if (tip && val) {
+      if (k === 0) ctx.moveTo(tip.sx, tip.sy);
+      else ctx.lineTo(tip.sx, tip.sy);
+      ctx.lineTo(val.sx, val.sy);
     }
   }
+  ctx.closePath();
   ctx.stroke();
 
-  // Glow halo around star tips
-  for (let i = 0; i < starVertices.length; i += 2) {
-    const tip = starVertices[i];
-    const halo = ctx.createRadialGradient(tip.sx, tip.sy, 0, tip.sx, tip.sy, 16);
-    halo.addColorStop(0, p.palette.nodeHot);
-    halo.addColorStop(0.5, p.palette.accentRgba(0.4));
-    halo.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = halo;
-    ctx.fillRect(tip.sx - 16, tip.sy - 16, 32, 32);
+  // Halos de Luz Estelar nas 5 Pontas
+  for (let k = 0; k < 5; k++) {
+    const tip = pOuter[k];
+    if (tip) {
+      const halo = ctx.createRadialGradient(tip.sx, tip.sy, 0, tip.sx, tip.sy, 16);
+      halo.addColorStop(0, p.palette.nodeHot);
+      halo.addColorStop(0.5, p.palette.accentRgba(0.5));
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(tip.sx - 16, tip.sy - 16, 32, 32);
+    }
   }
   ctx.restore();
 
-  // 2. THE DECOUPLED CENTRAL NUMERAL "13"
-  // Reacts VIOLENTLY to SUB-BASS & BASS kicks without inheriting the star's frantic spin!
+  // ============================================================================
+  // 2. O NUMERAL OFICIAL DE CAMPANHA "13" DESACOPLADO
+  // Responde com VIGOR & KICK aos impulsos de subgrave sem herdar o giro da estrela!
+  // Tipografia fiel: "1" sólido com aba a 45° e base robusta; "3" com curvas
+  // simétricas e corte horizontal central.
+  // ============================================================================
   const kickMult = (p.cfg3d.audio_reactivity?.num13_sub_kick || 1.8);
-  const kickEnergy = (p.sub * 0.85 + p.bass * 0.6) * kickMult;
+  const kickEnergy = ((p.sub || 0.4) * 0.85 + (p.bass || 0.4) * 0.6) * kickMult;
   const kickZDisplace = -0.35 * Math.min(1.5, kickEnergy);
   const kickScale = 1.0 + Math.min(1.2, kickEnergy * 0.65);
 
@@ -4903,46 +5098,64 @@ function renderSceneStar13(ctx, w, h, simTime, p) {
   ctx.translate(numCx, numCy);
   ctx.scale(kickScale, kickScale);
 
-  // Stylized high-tech vector glyph for "13"
-  ctx.lineWidth = Math.max(2.5, 4.0 * (1.0 + kickEnergy * 0.4));
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  const glyphH = Math.min(w, h) * (p.isOverlayStar ? 0.14 : 0.185);
+  const glyphW = glyphH * 0.72;
 
   const isHotKick = kickEnergy > 0.85;
   if (isHotKick) {
-    // Chromatic aberration glow when kicking hard
-    ctx.shadowColor = p.palette.primary;
-    ctx.shadowBlur = 24 * kickEnergy;
-    ctx.strokeStyle = p.palette.nodeHot;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 28 * kickEnergy;
   } else {
-    ctx.shadowColor = p.palette.accentRgba(0.6);
-    ctx.shadowBlur = 12;
-    ctx.strokeStyle = p.palette.primary;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
   }
 
-  const glyphH = Math.min(w, h) * (p.isOverlayStar ? 0.12 : 0.16);
-  const glyphW = glyphH * 0.65;
-  const gY0 = -glyphH * 0.5;
-  const gY1 = glyphH * 0.5;
+  const colFill = isHotKick ? '#ffffff' : '#f8fafc';
+  ctx.fillStyle = colFill;
 
-  // Numeral "1"
+  // Numeral "1" Oficial
+  const x1_center = -glyphW * 0.38;
+  const stemW = glyphW * 0.24;
+  const flagW = glyphW * 0.28;
+  const flagH = glyphH * 0.26;
+  const baseY = glyphH * 0.48;
+  const topY = -glyphH * 0.48;
+
   ctx.beginPath();
-  const x1_offset = -glyphW * 0.65;
-  ctx.moveTo(x1_offset - glyphW * 0.25, gY0 + glyphH * 0.25);
-  ctx.lineTo(x1_offset, gY0);
-  ctx.lineTo(x1_offset, gY1);
-  ctx.moveTo(x1_offset - glyphW * 0.3, gY1);
-  ctx.lineTo(x1_offset + glyphW * 0.25, gY1);
+  // Coluna vertical sólida
+  ctx.rect(x1_center - stemW * 0.5, topY, stemW, glyphH * 0.96);
+  // Bico/bandeira angular chanfrada a 45°
+  ctx.moveTo(x1_center - stemW * 0.5, topY);
+  ctx.lineTo(x1_center - stemW * 0.5 - flagW, topY + flagH);
+  ctx.lineTo(x1_center - stemW * 0.5, topY + flagH * 0.65);
+  ctx.closePath();
+  // Sapata/base horizontal de sustentação
+  ctx.rect(x1_center - stemW * 1.1, baseY - glyphH * 0.09, stemW * 2.2, glyphH * 0.09);
+  ctx.fill();
+
+  // Numeral "3" Oficial
+  const x3_center = glyphW * 0.36;
+  const arcR = glyphH * 0.25;
+  const barThick = glyphW * 0.23;
+
+  ctx.beginPath();
+  // Barra horizontal superior
+  ctx.rect(x3_center - arcR * 0.8, topY, arcR * 1.5, barThick);
+  // Arco superior
+  ctx.arc(x3_center, topY + arcR, arcR, -Math.PI * 0.45, Math.PI * 0.25, false);
+  // Arco inferior
+  ctx.arc(x3_center, baseY - arcR, arcR, -Math.PI * 0.25, Math.PI * 0.65, false);
+  // Junção horizontal central
+  ctx.rect(x3_center - arcR * 0.4, topY + arcR * 1.05 - barThick * 0.5, arcR * 1.0, barThick * 0.85);
+  ctx.lineWidth = barThick;
+  ctx.strokeStyle = colFill;
+  ctx.lineCap = 'square';
   ctx.stroke();
 
-  // Numeral "3"
-  ctx.beginPath();
-  const x3_offset = glyphW * 0.35;
-  ctx.moveTo(x3_offset - glyphW * 0.3, gY0);
-  ctx.lineTo(x3_offset + glyphW * 0.3, gY0);
-  ctx.lineTo(x3_offset + glyphW * 0.05, gY0 + glyphH * 0.46);
-  ctx.arc(x3_offset, gY0 + glyphH * 0.48, glyphW * 0.15, -Math.PI * 0.5, Math.PI * 0.5);
-  ctx.arc(x3_offset, gY1 - glyphW * 0.25, glyphW * 0.32, -Math.PI * 0.4, Math.PI * 0.8);
+  // Realce sutil de borda dourada
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = p.palette.accentRgba(0.65);
   ctx.stroke();
 
   ctx.restore();
@@ -5452,6 +5665,266 @@ function renderSceneHyperTorus(ctx, w, h, simTime, p) {
       }
     }
   }
+  ctx.restore();
+}
+
+function renderSceneBlackHole(ctx, w, h, simTime, p) {
+  // Singularidade Gravitacional, Lente Relativística & Disco de Acreção Doppler
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.5);
+  const minDim = Math.min(w, h);
+  const kickEnergy = ((p.sub || 0.4) * 0.9 + (p.bass || 0.4) * 0.5);
+  const tilt = 0.42;
+
+  // 1. Accretion Disk (Background Half - behind black hole)
+  const diskRInner = minDim * 0.16;
+  const diskROuter = minDim * 0.44 * (1.0 + kickEnergy * 0.15);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const ringCount = 12;
+  for (let r = ringCount; r >= 1; r--) {
+    const frac = r / ringCount;
+    const radX = diskRInner + (diskROuter - diskRInner) * frac;
+    const radY = radX * Math.sin(tilt);
+
+    // Relativistic Doppler beaming: Left side approaching (brighter), Right side receding (dimmer)
+    const diskGrad = ctx.createLinearGradient(-radX, 0, radX, 0);
+    diskGrad.addColorStop(0, p.palette.primaryRgba(0.85));
+    diskGrad.addColorStop(0.35, p.palette.accentRgba(0.6));
+    diskGrad.addColorStop(0.75, p.palette.primaryRgba(0.2));
+    diskGrad.addColorStop(1, 'rgba(15, 2, 5, 0.05)');
+
+    ctx.strokeStyle = diskGrad;
+    ctx.lineWidth = 2.0 + (1.0 - frac) * 3.5 * (1.0 + (p.bass || 0.4) * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radX, radY, 0, Math.PI, 0, false);
+    ctx.stroke();
+  }
+
+  // 2. Gravitational Lensing Halo (Relativistic Photon Ring)
+  const shadowRadius = minDim * 0.14;
+  const photonRadius = shadowRadius * 1.15;
+
+  const lensingGrad = ctx.createRadialGradient(0, 0, shadowRadius * 0.8, 0, 0, photonRadius * 1.6);
+  lensingGrad.addColorStop(0, '#000000');
+  lensingGrad.addColorStop(0.48, 'rgba(0,0,0,0.95)');
+  lensingGrad.addColorStop(0.68, p.palette.nodeHot);
+  lensingGrad.addColorStop(0.82, p.palette.primaryRgba(0.75));
+  lensingGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.fillStyle = lensingGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, photonRadius * 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. The Pitch-Black Event Horizon (Singularity Sphere)
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(0, 0, shadowRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Razor-sharp photon ring border
+  ctx.strokeStyle = p.palette.primaryRgba(0.95);
+  ctx.lineWidth = 1.8 + kickEnergy * 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, photonRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 4. Accretion Disk (Foreground Half - in front of black hole)
+  for (let r = 1; r <= ringCount; r++) {
+    const frac = r / ringCount;
+    const radX = diskRInner + (diskROuter - diskRInner) * frac;
+    const radY = radX * Math.sin(tilt);
+
+    const diskGrad = ctx.createLinearGradient(-radX, 0, radX, 0);
+    diskGrad.addColorStop(0, p.palette.nodeHot);
+    diskGrad.addColorStop(0.25, p.palette.primaryRgba(0.9));
+    diskGrad.addColorStop(0.6, p.palette.accentRgba(0.5));
+    diskGrad.addColorStop(1, p.palette.primaryRgba(0.15));
+
+    ctx.strokeStyle = diskGrad;
+    ctx.lineWidth = 2.0 + (1.0 - frac) * 3.5 * (1.0 + (p.bass || 0.4) * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radX, radY, 0, 0, Math.PI, false);
+    ctx.stroke();
+  }
+
+  // 5. Relativistic Infalling Matter Particles
+  const partCount = 30;
+  for (let i = 0; i < partCount; i++) {
+    const angle = (i / partCount) * Math.PI * 2 + simTime * 1.4 * (1.0 + (i % 3) * 0.2);
+    const pFrac = ((i * 0.17 + simTime * 0.25) % 1.0);
+    const radX = shadowRadius * (1.1 + pFrac * 2.2);
+    const radY = radX * Math.sin(tilt) + (i % 2 === 0 ? 1 : -1) * Math.sin(angle * 2) * 10;
+    const px = Math.cos(angle) * radX;
+    const py = Math.sin(angle) * radY;
+
+    const isApproaching = Math.sin(angle) > 0;
+    const alpha = (isApproaching ? 0.9 : 0.3) * (1.0 - pFrac);
+    ctx.fillStyle = pFrac < 0.2 ? p.palette.nodeHot : p.palette.accentRgba(alpha.toFixed(2));
+    ctx.beginPath();
+    ctx.arc(px, py, 1.5 + (1.0 - pFrac) * 2.0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function renderSceneBiomorphicFlora(ctx, w, h, simTime, p) {
+  // Flora Neural Biomórfica & Micélio 3D (Continuidade Poética Espinhaço)
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.5);
+  const minDim = Math.min(w, h);
+  const rotY = p.rotY !== undefined ? p.rotY : (simTime * 0.22);
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+  const branches = 10;
+  const segments = 14;
+  const pulseVocal = ((p.presence || 0.3) * 0.7 + (p.air || 0.3) * 0.5);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  for (let b = 0; b < branches; b++) {
+    const baseAngle = (b / branches) * Math.PI * 2;
+    let prevX = 0, prevY = 0;
+
+    for (let s = 1; s <= segments; s++) {
+      const frac = s / segments;
+      const angle = baseAngle + Math.sin(simTime * 0.8 + frac * 3.0) * 0.35 + frac * 0.8;
+      const r = minDim * (0.05 + frac * 0.42) * (1.0 + Math.sin(simTime * 1.2 + b) * 0.08);
+      const z = Math.sin(frac * Math.PI * 2 + simTime + b) * minDim * 0.18;
+      const y = -minDim * 0.35 * Math.cos(frac * Math.PI * 0.5) + Math.sin(angle * 2 + simTime) * 15;
+
+      const curX = Math.cos(angle) * r;
+      const curZ = z;
+      const curY = y;
+
+      const rx = curX * cosY + curZ * sinY;
+      const rz = -curX * sinY + curZ * cosY;
+      const depth = p.camDist + rz / minDim;
+
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        const sx = rx * persp;
+        const sy = curY * persp;
+
+        if (s > 1) {
+          ctx.strokeStyle = (s % 3 === 0) ? p.palette.accentRgba(0.8) : p.palette.primaryRgba((0.2 + frac * 0.6).toFixed(2));
+          ctx.lineWidth = Math.max(1.0, (1.0 - frac) * 3.5 * persp);
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+
+          if (s % 2 === 0) {
+            const nodeGlow = 2.0 + Math.sin(simTime * 3.0 + s + b) * 1.5 * (1.0 + pulseVocal);
+            ctx.fillStyle = (s === segments) ? p.palette.nodeHot : p.palette.primaryRgba(0.9);
+            ctx.beginPath();
+            ctx.arc(sx, sy, Math.max(1.5, nodeGlow * persp), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        prevX = sx;
+        prevY = sy;
+      }
+    }
+  }
+
+  const coreR = minDim * 0.04 * (1.0 + (p.sub || 0.4) * 0.6);
+  const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR * 2);
+  coreGrad.addColorStop(0, p.palette.nodeHot);
+  coreGrad.addColorStop(0.5, p.palette.primaryRgba(0.7));
+  coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, coreR * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function renderSceneSolVermelho(ctx, w, h, simTime, p) {
+  // Sol Monumental Vermelho, Chiaroscuro & Grade Topográfica 3D em Perspectiva
+  const cx = w * 0.5;
+  const cy = h * (p.isOverlayStar ? 0.42 : 0.52);
+  const minDim = Math.min(w, h);
+  const bass = p.bass || 0.4;
+  const sub = p.sub || 0.4;
+
+  ctx.save();
+
+  // 1. Sol Monumental no Horizonte
+  const sunRadius = minDim * 0.28 * (1.0 + sub * 0.12);
+  const sunY = cy - minDim * 0.05;
+
+  const sunGrad = ctx.createRadialGradient(cx, sunY, sunRadius * 0.2, cx, sunY, sunRadius * 1.8);
+  sunGrad.addColorStop(0, '#ffffff');
+  sunGrad.addColorStop(0.35, '#dc2626');
+  sunGrad.addColorStop(0.7, 'rgba(185, 28, 28, 0.4)');
+  sunGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(cx, sunY, sunRadius * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#dc2626';
+  ctx.beginPath();
+  ctx.arc(cx, sunY, sunRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fendas Horizontais Chiaroscuro
+  const bandCount = 10;
+  for (let i = 0; i < bandCount; i++) {
+    const bandY = sunY + sunRadius * (0.15 + (i / bandCount) * 0.85);
+    const bandH = 2.0 + i * 1.2;
+    ctx.fillStyle = '#050002';
+    ctx.fillRect(cx - sunRadius, bandY, sunRadius * 2, bandH);
+  }
+
+  // 2. Grade Topográfica 3D em Perspectiva
+  const gridRows = 22;
+  const gridCols = 32;
+  const gridW = w * 1.4;
+  const horizY = cy + minDim * 0.02;
+
+  ctx.lineWidth = 1.0;
+  for (let c = 0; c <= gridCols; c++) {
+    const xFrac = (c / gridCols) - 0.5;
+    const topX = cx + xFrac * w * 0.15;
+    const botX = cx + xFrac * gridW;
+
+    ctx.strokeStyle = p.palette.primaryRgba(0.25);
+    ctx.beginPath();
+    ctx.moveTo(topX, horizY);
+    ctx.lineTo(botX, h);
+    ctx.stroke();
+  }
+
+  for (let r = 1; r <= gridRows; r++) {
+    const zFrac = r / gridRows;
+    const yPersp = horizY + (h - horizY) * Math.pow(zFrac, 2.2);
+    const spanW = w * 0.15 + (gridW - w * 0.15) * zFrac;
+
+    const alpha = Math.min(0.9, zFrac * (0.3 + bass * 0.5));
+    ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(2));
+    ctx.beginPath();
+
+    const wavePoints = 28;
+    for (let wp = 0; wp <= wavePoints; wp++) {
+      const wFrac = wp / wavePoints;
+      const wx = (cx - spanW * 0.5) + spanW * wFrac;
+      const waveMod = Math.sin(wFrac * Math.PI * 6.0 + simTime * 2.0 + r * 0.4) * (14.0 * zFrac) * (1.0 + sub * 0.8);
+      const wy = yPersp + waveMod;
+
+      if (wp === 0) ctx.moveTo(wx, wy);
+      else ctx.lineTo(wx, wy);
+    }
+    ctx.stroke();
+  }
+
   ctx.restore();
 }
 
@@ -7490,6 +7963,11 @@ function executeTakeCommit() {
     appState.layers.layer0.rotation = queuedRotation || 0;
     appState.layers.layer0.fit_mode = queuedFitMode || 'fill';
 
+    // Transfer/Handover staged 3D scene parameters from Cue B to Program A live
+    if (appState.deckB_3d && appState.deckA_3d) {
+      Object.assign(appState.deckA_3d, JSON.parse(JSON.stringify(appState.deckB_3d)));
+    }
+
     // 2. SEAMLESS ZERO-GLITCH PLAYER SWAP:
     // playerL3 was ALREADY decoding & playing this video smoothly at 60 FPS.
     // By swapping references, playerL0 becomes the active player with ZERO dropped frames,
@@ -9078,7 +9556,7 @@ async function loadMediaPool(providedClips = null) {
       },
       {
         id: "clip_gen_star_13",
-        filename: "STAR 13 (Estrela Sagrada Vetorial + Numeral 13 Desacoplado)",
+        filename: "STAR 13 (Estrela Oficial PT + Numeral 13 Tridimensional Chiaroscuro)",
         folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/star_13_3d.gen",
         absolute_path: "GENERATIVE/star_13_3d",
@@ -9087,7 +9565,7 @@ async function loadMediaPool(providedClips = null) {
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.60, contrast: 1.05,
         thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
-        notes: "Estrela sagrada de 8 pontas com giro suave nos agudos e numeral 13 com kick violento desacoplado nos graves.",
+        notes: "Estrela regular de 5 pontas do Partido dos Trabalhadores em relevo áureo e numeral 13 oficial com subgrave desacoplado.",
         project: "Star 13 Sacred", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'star_13'
       },
       {
@@ -9103,6 +9581,48 @@ async function loadMediaPool(providedClips = null) {
         thumbnail: "thumb_003_Holographic_chrome_face.jpg",
         notes: "Composição harmônica do oceano ondulante, estrela sagrada 13 e orbe celestial.",
         project: "Hybrid Cosmos", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'hybrid'
+      },
+      {
+        id: "clip_gen_black_hole",
+        filename: "SINGULARITY 3D (Vórtice Espaço-Tempo & Horizonte de Eventos)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/black_hole_3d.gen",
+        absolute_path: "GENERATIVE/black_hole_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.38, contrast: 1.35,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Singularidade com lente gravitacional relativística, anel de fótons e disco de acreção com Doppler.",
+        project: "Black Hole Singularity 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'black_hole_singularity'
+      },
+      {
+        id: "clip_gen_biomorphic_flora",
+        filename: "BIOMORPHIC FLORA (Morfogênese Botânica & Tentáculos Neurais)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/biomorphic_flora_3d.gen",
+        absolute_path: "GENERATIVE/biomorphic_flora_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.46, contrast: 1.05,
+        thumbnail: "thumb_005_Metallic_spine_sculpture.jpg",
+        notes: "Morfogênese fractal de micélio e tentáculos bioluminescentes com pulsos de frequências médias e agudas.",
+        project: "Biomorphic Flora 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'biomorphic_flora'
+      },
+      {
+        id: "clip_gen_sol_vermelho",
+        filename: "SOL VERMELHO HORIZONTE (Vaporwave Penumbra & Grade Vetorial Retrô)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/sol_vermelho_3d.gen",
+        absolute_path: "GENERATIVE/sol_vermelho_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.54, contrast: 1.15,
+        thumbnail: "thumb_001_Animate_silver_tail.jpg",
+        notes: "Sol monumental com faixas horizontais de difração, grade topográfica 3D em perspectiva e reflexos.",
+        project: "Sol Vermelho 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'sol_vermelho_horizonte'
       }
     ];
 
@@ -10170,11 +10690,12 @@ function createMediaCardElement(clip) {
   const isUnlinked = Boolean((clip.is_local || clip.id.startsWith('local_')) && (clip.is_disconnected || !MediaProvider.isLocalFileConnected(clip)));
   const isOnAir = (appState.layers?.layer0?.clipId === clip.id);
   const isInCue = (appState.layers?.layer3?.clipId === clip.id);
+  const isInL5 = (appState.layers?.layer5?.clipId === clip.id);
   const isSelected = (studioInspectorState && studioInspectorState.targetClipId === clip.id);
   
   const isAutoEligible = isClipEligibleForAutopilot(clip);
   card.dataset.clipId = clip.id;
-  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${clipSource}`;
+  card.className = `media-card ${isGen ? 'is-generative' : ''} ${isUnlinked ? 'is-unlinked' : ''} ${isOnAir ? 'is-on-air-pgm' : ''} ${isInCue ? 'is-in-cue-prv' : ''} ${isInL5 ? 'is-in-l5' : ''} ${isSelected ? 'is-selected' : ''} ${isAutoEligible ? '' : 'is-autopilot-excluded'} source-${clipSource}`;
   const thumbSrc = MediaProvider.getThumbUrl(clip);
   const animSrc = MediaProvider.getPreviewAnimUrl(clip) || thumbSrc;
   const projName = clip.project || '1.In';
@@ -10222,8 +10743,9 @@ function createMediaCardElement(clip) {
     <div class="media-card-thumb">
       ${thumbSrc ? `<img src="${thumbSrc}" loading="lazy" alt="${clip.filename}" data-static="${thumbSrc}" data-anim="${animSrc}" class="dynamic-preview-img">` : '<div class="no-thumb">RAW 1.IN</div>'}
       ${srcBadgeHtml}
-      ${isOnAir ? '<span class="thumb-air-indicator">● NO AR</span>' : ''}
+      ${isOnAir ? '<span class="thumb-air-indicator">● PGM</span>' : ''}
       ${isInCue ? '<span class="thumb-cue-indicator">● CUE</span>' : ''}
+      ${isInL5 ? '<span class="thumb-l5-indicator">● L5</span>' : ''}
       ${isAutoEligible ? `<span class="thumb-auto-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take ATIVO no Autopilot · Clique para travar em apenas MANUAL">⚡ AUTO</span>` : `<span class="thumb-manual-indicator" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot">🔒 MANUAL</span>`}
       <span class="thumb-duration-badge">${clip.duration ? Math.round(clip.duration) + 's' : 'LOOP'}</span>
       <span class="thumb-resolution-badge">${clip.width || '1920'}×${clip.height || '1080'}</span>
@@ -10238,24 +10760,22 @@ function createMediaCardElement(clip) {
         <span>${clipFolder}</span>
       </div>
       <div class="card-actions-grid">
-        <button class="btn-card-action btn-action-pgm btn-bus-a" data-bus="A" title="Enviar para Program Master [A]">
+        <button class="btn-card-action btn-action-pgm btn-bus-a ${isOnAir ? 'is-active-on-air' : ''}" data-bus="A" title="Enviar para Program Master [A]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          <span>A (PGM)</span>
+          <span>PGM</span>
         </button>
-        <button class="btn-card-action btn-action-cue btn-bus-b" data-bus="B" title="Preparar no Preview Cue [B]">
+        <button class="btn-card-action btn-action-cue btn-bus-b ${isInCue ? 'is-active-cue' : ''}" data-bus="B" title="Preparar no Preview Cue [B]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"></circle></svg>
-          <span>B (CUE)</span>
+          <span>CUE</span>
         </button>
-        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar Geometria, Cor e Luz no Studio Inspector [I]">
+        <button class="btn-card-action btn-action-l5 ${isInL5 ? 'is-active-l5' : ''}" data-layer="layer5" title="Enviar para Camada de Apoio / Overlay [L5]">
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+          <span>L5</span>
+        </button>
+        <button class="btn-card-action btn-action-insp" onclick="event.stopPropagation(); openStudioInspector('clip', '${clip.id}')" title="Inspecionar no Studio Inspector [I]">
           <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span>INSP</span>
         </button>
-        <button class="btn-card-action btn-action-ap ${isAutoEligible ? 'is-auto-active' : 'is-auto-excluded'}" onclick="event.stopPropagation(); toggleClipAutopilot('${clip.id}', event);" title="${isAutoEligible ? 'Take ATIVO no Autopilot · Clique para travar em apenas MANUAL seu' : 'Take TRAVADO em manual (só você dispara) · Clique para incluir no Autopilot'}">
-          ${isAutoEligible ? '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg> <span>NO AUTO</span>' : '<svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span>MANUAL</span>'}
-        </button>
-
-        <button class="btn-card-action btn-action-l5" data-layer="layer5" title="Enviar para Overlay L5">L5</button>
-        ${actionBtnHtml}
       </div>
     </div>
   `;
@@ -10373,19 +10893,19 @@ function createMediaCardElement(clip) {
   if (btnL5) {
     btnL5.addEventListener('click', (e) => {
       e.stopPropagation();
-      appState.layers.layer5.clipId = clip.id;
-      appState.layers.layer5.name = clip.filename;
-      appState.layers.layer5._assignedAt = Date.now();
-      sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
-      updateUI();
-      syncVideoSources();
-      showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
+      if (typeof window.routeClipToLayer === 'function') {
+        window.routeClipToLayer(clip.id, 'layer5');
+      } else {
+        appState.layers.layer5.clipId = clip.id;
+        appState.layers.layer5.name = clip.filename;
+        appState.layers.layer5._assignedAt = Date.now();
+        sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
+        updateUI();
+        syncVideoSources();
+        showMacroToast(`Armado em L5 (OVERLAY): ${clip.filename.slice(0, 20)}`);
+      }
     });
   }
-
-  card.addEventListener('click', () => {
-    routeClipToBus(clip.id, 'B');
-  });
 
   return card;
 }
@@ -13374,6 +13894,28 @@ function routeClipToBus(clipId, bus) {
     sendAction('set_layer_fit_mode', { layer: 'layer3', fit_mode: 'fill' });
   }
 }
+window.routeClipToBus = routeClipToBus;
+
+function routeClipToLayer(clipId, layerKey = 'layer5') {
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.id === clipId) ||
+               (typeof allMediaPoolClips !== 'undefined' ? allMediaPoolClips : []).find(c => c.id === clipId) ||
+               { id: clipId, filename: clipId };
+  if (!clip || !appState.layers || !appState.layers[layerKey]) return;
+  const clipName = clip.filename || clip.name || clip.id;
+  appState.layers[layerKey].clipId = clip.id;
+  appState.layers[layerKey].name = clipName;
+  appState.layers[layerKey]._assignedAt = Date.now();
+  if (appState.layers[layerKey].opacity === undefined || appState.layers[layerKey].opacity <= 0.05) {
+    appState.layers[layerKey].opacity = 0.85;
+  }
+  updateUI();
+  syncVideoSources();
+  sendAction('cue_clip', { layer: layerKey, clipId: clip.id, name: clipName });
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[${layerKey.toUpperCase()}] Armado: "${clip.display_title || clipName.slice(0, 24)}"`);
+  }
+}
+window.routeClipToLayer = routeClipToLayer;
 
 function swapBuses() {
   const tempId = appState.layers.layer0.clipId;
@@ -13382,6 +13924,14 @@ function swapBuses() {
   appState.layers.layer0.name = appState.layers.layer3.name;
   appState.layers.layer3.clipId = tempId;
   appState.layers.layer3.name = tempName;
+
+  // Swap decoupled 3D configurations between Deck A and Deck B
+  if (appState.deckA_3d && appState.deckB_3d) {
+    const temp3d = JSON.parse(JSON.stringify(appState.deckA_3d));
+    Object.assign(appState.deckA_3d, appState.deckB_3d);
+    Object.assign(appState.deckB_3d, temp3d);
+  }
+
   updateUI();
   syncVideoSources();
 }
@@ -13483,7 +14033,11 @@ function initKeyboardShortcuts() {
   isKeyboardShortcutsInitialized = true;
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
-    const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+    const isTextInput = activeEl && (
+      (activeEl.tagName === 'INPUT' && ['text', 'password', 'search', 'email', 'url', 'number', 'tel'].includes(activeEl.type)) ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.isContentEditable
+    );
 
     // Se o elemento ativo for órfão ou estiver em diálogo/container invisível, desfoca para liberar os atalhos
     if (isTextInput && activeEl.offsetParent === null && activeEl !== document.body) {
@@ -13655,7 +14209,7 @@ function initKeyboardShortcuts() {
     }
 
     // I: Toggle Studio Inspector (DaVinci / After Effects Style)
-    if (key === 'i' || key === 'I') {
+    if (key === 'i' || key === 'I' || e.code === 'KeyI') {
       e.preventDefault();
       toggleStudioInspector();
       return;
@@ -15318,74 +15872,177 @@ function renderStudioInspector() {
 
     container.innerHTML = html;
   } else if (targetType === '3d') {
-    if (badge) badge.textContent = '🌌 CENÁRIOS 3D & ESTRELA 13';
-    const cfg3d = appState.gen3d || {};
+    const currentTarget = appState.inspector_3d_target || 'deckA';
+    if (badge) {
+      badge.textContent = currentTarget === 'deckA' ? '🔴 3D PGM A (AO VIVO)' : (currentTarget === 'deckB' ? '🟢 3D CUE B (PRÉ-AR)' : '🟡 3D L5 (APOIO)');
+    }
+
+    const cfg3d = getActive3DConfig(currentTarget);
     const curScene = cfg3d.active_scene || 'star_13';
-    const curPal = cfg3d.palette || 'cyan_neon';
+    const curPal = cfg3d.palette || 'pt_rubi';
     const react = cfg3d.audio_reactivity || {};
+    const cam = cfg3d.camera || {};
+    const parts = cfg3d.particles || {};
+
+    const all3DScenes = [
+      { id: 'star_13', name: 'ESTRELA 13 PT', desc: 'Estrela 5 pontas áurea PT + Numeral 13 oficial', icon: '⭐' },
+      { id: 'spine', name: 'ESPINHAÇO HOUDINI', desc: 'Vértebras marinhas biomórficas abyss', icon: '🦴' },
+      { id: 'black_hole_singularity', name: 'SINGULARIDADE', desc: 'Vórtice espaço-tempo & anel de fótons Doppler', icon: '🕳️' },
+      { id: 'biomorphic_flora', name: 'BIOMORPHIC FLORA', desc: 'Micélio fractal & tentáculos bioluminescentes', icon: '🌿' },
+      { id: 'sol_vermelho_horizonte', name: 'SOL VERMELHO', desc: 'Sol monumental & grade vetorial em perspectiva', icon: '🌅' },
+      { id: 'mercury_blob', name: 'MERCÚRIO LÍQUIDO', desc: 'Escultura fluida cromada Chiaroscuro', icon: '💧' },
+      { id: 'monolith_13', name: 'MONÓLITO BRUTALISTA', desc: 'Prisma sagrado brutalista & fendas laser', icon: '🏛️' },
+      { id: 'nebula_particles', name: 'NEBULA PARTICLES', desc: 'Enxame quântico em atrator de Lorenz', icon: '✨' },
+      { id: 'cyber_wireframe', name: 'WIREFRAME LATTICE', desc: 'Hipercubo Tesseract brutalista laser', icon: '🕸️' },
+      { id: 'hyper_torus', name: 'QUANTUM TORUS', desc: 'Nó toroidal topológico & fluxo quântico', icon: '🌀' },
+      { id: 'ocean_sun', name: 'OCEAN SUN', desc: 'Mar ondulante 3D + orbe solar celestial', icon: '🌊' },
+      { id: 'hybrid', name: 'HYBRID COSMOS', desc: 'Mar + Estrela 13 + Sol no horizonte', icon: '🪐' }
+    ];
+
+    const luxuryPalettes = [
+      { id: 'pt_rubi', label: 'PT RUBI & OURO', color: '#dc2626' },
+      { id: 'noir_gold', label: 'NOIR OBSIDIANA', color: '#ffd700' },
+      { id: 'cyan_neon', label: 'CIANO NEON', color: '#00f0ff' },
+      { id: 'solar_gold', label: 'SOLAR DOURADO', color: '#ffb703' },
+      { id: 'matrix_emerald', label: 'MATRIX VERDE', color: '#00ff88' },
+      { id: 'deep_violet', label: 'ULTRAVIOLETA', color: '#d946ef' },
+      { id: 'monochrome_ice', label: 'GELO MONO', color: '#e2e8f0' }
+    ];
 
     html += `
-      <!-- 3D SCENE PICKER GRID -->
-      <div class="insp-section">
-        <div class="insp-sec-title">CENÁRIO 3D GENERATIVO</div>
-        <div class="insp-scene-grid">
-          ${[
-            { id: 'spine', name: 'ESPINHAÇO', desc: 'Vértebras marinhas Houdini abyss' },
-            { id: 'ocean_sun', name: 'OCEAN SUN', desc: 'Mar ondulante + sol/lua de partículas' },
-            { id: 'star_13', name: 'ESTRELA 13', desc: 'Estrela sagrada + numeral 13 desacoplado' },
-            { id: 'hybrid', name: 'HYBRID COSMOS', desc: 'Mar + estrela 13 + horizonte solar' }
-          ].map(sc => `
-            <div class="insp-scene-card ${curScene === sc.id ? 'active' : ''}" onclick="appState.gen3d.active_scene = '${sc.id}'; renderStudioInspector();">
-              <div class="insp-scene-card-name">${sc.name}</div>
-              <div class="insp-scene-card-desc">${sc.desc}</div>
-            </div>
-          `).join('')}
+      <!-- DECK TARGET STAGING SELECTOR -->
+      <div class="insp-section insp-highlight-card" style="border-left: 3px solid ${currentTarget === 'deckA' ? '#ef4444' : (currentTarget === 'deckB' ? '#10b981' : '#f59e0b')};">
+        <div class="insp-sec-title">ALVO DE STAGING 3D (DESACOPLAMENTO)</div>
+        <div class="insp-pills-row" style="margin-bottom: 8px;">
+          <button class="insp-layer-pill ${currentTarget === 'deckA' ? 'active' : ''}" style="${currentTarget === 'deckA' ? 'background:#ef4444;color:#fff;' : ''}" onclick="window.setInspector3DTarget('deckA')">
+            🔴 PGM A (AO VIVO)
+          </button>
+          <button class="insp-layer-pill ${currentTarget === 'deckB' ? 'active' : ''}" style="${currentTarget === 'deckB' ? 'background:#10b981;color:#fff;' : ''}" onclick="window.setInspector3DTarget('deckB')">
+            🟢 CUE B (PRÉ-AR)
+          </button>
+          <button class="insp-layer-pill ${currentTarget === 'layer5' ? 'active' : ''}" style="${currentTarget === 'layer5' ? 'background:#f59e0b;color:#000;' : ''}" onclick="window.setInspector3DTarget('layer5')">
+            🟡 L5 (APOIO)
+          </button>
         </div>
-      </div>
-
-      <!-- PALETTE SELECTOR -->
-      <div class="insp-section">
-        <div class="insp-sec-title">PALETA DE COR & LUZ (LUXURY THEMES)</div>
-        <div class="insp-pills-row">
-          ${[
-            { id: 'cyan_neon', label: 'CIANO NEON', color: '#00f0ff' },
-            { id: 'solar_gold', label: 'SOLAR DOURADO', color: '#ffb703' },
-            { id: 'matrix_emerald', label: 'MATRIX ESMERALDA', color: '#00ff88' },
-            { id: 'deep_violet', label: 'ULTRAVIOLETA', color: '#d946ef' },
-            { id: 'monochrome_ice', label: 'GELO MONO', color: '#e2e8f0' }
-          ].map(pal => `
-            <button class="insp-palette-pill ${curPal === pal.id ? 'active' : ''}" onclick="appState.gen3d.palette = '${pal.id}'; renderStudioInspector();">
-              <span class="pal-dot" style="background:${pal.color};"></span>
-              <span>${pal.label}</span>
-            </button>
-          `).join('')}
+        <div class="insp-desc" style="font-size:0.75rem;">
+          ${currentTarget === 'deckA' ? '⚠️ Modificando parâmetros 3D AO VIVO no Program Master A.' : (currentTarget === 'deckB' ? '🛡️ Staging seguro: Edite no CUE B sem vazar alterações para o sinal ao vivo!' : '✨ Modificando parâmetros 3D da Camada de Apoio L5.')}
+        </div>
+        <div class="insp-routes-strip" style="margin-top:6px;">
+          <button class="btn-insp-route" onclick="window.triggerCurrent3DLive('${curScene}')" title="Disparar este cenário 3D no PGM A">
+            ▶ DISPARAR NO PGM A
+          </button>
+          <button class="btn-insp-route" onclick="window.armCurrent3DCue('${curScene}')" title="Armar este cenário 3D no CUE B">
+            ● ARMAR NO CUE B
+          </button>
+          <button class="btn-insp-route" onclick="window.copy3DConfig('${currentTarget === 'deckB' ? 'deckB' : 'deckA'}', '${currentTarget === 'deckB' ? 'deckA' : 'deckB'}')" title="Copiar parâmetros 3D">
+            📋 ${currentTarget === 'deckB' ? 'PASSAR CUE ➔ PGM' : 'PASSAR PGM ➔ CUE'}
+          </button>
         </div>
       </div>
     `;
 
     if (subtab === 'transform') {
-      const cam = cfg3d.camera || {};
+      // 1. SCENE PICKER (CENAS 3D)
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">SELEÇÃO DE CENÁRIO 3D (${all3DScenes.length} CENAS DISPONÍVEIS)</div>
+          <div class="insp-scene-grid">
+            ${all3DScenes.map(sc => `
+              <div class="insp-scene-card ${curScene === sc.id ? 'active' : ''}" onclick="window.set3DScene('${sc.id}')">
+                <div class="insp-scene-card-name">${sc.icon} ${sc.name}</div>
+                <div class="insp-scene-card-desc">${sc.desc}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'color') {
+      // 2. PALETTES & LIGHTING (PALETAS DE COR)
+      html += `
+        <div class="insp-section">
+          <div class="insp-sec-title">PALETA DE COR & LUZ (LUXURY THEMES)</div>
+          <div class="insp-pills-row">
+            ${luxuryPalettes.map(pal => `
+              <button class="insp-palette-pill ${curPal === pal.id ? 'active' : ''}" onclick="window.set3DPalette('${pal.id}')">
+                <span class="pal-dot" style="background:${pal.color};"></span>
+                <span>${pal.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-title">MODO DE RENDER & PONTOS</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESTRUTURA ARAMADA (WIREFRAME)</span>
+              <span class="insp-val-disp">${parts.wireframe !== false ? 'LIGADO' : 'DESLIGADO'}</span>
+            </div>
+            <button class="insp-btn-toggle ${parts.wireframe !== false ? 'active' : ''}" onclick="window.toggle3DWireframe()">
+              ${parts.wireframe !== false ? '✓ MALHA ARAMADA ATIVA' : 'MALHA DESATIVADA'}
+            </button>
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ESPESSURA DO TRAÇO / TAMANHO DE PONTO</span>
+              <span class="insp-val-disp">${(parts.point_size || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="5" max="30" value="${Math.round((parts.point_size || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('particles.point_size', this.value / 10.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>INTENSIDADE DE BRILHO (GLOW)</span>
+              <span class="insp-val-disp">${(parts.glow_intensity || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((parts.glow_intensity || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('particles.glow_intensity', this.value / 10.0)">
+          </div>
+        </div>
+      `;
+    } else if (subtab === 'advanced') {
+      // 3. CAMERA & REACTION (CÂMERA & KICK)
       const orbSpd = cam.orbit_speed !== undefined ? cam.orbit_speed : 1.0;
       const tilt = cam.tilt !== undefined ? cam.tilt : 0.22;
+      const roll = cam.roll !== undefined ? cam.roll : 0.0;
       const dist = cam.distance !== undefined ? cam.distance : 2.3;
+      const autoOrb = cam.auto_orbit !== false;
 
       html += `
         <div class="insp-section">
-          <div class="insp-sec-title">CÂMERA 3D & PERSPECTIVA</div>
+          <div class="insp-sec-title">CÂMERA 3D, ÓRBITA & PERSPECTIVA</div>
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ÓRBITA AUTOMÁTICA CONTÍNUA</span>
+              <span class="insp-val-disp">${autoOrb ? 'AUTO' : 'MANUAL'}</span>
+            </div>
+            <button class="insp-btn-toggle ${autoOrb ? 'active' : ''}" onclick="window.toggle3DAutoOrbit()">
+              ${autoOrb ? '✓ ÓRBITA DINÂMICA ATIVA' : 'ÓRBITA TRAVADA'}
+            </button>
+          </div>
+
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>VELOCIDADE DE ÓRBITA</span>
               <span class="insp-val-disp">${orbSpd.toFixed(1)}x</span>
             </div>
-            <input type="range" min="-30" max="30" value="${Math.round(orbSpd * 10)}" class="insp-range" oninput="appState.gen3d.camera.orbit_speed = this.value / 10.0; renderStudioInspector();">
+            <input type="range" min="-30" max="30" value="${Math.round(orbSpd * 10)}" class="insp-range" oninput="window.set3DParam('camera.orbit_speed', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>INCLINAÇÃO DA CÂMERA (TILT)</span>
+              <span>INCLINAÇÃO VERTICAL (TILT / PITCH)</span>
               <span class="insp-val-disp">${(tilt * 180 / Math.PI).toFixed(1)}°</span>
             </div>
-            <input type="range" min="-60" max="60" value="${Math.round(tilt * 100)}" class="insp-range" oninput="appState.gen3d.camera.tilt = this.value / 100.0; renderStudioInspector();">
+            <input type="range" min="-60" max="60" value="${Math.round(tilt * 100)}" class="insp-range" oninput="window.set3DParam('camera.tilt', this.value / 100.0)">
+          </div>
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>ROTAÇÃO DE HORIZONTE (DUTCH ANGLE / ROLL)</span>
+              <span class="insp-val-disp">${(roll * 180 / Math.PI).toFixed(1)}°</span>
+            </div>
+            <input type="range" min="-45" max="45" value="${Math.round(roll * 100)}" class="insp-range" oninput="window.set3DParam('camera.roll', this.value / 100.0)">
           </div>
 
           <div class="insp-control-row">
@@ -15393,48 +16050,48 @@ function renderStudioInspector() {
               <span>DISTÂNCIA / ZOOM (CAMERA DISTANCE)</span>
               <span class="insp-val-disp">${dist.toFixed(2)}</span>
             </div>
-            <input type="range" min="12" max="45" value="${Math.round(dist * 10)}" class="insp-range" oninput="appState.gen3d.camera.distance = this.value / 10.0; renderStudioInspector();">
+            <input type="range" min="12" max="45" value="${Math.round(dist * 10)}" class="insp-range" oninput="window.set3DParam('camera.distance', this.value / 10.0)">
           </div>
         </div>
-      `;
-    } else if (subtab === 'color') {
-      html += `
+
         <div class="insp-section insp-highlight-card">
-          <div class="insp-sec-title insp-cyan-title">REATIVIDADE DESACOPLADA · ESTRELA 13</div>
-          <div class="insp-desc">A estrela sagrada gira nos agudos e médios. O numeral 13 responde de forma isolada com impulsos vigorosos no subgrave.</div>
+          <div class="insp-sec-title insp-cyan-title">REATIVIDADE DESACOPLADA · ÁUDIO & KICK</div>
+          <div class="insp-desc">Reatividade com controle independente de graves (Sub/Bass) e frequências altas (Treble/Air).</div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>KICK DO NUMERAL 13 (SUB & BASS)</span>
-              <span class="insp-val-disp text-cyan" id="disp-gen-kick">${(react.num13_sub_kick || 1.8).toFixed(1)}x</span>
+              <span class="insp-val-disp text-cyan">${(react.num13_sub_kick || 1.8).toFixed(1)}x</span>
             </div>
-            <input type="range" min="5" max="40" value="${Math.round((react.num13_sub_kick || 1.8) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.num13_sub_kick = this.value / 10.0; document.getElementById('disp-gen-kick').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+            <input type="range" min="5" max="40" value="${Math.round((react.num13_sub_kick || 1.8) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.num13_sub_kick', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
               <span>GIRO DA ESTRELA SAGRADA (TREBLE & AIR)</span>
-              <span class="insp-val-disp text-cyan" id="disp-gen-spin">${(react.star_treble_spin || 1.2).toFixed(1)}x</span>
+              <span class="insp-val-disp text-cyan">${(react.star_treble_spin || 1.2).toFixed(1)}x</span>
             </div>
-            <input type="range" min="2" max="30" value="${Math.round((react.star_treble_spin || 1.2) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.star_treble_spin = this.value / 10.0; document.getElementById('disp-gen-spin').textContent = (this.value / 10.0).toFixed(1) + 'x';">
+            <input type="range" min="2" max="30" value="${Math.round((react.star_treble_spin || 1.2) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.star_treble_spin', this.value / 10.0)">
           </div>
 
           <div class="insp-control-row">
             <div class="insp-label-val">
-              <span>ONDULAÇÃO DO OCEANO (WAVE AMPLITUDE)</span>
+              <span>ONDULAÇÃO DO OCEANO / SOL (WAVE AMPLITUDE)</span>
               <span class="insp-val-disp">${(react.ocean_wave_amp || 1.0).toFixed(1)}x</span>
             </div>
-            <input type="range" min="2" max="25" value="${Math.round((react.ocean_wave_amp || 1.0) * 10)}" class="insp-range" oninput="appState.gen3d.audio_reactivity.ocean_wave_amp = this.value / 10.0;">
+            <input type="range" min="2" max="25" value="${Math.round((react.ocean_wave_amp || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.ocean_wave_amp', this.value / 10.0)">
           </div>
-        </div>
-      `;
-    } else if (subtab === 'advanced') {
-      html += `
-        <div class="insp-section">
-          <div class="insp-sec-title">CONTROLE DIRETO MIDI · BANCO 3D (BANK 3)</div>
-          <div class="insp-desc">Use o botão BANK no cabeçalho ou o atalho "[" / "]" para entrar no modo 3D MATRIX no seu controlador físico.</div>
-          <button class="insp-btn-toggle active" onclick="if(window.penumbraMidi){ window.penumbraMidi.setBank(3); showMacroToast('Modo MIDI 3D Ativado'); }">
-            ATIVAR MAPEAMENTO MIDI 3D MATRIX
+
+          <div class="insp-control-row">
+            <div class="insp-label-val">
+              <span>PULSO BIOMÓRFICO & MICÉLIO (ORGANIC PULSE)</span>
+              <span class="insp-val-disp">${(react.spine_swimming || 1.0).toFixed(1)}x</span>
+            </div>
+            <input type="range" min="2" max="25" value="${Math.round((react.spine_swimming || 1.0) * 10)}" class="insp-range" oninput="window.set3DParam('audio_reactivity.spine_swimming', this.value / 10.0)">
+          </div>
+
+          <button class="insp-btn-toggle" style="margin-top: 10px; border-color: rgba(239,68,68,0.4);" onclick="window.reset3DConfig('${currentTarget}')">
+            ⟲ RESETAR PARÂMETROS DESTE ALVO
           </button>
         </div>
       `;
@@ -15444,6 +16101,109 @@ function renderStudioInspector() {
   }
 }
 window.renderStudioInspector = renderStudioInspector;
+
+window.setInspector3DTarget = function(tgt) {
+  appState.inspector_3d_target = tgt;
+  renderStudioInspector();
+};
+
+window.set3DScene = function(sceneId) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  cfg.active_scene = sceneId;
+  if (tgt === 'deckA') {
+    appState.gen3d = cfg;
+  }
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D ${tgt.toUpperCase()}] Cenário: ${sceneId.toUpperCase()}`);
+  }
+};
+
+window.set3DPalette = function(palId) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  cfg.palette = palId;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.toggle3DWireframe = function() {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  if (!cfg.particles) cfg.particles = {};
+  cfg.particles.wireframe = !cfg.particles.wireframe;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.toggle3DAutoOrbit = function() {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  if (!cfg.camera) cfg.camera = {};
+  cfg.camera.auto_orbit = !cfg.camera.auto_orbit;
+  if (tgt === 'deckA') appState.gen3d = cfg;
+  renderStudioInspector();
+};
+
+window.set3DParam = function(path, val) {
+  const tgt = appState.inspector_3d_target || 'deckA';
+  const cfg = getActive3DConfig(tgt);
+  const parts = path.split('.');
+  if (parts.length === 2) {
+    if (!cfg[parts[0]]) cfg[parts[0]] = {};
+    cfg[parts[0]][parts[1]] = Number(val);
+  } else {
+    cfg[path] = Number(val);
+  }
+  if (tgt === 'deckA') appState.gen3d = cfg;
+};
+
+window.copy3DConfig = function(fromTgt, toTgt) {
+  const src = getActive3DConfig(fromTgt);
+  const dest = getActive3DConfig(toTgt);
+  Object.assign(dest, JSON.parse(JSON.stringify(src)));
+  if (toTgt === 'deckA') appState.gen3d = dest;
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D] Configuração copiada de ${fromTgt.toUpperCase()} para ${toTgt.toUpperCase()}`);
+  }
+};
+
+window.reset3DConfig = function(tgt) {
+  const defaults = createDefault3DConfig(tgt === 'deckA' ? 'star_13' : 'spine', tgt === 'deckA' ? 'pt_rubi' : 'cyan_neon');
+  if (tgt === 'deckA') {
+    appState.deckA_3d = defaults;
+    appState.gen3d = defaults;
+  } else if (tgt === 'deckB') {
+    appState.deckB_3d = defaults;
+  } else if (tgt === 'layer5') {
+    appState.layer5_3d = defaults;
+  }
+  renderStudioInspector();
+  if (typeof showMacroToast === 'function') {
+    showMacroToast(`[3D] Padrões restaurados para ${tgt.toUpperCase()}`);
+  }
+};
+
+window.triggerCurrent3DLive = function(sceneId) {
+  const clipId = 'clip_gen_' + (sceneId === 'star_13' ? 'star_13' : sceneId === 'spine' ? 'plexus_spine' : sceneId);
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.gen_scene === sceneId || c.id === clipId) || { id: 'clip_gen_plexus_spine', filename: 'GENERATIVE 3D' };
+  routeClipToBus(clip.id, 'A');
+  const cfgLive = getActive3DConfig('deckA');
+  cfgLive.active_scene = sceneId;
+  appState.gen3d = cfgLive;
+  renderStudioInspector();
+};
+
+window.armCurrent3DCue = function(sceneId) {
+  const clipId = 'clip_gen_' + (sceneId === 'star_13' ? 'star_13' : sceneId === 'spine' ? 'plexus_spine' : sceneId);
+  const clip = (typeof allClips !== 'undefined' ? allClips : []).find(c => c.gen_scene === sceneId || c.id === clipId) || { id: 'clip_gen_plexus_spine', filename: 'GENERATIVE 3D' };
+  routeClipToBus(clip.id, 'B');
+  const cfgCue = getActive3DConfig('deckB');
+  cfgCue.active_scene = sceneId;
+  renderStudioInspector();
+};
 
 function setGlobalMatteAsset(assetPath) {
   if (!appState.matte) appState.matte = {};

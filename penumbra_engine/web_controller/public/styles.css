@@ -2805,32 +2805,45 @@ body.resizing-workspace-active .top-zone {
   display: flex;
   align-items: center;
   gap: 3px;
-  margin-top: 1px;
+  margin-top: 4px;
+  width: 100%;
 }
 
-/* Zero white default buttons - Adobe / Resolume Broadcast Standard */
+/* Broadcast Standard Segmented Buttons - Zero White & Clean Chiaroscuro */
 .btn-card-action {
   appearance: none;
   -webkit-appearance: none;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  color: #94a3b8;
   font-family: var(--font-mono);
   font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   border-radius: 3px;
-  padding: 2.5px 6px;
+  padding: 3px 4px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   white-space: nowrap;
   line-height: 1.2;
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.btn-card-action .btn-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .btn-card-action:hover {
@@ -2848,7 +2861,7 @@ body.resizing-workspace-active .top-zone {
 .btn-card-action.btn-action-pgm,
 .btn-card-action.btn-bus-a {
   background: rgba(0, 255, 136, 0.08);
-  border-color: rgba(0, 255, 136, 0.3);
+  border-color: rgba(0, 255, 136, 0.25);
   color: #00ff88;
 }
 .btn-card-action.btn-action-pgm:hover,
@@ -2858,12 +2871,25 @@ body.resizing-workspace-active .top-zone {
   color: #ffffff;
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.35);
 }
+.btn-card-action.btn-action-pgm.active,
+.btn-card-action.btn-bus-a.active,
+.media-card.is-on-air-pgm .btn-action-pgm {
+  background: rgba(0, 255, 136, 0.25);
+  border-color: #00ff88;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+  font-weight: 800;
+}
+.media-card.is-on-air-pgm .btn-action-pgm .btn-dot {
+  opacity: 1;
+  box-shadow: 0 0 5px #00ff88;
+}
 
 /* Bus B: Preview Cue (Cyan Broadcast Luminescence) */
 .btn-card-action.btn-action-cue,
 .btn-card-action.btn-bus-b {
   background: rgba(0, 240, 255, 0.08);
-  border-color: rgba(0, 240, 255, 0.3);
+  border-color: rgba(0, 240, 255, 0.25);
   color: #00f0ff;
 }
 .btn-card-action.btn-action-cue:hover,
@@ -2873,25 +2899,25 @@ body.resizing-workspace-active .top-zone {
   color: #ffffff;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
-
-/* Inspector Trigger (Purple Royalty) */
-.btn-card-action.btn-action-insp {
-  background: rgba(192, 132, 252, 0.08);
-  border-color: rgba(192, 132, 252, 0.3);
-  color: #c084fc;
-}
-.btn-card-action.btn-action-insp:hover {
-  background: rgba(192, 132, 252, 0.22);
-  border-color: #c084fc;
+.btn-card-action.btn-action-cue.active,
+.btn-card-action.btn-bus-b.active,
+.media-card.is-in-cue-prv .btn-action-cue {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: #00f0ff;
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(192, 132, 252, 0.35);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+  font-weight: 800;
+}
+.media-card.is-in-cue-prv .btn-action-cue .btn-dot {
+  opacity: 1;
+  box-shadow: 0 0 5px #00f0ff;
 }
 
-/* Layer 5 Overlay (Amber Spark) */
+/* Layer 5: Support / Overlay (Amber Gold Luminescence) */
 .btn-card-action.btn-action-l5,
 .btn-card-action[data-layer="layer5"] {
   background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.25);
   color: #fbbf24;
 }
 .btn-card-action.btn-action-l5:hover,
@@ -2900,6 +2926,34 @@ body.resizing-workspace-active .top-zone {
   border-color: #f59e0b;
   color: #ffffff;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+.btn-card-action.btn-action-l5.active,
+.btn-card-action[data-layer="layer5"].active,
+.media-card.is-in-l5 .btn-action-l5 {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  font-weight: 800;
+}
+.media-card.is-in-l5 .btn-action-l5 .btn-dot {
+  opacity: 1;
+  box-shadow: 0 0 5px #fbbf24;
+}
+
+/* Inspector Trigger (Purple Royalty) */
+.btn-card-action.btn-action-insp {
+  background: rgba(192, 132, 252, 0.08);
+  border-color: rgba(192, 132, 252, 0.25);
+  color: #c084fc;
+  flex: 0 0 32px;
+  padding: 3px 2px;
+}
+.btn-card-action.btn-action-insp:hover {
+  background: rgba(192, 132, 252, 0.22);
+  border-color: #c084fc;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.35);
 }
 
 /* Cache & Local Status Badges */
@@ -10820,6 +10874,112 @@ body.resizing-workspace-active .top-zone {
   border-color: #00f0ff;
   color: #00f0ff;
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+/* Rich 3D Scene Cards in Inspector */
+.insp-scene-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 4px;
+  padding: 6px 7px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.insp-scene-card:hover {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.insp-scene-card.active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.insp-scene-card.active.is-pt-star {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
+}
+
+.insp-scene-card-name {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.insp-scene-card-desc {
+  font-size: 7.5px;
+  color: #94a3b8;
+  line-height: 1.25;
+}
+
+/* 3D Staging Deck Selector Strip */
+.insp-deck-selector-strip {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.insp-deck-pill {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 4px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.12s ease;
+}
+
+.insp-deck-pill:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.insp-deck-pill.active-pgm {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+  color: #00ff88;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+}
+
+.insp-deck-pill.active-cue {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+.insp-deck-pill.active-l5 {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 
 /* 3D Color Palette Swatches */
