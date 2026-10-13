@@ -8,7 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const ARTIFACTS_REPORT_PATH = '/Users/felipeconceicao/.gemini/antigravity-ide/brain/4bc15861-a7a4-4a44-8bbc-2704f1df8acf/preflight_report.md';
+const ARTIFACTS_REPORT_PATH = process.env.PENUMBRA_ARTIFACT_MIRROR_DIR
+  ? path.join(process.env.PENUMBRA_ARTIFACT_MIRROR_DIR, 'preflight_report.md')
+  : null;
 const LOCAL_REPORT_PATH = path.resolve(__dirname, '../tests/reports/preflight_report.md');
 
 function checkServerAlive(port = 3000) {
@@ -132,7 +134,7 @@ async function main() {
   const reportContent = reportLines.join('\n');
   fs.writeFileSync(LOCAL_REPORT_PATH, reportContent);
   try {
-    fs.writeFileSync(ARTIFACTS_REPORT_PATH, reportContent);
+    if (ARTIFACTS_REPORT_PATH) fs.writeFileSync(ARTIFACTS_REPORT_PATH, reportContent);
   } catch (_) {}
 
   console.log('\n====================================================');

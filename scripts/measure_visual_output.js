@@ -159,7 +159,9 @@ async function runVisualMeasurement() {
   const cropPath = path.join(REPORTS_DIR, 'crop_1x1_program_center.png');
   fs.writeFileSync(cropPath, cropBuffer);
   try {
-    fs.writeFileSync('/Users/felipeconceicao/.gemini/antigravity-ide/brain/4bc15861-a7a4-4a44-8bbc-2704f1df8acf/crop_1x1_program_center.png', cropBuffer);
+    if (process.env.PENUMBRA_ARTIFACT_MIRROR_DIR) {
+      fs.writeFileSync(path.join(process.env.PENUMBRA_ARTIFACT_MIRROR_DIR, 'crop_1x1_program_center.png'), cropBuffer);
+    }
   } catch (_) {}
 
   await browser.close();
@@ -220,7 +222,9 @@ async function runVisualMeasurement() {
 
   fs.writeFileSync(reportPath, reportMd.join('\n'));
   try {
-    fs.writeFileSync('/Users/felipeconceicao/.gemini/antigravity-ide/brain/4bc15861-a7a4-4a44-8bbc-2704f1df8acf/visual_output_scientific_report.md', reportMd.join('\n'));
+    if (process.env.PENUMBRA_ARTIFACT_MIRROR_DIR) {
+      fs.writeFileSync(path.join(process.env.PENUMBRA_ARTIFACT_MIRROR_DIR, 'visual_output_scientific_report.md'), reportMd.join('\n'));
+    }
   } catch (_) {}
 
   console.log(`\n[✓] Relatório científico visual salvo em: ${reportPath}`);

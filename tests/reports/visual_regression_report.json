@@ -1,6 +1,6 @@
 {
   "name": "Visual Regression Audit",
-  "timestamp": "2026-10-11T23:19:08.948Z",
+  "timestamp": "2026-10-13T18:41:08.759Z",
   "updateBaselines": false,
   "viewports": [
     {
@@ -8,7 +8,7 @@
       "width": 1920,
       "height": 1080,
       "status": "PASS",
-      "diffPct": "1.34",
+      "diffPct": "2.90",
       "file": "cockpit_desktop_1920x1080.png"
     },
     {
@@ -16,7 +16,7 @@
       "width": 1280,
       "height": 800,
       "status": "PASS",
-      "diffPct": "0.77",
+      "diffPct": "4.67",
       "file": "cockpit_macbook_1280x800.png"
     },
     {
@@ -24,7 +24,7 @@
       "width": 1180,
       "height": 820,
       "status": "PASS",
-      "diffPct": "0.61",
+      "diffPct": "4.50",
       "file": "cockpit_ipad_1180x820.png"
     },
     {
@@ -32,7 +32,7 @@
       "width": 1024,
       "height": 768,
       "status": "PASS",
-      "diffPct": "0.64",
+      "diffPct": "3.32",
       "file": "cockpit_ipad_1024x768.png"
     }
   ],
