@@ -1162,6 +1162,7 @@ let hasHandoverFrame = false;
 // ----------------------------------------------------------------------------
 // CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
 // ----------------------------------------------------------------------------
+let pendingContextRestoreRaf = false;
 [prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
   if (!cv) return;
   cv.addEventListener('contextlost', (e) => {
@@ -1171,7 +1172,17 @@ let hasHandoverFrame = false;
   cv.addEventListener('contextrestored', () => {
     console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
     lastFrameTime = 0;
-    requestAnimationFrame(renderVisuals);
+    // A GPU reset tende a disparar 'contextrestored' em vários canvases quase ao
+    // mesmo tempo; renderVisuals já se reagenda sozinho (requestAnimationFrame no
+    // fim do próprio loop), então só a primeira restauração do lote deve iniciar
+    // uma nova cadeia de RAF — sem essa guarda, cada canvas abriria seu próprio
+    // loop paralelo e duplicaria o render indefinidamente.
+    if (pendingContextRestoreRaf) return;
+    pendingContextRestoreRaf = true;
+    requestAnimationFrame((time) => {
+      pendingContextRestoreRaf = false;
+      renderVisuals(time);
+    });
   });
 });
 
@@ -3713,7 +3724,7 @@ function initBackgroundKeepAlive() {
 window.initBackgroundKeepAlive = initBackgroundKeepAlive;
 
 function renderVisuals(time) {
-  const targetFps = appState.fps_limit || 30;
+  const targetFps = appState.fps_limit || 60;
   const fpsInterval = 1000 / targetFps;
   const now = time || performance.now();
   lastEngineTick = now;
@@ -7533,6 +7544,14 @@ function executeTakeCommit() {
 }
 
 function executeHardCut(isUserAction = false) {
+  // Mesma proteção anti-disparo-duplo de startAutoTransition: um hard cut
+  // disparado por automação dentro de 3s de outro take é ignorado; um hard cut
+  // explícito do operador (botão ou Enter) sempre executa.
+  const nowCut = performance.now();
+  if (!isUserAction && (nowCut - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowCut;
   isAutoTransitioning = false;
   autoTransitionProgress = 0.0;
   const bar = document.getElementById('auto-take-bar');
@@ -11649,7 +11668,7 @@ function setupEvents() {
   if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition(null, true));
 
   const btnCutTake = document.getElementById('btn-cut-take');
-  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut());
+  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut(true));
 
   document.querySelectorAll('.trans-rate-btn').forEach(btn => {
     btn.addEventListener('click', () => {

@@ -201,7 +201,9 @@ async function runIpadAudit() {
 
   fs.writeFileSync(reportPath, reportMd.join('\n'));
   try {
-    fs.writeFileSync('/Users/felipeconceicao/.gemini/antigravity-ide/brain/4bc15861-a7a4-4a44-8bbc-2704f1df8acf/ipad_cognitive_audit.md', reportMd.join('\n'));
+    if (process.env.PENUMBRA_ARTIFACT_MIRROR_DIR) {
+      fs.writeFileSync(path.join(process.env.PENUMBRA_ARTIFACT_MIRROR_DIR, 'ipad_cognitive_audit.md'), reportMd.join('\n'));
+    }
   } catch (_) {}
   console.log(`\n[✓] Relatório de auditoria touch salvo em: ${reportPath}`);
 
