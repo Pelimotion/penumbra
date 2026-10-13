@@ -301,8 +301,15 @@ function createDownloadManager(options = {}) {
     });
   }
 
-  function start(value) {
+  function start(value, qualityValue) {
     const url = validateYouTubeUrl(value);
+    // Teto de resolução no download: por padrão 720p (menos decode/aquecimento em
+    // sessões longas num notebook), com opção explícita de 1080p quando a
+    // qualidade importar mais que a temperatura. Qualquer valor fora da
+    // allowlist cai silenciosamente para o padrão seguro de 720p.
+    const allowedHeights = new Set([720, 1080]);
+    const requestedHeight = Number.parseInt(qualityValue, 10);
+    const maxHeight = allowedHeights.has(requestedHeight) ? requestedHeight : 720;
     if ([...jobs.values()].some(job => ACTIVE_STATUSES.has(job.status))) {
       throw new YouTubeDownloadError('Já existe um download ativo. Aguarde ou cancele antes de iniciar outro.', 'DOWNLOAD_ACTIVE', 429);
     }
@@ -320,7 +327,7 @@ function createDownloadManager(options = {}) {
     const args = [
       '--ignore-config', '--no-playlist', '--no-warnings', '--newline',
       '--js-runtimes', `node:${jsRuntimePath}`,
-      '--format', 'bv*+ba/b', '--merge-output-format', 'mkv',
+      '--format', `bv*[height<=${maxHeight}]+ba/b[height<=${maxHeight}]`, '--merge-output-format', 'mkv',
       '--progress-template', 'download:%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.total_bytes_estimate)s',
       '--print', 'before_dl:__PENUMBRA_TITLE__%(title)s',
       '--print', 'before_dl:__PENUMBRA_DURATION__%(duration)s',
