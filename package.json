@@ -10,6 +10,13 @@
     "bundle": "node scripts/build_portable.js",
     "sync-media": "node scripts/sync_cdn.js",
     "ship": "node scripts/update_docs.js && git add CHANGELOG.md STATE.md docs/ && git diff --cached --quiet || git commit -m 'docs: auto-update documentation' && node scripts/deploy_cdn.js",
-    "start": "cd penumbra_engine/web_controller && node server.js"
+    "start": "cd penumbra_engine/web_controller && node server.js",
+    "preflight": "node scripts/preflight.js",
+    "test:smoke": "node scripts/preflight.js --smoke-only",
+    "test:visual": "node scripts/preflight.js --visual-only",
+    "test:update-baselines": "node scripts/preflight.js --update-baselines"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.0"
   }
 }

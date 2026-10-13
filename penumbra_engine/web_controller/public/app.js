@@ -1159,6 +1159,94 @@ handoverCanvas.width = 640;
 handoverCanvas.height = 360;
 let hasHandoverFrame = false;
 
+// ----------------------------------------------------------------------------
+// CANVAS CONTEXT LOSS RESILIENCE (BROADCAST HDMI & GPU CRASH PROTECTION)
+// ----------------------------------------------------------------------------
+let pendingContextRestoreRaf = false;
+[prgCanvas, prvCanvas, busCanvasA, busCanvasB, offscreenA, offscreenB, handoverCanvas].forEach(cv => {
+  if (!cv) return;
+  cv.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    console.warn('[PENUMBRA ENGINE] Canvas Context Lost detectado! Prevenindo encerramento e aguardando restauração...');
+  });
+  cv.addEventListener('contextrestored', () => {
+    console.log('[PENUMBRA ENGINE] Canvas Context Restaurado com sucesso.');
+    lastFrameTime = 0;
+    // A GPU reset tende a disparar 'contextrestored' em vários canvases quase ao
+    // mesmo tempo; renderVisuals já se reagenda sozinho (requestAnimationFrame no
+    // fim do próprio loop), então só a primeira restauração do lote deve iniciar
+    // uma nova cadeia de RAF — sem essa guarda, cada canvas abriria seu próprio
+    // loop paralelo e duplicaria o render indefinidamente.
+    if (pendingContextRestoreRaf) return;
+    pendingContextRestoreRaf = true;
+    requestAnimationFrame((time) => {
+      pendingContextRestoreRaf = false;
+      renderVisuals(time);
+    });
+  });
+});
+
+// ----------------------------------------------------------------------------
+// LIVE SET SESSION PERSISTENCE & AUTO-RECOVERY (ANTI-CRASH STAGE RESILIENCE)
+// ----------------------------------------------------------------------------
+function saveLiveSetSession() {
+  try {
+    if (!appState || !appState.layers) return;
+    const sessionSnapshot = {
+      timestamp: Date.now(),
+      macro_state: appState.macro_state,
+      bpm: appState.bpm,
+      crossfader: crossfader ? Number(crossfader.value) : 0,
+      aspectRatio: appState.aspectRatio,
+      vertical_mode: Boolean(appState.vertical_mode),
+      blackout: Boolean(appState.blackout),
+      layers: {
+        layer0: { ...appState.layers.layer0 },
+        layer1: { ...appState.layers.layer1 },
+        layer2: { ...appState.layers.layer2 },
+        layer3: { ...appState.layers.layer3 },
+        layer4: { ...appState.layers.layer4 },
+        layer5: { ...appState.layers.layer5 }
+      }
+    };
+    sessionStorage.setItem('penumbra_live_set_session', JSON.stringify(sessionSnapshot));
+  } catch (err) {}
+}
+
+function restoreLiveSetSession() {
+  try {
+    const raw = sessionStorage.getItem('penumbra_live_set_session');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.layers) return false;
+    if (Date.now() - (data.timestamp || 0) > 12 * 3600 * 1000) return false;
+
+    if (data.macro_state) appState.macro_state = data.macro_state;
+    if (data.bpm) appState.bpm = data.bpm;
+    if (data.aspectRatio) appState.aspectRatio = data.aspectRatio;
+    if (data.vertical_mode !== undefined) appState.vertical_mode = data.vertical_mode;
+    if (data.blackout !== undefined) appState.blackout = data.blackout;
+
+    for (const [lid, ldata] of Object.entries(data.layers)) {
+      if (appState.layers[lid]) {
+        appState.layers[lid] = { ...appState.layers[lid], ...ldata };
+      }
+    }
+
+    if (crossfader && data.crossfader !== undefined) {
+      crossfader.value = data.crossfader;
+    }
+    console.log('[PENUMBRA ENGINE] Set operacional restaurado com sucesso a partir de sessionStorage.');
+    return true;
+  } catch (err) {
+    console.warn('[PENUMBRA ENGINE] Falha ao restaurar sessão de set:', err);
+    return false;
+  }
+}
+window.saveLiveSetSession = saveLiveSetSession;
+window.restoreLiveSetSession = restoreLiveSetSession;
+
+
 // Theater / Expanded Modal Elements
 const theaterModal = document.getElementById('theater-modal');
 const theaterCanvas = document.getElementById('theater-canvas');
@@ -1228,9 +1316,15 @@ function initWebSocket() {
         if (incoming.layers) {
           for (const [lid, lprops] of Object.entries(incoming.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fit')
               };
@@ -1265,9 +1359,15 @@ function initWebSocket() {
         if (incomingData.layers) {
           for (const [lid, lprops] of Object.entries(incomingData.layers)) {
             if (appState.layers[lid]) {
+              const isRecentAssignment = (Date.now() - (appState.layers[lid]._assignedAt || 0)) < 1500;
+              const safeLprops = { ...lprops };
+              if (isRecentAssignment && lprops.clipId && lprops.clipId !== appState.layers[lid].clipId) {
+                delete safeLprops.clipId;
+                delete safeLprops.name;
+              }
               appState.layers[lid] = {
                 ...appState.layers[lid],
-                ...lprops,
+                ...safeLprops,
                 rotation: lprops.rotation !== undefined ? lprops.rotation : (appState.layers[lid].rotation || 0),
                 fit_mode: lprops.fit_mode !== undefined ? lprops.fit_mode : (appState.layers[lid].fit_mode || 'fill')
               };
@@ -1278,10 +1378,15 @@ function initWebSocket() {
         if (incomingData.audio_source) {
           updateAudioSourceUI(incomingData.audio_source);
         }
+        const preservedLastTakeBar = appState.last_take_total_bar;
+        const preservedPhrase = appState.phrase;
         appState = { ...appState, ...incomingData };
+        if (preservedLastTakeBar !== undefined) appState.last_take_total_bar = preservedLastTakeBar;
+        if (preservedPhrase) appState.phrase = { ...preservedPhrase, ...(incomingData.phrase || {}) };
         window.appState = appState;
         updateMeters();
-        runAutopilotEngine();
+        // Governance: runAutopilotEngine() runs deterministically inside 60 FPS render loop beat tick,
+        // avoiding asynchronous race conditions from 40ms telemetry updates.
       } else if (msg.type === 'audio_source_status') {
         updateAudioSourceUI(msg.data);
       } else if (msg.type === 'manifest_updated') {
@@ -3766,9 +3871,18 @@ function renderVisuals(time) {
     busCtxA.fillRect(0, 0, w, h);
 
     const baseClip = allClips.find(c => c.id === appState.layers.layer0.clipId) || allClips[0];
-    const isBaseGen = baseClip && (baseClip.is_generative || baseClip.id === 'clip_gen_plexus_spine');
+    const isBaseGen = baseClip && (baseClip.is_generative || baseClip.id === 'clip_gen_plexus_spine' || baseClip.category === '3D');
     const videoL0Ready = playerL0 && playerL0.readyState >= 2;
-    const baseSource = isBaseGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL0Ready ? playerL0 : getClipImage(baseClip));
+    const baseSource = isBaseGen ? getPlexusSpineCanvas(w, h, simTime, baseClip?.gen_scene, 'deckA') : (videoL0Ready ? playerL0 : getClipImage(baseClip));
+
+    // Clip & Layer Transforms for Deck A (acessíveis globalmente para Layer 0 e Layer 2 Sobel)
+    const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
+    const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
+    const l0 = appState.layers.layer0;
+    const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
+    const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
+    const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
+    const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
 
     if (baseSource && appState.layers.layer0.active) {
       offCtxA.clearRect(0, 0, w, h);
@@ -3776,13 +3890,6 @@ function renderVisuals(time) {
       offCtxA.fillRect(0, 0, w, h);
 
       // Render base with rotation, scale, position & fit (combines Layer 0 + Base Clip transform)
-      const clipTf0 = getClipTransform(appState.layers.layer0.clipId);
-      const clipTn0 = getClipTonal(appState.layers.layer0.clipId);
-      const l0 = appState.layers.layer0;
-      const totalRot0 = (l0.rotation || 0) + (clipTf0.rotation || 0);
-      const totalScale0 = (l0.scale || 1.0) * (clipTf0.scale || 1.0);
-      const totalPosX0 = (l0.pos_x || 0) + (clipTf0.pos_x || 0);
-      const totalPosY0 = (l0.pos_y || 0) + (clipTf0.pos_y || 0);
       const tnFilter0 = getClipTonalFilterString(clipTn0);
       offCtxA.save();
       if (tnFilter0 !== 'none') offCtxA.filter = tnFilter0;
@@ -3887,9 +3994,9 @@ function renderVisuals(time) {
     busCtxB.fillRect(0, 0, w, h);
 
     const queuedClip = allClips.find(c => c.id === appState.layers.layer3.clipId) || allClips[1] || allClips[0];
-    const isQueuedGen = queuedClip && (queuedClip.is_generative || queuedClip.id === 'clip_gen_plexus_spine');
+    const isQueuedGen = queuedClip && (queuedClip.is_generative || queuedClip.id === 'clip_gen_plexus_spine' || queuedClip.category === '3D');
     const videoL3Ready = playerL3 && playerL3.readyState >= 2;
-    const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
+    const queuedSource = isQueuedGen ? getPlexusSpineCanvas(w, h, simTime, queuedClip?.gen_scene, 'deckB') : (videoL3Ready ? playerL3 : getClipImage(queuedClip));
 
     if (queuedSource) {
       // Deck B representa a mídia que está sendo pré-visualizada (CUE) e pronta para transição.
@@ -3897,19 +4004,21 @@ function renderVisuals(time) {
       const l3RawOpac = (appState.layers.layer3 && appState.layers.layer3.opacity !== undefined) ? appState.layers.layer3.opacity : 1.0;
       const deckBOpacity = l3RawOpac > 0.05 ? l3RawOpac : 1.0;
 
+      // Clip & Layer Transforms for Deck B (acessíveis globalmente para Layer 3 e Layer 2 Sobel no Bus B)
+      const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
+      const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
+      const l3 = appState.layers.layer3;
+      const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
+      const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
+      const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
+      const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
+
       if (appState.layers.layer3.active) {
         offCtxB.clearRect(0, 0, w, h);
         offCtxB.fillStyle = '#050608';
         offCtxB.fillRect(0, 0, w, h);
 
         // Render secondary with rotation, scale, position & fit (combines Layer 3 + Queued Clip transform)
-        const clipTf3 = getClipTransform(appState.layers.layer3.clipId);
-        const clipTn3 = getClipTonal(appState.layers.layer3.clipId);
-        const l3 = appState.layers.layer3;
-        const totalRot3 = (l3.rotation || 0) + (clipTf3.rotation || 0);
-        const totalScale3 = (l3.scale || 1.0) * (clipTf3.scale || 1.0);
-        const totalPosX3 = (l3.pos_x || 0) + (clipTf3.pos_x || 0);
-        const totalPosY3 = (l3.pos_y || 0) + (clipTf3.pos_y || 0);
         const tnFilter3 = getClipTonalFilterString(clipTn3);
         offCtxB.save();
         if (tnFilter3 !== 'none') offCtxB.filter = tnFilter3;
@@ -4080,9 +4189,9 @@ function renderVisuals(time) {
       const l4Opacity = (appState.layers.layer4 && appState.layers.layer4.opacity !== undefined) ? appState.layers.layer4.opacity : 0.25;
       if (l4Opacity > 0.005 && (appState.macro_state === 'DROP' || appState.drop_likelihood > 0.65) && appState.layers.layer4.active) {
         const accentClip = allClips.find(c => c.id === appState.layers.layer4.clipId) || allClips[2] || allClips[0];
-        const isAccentGen = accentClip && (accentClip.is_generative || accentClip.id === 'clip_gen_plexus_spine');
+        const isAccentGen = accentClip && (accentClip.is_generative || accentClip.id === 'clip_gen_plexus_spine' || accentClip.category === '3D');
         const videoL4Ready = playerL4 && playerL4.readyState >= 2;
-        const accentSource = isAccentGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL4Ready ? playerL4 : getClipImage(accentClip));
+        const accentSource = isAccentGen ? getPlexusSpineCanvas(w, h, simTime, accentClip?.gen_scene, 'layer4') : (videoL4Ready ? playerL4 : getClipImage(accentClip));
 
         if (accentSource) {
           offCtxB.clearRect(0, 0, w, h);
@@ -4113,9 +4222,9 @@ function renderVisuals(time) {
       // 4.4. LAYER 5: DEDICATED OVERLAY DECK (PRIMARY FOREGROUND & INDEPENDENT LOOP COMPOSITING)
       if (appState.layers.layer5 && appState.layers.layer5.active && (appState.layers.layer5.opacity || 0) > 0.005) {
         const overlayClip = allClips.find(c => c.id === appState.layers.layer5.clipId) || allClips[1] || allClips[0];
-        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine');
+        const isOverlayGen = overlayClip && (overlayClip.is_generative || overlayClip.id === 'clip_gen_plexus_spine' || overlayClip.category === '3D');
         const videoL5Ready = playerL5 && playerL5.readyState >= 2;
-        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime) : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
+        const overlaySource = isOverlayGen ? getPlexusSpineCanvas(w, h, simTime, overlayClip?.gen_scene, 'layer5') : (videoL5Ready ? playerL5 : getClipImage(overlayClip));
 
         if (overlaySource) {
           offCtxOverlay.clearRect(0, 0, w, h);
@@ -4305,6 +4414,7 @@ function drawSobelContours(ctx, source, w, h, t, threshold, isSolo, alpha = 1.0,
 let plexusSpinePoints = null;
 let plexusCanvas = document.createElement('canvas');
 let plexusCtx = plexusCanvas.getContext('2d');
+const plexusCanvasBuffers = new Map();
 let marineSpores = [];
 
 function generateProceduralSpine() {
@@ -4426,19 +4536,27 @@ function getPlexusPaletteColors(paletteKey) {
   }
 }
 
-function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
-  if (plexusCanvas.width !== w || plexusCanvas.height !== h) {
-    plexusCanvas.width = w;
-    plexusCanvas.height = h;
+function getPlexusSpineCanvas(w, h, simTime, explicitScene = null, bufferId = 'main') {
+  let buf = plexusCanvasBuffers.get(bufferId);
+  if (!buf) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    buf = { canvas: c, ctx: c.getContext('2d') };
+    plexusCanvasBuffers.set(bufferId, buf);
+  } else if (buf.canvas.width !== w || buf.canvas.height !== h) {
+    buf.canvas.width = w;
+    buf.canvas.height = h;
   }
   
   if (!plexusSpinePoints) {
     plexusSpinePoints = generateProceduralSpine();
   }
 
-  const ctx = plexusCtx;
+  const canvas = buf.canvas;
+  const ctx = buf.ctx;
   const cfg3d = appState.gen3d || {};
-  const activeScene = explicitScene || cfg3d.active_scene || 'star_13';
+  const activeScene = explicitScene || cfg3d.active_scene || 'spine';
   const palette = getPlexusPaletteColors(cfg3d.palette || 'cyan_neon');
 
   const bass = Number(appState.bands?.bass || 0.45);
@@ -4465,7 +4583,17 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
   let rotX = camTilt + Math.sin(simTime * 0.18) * 0.12;
 
   // Branch rendering per scene
-  if (activeScene === 'ocean_sun') {
+  if (activeScene === 'mercury_blob') {
+    renderSceneMercuryBlob(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'monolith_13') {
+    renderSceneMonolith13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'nebula_particles') {
+    renderSceneNebulaParticles(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'cyber_wireframe') {
+    renderSceneCyberWireframe(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'hyper_torus') {
+    renderSceneHyperTorus(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
+  } else if (activeScene === 'ocean_sun') {
     renderSceneOceanSun(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
   } else if (activeScene === 'star_13') {
     renderSceneStar13(ctx, w, h, simTime, { bass, sub, presence, air, camDist, fov, palette, cfg3d });
@@ -4477,7 +4605,7 @@ function getPlexusSpineCanvas(w, h, simTime, explicitScene = null) {
     renderSceneMarineSpine(ctx, w, h, simTime, { rotY, rotX, camDist, fov, bass, sub, presence, air, palette, cfg3d });
   }
 
-  return plexusCanvas;
+  return canvas;
 }
 window.getPlexusSpineCanvas = getPlexusSpineCanvas;
 
@@ -4817,6 +4945,513 @@ function renderSceneStar13(ctx, w, h, simTime, p) {
   ctx.arc(x3_offset, gY1 - glyphW * 0.25, glyphW * 0.32, -Math.PI * 0.4, Math.PI * 0.8);
   ctx.stroke();
 
+  ctx.restore();
+}
+
+function renderSceneMercuryBlob(ctx, w, h, simTime, p) {
+  // Escultura Orgânica Contemporânea de Cromo Líquido / Mercúrio Metálico (Deformador Simplex Chiaroscuro)
+  const rotY = simTime * 0.35;
+  const rotX = 0.25 + Math.sin(simTime * 0.22) * 0.15;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const baseRadius = 0.44;
+  const latRings = 24;
+  const lonSegments = 32;
+  const projectedRings = [];
+
+  const viscosityPulse = 1.0 + p.bass * 0.45;
+  const morphSpeed = simTime * 1.6;
+
+  for (let lat = 0; lat <= latRings; lat++) {
+    const theta = (lat / latRings) * Math.PI;
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    const ringPts = [];
+
+    for (let lon = 0; lon <= lonSegments; lon++) {
+      const phi = (lon / lonSegments) * Math.PI * 2;
+      const cosPhi = Math.cos(phi);
+      const sinPhi = Math.sin(phi);
+
+      const deform = (
+        Math.sin(theta * 3.0 + phi * 2.0 + morphSpeed) * 0.07 +
+        Math.cos(theta * 5.0 - morphSpeed * 1.3) * 0.04 * (1.0 + p.sub * 0.8) +
+        Math.sin(phi * 4.0 + morphSpeed * 0.9) * 0.05 * (1.0 + p.bass * 0.6)
+      ) * viscosityPulse;
+
+      const r = baseRadius + deform;
+
+      const px = r * sinTheta * cosPhi;
+      const py = r * cosTheta;
+      const pz = r * sinTheta * sinPhi;
+
+      const nx = sinTheta * cosPhi;
+      const ny = cosTheta;
+      const nz = sinTheta * sinPhi;
+
+      const x1 = px * cosY + pz * sinY;
+      const z1 = -px * sinY + pz * cosY;
+      const y2 = py * cosX - z1 * sinX;
+      const z2 = py * sinX + z1 * cosX;
+
+      const nx1 = nx * cosY + nz * sinY;
+      const nz1 = -nx * sinY + nz * cosY;
+      const ny2 = ny * cosX - nz1 * sinX;
+      const nz2 = ny * sinX + nz1 * cosX;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        const sx = w * 0.5 + x1 * persp * w;
+        const sy = h * 0.5 + y2 * persp * h;
+
+        const dotLight = nx1 * 0.55 - ny2 * 0.65 + nz2 * 0.52;
+        const specular = Math.pow(Math.max(0, dotLight), 7.0);
+        const rim = Math.pow(1.0 - Math.max(0, nz2), 2.2);
+
+        ringPts.push({ sx, sy, depth, dotLight, specular, rim });
+      } else {
+        ringPts.push(null);
+      }
+    }
+    projectedRings.push(ringPts);
+  }
+
+  ctx.save();
+  for (let lat = 0; lat < latRings; lat++) {
+    const r1 = projectedRings[lat];
+    const r2 = projectedRings[lat + 1];
+
+    for (let lon = 0; lon < lonSegments; lon++) {
+      const p1 = r1[lon];
+      const p2 = r1[lon + 1];
+      const p3 = r2[lon + 1];
+      const p4 = r2[lon];
+
+      if (!p1 || !p2 || !p3 || !p4) continue;
+
+      const avgDot = (p1.dotLight + p2.dotLight + p3.dotLight + p4.dotLight) * 0.25;
+      const avgSpec = (p1.specular + p2.specular + p3.specular + p4.specular) * 0.25;
+      const avgRim = (p1.rim + p2.rim + p3.rim + p4.rim) * 0.25;
+
+      const baseAlpha = Math.max(0.12, Math.min(0.95, (avgDot * 0.5 + 0.5) * 0.75 + avgSpec * 0.85));
+      ctx.fillStyle = avgSpec > 0.45 ? p.palette.nodeHot : p.palette.primaryRgba(baseAlpha.toFixed(2));
+
+      ctx.beginPath();
+      ctx.moveTo(p1.sx, p1.sy);
+      ctx.lineTo(p2.sx, p2.sy);
+      ctx.lineTo(p3.sx, p3.sy);
+      ctx.lineTo(p4.sx, p4.sy);
+      ctx.closePath();
+      ctx.fill();
+
+      if (avgRim > 0.55) {
+        ctx.strokeStyle = p.palette.accentRgba((avgRim * 0.65).toFixed(2));
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+    }
+  }
+
+  const dropletCount = 28;
+  for (let i = 0; i < dropletCount; i++) {
+    const angle = (i / dropletCount) * Math.PI * 2 + simTime * 0.7 * (i % 2 === 0 ? 1 : -1);
+    const dropDist = baseRadius * (1.35 + Math.sin(angle * 3 + simTime) * 0.2 * (1.0 + p.presence * 0.4));
+    const dX = Math.cos(angle) * dropDist;
+    const dY = Math.sin(angle * 2) * 0.12 + Math.cos(angle) * 0.08;
+    const dZ = Math.sin(angle) * dropDist;
+
+    const x1 = dX * cosY + dZ * sinY;
+    const z1 = -dX * sinY + dZ * cosY;
+    const y2 = dY * cosX - z1 * sinX;
+    const z2 = dY * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      const radius = Math.max(1.5, 3.5 * persp * (1.0 + p.air * 0.8));
+
+      const dropGrad = ctx.createRadialGradient(sx - radius * 0.3, sy - radius * 0.3, 0, sx, sy, radius * 1.8);
+      dropGrad.addColorStop(0, p.palette.nodeHot);
+      dropGrad.addColorStop(0.5, p.palette.primaryRgba(0.85));
+      dropGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = dropGrad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneMonolith13(ctx, w, h, simTime, p) {
+  // Instalação Arquitetônica Brutalista: Monólito Sagrado 13 com Fendas de Luz Volumétricas
+  const rotY = simTime * 0.18;
+  const rotX = 0.22 + Math.sin(simTime * 0.14) * 0.08;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const hw = 0.28;
+  const hh = 0.72;
+  const hd = 0.12;
+
+  const rawVertices = [
+    [-hw, -hh, -hd], [hw, -hh, -hd], [hw, hh, -hd], [-hw, hh, -hd],
+    [-hw, -hh,  hd], [hw, -hh,  hd], [hw, hh,  hd], [-hw, hh,  hd]
+  ];
+
+  const proj = [];
+  for (let i = 0; i < rawVertices.length; i++) {
+    const [px, py, pz] = rawVertices[i];
+    const x1 = px * cosY + pz * sinY;
+    const z1 = -px * sinY + pz * cosY;
+    const y2 = py * cosX - z1 * sinX;
+    const z2 = py * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      proj.push({
+        sx: w * 0.5 + x1 * persp * w,
+        sy: h * 0.5 + y2 * persp * h,
+        z: z2,
+        depth
+      });
+    } else {
+      proj.push(null);
+    }
+  }
+
+  const faces = [
+    { idx: [0, 1, 2, 3], name: 'front' },
+    { idx: [5, 4, 7, 6], name: 'back' },
+    { idx: [4, 0, 3, 7], name: 'left' },
+    { idx: [1, 5, 6, 2], name: 'right' },
+    { idx: [4, 5, 1, 0], name: 'top' },
+    { idx: [3, 2, 6, 7], name: 'bottom' }
+  ];
+
+  ctx.save();
+  faces.forEach(f => {
+    const pts = f.idx.map(i => proj[i]);
+    if (pts.some(p => !p)) return;
+
+    const vax = pts[1].sx - pts[0].sx, vay = pts[1].sy - pts[0].sy;
+    const vbx = pts[2].sx - pts[0].sx, vby = pts[2].sy - pts[0].sy;
+    const cross2D = vax * vby - vay * vbx;
+    if (cross2D <= 0) return;
+
+    const isFront = f.name === 'front';
+    const isTop = f.name === 'top';
+    const faceLight = isTop ? 0.42 : (isFront ? 0.32 : 0.18);
+    const colVal = Math.floor(faceLight * 255);
+    ctx.fillStyle = `rgb(${Math.floor(colVal * 0.85)}, ${Math.floor(colVal * 0.95)}, ${Math.floor(colVal * 1.1)})`;
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].sx, pts[0].sy);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = p.palette.accentRgba(0.35);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    if (isFront) {
+      const slats = 5;
+      const kickLight = 0.4 + p.sub * 0.6;
+      for (let s = 1; s <= slats; s++) {
+        const t = s / (slats + 1);
+        const topX = pts[0].sx + (pts[1].sx - pts[0].sx) * t;
+        const topY = pts[0].sy + (pts[1].sy - pts[0].sy) * t;
+        const botX = pts[3].sx + (pts[2].sx - pts[3].sx) * t;
+        const botY = pts[3].sy + (pts[2].sy - pts[3].sy) * t;
+
+        ctx.strokeStyle = p.palette.primaryRgba(kickLight.toFixed(2));
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(topX, topY + 15);
+        ctx.lineTo(botX, botY - 15);
+        ctx.stroke();
+      }
+
+      const midX = (pts[0].sx + pts[1].sx + pts[2].sx + pts[3].sx) * 0.25;
+      const midY = (pts[0].sy + pts[1].sy + pts[2].sy + pts[3].sy) * 0.25;
+      const glyphScale = 1.0 + p.bass * 0.3;
+
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.scale(glyphScale, glyphScale);
+      ctx.font = 'bold 36px "SF Pro Display", "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = p.palette.nodeHot;
+      ctx.shadowColor = p.palette.primary;
+      ctx.shadowBlur = 18 * (1.0 + p.bass * 0.8);
+      ctx.fillText('13', 0, 0);
+      ctx.restore();
+    }
+  });
+
+  const dustCount = 45;
+  for (let i = 0; i < dustCount; i++) {
+    const t = (simTime * 0.25 + i / dustCount) % 1.0;
+    const dY = (0.5 - t) * 1.8;
+    const angle = (i * 137.5 * Math.PI) / 180;
+    const dist = 0.45 + Math.sin(i * 1.3) * 0.2;
+    const dX = Math.cos(angle) * dist;
+    const dZ = Math.sin(angle) * dist;
+
+    const x1 = dX * cosY + dZ * sinY;
+    const z1 = -dX * sinY + dZ * cosY;
+    const y2 = dY * cosX - z1 * sinX;
+    const z2 = dY * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      const alpha = Math.sin(t * Math.PI) * (0.3 + p.air * 0.5);
+
+      ctx.fillStyle = p.palette.primaryRgba(alpha.toFixed(2));
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.8 * persp * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneNebulaParticles(ctx, w, h, simTime, p) {
+  // Enxame Quântico de Partículas & Atrator Estranho de Lorenz (Volumetric Stardust)
+  const rotY = simTime * 0.24;
+  const rotX = 0.35 + Math.sin(simTime * 0.16) * 0.12;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const count = 320;
+  const projected = [];
+  const expand = 1.0 + p.presence * 0.35;
+
+  for (let i = 0; i < count; i++) {
+    const t = i * 0.08 + simTime * 0.4;
+    const px = (Math.sin(t * 1.1) * Math.cos(t * 0.7) * 0.75 + Math.sin(t * 2.3) * 0.2) * expand;
+    const py = (Math.cos(t * 1.3) * 0.65 + Math.sin(t * 3.1) * 0.15) * expand;
+    const pz = (Math.sin(t * 0.9) * 0.75 + Math.cos(t * 1.7) * 0.25) * expand;
+
+    const x1 = px * cosY + pz * sinY;
+    const z1 = -px * sinY + pz * cosY;
+    const y2 = py * cosX - z1 * sinX;
+    const z2 = py * sinX + z1 * cosX;
+
+    const depth = p.camDist + z2;
+    if (depth > 0.1) {
+      const persp = p.fov / depth;
+      const sx = w * 0.5 + x1 * persp * w;
+      const sy = h * 0.5 + y2 * persp * h;
+      projected.push({ sx, sy, depth, z2, i });
+    }
+  }
+
+  ctx.save();
+  const connThreshold = 48 * (1.0 + p.bass * 0.4);
+  const connThresholdSq = connThreshold * connThreshold;
+  ctx.lineWidth = 1.0;
+
+  for (let i = 0; i < projected.length; i += 2) {
+    const p1 = projected[i];
+    for (let j = i + 1; j < Math.min(i + 12, projected.length); j++) {
+      const p2 = projected[j];
+      const dx = p1.sx - p2.sx;
+      const dy = p1.sy - p2.sy;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq < connThresholdSq) {
+        const d = Math.sqrt(distSq);
+        const alpha = (1.0 - d / connThreshold) * (0.25 + p.air * 0.45);
+        ctx.strokeStyle = p.palette.accentRgba(alpha.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+    }
+  }
+
+  for (let i = 0; i < projected.length; i++) {
+    const pt = projected[i];
+    const size = Math.max(1.2, (2.6 / pt.depth) * (1.0 + p.presence * 0.5));
+    const alpha = Math.min(0.95, (1.2 / pt.depth) * (0.45 + p.air * 0.55));
+
+    ctx.fillStyle = (i % 7 === 0) ? p.palette.nodeHot : p.palette.primaryRgba(alpha.toFixed(2));
+    ctx.beginPath();
+    ctx.arc(pt.sx, pt.sy, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderSceneCyberWireframe(ctx, w, h, simTime, p) {
+  // Matriz Tridimensional de Tensores Brutalistas & Tesseract Laser Wireframe
+  const rotY = simTime * 0.42;
+  const rotX = simTime * 0.28;
+  const rotZ = Math.sin(simTime * 0.18) * 0.2;
+
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+
+  const sizes = [0.32, 0.58 * (1.0 + p.sub * 0.3)];
+  const projectedSets = [];
+
+  sizes.forEach(s => {
+    const cubeVerts = [
+      [-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s],
+      [-s, -s,  s], [s, -s,  s], [s, s,  s], [-s, s,  s]
+    ];
+    const proj = [];
+    cubeVerts.forEach(([px, py, pz]) => {
+      let x1 = px * cosY + pz * sinY;
+      let z1 = -px * sinY + pz * cosY;
+      let y2 = py * cosX - z1 * sinX;
+      let z2 = py * sinX + z1 * cosX;
+      let x3 = x1 * cosZ - y2 * sinZ;
+      let y3 = x1 * sinZ + y2 * cosZ;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        proj.push({
+          sx: w * 0.5 + x3 * persp * w,
+          sy: h * 0.5 + y3 * persp * h,
+          depth
+        });
+      } else {
+        proj.push(null);
+      }
+    });
+    projectedSets.push(proj);
+  });
+
+  const edges = [
+    [0,1], [1,2], [2,3], [3,0],
+    [4,5], [5,6], [6,7], [7,4],
+    [0,4], [1,5], [2,6], [3,7]
+  ];
+
+  ctx.save();
+  const kickEnergy = p.bass * 0.8 + p.sub * 0.4;
+  ctx.lineWidth = 1.5 + kickEnergy * 1.5;
+
+  projectedSets.forEach((proj, setIdx) => {
+    const isInner = setIdx === 0;
+    ctx.strokeStyle = isInner ? p.palette.nodeHot : p.palette.primaryRgba((0.65 + kickEnergy * 0.35).toFixed(2));
+
+    edges.forEach(([i1, i2]) => {
+      const p1 = proj[i1];
+      const p2 = proj[i2];
+      if (!p1 || !p2) return;
+
+      ctx.beginPath();
+      ctx.moveTo(p1.sx, p1.sy);
+      ctx.lineTo(p2.sx, p2.sy);
+      ctx.stroke();
+    });
+  });
+
+  if (projectedSets[0] && projectedSets[1]) {
+    ctx.strokeStyle = p.palette.accentRgba((0.4 + p.air * 0.4).toFixed(2));
+    ctx.lineWidth = 1.0;
+    for (let i = 0; i < 8; i++) {
+      const p1 = projectedSets[0][i];
+      const p2 = projectedSets[1][i];
+      if (p1 && p2) {
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function renderSceneHyperTorus(ctx, w, h, simTime, p) {
+  // Nó Toroidal Topológico & Vórtice de Fluxo Harmônico
+  const rotY = simTime * 0.32;
+  const rotX = 0.38 + Math.sin(simTime * 0.2) * 0.14;
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  const R = 0.42;
+  const rBase = 0.16 * (1.0 + p.bass * 0.35);
+  const rings = 20;
+  const tubeSteps = 24;
+  const grid = [];
+
+  for (let i = 0; i < rings; i++) {
+    const u = (i / rings) * Math.PI * 2;
+    const ringPts = [];
+    for (let j = 0; j < tubeSteps; j++) {
+      const v = (j / tubeSteps) * Math.PI * 2 + simTime * 1.5;
+      const px = (R + rBase * Math.cos(v)) * Math.cos(u);
+      const py = (R + rBase * Math.cos(v)) * Math.sin(u);
+      const pz = rBase * Math.sin(v) + Math.sin(u * 3 + simTime * 2) * 0.05 * (1.0 + p.sub * 0.5);
+
+      const x1 = px * cosY + pz * sinY;
+      const z1 = -px * sinY + pz * cosY;
+      const y2 = py * cosX - z1 * sinX;
+      const z2 = py * sinX + z1 * cosX;
+
+      const depth = p.camDist + z2;
+      if (depth > 0.1) {
+        const persp = p.fov / depth;
+        ringPts.push({
+          sx: w * 0.5 + x1 * persp * w,
+          sy: h * 0.5 + y2 * persp * h,
+          depth
+        });
+      } else {
+        ringPts.push(null);
+      }
+    }
+    grid.push(ringPts);
+  }
+
+  ctx.save();
+  ctx.lineWidth = 1.0;
+  for (let i = 0; i < rings; i++) {
+    const nextI = (i + 1) % rings;
+    for (let j = 0; j < tubeSteps; j++) {
+      const nextJ = (j + 1) % tubeSteps;
+      const p1 = grid[i][j];
+      const p2 = grid[i][nextJ];
+      const p3 = grid[nextI][j];
+
+      if (!p1) continue;
+
+      if (p2) {
+        const alpha = Math.min(0.8, (1.2 / p1.depth) * (0.3 + p.presence * 0.5));
+        ctx.strokeStyle = p.palette.primaryRgba(alpha.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p2.sx, p2.sy);
+        ctx.stroke();
+      }
+      if (p3) {
+        const alpha2 = Math.min(0.7, (1.0 / p1.depth) * (0.25 + p.air * 0.45));
+        ctx.strokeStyle = p.palette.accentRgba(alpha2.toFixed(2));
+        ctx.beginPath();
+        ctx.moveTo(p1.sx, p1.sy);
+        ctx.lineTo(p3.sx, p3.sy);
+        ctx.stroke();
+      }
+    }
+  }
   ctx.restore();
 }
 
@@ -6243,6 +6878,7 @@ window.runFxAutopilotEngine = runFxAutopilotEngine;
 let lastAutopilotBar = 0;
 let lastAutopilotState = null;
 let lastDropTriggered = false;
+let lastAutopilotTakeTimestamp = 0;
 
 function runAutopilotEngine() {
   // Musical Autopilot for FX Engine
@@ -6251,6 +6887,7 @@ function runAutopilotEngine() {
   if (!appState.auto_mode) return;
 
   const p = appState.phrase;
+  if (!p) return;
   const currentBar = p.current_bar;
   const currentBeat = p.current_beat;
   const totalBars = p.total_bars || 1;
@@ -6282,12 +6919,18 @@ function runAutopilotEngine() {
   if (del.media) {
     const minBarsInterval = Math.max(8, Number(appState.autopilot_min_bars) || 16);
     const barsSinceLastTake = totalBars - (appState.last_take_total_bar || 0);
+    const nowMs = performance.now();
+    const bpmVal = Number(appState.bpm) || 124.0;
+    // Strict musical cooldown in milliseconds (at least 70% of phrase length)
+    const minTakeCooldownMs = Math.max(6000, (minBarsInterval * (240.0 / bpmVal) * 1000.0 * 0.70));
+    const timeSinceLastTake = nowMs - lastAutopilotTakeTimestamp;
     
-    // Auto Cycle on Downbeat
+    // Auto Cycle on Downbeat (Frase completa)
     if (currentBar === 1 && currentBeat === 1 && totalBars > 1) {
-      if (barsSinceLastTake >= minBarsInterval && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
+      if (barsSinceLastTake >= minBarsInterval && timeSinceLastTake >= minTakeCooldownMs && lastAutopilotBar !== totalBars && !isAutoTransitioning) {
         lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         
         // Evolve matte policy if enabled
         if (del.mattes && appState.autopilot_matte_policy === 'evolve') {
@@ -6297,11 +6940,13 @@ function runAutopilotEngine() {
       }
     }
 
-    // Auto Drop Take (Hard Cut on Climax)
+    // Auto Drop Take (Hard Cut on Climax) - Strict guard to never cut if a take just occurred
     if (isEnteringDrop && currentBeat === 1 && !lastDropTriggered && !isAutoTransitioning) {
-      if (barsSinceLastTake >= 8) {
+      if (barsSinceLastTake >= Math.max(8, Math.floor(minBarsInterval / 2)) && timeSinceLastTake >= minTakeCooldownMs) {
         lastDropTriggered = true;
+        lastAutopilotBar = totalBars;
         appState.last_take_total_bar = totalBars;
+        lastAutopilotTakeTimestamp = nowMs;
         executeTakeCommit();
       }
     } else if (appState.macro_state !== 'DROP') {
@@ -6864,17 +7509,24 @@ function executeTakeCommit() {
     if (stripA) stripA.textContent = `BASE: ${queuedName || queuedClipId}`;
 
     // 5. Send action to server & OSC
-    sendAction('trigger_take', { clipId: queuedClipId, name: queuedName });
+    sendAction('trigger_take', { 
+      clipId: queuedClipId, 
+      name: queuedName,
+      nextCueClipId: queueList[0]?.clipId,
+      nextCueName: queueList[0]?.name
+    });
     sendAction('cue_clip', { layer: 'layer0', clipId: queuedClipId, name: queuedName });
     sendAction('set_layer_rotation', { layer: 'layer0', rotation: queuedRotation || 0 });
     sendAction('set_layer_fit_mode', { layer: 'layer0', fit_mode: queuedFitMode || 'fill' });
     sendAction('set_crossfader', { value: 0 });
   }
 
-  // 5.5 Record safety bar count to prevent autopilot from rapid-cycling takes
+  // 5.5 Record safety bar count & timestamp to prevent autopilot from rapid-cycling takes
+  lastAutopilotTakeTimestamp = performance.now();
   if (appState.phrase) {
     appState.last_take_total_bar = appState.phrase.total_bars || 1;
     appState.phrase.last_take_bar = appState.phrase.total_bars || 1;
+    lastAutopilotBar = appState.phrase.total_bars || 1;
   }
 
   // 6. Advance smart queue to arm the NEXT clip into Preview Cue
@@ -6888,9 +7540,27 @@ function executeTakeCommit() {
   updateUI();
   updateGeometryUI();
   syncVideoSources();
+  if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
 }
 
-function executeHardCut() {
+let lastHardCutTimestamp = 0;
+function executeHardCut(isUserAction = false) {
+  const nowCut = performance.now();
+  // Debounce de clique/tecla duplo literal (ex.: dois cliques rápidos no botão
+  // físico de corte, ou Enter seguido do clique): isso não depende de
+  // isUserAction e vale para qualquer origem, numa janela curta o bastante
+  // para nunca atrapalhar dois cortes manuais de verdade em sequência.
+  if (nowCut - lastHardCutTimestamp < 400) {
+    return;
+  }
+  lastHardCutTimestamp = nowCut;
+  // Mesma proteção anti-disparo-duplo de startAutoTransition: um hard cut
+  // disparado por automação dentro de 3s de outro take é ignorado; um hard cut
+  // explícito do operador (botão ou Enter) sempre executa essa checagem.
+  if (!isUserAction && (nowCut - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowCut;
   isAutoTransitioning = false;
   autoTransitionProgress = 0.0;
   const bar = document.getElementById('auto-take-bar');
@@ -6900,8 +7570,18 @@ function executeHardCut() {
   executeTakeCommit();
 }
 
-function startAutoTransition(duration = null) {
+function startAutoTransition(duration = null, isUserAction = false) {
   if (isAutoTransitioning) return;
+  const nowStart = performance.now();
+  // Se for automação e acabamos de comitar um take há menos de 3s, ignora disparo duplo
+  if (!isUserAction && (nowStart - lastAutopilotTakeTimestamp < 3000)) {
+    return;
+  }
+  lastAutopilotTakeTimestamp = nowStart;
+  if (appState.phrase) {
+    lastAutopilotBar = appState.phrase.total_bars || 1;
+    appState.last_take_total_bar = appState.phrase.total_bars || 1;
+  }
   if (isSyncBeatTransition) {
     currentTransitionDuration = (4.0 * 60.0) / (appState.bpm || 124.0); // 1 bar (4 beats)
   } else {
@@ -6934,14 +7614,29 @@ function renderQueueCards() {
   renderProTimeline();
 }
 
+let cachedTimelineRect = null;
+let lastTimelineRenderTick = 0;
+window.addEventListener('resize', () => { cachedTimelineRect = null; });
+window.invalidateTimelineRect = () => { cachedTimelineRect = null; };
+
 function renderProTimeline() {
   const canvas = document.getElementById('timeline-canvas');
   if (!canvas) return;
+
+  const now = performance.now();
+  // Throttle timeline arranger to ~30 FPS so master video compositing has full 60 FPS priority
+  if (now - lastTimelineRenderTick < 32) return;
+  lastTimelineRenderTick = now;
+
   const ctx = canvas.getContext('2d');
   
-  // Set real canvas resolution based on device pixel ratio to ensure razor-sharp rendering
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return;
+  // Use cached bounding rect to eliminate synchronous getBoundingClientRect layout thrashing at 60 FPS
+  if (!cachedTimelineRect || cachedTimelineRect.width <= 0) {
+    cachedTimelineRect = canvas.getBoundingClientRect();
+  }
+  const rect = cachedTimelineRect;
+  if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
   const dpr = window.devicePixelRatio || 1;
   const targetW = Math.floor(rect.width * dpr);
   const targetH = Math.floor(rect.height * dpr);
@@ -8281,16 +8976,16 @@ async function loadMediaPool(providedClips = null) {
     // Keep only videos for the UI Grid
     allClips = allClips.filter(c => c.type !== 'model');
 
-    // Ensure all 4 Generative 3D clips are prepended and available in Media Pool
+    // Ensure all 9 Generative 3D clips are prepended and available in Media Pool under category 3D
     const genClipsDefs = [
       {
         id: "clip_gen_plexus_spine",
         filename: "PLEXUS 3D ESPINHAÇO (Houdini Generative Marine Spine)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/plexus_espinhaco_3d.gen",
         absolute_path: "GENERATIVE/plexus_espinhaco_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.07, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.07, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.45, contrast: 0.85,
         thumbnail: "thumb_005_Metallic_spine_sculpture.jpg",
@@ -8298,13 +8993,83 @@ async function loadMediaPool(providedClips = null) {
         project: "Espinhaço 3D Plexus", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'spine'
       },
       {
+        id: "clip_gen_mercury_blob",
+        filename: "LIQUID CHROME MERCURY (Escultura Orgânica & Cromo Líquido)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/mercury_blob_3d.gen",
+        absolute_path: "GENERATIVE/mercury_blob_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.58, contrast: 1.15,
+        thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
+        notes: "Deformador de mercúrio líquido cromado com reflexos Chiaroscuro e pulsos de viscosidade áudio-reativos.",
+        project: "Mercury Liquid 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'mercury_blob'
+      },
+      {
+        id: "clip_gen_monolith_13",
+        filename: "BRUTALIST MONOLITH 13 (Monólito Sagrado & Luz Volumétrica)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/monolith_13_3d.gen",
+        absolute_path: "GENERATIVE/monolith_13_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.42, contrast: 1.20,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Instalação arquitetônica brutalista de prisma monolítico com fendas de laser e runa 13 luminosa.",
+        project: "Brutalist Monolith 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'monolith_13'
+      },
+      {
+        id: "clip_gen_nebula_particles",
+        filename: "NEBULA STARDUST 3D (Atrator Estranho & Enxame Quântico)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/nebula_particles_3d.gen",
+        absolute_path: "GENERATIVE/nebula_particles_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.50, contrast: 0.95,
+        thumbnail: "thumb_006_Abstract_iridescent_crystal.jpg",
+        notes: "Enxame tridimensional de partículas cósmicas orbitando em atrator de Lorenz com micro-filamentos de luz.",
+        project: "Nebula Quantum 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'nebula_particles'
+      },
+      {
+        id: "clip_gen_cyber_wireframe",
+        filename: "ARCHITECTURAL WIREFRAME (Hipercubo Tesseract Brutalista)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/cyber_wireframe_3d.gen",
+        absolute_path: "GENERATIVE/cyber_wireframe_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.07, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.48, contrast: 1.10,
+        thumbnail: "thumb_004_Geometric_prism_refraction.jpg",
+        notes: "Matriz tridimensional de tensores ortogonais e cubos aninhados com feixes de corte laser nos kicks.",
+        project: "Wireframe Lattice 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'cyber_wireframe'
+      },
+      {
+        id: "clip_gen_hyper_torus",
+        filename: "QUANTUM TORUS FLUX (Nó Toroidal Topológico & Vórtice)",
+        folder: "GENERATIVE 3D",
+        relative_path: "GENERATIVE/hyper_torus_3d.gen",
+        absolute_path: "GENERATIVE/hyper_torus_3d",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
+        suggested_layer: 0, has_chroma: false, green_pct: 0.0,
+        mean_luminance: 0.55, contrast: 1.05,
+        thumbnail: "thumb_003_Holographic_chrome_face.jpg",
+        notes: "Estrutura toroidal helicoidal animada em rotação contínua com linhas de fluxo de campo quântico.",
+        project: "Quantum Torus 3D", project_folder: "GENERATIVE 3D", is_generative: true, gen_scene: 'hyper_torus'
+      },
+      {
         id: "clip_gen_ocean_sun",
         filename: "OCEAN SUN 3D (Mar Ondulante + Sol Celestial de Partículas)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/ocean_sun_3d.gen",
         absolute_path: "GENERATIVE/ocean_sun_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.08, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.08, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.52, contrast: 0.90,
         thumbnail: "thumb_001_Animate_silver_tail.jpg",
@@ -8314,11 +9079,11 @@ async function loadMediaPool(providedClips = null) {
       {
         id: "clip_gen_star_13",
         filename: "STAR 13 (Estrela Sagrada Vetorial + Numeral 13 Desacoplado)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/star_13_3d.gen",
         absolute_path: "GENERATIVE/star_13_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.09, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.09, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.60, contrast: 1.05,
         thumbnail: "thumb_002_Fluid_chrome_sculpture.jpg",
@@ -8328,11 +9093,11 @@ async function loadMediaPool(providedClips = null) {
       {
         id: "clip_gen_hybrid",
         filename: "HYBRID COSMOS (Mar + Estrela 13 + Horizonte Solar)",
-        folder: "GENERATIVE",
+        folder: "GENERATIVE 3D",
         relative_path: "GENERATIVE/hybrid_cosmos_3d.gen",
         absolute_path: "GENERATIVE/hybrid_cosmos_3d",
-        width: 1920, height: 1080, duration: 999.0, fps: 60.0,
-        codec: "procedural_3d", size_mb: 0.10, category: "GENERATIVE",
+        width: 1920, height: 1080, duration: 999.0, fps: 30.0,
+        codec: "procedural_3d", size_mb: 0.10, category: "3D",
         suggested_layer: 0, has_chroma: false, green_pct: 0.0,
         mean_luminance: 0.58, contrast: 0.95,
         thumbnail: "thumb_003_Holographic_chrome_face.jpg",
@@ -8342,7 +9107,10 @@ async function loadMediaPool(providedClips = null) {
     ];
 
     genClipsDefs.forEach(gc => {
-      if (!allClips.some(c => c.id === gc.id)) {
+      const idx = allClips.findIndex(c => c.id === gc.id);
+      if (idx !== -1) {
+        allClips[idx] = Object.assign({}, allClips[idx], gc);
+      } else {
         allClips.unshift(gc);
       }
     });
@@ -8367,7 +9135,7 @@ async function loadMediaPool(providedClips = null) {
 
 function getClipFolder(c) {
   if (!c) return '1. IN';
-  if (c.is_generative || c.id === 'clip_gen_plexus_spine') return 'GENERATIVE 3D';
+  if (c.is_generative || c.id === 'clip_gen_plexus_spine' || c.category === '3D' || c.category === 'GENERATIVE' || c.folder === 'GENERATIVE' || c.folder === 'GENERATIVE 3D' || c.project_folder === 'GENERATIVE 3D') return 'GENERATIVE 3D';
   if (c.project_folder) return c.project_folder;
   if (c.project && c.folder) return `${c.project}/${c.folder}`;
   if (c.project) return `${c.project}/1. In`;
@@ -9043,7 +9811,7 @@ window.openCategorySelector = function(clipId, event) {
   const clip = allClips.find(c => c.id === clipId);
   if (!clip) return;
 
-  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', 'STREAMS & YOUTUBE', 'GENERATIVE'];
+  const categories = ['MINIMAL', 'ABSTRACT', 'FIGURA', 'DENSE', 'CHROMA', '3D', 'STREAMS & YOUTUBE', 'GENERATIVE'];
   const newCat = prompt(`Alterar categoria do clipe "${clip.filename}":\n\nCategorias disponíveis:\n${categories.join(' · ')}`, clip.category || 'MINIMAL');
   if (newCat && categories.includes(newCat.trim().toUpperCase())) {
     window.setClipCategory(clipId, newCat.trim().toUpperCase());
@@ -9594,6 +10362,7 @@ function createMediaCardElement(clip) {
       e.stopPropagation();
       appState.layers.layer4.clipId = clip.id;
       appState.layers.layer4.name = clip.filename;
+      appState.layers.layer4._assignedAt = Date.now();
       sendAction('cue_clip', { layer: 'layer4', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
@@ -9606,6 +10375,7 @@ function createMediaCardElement(clip) {
       e.stopPropagation();
       appState.layers.layer5.clipId = clip.id;
       appState.layers.layer5.name = clip.filename;
+      appState.layers.layer5._assignedAt = Date.now();
       sendAction('cue_clip', { layer: 'layer5', clipId: clip.id, name: clip.filename });
       updateUI();
       syncVideoSources();
@@ -9652,9 +10422,9 @@ function selectLibraryAssetType(type) {
   const catStrip = document.querySelector('.pool-category-strip');
   const folderStrip = document.querySelector('.pool-folder-strip');
 
-  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
-  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
-  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips') ? 'flex' : 'none';
+  if (sourceStrip) sourceStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
+  if (catStrip) catStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
+  if (folderStrip) folderStrip.style.display = (type === 'all' || type === 'clips' || type === '3d') ? 'flex' : 'none';
 
   if (typeof UserProfileManager !== 'undefined') {
     UserProfileManager.setSetting('library_active_asset_type', type);
@@ -9981,7 +10751,10 @@ function renderMediaCards() {
 
   // Update counts on badges
   const badgeClips = document.getElementById('lib-count-clips');
-  if (badgeClips) badgeClips.textContent = allClips.length;
+  if (badgeClips) badgeClips.textContent = allClips.filter(c => !c.is_generative && c.codec !== 'procedural_3d').length;
+  const badge3d = document.getElementById('lib-count-3d');
+  const count3d = allClips.filter(c => c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D').length;
+  if (badge3d) badge3d.textContent = count3d;
   const badgeMattes = document.getElementById('lib-count-mattes');
   if (badgeMattes) badgeMattes.textContent = allMattes.length;
   const badgeFx = document.getElementById('lib-count-fx');
@@ -10065,6 +10838,25 @@ function renderMediaCards() {
     const matchSearch = !searchVal || nameText.includes(searchVal) || titleText.includes(searchVal) || projText.includes(searchVal) || folderText.includes(searchVal);
     if (!matchSearch) return false;
 
+    // Filter by Asset Type (Coleções Globais: 3D ou VÍDEOS)
+    if (activeLibraryAssetType === '3d') {
+      const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+      if (!is3d) return false;
+    } else if (activeLibraryAssetType === 'clips') {
+      const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+      if (is3d) return false;
+    }
+
+    // Filter by Category
+    if (activeCategoryFilter && activeCategoryFilter !== 'ALL') {
+      if (activeCategoryFilter === '3D') {
+        const is3d = c.is_generative || c.category === '3D' || c.codec === 'procedural_3d' || c.folder === 'GENERATIVE 3D';
+        if (!is3d) return false;
+      } else if (c.category !== activeCategoryFilter) {
+        return false;
+      }
+    }
+
     // Filter by Project / Folder
     if (activeProjectFilter !== 'ALL' && c.project !== activeProjectFilter) return false;
 
@@ -10094,7 +10886,8 @@ function renderMediaCards() {
 
   const searchCountLbl = document.getElementById('lbl-search-count');
   if (searchCountLbl) {
-    searchCountLbl.textContent = `${filtered.length} / ${allClips.length} CLIPES`;
+    const typeLabel = activeLibraryAssetType === '3d' ? 'CENAS 3D' : (activeLibraryAssetType === 'clips' ? 'VÍDEOS' : 'CLIPES');
+    searchCountLbl.textContent = `${filtered.length} / ${allClips.length} ${typeLabel}`;
   }
 
   // Grouped by Folder View Mode (DaVinci Resolve / Ableton Bin hierarchy)
@@ -10881,10 +11674,10 @@ function setupEvents() {
 
   // Central M/E Transition Strip Controls
   const btnAutoTake = document.getElementById('btn-auto-take');
-  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition());
+  if (btnAutoTake) btnAutoTake.addEventListener('click', () => startAutoTransition(null, true));
 
   const btnCutTake = document.getElementById('btn-cut-take');
-  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut());
+  if (btnCutTake) btnCutTake.addEventListener('click', () => executeHardCut(true));
 
   document.querySelectorAll('.trans-rate-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -11446,7 +12239,7 @@ function setupEvents() {
 
   // Take Button in Program Monitor
   const btnTake = document.getElementById('btn-cue-take');
-  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(); });
+  if (btnTake) btnTake.addEventListener('click', () => { executeTakeTransition(null, true); });
 
   // Pro Crossfader A/B Real-time Slider
   if (crossfader) {
@@ -11455,10 +12248,11 @@ function setupEvents() {
       sendAction('set_crossfader', { value: val });
     });
     crossfader.addEventListener('change', (e) => {
+      if (!e.isTrusted || isAutoTransitioning) return;
       const val = Number(e.target.value);
       if (val >= 98) {
         // Complete cut to B when fully crossfaded
-        executeTakeTransition();
+        executeTakeTransition(null, true);
       }
     });
   }
@@ -12011,10 +12805,16 @@ window.openStudioLauncher = openStudioLauncher;
 function closeStudioLauncher() {
   const nexusModal = document.getElementById('media-nexus-modal');
   if (!nexusModal) return;
+  if (document.activeElement && nexusModal.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
   nexusModal.classList.add('dialog-closing');
   setTimeout(() => {
     try { nexusModal.close(); } catch (e) { nexusModal.removeAttribute('open'); }
     nexusModal.classList.remove('dialog-closing');
+    if (document.activeElement && nexusModal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }, 240);
 }
 window.closeStudioLauncher = closeStudioLauncher;
@@ -12346,7 +13146,10 @@ function bootstrapApp() {
     }
   }
 
-  applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  const hasRestoredLiveSet = typeof restoreLiveSetSession === 'function' ? restoreLiveSetSession() : false;
+  if (!hasRestoredLiveSet) {
+    applyMacroPreset(appState.macro_state || 'GROOVE', 0, false);
+  }
   renderMacroPresetsMatrix();
   updateMatteRibbonActiveStatus();
   updateFxUI();
@@ -12354,6 +13157,11 @@ function bootstrapApp() {
   renderVisuals();
   updateUI();
   updateSourceUI(activeMediaSource);
+
+  // Periodically persist live set state for anti-crash resilience
+  setInterval(() => {
+    if (typeof saveLiveSetSession === 'function') saveLiveSetSession();
+  }, 3500);
 
   window.addEventListener('resize', () => {
     if (typeof renderQueueCards === 'function') renderQueueCards();
@@ -12547,6 +13355,7 @@ function routeClipToBus(clipId, bus) {
   if (bus === 'A') {
     appState.layers.layer0.clipId = clip.id;
     appState.layers.layer0.name = clipName;
+    appState.layers.layer0._assignedAt = Date.now();
     appState.layers.layer0.fit_mode = 'fill';
     appState.layers.layer0.matte = 'none';
     updateUI();
@@ -12556,6 +13365,7 @@ function routeClipToBus(clipId, bus) {
   } else {
     appState.layers.layer3.clipId = clip.id;
     appState.layers.layer3.name = clipName;
+    appState.layers.layer3._assignedAt = Date.now();
     appState.layers.layer3.fit_mode = 'fill';
     appState.layers.layer3.matte = 'none';
     updateUI();
@@ -12601,6 +13411,9 @@ function openSettingsModal() {
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.classList.remove('active');
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) {
+    document.activeElement.blur();
+  }
 }
 
 window.openSettingsModal = openSettingsModal;
@@ -12663,15 +13476,28 @@ function rescanMediaWithFeedback() {
 }
 window.rescanMediaWithFeedback = rescanMediaWithFeedback;
 
+let isKeyboardShortcutsInitialized = false;
+
 function initKeyboardShortcuts() {
+  if (isKeyboardShortcutsInitialized) return;
+  isKeyboardShortcutsInitialized = true;
   window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+    const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
+    // Se o elemento ativo for órfão ou estiver em diálogo/container invisível, desfoca para liberar os atalhos
+    if (isTextInput && activeEl.offsetParent === null && activeEl !== document.body) {
+      activeEl.blur();
+    } else if (isTextInput) {
       if (e.key === 'Escape') {
         activeEl.blur();
+        closeSettingsModal();
+        closeShortcutsModal();
+        closeTheater();
         if (typeof window.toggleMediaIngestDeck === 'function') {
           window.toggleMediaIngestDeck(false);
         }
+        return;
       }
       return;
     }
@@ -12681,7 +13507,7 @@ function initKeyboardShortcuts() {
     // SPACE: Auto Take (Smooth Transition)
     if (e.code === 'Space') {
       e.preventDefault();
-      startAutoTransition();
+      startAutoTransition(null, true);
       return;
     }
 
@@ -12695,7 +13521,7 @@ function initKeyboardShortcuts() {
     // ENTER: Hard Cut
     if (key === 'Enter') {
       e.preventDefault();
-      executeHardCut();
+      executeHardCut(true);
       return;
     }
 
@@ -12720,14 +13546,17 @@ function initKeyboardShortcuts() {
       if (focusedClipId) {
         routeClipToBus(focusedClipId, 'A');
       } else if (appState.layers.layer3.clipId) {
-        startAutoTransition();
+        startAutoTransition(null, true);
       }
       return;
     }
     if (key === 'b' || key === 'B') {
       e.preventDefault();
-      if (focusedClipId) {
+      if (focusedClipId && !e.shiftKey) {
         routeClipToBus(focusedClipId, 'B');
+      } else {
+        const btnBlackout = document.getElementById('btn-blackout');
+        if (btnBlackout) btnBlackout.click();
       }
       return;
     }
@@ -12769,6 +13598,18 @@ function initKeyboardShortcuts() {
       e.preventDefault();
       const btnBlackout = document.getElementById('btn-blackout');
       if (btnBlackout) btnBlackout.click();
+      return;
+    }
+
+    // , (Comma): Toggle Preferences & System Settings Modal
+    if (key === ',' || e.code === 'Comma') {
+      e.preventDefault();
+      const modal = document.getElementById('settings-modal');
+      if (modal && modal.classList.contains('active')) {
+        closeSettingsModal();
+      } else {
+        openSettingsModal();
+      }
       return;
     }
 
@@ -12826,6 +13667,7 @@ function initKeyboardShortcuts() {
         toggleStudioInspector();
         return;
       }
+      closeSettingsModal();
       closeShortcutsModal();
       closeTheater();
       if (typeof window.toggleMediaIngestDeck === 'function') {
@@ -13209,6 +14051,7 @@ function setDockViewMode(mode) {
   const lblQuick = document.getElementById('lbl-quick-switch-text');
 
   if (mode === 'timeline') {
+    if (typeof window.invalidateTimelineRect === 'function') window.invalidateTimelineRect();
     if (btnModules) btnModules.classList.remove('active');
     if (btnTimeline) btnTimeline.classList.add('active');
     if (viewModules) viewModules.style.display = 'none';

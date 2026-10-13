@@ -411,6 +411,19 @@ html, body.penumbra-app {
   box-shadow: 0 0 10px var(--crimson-glow);
 }
 
+#btn-settings-close, #btn-shortcuts-close, #btn-theater-close {
+  background: rgba(255, 68, 102, 0.22);
+  border: 1px solid rgba(255, 68, 102, 0.65);
+  color: #ff7588;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+#btn-settings-close:hover, #btn-shortcuts-close:hover, #btn-theater-close:hover {
+  background: #ff2a55;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 42, 85, 0.6);
+}
+
 .btn-primary {
   background: var(--cyan);
   color: #06080b;

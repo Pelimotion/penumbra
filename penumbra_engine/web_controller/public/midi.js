@@ -120,8 +120,8 @@ class PenumbraMidiHub {
         this.midiAccess.onstatechange = this.onStateChange.bind(this);
         this.scanDevices();
       } catch (e2) {
-        console.error("[PENUMBRA MIDI] Erro fatal ao acessar Web MIDI:", e2);
-        this.activeTelemetry.deviceName = 'Acesso Negado';
+        console.warn("[PENUMBRA MIDI] Permissão Web MIDI aguardando autorização do operador:", (e2 && e2.message) || e2);
+        this.activeTelemetry.deviceName = 'Aguardando Permissão MIDI';
         this.notifyUI();
       }
     }

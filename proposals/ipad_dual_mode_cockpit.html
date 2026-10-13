@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Penumbra System · Proposta iPad Dual-Mode Cockpit (LIVE vs SETUP)</title>
+  <style>
+    :root {
+      --bg-dark: #05070a;
+      --bg-surface: #0a0e14;
+      --bg-panel: #0f1520;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 240, 255, 0.4);
+      --cyan: #00f0ff;
+      --amber: #ffb800;
+      --red: #ff3344;
+      --green: #00e676;
+      --text-main: #f0f4f8;
+      --text-dim: #7e8b9b;
+      --touch-min: 44px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* BARRA SUPERIOR DE MODO DUAL */
+    header {
+      height: 52px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      font-size: 14px;
+    }
+    .brand-badge {
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--cyan);
+      border: 1px solid var(--cyan);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .mode-switch {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+    .mode-btn {
+      min-height: var(--touch-min);
+      min-width: 140px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .mode-btn.active {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    }
+
+    /* CONTAINER PRINCIPAL */
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .view-mode {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      padding: 12px;
+      gap: 12px;
+    }
+    .view-mode.active { display: flex; }
+
+    /* =========================================================================
+       MODO LIVE (PALCO TOUCH 1-TOQUE · ZERO HOVER · ALVOS >= 48px)
+       ========================================================================= */
+    .live-top-monitors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 42%;
+    }
+    .monitor-card {
+      background: #000;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .monitor-card.program { border-color: rgba(0, 240, 255, 0.5); }
+    .monitor-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.7);
+    }
+    .monitor-label.cue { color: var(--amber); border: 1px solid var(--amber); }
+    .monitor-label.pgm { color: var(--cyan); border: 1px solid var(--cyan); }
+    .monitor-video-mock {
+      color: rgba(255,255,255,0.2);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    /* CONTROLE CENTRAL AO VIVO */
+    .live-center-strip {
+      display: grid;
+      grid-template-columns: 2fr 3fr 1fr;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px;
+      align-items: center;
+    }
+    /* GATILHOS DE TAKE & CUT */
+    .take-controls {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-live-take {
+      flex: 2;
+      min-height: 58px;
+      background: linear-gradient(135deg, #00f0ff, #0099cc);
+      color: #000;
+      font-size: 18px;
+      font-weight: 800;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 240, 255, 0.35);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-live-take small { font-size: 10px; font-weight: 600; opacity: 0.8; }
+    .btn-live-cut {
+      flex: 1;
+      min-height: 58px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-live-blackout {
+      min-height: 58px;
+      background: rgba(255, 51, 68, 0.15);
+      color: var(--red);
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* MACRO STATES COM BOTÕES GIGANTES TOUCH */
+    .macro-states-touch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .macro-touch-btn {
+      min-height: 58px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .macro-touch-btn span { font-size: 9px; opacity: 0.7; }
+    .macro-touch-btn.active {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+    }
+    .macro-touch-btn.drop.active {
+      background: rgba(255, 184, 0, 0.25);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    /* PAINEL INFERIOR: FADERS TÁTEIS + MACRO PADS */
+    .live-bottom-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 12px;
+      min-height: 0;
+    }
+    .touch-channel-strips {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .touch-strip-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 8px 4px;
+      gap: 8px;
+    }
+    .touch-strip-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .touch-fader-track {
+      flex: 1;
+      width: 32px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .touch-fader-thumb {
+      position: absolute;
+      bottom: 60%;
+      width: 42px;
+      height: 36px;
+      background: #334155;
+      border: 2px solid var(--cyan);
+      border-radius: 6px;
+      cursor: grab;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .touch-mute-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .touch-mute-btn.active {
+      background: var(--cyan);
+      color: #000;
+      border-color: var(--cyan);
+    }
+
+    /* HOT PADS DE PRESETS AO VIVO */
+    .touch-preset-pads {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .touch-preset-pads-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+    }
+    .preset-pad-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .preset-pad-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preset-pad-btn.active {
+      border-color: var(--cyan);
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--cyan);
+    }
+
+    /* =========================================================================
+       MODO SETUP (BANCADA PRÉ-SHOW · CONFIGURAÇÃO · MEDIA POOL · ARRANGER)
+       ========================================================================= */
+    .setup-container {
+      display: grid;
+      grid-template-columns: 240px 1fr 280px;
+      gap: 12px;
+      height: 100%;
+    }
+    .setup-sidebar, .setup-main, .setup-inspector {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .setup-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 6px;
+    }
+    .setup-item {
+      min-height: 44px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABEÇALHO DUAL MODE -->
+  <header>
+    <div class="brand">
+      <span>PENUMBRA</span>
+      <span class="brand-badge">IPAD DUAL-TIER ENGINE</span>
+    </div>
+
+    <!-- CHAVEADOR PRINCIPAL DE MODO -->
+    <div class="mode-switch">
+      <button class="mode-btn active" id="btn-mode-live" onclick="switchMode('live')">
+        <span>🎛️ MODO LIVE</span>
+        <small style="font-size:10px; opacity:0.7;">(Palco Touch)</small>
+      </button>
+      <button class="mode-btn" id="btn-mode-setup" onclick="switchMode('setup')">
+        <span>⚙️ MODO SETUP</span>
+        <small style="font-size:10px; opacity:0.7;">(Bancada)</small>
+      </button>
+    </div>
+
+    <div style="font-size: 12px; color: var(--cyan); font-weight: 600;">
+      iPad Air / Pro 11" · 1180×820 Touch-First
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. MODO LIVE (FOCO TOTAL EM PALCO ESCURO & TOUCH >= 48px) -->
+    <div class="view-mode active" id="view-live">
+      
+      <!-- TOP DUAL MONITORS -->
+      <div class="live-top-monitors">
+        <div class="monitor-card">
+          <div class="monitor-label cue">PREVIEW CUE B</div>
+          <div class="monitor-video-mock">FEED NA AGULHA</div>
+        </div>
+        <div class="monitor-card program">
+          <div class="monitor-label pgm">PROGRAM A (AO VIVO NO PROJETOR)</div>
+          <div class="monitor-video-mock">SINAL ATIVO HDMI</div>
+        </div>
+      </div>
+
+      <!-- CENTER STRIP: GATILHOS PRINCIPAIS & MACRO STATES -->
+      <div class="live-center-strip">
+        <div class="take-controls">
+          <button class="btn-live-take" onclick="alert('Take disparado no tempo 1.1!')">
+            AUTO TAKE
+            <small>Transição 1 compasso (1.1)</small>
+          </button>
+          <button class="btn-live-cut" onclick="alert('Hard Cut imediato!')">CUT</button>
+        </div>
+
+        <div class="macro-states-touch-grid">
+          <button class="macro-touch-btn" onclick="setLiveMacro(this)">IN <span>INTRO</span></button>
+          <button class="macro-touch-btn active" onclick="setLiveMacro(this)">GRV <span>GROOVE</span></button>
+          <button class="macro-touch-btn" onclick="setLiveMacro(this)">BLD <span>BUILD</span></button>
+          <button class="macro-touch-btn drop" onclick="setLiveMacro(this)">DRP <span>DROP</span></button>
+          <button class="macro-touch-btn" onclick="setLiveMacro(this)">BRK <span>BREAK</span></button>
+        </div>
+
+        <button class="btn-live-blackout" onclick="alert('BLACKOUT TOTAL!')">BLACKOUT</button>
+      </div>
+
+      <!-- BOTTOM: QUICK FADERS + 8 MACRO PADS -->
+      <div class="live-bottom-grid">
+        <div class="touch-channel-strips">
+          <div class="touch-strip-col">
+            <span class="touch-strip-header">L0 MASTER</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 85%;"></div></div>
+            <button class="touch-mute-btn active">ON</button>
+          </div>
+          <div class="touch-strip-col">
+            <span class="touch-strip-header">L1 PULSE</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 45%;"></div></div>
+            <button class="touch-mute-btn active">ON</button>
+          </div>
+          <div class="touch-strip-col">
+            <span class="touch-strip-header">L2 SOBEL</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 25%;"></div></div>
+            <button class="touch-mute-btn active">ON</button>
+          </div>
+          <div class="touch-strip-col">
+            <span class="touch-strip-header">L3 CUE B</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 0%;"></div></div>
+            <button class="touch-mute-btn">CUE</button>
+          </div>
+          <div class="touch-strip-col">
+            <span class="touch-strip-header">L4 CLIMAX</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 0%;"></div></div>
+            <button class="touch-mute-btn">OFF</button>
+          </div>
+          <div class="touch-strip-col">
+            <span class="touch-strip-header" style="color:var(--amber);">L5 OVER</span>
+            <div class="touch-fader-track"><div class="touch-fader-thumb" style="bottom: 60%; border-color:var(--amber);"></div></div>
+            <button class="touch-mute-btn active" style="background:var(--amber); color:#000;">L5 ON</button>
+          </div>
+        </div>
+
+        <!-- 8 QUICK MACRO PADS (1-TOQUE SEM PRECISAR DE DOCK TAB) -->
+        <div class="touch-preset-pads">
+          <div class="touch-preset-pads-header">⚡ 8 PRESETS FAVORITOS (DISPARO IMEDIATO 1-TOQUE)</div>
+          <div class="preset-pad-grid">
+            <button class="preset-pad-btn active"><span>01 · Pure Clean Cinema</span> <span>✓</span></button>
+            <button class="preset-pad-btn"><span>02 · Deep Sub-Bass Ripple</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>03 · Ghost Trails Modulation</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>04 · Sobel Charcoal Anatomy</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>05 · Pre-Drop Vocal Tension</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>06 · Hard Drop Climax Diff</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>07 · Pixel Stretch Void</span> <span>▶</span></button>
+            <button class="preset-pad-btn"><span>08 · Ambient Vignette Break</span> <span>▶</span></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. MODO SETUP (BANCADA COMPLETA PRÉ-SHOW) -->
+    <div class="view-mode" id="view-setup">
+      <div class="setup-container">
+        <div class="setup-sidebar">
+          <div class="setup-title">📁 SMART BINS & PASTAS</div>
+          <div class="setup-item"><span>📁 Espinhaço / 1. In</span> <span>24 clipes</span></div>
+          <div class="setup-item"><span>📁 Tetropode / 1. In</span> <span>18 clipes</span></div>
+          <div class="setup-item"><span>📁 Zimbro / 1. In</span> <span>15 clipes</span></div>
+          <div class="setup-item"><span>☁️ Bunny CDN</span> <span>6 clipes</span></div>
+          <div class="setup-item"><span>▶️ YouTube & Streams</span> <span>3 clipes</span></div>
+        </div>
+
+        <div class="setup-main">
+          <div class="setup-title">🎬 ARRANGER MULTICAMADA & TIMELINE PRO</div>
+          <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:13px;">
+            Régua Musical 16/32/64 Bars + 7 Tracks Multicamada (L0 a L5 + FX Master)
+          </div>
+          <div class="setup-title">🎛️ BIBLIOTECA DE 29 MÁSCARAS & FX ENGINE</div>
+          <div style="height: 120px; background:rgba(0,0,0,0.4); border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:13px;">
+            Grade de 29 Mattes com Inversão Alpha e Atribuição por Camada
+          </div>
+        </div>
+
+        <div class="setup-inspector">
+          <div class="setup-title">⚙️ STUDIO INSPECTOR LATERAL</div>
+          <div class="setup-item"><span>Escala L0</span> <span>1.00x</span></div>
+          <div class="setup-item"><span>Posição X / Y</span> <span>0, 0</span></div>
+          <div class="setup-item"><span>Rotação</span> <span>0° Nativo</span></div>
+          <div class="setup-item"><span>Fonte de Áudio</span> <span>P2 Line-In</span></div>
+          <div class="setup-item"><span>Gêmeo MIDI</span> <span>Click-to-Map</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function switchMode(mode) {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-mode').forEach(v => v.classList.remove('active'));
+      
+      if (mode === 'live') {
+        document.getElementById('btn-mode-live').classList.add('active');
+        document.getElementById('view-live').classList.add('active');
+      } else {
+        document.getElementById('btn-mode-setup').classList.add('active');
+        document.getElementById('view-setup').classList.add('active');
+      }
+    }
+
+    function setLiveMacro(btn) {
+      document.querySelectorAll('.macro-touch-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

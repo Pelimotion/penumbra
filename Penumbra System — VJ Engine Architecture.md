@@ -9,13 +9,14 @@ O objetivo estético continua inegociável: alto contraste, penumbra dominante e
 
 ## 2. O `appState` (Fonte da Verdade)
 A interface e o motor visual são reativos a um único objeto global: `appState`. Ele define:
-- `macro_state`: Estado narrativo (INTRO, BUILD, DROP, GROOVE).
+- `macro_state`: Estado narrativo (INTRO, GROOVE, BUILD, DROP, BREAK).
 - `bands` & `stems`: Reatividade de áudio, com valores de 0 a 1 que modulam parâmetros visuais em tempo real (ex: tamanho do matte, opacidade).
-- `layers`: Configuração independente para os 5 canais de vídeo (0 a 4).
+- `layers`: Configuração independente para os 6 canais de vídeo (Layer 0 a Layer 5).
 - `tonal`: Grading master com gamma, contrast, midtones e Sobel edge mix.
 - `phrase`: Engine de fraseamento musical (compassos, beats, pre-drops).
+- `fps`: Cadência do render loop (Padrão: 30 FPS para estabilidade térmica no palco, com alternador no cockpit para 60 FPS quando o hardware permitir).
 
-*Regra de Ouro do Vibecoding:* Qualquer manipulação visual ou lógica de UI deve ler e escrever diretamente em propriedades específicas do `appState`. O loop de renderização lê o estado a 60 FPS e desenha adequadamente. Nunca manipular o DOM para mudar estado; o DOM reage ao estado.
+*Regra de Ouro do Vibecoding:* Qualquer manipulação visual ou lógica de UI deve ler e escrever diretamente em propriedades específicas do `appState`. O loop de renderização lê o estado (a 30 FPS por padrão ou 60 FPS se configurado) e desenha adequadamente. Nunca manipular o DOM para mudar estado; o DOM reage ao estado.
 
 ## 3. Stack de Composição (6 Camadas Profissionais)
 O render loop em `app.js` varre do Layer 0 ao Layer 5 utilizando Canvas 2D acelerado por hardware (`globalCompositeOperation`).

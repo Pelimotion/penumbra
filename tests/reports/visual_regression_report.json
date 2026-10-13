@@ -1,0 +1,68 @@
+{
+  "name": "Visual Regression Audit",
+  "timestamp": "2026-10-13T18:38:18.150Z",
+  "updateBaselines": false,
+  "viewports": [
+    {
+      "viewport": "desktop_1920x1080",
+      "width": 1920,
+      "height": 1080,
+      "status": "PASS",
+      "diffPct": "2.89",
+      "file": "cockpit_desktop_1920x1080.png"
+    },
+    {
+      "viewport": "macbook_1280x800",
+      "width": 1280,
+      "height": 800,
+      "status": "PASS",
+      "diffPct": "4.17",
+      "file": "cockpit_macbook_1280x800.png"
+    },
+    {
+      "viewport": "ipad_1180x820",
+      "width": 1180,
+      "height": 820,
+      "status": "PASS",
+      "diffPct": "4.14",
+      "file": "cockpit_ipad_1180x820.png"
+    },
+    {
+      "viewport": "ipad_1024x768",
+      "width": 1024,
+      "height": 768,
+      "status": "PASS",
+      "diffPct": "3.36",
+      "file": "cockpit_ipad_1024x768.png"
+    }
+  ],
+  "outputStates": [
+    {
+      "state": "INTRO",
+      "status": "PASS",
+      "file": "output_INTRO.png"
+    },
+    {
+      "state": "GROOVE",
+      "status": "PASS",
+      "file": "output_GROOVE.png"
+    },
+    {
+      "state": "BUILD",
+      "status": "PASS",
+      "file": "output_BUILD.png"
+    },
+    {
+      "state": "DROP",
+      "status": "PASS",
+      "file": "output_DROP.png"
+    },
+    {
+      "state": "BREAK",
+      "status": "PASS",
+      "file": "output_BREAK.png"
+    }
+  ],
+  "success": true,
+  "errors": []
+}

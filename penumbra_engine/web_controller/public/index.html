@@ -88,13 +88,14 @@
             </div>
             <div class="nsb-cat-selector">
               <span class="nsb-sub-lbl">CATEGORIA:</span>
-              <select id="select-nexus-yt-cat" class="nsb-mini-select">
+              <select id="select-nexus-yt-cat" class="nsb-mini-select" aria-label="Categoria de Ingestão de Mídia">
                 <option value="STREAMS & YOUTUBE" selected>STREAMS & YOUTUBE</option>
                 <option value="MINIMAL">MINIMAL</option>
                 <option value="ABSTRACT">ABSTRACT</option>
                 <option value="FIGURA">FIGURA</option>
                 <option value="DENSE">DENSE</option>
                 <option value="CHROMA">CHROMA</option>
+                <option value="3D">3D (GENERATIVO)</option>
               </select>
             </div>
           </div>
@@ -305,7 +306,7 @@
       </button>
 
       <!-- Settings Modal Trigger -->
-      <button class="btn btn-outline btn-sm" id="btn-show-settings" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
+      <button class="btn btn-outline btn-sm" id="btn-show-settings" onclick="window.openSettingsModal && window.openSettingsModal()" data-tooltip-title="CONFIGURAÇÕES E AJUDA" data-tooltip-desc="Abre o painel de configurações de áudio, vídeo, projetor e atalhos." data-shortcut=",">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
 
@@ -1980,6 +1981,7 @@
                     <option value="FIGURA">FIGURA</option>
                     <option value="DENSE">DENSE</option>
                     <option value="CHROMA">CHROMA (ALPHA)</option>
+                    <option value="3D">3D (GENERATIVO)</option>
                   </select>
                 </div>
                 <div class="mid-status-box" id="mid-local-status-box">
@@ -2040,6 +2042,7 @@
                     <option value="FIGURA">FIGURA</option>
                     <option value="DENSE">DENSE</option>
                     <option value="CHROMA">CHROMA (ALPHA)</option>
+                    <option value="3D">3D (GENERATIVO)</option>
                   </select>
                 </div>
 
@@ -2131,6 +2134,11 @@
                     <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
                     <span class="lib-type-label">VÍDEOS & CLIPES</span>
                     <span class="lib-type-badge" id="lib-count-clips">74</span>
+                  </button>
+                  <button class="lib-type-btn lib-tree-item" id="lib-type-3d" data-asset-type="3d" onclick="selectLibraryAssetType('3d')">
+                    <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <span class="lib-type-label">CENAS 3D (VANGUARDA)</span>
+                    <span class="lib-type-badge" id="lib-count-3d">9</span>
                   </button>
                   <button class="lib-type-btn lib-tree-item" id="lib-type-mattes" data-asset-type="mattes" onclick="selectLibraryAssetType('mattes')">
                     <svg class="lib-type-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
@@ -2552,7 +2560,7 @@
             <input type="text" id="cfg-search-input" placeholder="Filtrar preferências e parâmetros..." oninput="filterPreferencesSearch(this.value)">
             <button class="cfg-search-clear" onclick="clearPreferencesSearch()" title="Limpar busca">✕</button>
           </div>
-          <button class="btn btn-danger btn-xs" id="btn-settings-close">FECHAR (ESC)</button>
+          <button class="btn btn-danger btn-xs" id="btn-settings-close" onclick="window.closeSettingsModal && window.closeSettingsModal()">FECHAR (ESC)</button>
         </div>
 
         <!-- Pro Two-Column Layout -->
@@ -3589,7 +3597,7 @@
 
     <!-- MIDI Controller Hub -->
     <script src="midi.js"></script>
-    <script src="app.js?t=20261009_studio_pro"></script>
+    <script src="app.js?t=20261011_resilience_fix_totalrot"></script>
   </body>
 </html>
 
