@@ -17800,7 +17800,12 @@ function escapeHTML(value) {
 
 function cdnAssetUrl(value) {
   const safePath = safeManifestPath(value);
-  return safePath ? `https://gigantera-penumbra.b-cdn.net/${safePath.split('/').map(encodeURIComponent).join('/')}` : '';
+  if (!safePath) return '';
+  if (safePath.startsWith('penumbra-app/')) {
+    return `https://gigantera-penumbra.b-cdn.net/${safePath.split('/').map(encodeURIComponent).join('/')}`;
+  }
+  const prefix = safePath.startsWith('thumb_') ? 'thumbnails/' : '';
+  return `https://gigantera-penumbra.b-cdn.net/penumbra-app/${prefix}${safePath.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 // ============================================================================
@@ -17883,7 +17888,7 @@ const PenumbraMediaCache = {
       if (typeof caches !== 'undefined') {
         const cache = await caches.open(PenumbraMediaCache.CACHE_NAME);
         const rel = (clip.relative_path || clip.filename || '').replace(/^\//, '');
-        const cdnUrl = `https://gigantera-penumbra.b-cdn.net/${rel}`;
+        const cdnUrl = `https://gigantera-penumbra.b-cdn.net/penumbra-app/${rel}`;
         const match = await cache.match(cdnUrl);
         if (match) return true;
       }
@@ -17918,7 +17923,7 @@ const PenumbraMediaCache = {
       if (typeof caches !== 'undefined') {
         const cache = await caches.open(PenumbraMediaCache.CACHE_NAME);
         const rel = (clip.relative_path || clip.filename || '').replace(/^\//, '');
-        const cdnUrl = `https://gigantera-penumbra.b-cdn.net/${rel}`;
+        const cdnUrl = `https://gigantera-penumbra.b-cdn.net/penumbra-app/${rel}`;
         const res = await cache.match(cdnUrl);
         if (res) {
           const blob = await res.blob();
@@ -17934,7 +17939,7 @@ const PenumbraMediaCache = {
   cacheClip: async (clip) => {
     if (!clip) return null;
     const rel = (clip.relative_path || clip.filename || '').replace(/^\//, '');
-    const cdnUrl = `https://gigantera-penumbra.b-cdn.net/${rel}`;
+    const cdnUrl = `https://gigantera-penumbra.b-cdn.net/penumbra-app/${rel}`;
 
     try {
       const response = await fetch(cdnUrl);
@@ -18449,7 +18454,7 @@ const MediaProvider = {
     } catch(eHost) {}
     // 2. Try Bunny Edge CDN
     try {
-      const res = await fetch('https://gigantera-penumbra.b-cdn.net/media_manifest.json');
+      const res = await fetch('https://gigantera-penumbra.b-cdn.net/penumbra-app/media_manifest.json');
       if (res.ok) {
         console.log('[MediaProvider] Loaded manifest from Bunny CDN');
         return await res.json();
@@ -26703,7 +26708,7 @@ function getMatteThumbUrl(matte) {
   if (!mPath) return '';
   const encodedPath = mPath.split('/').map(encodeURIComponent).join('/');
   if (MediaProvider.mode === 'cdn' || window.location.hostname.includes('b-cdn.net') || window.location.hostname.includes('vercel.app')) {
-    return `https://gigantera-penumbra.b-cdn.net/mattes/${encodedPath}`;
+    return `https://gigantera-penumbra.b-cdn.net/penumbra-app/mattes/${encodedPath}`;
   }
   return `./mattes/${encodedPath}`;
 }
@@ -26742,7 +26747,7 @@ async function loadMattesCatalog() {
     // 3. Tenta carregar do CDN Bunny Edge
     if (!loaded) {
       try {
-        const resCdn = await fetch('https://gigantera-penumbra.b-cdn.net/mattes_manifest.json');
+        const resCdn = await fetch('https://gigantera-penumbra.b-cdn.net/penumbra-app/mattes_manifest.json');
         if (resCdn.ok) {
           const data = await resCdn.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -28408,7 +28413,7 @@ window.cacheMediaClip = async function(clipId, event) {
 
   // 3. Persistent Web Cache Storage API + IndexedDB Fallback (Zero-Waste)
   try {
-    const streamUrl = clip.stream_url || `https://gigantera-penumbra.b-cdn.net/${encodeURIComponent(clip.relative_path || clip.filename)}`;
+    const streamUrl = clip.stream_url || `https://gigantera-penumbra.b-cdn.net/penumbra-app/${encodeURIComponent(clip.relative_path || clip.filename)}`;
     const cachedBlobUrl = await PenumbraMediaCache.cacheMedia(clip.id, streamUrl);
     clip.is_downloaded = true;
     if (!UserProfileManager.profile.cached_media_registry) UserProfileManager.profile.cached_media_registry = {};
