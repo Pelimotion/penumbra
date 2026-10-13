@@ -102,23 +102,25 @@ async function runDeploy() {
   }
 
   // 3. Core Files Deployment Queue
+  const mattesManifest = path.join(MEDIA_POOL_DIR, 'mattes_manifest.json');
   const coreQueue = [
-    { local: path.join(PUBLIC_DIR, 'index.html'), remote: 'index.html', type: 'text/html' },
-    { local: path.join(PUBLIC_DIR, 'styles.css'), remote: 'styles.css', type: 'text/css' },
-    { local: path.join(PUBLIC_DIR, 'app.js'), remote: 'app.js', type: 'application/javascript' },
-    { local: path.join(PUBLIC_DIR, 'midi.js'), remote: 'midi.js', type: 'application/javascript' },
-    { local: path.join(PUBLIC_DIR, 'favicon.svg'), remote: 'favicon.svg', type: 'image/svg+xml' },
-    { local: manifestPublic, remote: 'media_manifest.json', type: 'application/json' },
-    { local: portablePath, remote: 'Penumbra_Portable.html', type: 'text/html' }
+    { local: path.join(PUBLIC_DIR, 'index.html'), remote: 'penumbra-app/index.html', type: 'text/html' },
+    { local: path.join(PUBLIC_DIR, 'styles.css'), remote: 'penumbra-app/styles.css', type: 'text/css' },
+    { local: path.join(PUBLIC_DIR, 'app.js'), remote: 'penumbra-app/app.js', type: 'application/javascript' },
+    { local: path.join(PUBLIC_DIR, 'midi.js'), remote: 'penumbra-app/midi.js', type: 'application/javascript' },
+    { local: path.join(PUBLIC_DIR, 'favicon.svg'), remote: 'penumbra-app/favicon.svg', type: 'image/svg+xml' },
+    { local: manifestPublic, remote: 'penumbra-app/media_manifest.json', type: 'application/json' },
+    { local: mattesManifest, remote: 'penumbra-app/mattes_manifest.json', type: 'application/json' },
+    { local: portablePath, remote: 'penumbra-app/Penumbra_Portable.html', type: 'text/html' }
   ];
 
   const uploadFailures = [];
-  console.log(`\n⬆️ [Upload] Enviando ${coreQueue.length} arquivos essenciais para a CDN...`);
+  console.log(`\n⬆️ [Upload] Enviando ${coreQueue.length} arquivos essenciais para a CDN em penumbra-app/...`);
   for (const item of coreQueue) {
     try {
       const res = await uploadFile(item.local, item.remote, item.type);
       const kb = (res.size / 1024).toFixed(1);
-      console.log(`  ✓ ${item.remote.padEnd(26)} [${kb} KB] -> HTTP ${res.status}`);
+      console.log(`  ✓ ${item.remote.padEnd(38)} [${kb} KB] -> HTTP ${res.status}`);
     } catch (e) {
       uploadFailures.push(item.remote);
       console.error(`  ✗ Falha ao enviar ${item.remote}:`, e.message);
@@ -128,8 +130,8 @@ async function runDeploy() {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`\n🏁 [DEPLOY CONCLUÍDO] Duração: ${elapsed}s`);
-  console.log(`✨ Cockpit Web Online: ${PULL_ZONE}/index.html`);
-  console.log(`📱 Executável Portátil: ${PULL_ZONE}/Penumbra_Portable.html\n`);
+  console.log(`✨ Cockpit Web Online: ${PULL_ZONE}/penumbra-app/index.html`);
+  console.log(`📱 Executável Portátil: ${PULL_ZONE}/penumbra-app/Penumbra_Portable.html\n`);
 }
 
 if (require.main === module) {
